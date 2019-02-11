@@ -18,13 +18,24 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
+trait ReserveEventHandler {
+
+  def onTokenReservedForOrder(
+      orderId: String,
+      token: String,
+      amount: BigInt
+    ): Unit
+}
+
 // TODO(dongw): this is not impolemented yet
-private[core] abstract class ReserveManagerAltAutoScaleImpl(
+private[core] final class ReserveManagerAltAutoScaleImpl(
+    val token: String
   )(
     implicit
-    val token: String)
+    eventHandler: ReserveEventHandler)
     extends ReserveManagerAlt
     with Logging {
+  implicit private val t = token
 
   case class Reserve(
       orderId: String,
@@ -92,7 +103,6 @@ private[core] abstract class ReserveManagerAltAutoScaleImpl(
       requestedAmount: BigInt
     ): Set[String] = this.synchronized {
     var ordersToDelete = Set.empty[String]
-
     def available = requestedAmount.min(spendable - reserved)
 
     var idx = reserves.indexWhere(_.orderId == orderId)
@@ -109,6 +119,7 @@ private[core] abstract class ReserveManagerAltAutoScaleImpl(
         reserved += available
         val reserve = Reserve(orderId, requestedAmount, available)
         reserves = reserves.patch(idx, Seq(reserve), 1)
+        eventHandler.onTokenReservedForOrder(orderId, token, available)
       }
 
     } else {
@@ -118,6 +129,7 @@ private[core] abstract class ReserveManagerAltAutoScaleImpl(
       } else {
         reserved += available
         reserves = reserves :+ Reserve(orderId, requestedAmount, available)
+        eventHandler.onTokenReservedForOrder(orderId, token, available)
       }
     }
     ordersToDelete

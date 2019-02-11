@@ -16,20 +16,30 @@
 
 package io.lightcone.core
 
-// import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
 
-class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
+class ReserveManagerAltClassicImplSpec extends CommonSpec {
 
   implicit val token = "ABC"
-  var manager: ReserveManagerAltAutoCancelImpl = _
+  var manager: ReserveManagerAltClassicImpl = _
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
+  implicit val reh = new ReserveEventHandler {
+
+    def onTokenReservedForOrder(
+        orderId: String,
+        token: String,
+        amount: BigInt
+      ) = {
+      // println(s"reserved $amount@$token for order: $orderId")
+    }
+  }
   override def beforeEach(): Unit = {
-    manager = new ReserveManagerAltAutoCancelImpl
+    manager = new ReserveManagerAltClassicImpl(token)
   }
 
-  "ReserveManagerAltAutoCancelImpl" should "not reserve in 0 balance or allowance" in {
+  "ReserveManagerAltClassicImpl" should "not reserve in 0 balance or allowance" in {
     var result = manager.reserve("order1", 100)
     result should be(Set("order1"))
     manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
@@ -47,7 +57,7 @@ class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
     manager.getAccountInfo should be(AccountInfo(token, 99, 100, 99, 100, 0))
   }
 
-  "ReserveManagerAltAutoCancelImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
+  "ReserveManagerAltClassicImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
     manager.setBalanceAndAllowance(100, 110)
 
     var result = manager.reserve("order1", 50)
@@ -68,7 +78,7 @@ class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
     manager.getReserves should be(Seq.empty)
   }
 
-  "ReserveManagerAltAutoCancelImpl" should "release multiple orders in one operation" in {
+  "ReserveManagerAltClassicImpl" should "release multiple orders in one operation" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders

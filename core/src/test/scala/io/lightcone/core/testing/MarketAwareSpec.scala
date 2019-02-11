@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.core.testing
 import io.lightcone.lib._
+import io.lightcone.core._
 
 trait MarketAwareSpec extends OrderAwareSpec {
   type MR = MarketManager.MatchResult

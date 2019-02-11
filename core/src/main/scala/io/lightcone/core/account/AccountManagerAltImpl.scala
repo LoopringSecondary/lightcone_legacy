@@ -20,7 +20,7 @@ import org.slf4s.Logging
 import scala.concurrent._
 
 final class AccountManagerAltImpl(
-    val address: String
+    val owner: String
   )(
     implicit
     processor: UpdatedOrdersProcessor,
@@ -36,7 +36,7 @@ final class AccountManagerAltImpl(
   private implicit var tokens = Map.empty[String, ReserveManagerAlt]
 
   def getAccountInfo(token: String): Future[AccountInfo] =
-    getReserveManager(token).map(_.getAccountInfo)
+    getReserveManagerOption(token, true).map(_.get.getAccountInfo)
 
   def setBalanceAndAllowance(
       token: String,
@@ -63,11 +63,9 @@ final class AccountManagerAltImpl(
 
   def resubmitOrder(order: Matchable) = {
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
-    orderPool += order_.as(STATUS_NEW)
+    orderPool += order_.as(STATUS_NEW) // potentially replace the old one.
     for {
-      orderIdsToDelete <- order_.callOnTokenSAndTokenFee(
-        m => m.reserve(order_.id, order.requestedAmount(m.token))
-      )
+      orderIdsToDelete <- reserveForOrder(order_)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
         orderPool +=
@@ -133,17 +131,34 @@ final class AccountManagerAltImpl(
     }
   }
 
-  private def getReserveManager(token: String): Future[ReserveManagerAlt] =
+  implicit private val reserveEventHandler = new ReserveEventHandler {
+
+    def onTokenReservedForOrder(
+        orderId: String,
+        token: String,
+        amount: BigInt
+      ) = {
+      val order = orderPool(orderId)
+      orderPool += order.withReservedAmount(amount)(token)
+    }
+  }
+
+  private def getReserveManagerOption(
+      token: String,
+      mustReturn: Boolean
+    ): Future[Option[ReserveManagerAlt]] =
     this.synchronized {
-      if (tokens.contains(token)) Future.successful(tokens(token))
-      else
-        provider.getBalanceAndALlowance(address, token).map { result =>
+      if (tokens.contains(token)) Future.successful(Some(tokens(token)))
+      else if (!mustReturn) Future.successful(None)
+      else {
+        provider.getBalanceAndALlowance(owner, token).map { result =>
           val (balance, allowance) = result
-          val manager = new ReserveManagerAltClassicImpl()(token)
+          val manager = new ReserveManagerAltClassicImpl(token)
           manager.setBalanceAndAllowance(balance, allowance)
           tokens += token -> manager
-          manager
+          Some(manager)
         }
+      }
     }
 
   private def setBalanceAndAllowanceInternal(
@@ -151,7 +166,8 @@ final class AccountManagerAltImpl(
     )(method: ReserveManagerAlt => Set[String]
     ): Future[Map[String, Matchable]] =
     for {
-      manager <- getReserveManager(token)
+      managerOpt <- getReserveManagerOption(token, true)
+      manager = managerOpt.get
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
@@ -169,7 +185,7 @@ final class AccountManagerAltImpl(
     for {
       _ <- Future.sequence(orders.map { order =>
         orderPool += order.copy(status = status)
-        callOnToken(order.tokenS, _.release(order.id))
+        onToken(order.tokenS, _.release(order.id))
       })
       updatedOrders = orderPool.takeUpdatedOrders
       _ <- {
@@ -178,35 +194,47 @@ final class AccountManagerAltImpl(
       }
     } yield updatedOrders
 
-  private def callOnToken(
+  private def reserveForOrder(order: Matchable): Future[Set[String]] = {
+    val requestedAmountS = order.requestedAmount(order.tokenS)
+    val requestedAmountFee = order.requestedAmount(order.tokenFee)
+
+    if (requestedAmountS <= 0 || requestedAmountFee < 0) {
+      orderPool += order.copy(status = STATUS_INVALID_DATA)
+      Future.successful(Set(order.id))
+    } else
+      for {
+        r1 <- onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
+        r2 <- {
+          if (order.tokenFee == order.tokenS || requestedAmountFee == 0)
+            Future.successful(Set.empty[String])
+          else
+            onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
+        }
+        orderIdsToDelete = r1 ++ r2
+      } yield orderIdsToDelete
+  }
+
+  private def onToken(
       token: String,
       invoke: ReserveManagerMethod
     ): Future[Set[String]] =
     for {
-      manager <- getReserveManager(token)
+      managerOpt <- getReserveManagerOption(token, true)
+      manager = managerOpt.get
       orderIdsToDelete = invoke(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ <- Future.sequence(ordersToDelete.map { order =>
-        val f1 =
-          if (order.tokenS == token) Future.unit
-          else getReserveManager(order.tokenS).map(_.release(order.id))
+      _ <- Future.sequence {
+        ordersToDelete.map { order =>
+          Seq(order.tokenS, order.tokenFee)
+            .filter(_ != token)
+            .map { t =>
+              getReserveManagerOption(t, false).map { managerOpt =>
+                managerOpt.foreach(_.release(order.id))
+              }
+            }
 
-        val f2 =
-          if (order.tokenFee == token) Future.unit
-          else getReserveManager(order.tokenFee).map(_.release(order.id))
-        Seq(f1, f2)
-      }.flatten)
+        }.flatten
+      }
     } yield orderIdsToDelete
 
-  implicit private class MagicOrder(order: Matchable) {
-
-    def callOnTokenSAndTokenFee(
-        invoke: ReserveManagerMethod
-      ): Future[Set[String]] =
-      for {
-        r1 <- callOnToken(order.tokenS, invoke)
-        r2 <- callOnToken(order.tokenFee, invoke)
-        orderIdsToDelete = r1 ++ r2
-      } yield orderIdsToDelete
-  }
 }

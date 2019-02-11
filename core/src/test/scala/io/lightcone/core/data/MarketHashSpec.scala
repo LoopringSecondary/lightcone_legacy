@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-// import io.lightcone.core.CommonSpec
+import io.lightcone.core.testing._
 
 class MarketHashSpec extends CommonSpec {
 

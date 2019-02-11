@@ -47,7 +47,7 @@ class AccountManagerAltActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
-    val provider: BalanceAndAllowanceProvider)
+    val baProvider: BalanceAndAllowanceProvider)
     extends Actor
     with AccountManagerUpdatedOrdersProcessor
     with Stash
@@ -57,16 +57,9 @@ class AccountManagerAltActor(
   import OrderStatus._
   import TxStatus._
 
-  implicit val processor: UpdatedOrdersProcessor = this
-
-  override val supervisorStrategy =
-    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      case e: Exception =>
-        log.error(e.getMessage)
-        Escalate
-    }
-
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
+  implicit val uoProcessor: UpdatedOrdersProcessor = this
+
   val manager = AccountManagerAlt.default(owner)
   val accountCutoffState = new AccountCutoffStateImpl()
 
@@ -77,6 +70,13 @@ class AccountManagerAltActor(
   override def preStart() = {
     self ! Notify("initialize")
   }
+
+  override val supervisorStrategy =
+    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+      case e: Exception =>
+        log.error(e.getMessage)
+        Escalate
+    }
 
   def receive: Receive = initialReceive
 

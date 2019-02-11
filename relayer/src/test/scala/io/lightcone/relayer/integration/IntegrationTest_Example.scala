@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer
 
-import org.scalatest._
-import org.scalamock.scalatest._
-import org.slf4s.Logging
+import io.lightcone.relayer.data._
+import io.lightcone.core._
 
-trait CommonSpec
-    extends FlatSpec
-    with BeforeAndAfterEach
-    with BeforeAndAfterAll
-    with Matchers
-    with MockFactory
-    with Logging {
+// Please make sure in `mysql.conf` all database dals use the same database configuration.
+class IntegrationTest_Example extends IntegrationTest with testing.Constants {
 
-  override def beforeAll(): Unit = {
-    println(
-      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
-    )
+  "foo" must "bar" in {
+    testRpc {
+      val order /*: RawOrder*/ = Addr(0) |>>> 12.1.lrc --> 23.0.weth -- 10.0.lrc
+      SubmitOrder.Req(Some(order))
+    } {
+      SubmitOrder.Res()
+    }
   }
+
 }

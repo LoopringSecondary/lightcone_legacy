@@ -17,6 +17,7 @@
 package io.lightcone.core
 
 import io.lightcone.lib._
+import io.lightcone.core.testing._
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 

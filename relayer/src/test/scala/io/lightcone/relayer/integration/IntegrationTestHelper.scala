@@ -23,39 +23,9 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import org.scalatest._
 
-trait TestHelpers extends IntegrationConstants with Matchers {
+trait IntegrationTestHelper extends testing.OrderHelper with Matchers {
   implicit val timeout = akka.util.Timeout(10 seconds)
   def entrypoint: ActorRef
-
-  case class AmountToken(
-      amount: Double,
-      tokenAddress: String) {
-    def ->(another: AmountToken) = OrderRep(this, another, None)
-  }
-
-  case class OrderRep(
-      sell: AmountToken,
-      buy: AmountToken,
-      fee: Option[AmountToken]) {
-    def --(fee: AmountToken) = copy(fee = Some(fee))
-  }
-
-  implicit class Rich_DoubleAmount(v: Double) {
-    def ^(str: String) = AmountToken(v, str)
-    def lrc = AmountToken(v, LRC)
-    def gto = AmountToken(v, GTO)
-    def weth = AmountToken(v, WETH)
-  }
-
-  implicit class Rich_StringAddress(owner: String) {
-
-    def >>(or: OrderRep): RawOrder =
-      RawOrder(
-        owner = owner,
-        tokenS = or.sell.tokenAddress,
-        tokenB = or.buy.tokenAddress
-      )
-  }
 
   implicit class Rich_ActorRef(actor: ActorRef) {
 
@@ -75,7 +45,7 @@ trait TestHelpers extends IntegrationConstants with Matchers {
     }
   }
 
-  // TODO
+  // TODO(hongyu)
   def killActors(name: String) = {}
 
 }

@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
-import io.lightcone.core.implicits._
+package io.lightcone.core.testing
 import com.typesafe.config.ConfigFactory
+import io.lightcone.core._
 
-trait OrderAwareSpec extends CommonSpec {
+trait OrderAwareSpec extends CommonSpec with OrderHelper {
   var nextId = 1
-
-  // These are the addresses, not symbols
-  val LRC = "0x00000000002"
-  val GTO = "0x00000000001"
-  val DAI = "0x00000000003"
-  val WETH = "0x00000000004"
 
   val configStr =
     """

@@ -17,9 +17,10 @@
 package io.lightcone.core
 
 private[core] final class ReserveManagerAltAutoCancelImpl(
+    val token: String
   )(
     implicit
-    token: String)
+    val eventHandler: ReserveEventHandler)
     extends ReserveManagerAltImplBase {
 
   def reserve(
@@ -58,6 +59,7 @@ private[core] final class ReserveManagerAltAutoCancelImpl(
         reserved += requestedAmount
         val reserve = Reserve(orderId, requestedAmount)
         reserves = reserves.patch(idx, Seq(reserve), 1)
+        eventHandler.onTokenReservedForOrder(orderId, token, requestedAmount)
       }
 
     } else {
@@ -74,6 +76,7 @@ private[core] final class ReserveManagerAltAutoCancelImpl(
         }
         reserved += requestedAmount
         reserves = reserves :+ Reserve(orderId, requestedAmount)
+        eventHandler.onTokenReservedForOrder(orderId, token, requestedAmount)
       }
     }
 

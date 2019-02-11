@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.core.testing
 
-import io.lightcone.relayer.data._
-import io.lightcone.core._
+trait Constants {
 
-// Please make sure in `mysql.conf` all database dals use the same database configuration.
-class ExampleIntegrationSpec extends IntegrationTesting {
+  private val rand = new scala.util.Random(31)
 
-  "foo" must "bar" in {
-    testRpc {
-      val order: RawOrder = Addr(0) >> 12.1.lrc -> 23.0.weth -- 10.0.lrc
-      SubmitOrder.Req(Some(order))
-    } {
-      SubmitOrder.Res()
-    }
+  val LRC = "LRC_token_address"
+  val GTO = "GTO_token_address"
+  val DAI = "DAI_token_address"
+  val WETH = "WETH_token_address"
+
+  object Addr {
+    def apply() = rand.alphanumeric.take(22).mkString("")
+    def apply(idx: Int) = addresses(idx)
+    val addresses = Seq("addr0", "addr1", "addr2")
   }
-
 }

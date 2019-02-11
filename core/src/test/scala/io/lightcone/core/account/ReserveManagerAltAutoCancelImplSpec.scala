@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-// import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
 
 class ReserveManagerAltAutoCancelImplSpec extends CommonSpec {
 
@@ -25,8 +25,19 @@ class ReserveManagerAltAutoCancelImplSpec extends CommonSpec {
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
+  implicit val reh = new ReserveEventHandler {
+
+    def onTokenReservedForOrder(
+        orderId: String,
+        token: String,
+        amount: BigInt
+      ) = {
+      // println(s"reserved $amount@$token for order: $orderId")
+    }
+  }
+
   override def beforeEach(): Unit = {
-    manager = new ReserveManagerAltAutoCancelImpl
+    manager = new ReserveManagerAltAutoCancelImpl(token)
   }
 
   "ReserveManagerAltAutoCancelImpl" should "not reserve in 0 balance or allowance" in {

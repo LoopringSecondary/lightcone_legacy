@@ -15,7 +15,7 @@
  */
 
 package io.lightcone.core
-import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
 
 class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {
   "when tokenS == tokenFee, submit order" should "fail when tokenS balance is low" in {

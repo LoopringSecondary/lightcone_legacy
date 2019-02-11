@@ -18,12 +18,12 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-private[core] abstract class ReserveManagerAltImplBase(
-  )(
-    implicit
-    val token: String)
+private[core] abstract class ReserveManagerAltImplBase
     extends ReserveManagerAlt
     with Logging {
+
+  implicit val token: String
+  val eventHandler: ReserveEventHandler
 
   case class Reserve(
       orderId: String,

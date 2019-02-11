@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.core
 
-trait IntegrationConstants {
+// import scala.concurrent._
 
-  val LRC = "LRC"
-  val GTO = "GTO"
-  val WETH = "WETH"
-
-  object Addr {
-    def apply(idx: Int) = addresses(idx)
-    val addresses = Seq("a1", "a2", "a3")
-  }
-}
+abstract class AccountManagerAltImplSpec1
+    extends AccountManagerAltImplSpec_Base {}

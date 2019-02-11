@@ -21,19 +21,23 @@ lazy val lib = (project in file("lib"))
 
 lazy val core = (project in file("core"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, lib)
   .settings(basicSettings, libraryDependencies ++= dependency4Core)
   .dependsOn(proto)
+  .dependsOn(lib % "compile->compile;test->test")
 
 lazy val ethereum = (project in file("ethereum"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(lib, core)
   .settings(basicSettings, libraryDependencies ++= dependency4Ethereum)
+  .dependsOn(lib % "compile->compile;test->test")
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val persistence = (project in file("persistence"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, core, lib, ethereum)
   .settings(basicSettings, libraryDependencies ++= dependency4Persistence)
+  .dependsOn(proto)
+  .dependsOn(lib % "compile->compile;test->test")
+  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(ethereum)
 
 lazy val relayer = (project in file("relayer"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -44,7 +48,10 @@ lazy val relayer = (project in file("relayer"))
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
   .settings(parallelExecution in Test := false)
-  .dependsOn(proto, lib, core, persistence)
+  .dependsOn(proto)
+  .dependsOn(lib % "compile->compile;test->test")
+  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(persistence)
   .settings(
     basicSettings,
     dockerSettings,

@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.testing._
+
 class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 
   import ErrorCode._
