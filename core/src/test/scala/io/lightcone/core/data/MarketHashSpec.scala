@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.core
 
-trait IntegrationConstants {
+import io.lightcone.core.testing._
 
-  val LRC = "LRC"
-  val GTO = "GTO"
-  val WETH = "WETH"
+class MarketHashSpec extends CommonSpec {
 
-  object Addr {
-    def apply(idx: Int) = addresses(idx)
-    val addresses = Seq("a1", "a2", "a3")
+  "marketHash" must "calculate a market hash by two address" in {
+    val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
+    val address2 = "0x6d0643f40c625a46d4ede0b11031b0907bc197d1"
+    val marketHash1 = MarketHash(MarketPair(address1, address2)).toString
+    val marketHash2 = MarketHash(MarketPair(address2, address1)).toString
+    val t = MarketHash(MarketPair(address1, address2)).toString
+    marketHash1 should be(marketHash2)
+    t should be("0x3d6ede5134aa557420825295bf6c2d96b8f101e2")
   }
 }

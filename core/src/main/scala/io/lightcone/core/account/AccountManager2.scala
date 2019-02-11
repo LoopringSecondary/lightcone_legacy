@@ -21,18 +21,18 @@ import scala.concurrent._
 object AccountManager2 {
 
   def default(
-      address: String
+      owner: String
     )(
       implicit
       processor: UpdatedOrdersProcessor,
       provider: BalanceAndAllowanceProvider,
       ec: ExecutionContext,
       orderPool: AccountOrderPool with UpdatedOrdersTracing
-    ): AccountManager2 = new AccountManager2Impl(address)
+    ): AccountManager2 = new AccountManager2Impl(owner)
 }
 
 trait AccountManager2 {
-  val address: String
+  val owner: String
 
   def getAccountInfo(token: String): Future[AccountInfo]
 

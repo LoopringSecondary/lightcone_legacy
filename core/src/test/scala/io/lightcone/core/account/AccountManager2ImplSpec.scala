@@ -16,4 +16,44 @@
 
 package io.lightcone.core
 
-class AccountManager2ImplSpec extends CommonSpec {}
+import scala.concurrent._
+import io.lightcone.core.testing._
+
+abstract class AccountManager2ImplSpec_Base extends CommonSpec {
+
+  var owner = "owning_address"
+  var manager: AccountManager2 = _
+
+  var balanceMap =
+    Map.empty[String, (BigInt /*balance*/, BigInt /*allowance*/ )]
+
+  def processOneOrder(order: Matchable): Unit = println(s"==> order: $order")
+
+  implicit val _ec: ExecutionContext = ExecutionContext.Implicits.global
+
+  implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
+
+  implicit val baProvider = new BalanceAndAllowanceProvider {
+
+    def getBalanceAndALlowance(
+        address: String,
+        token: String
+      ): Future[(BigInt, BigInt)] = Future.successful {
+      balanceMap.getOrElse(token, (BigInt(0), BigInt(0)))
+    }
+  }
+
+  implicit val updatdOrderProcessor = new UpdatedOrdersProcessor {
+    val ec = _ec
+
+    def processOrder(order: Matchable): Future[Any] = {
+      processOneOrder(order)
+      Future.unit
+    }
+
+  }
+
+  override def beforeEach(): Unit = {
+    manager = AccountManager2.default(owner)
+  }
+}

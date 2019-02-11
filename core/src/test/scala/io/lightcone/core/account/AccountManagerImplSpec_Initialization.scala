@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
 
 class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
   "reinitialization of tokenS balance to smaller values" should "cancel existing orders" in {

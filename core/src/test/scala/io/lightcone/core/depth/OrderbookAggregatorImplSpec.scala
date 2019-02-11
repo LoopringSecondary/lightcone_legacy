@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.testing._
+
 class OrderbookAggregatorImplSpec extends CommonSpec {
   var agg: OrderbookAggregator = _
 

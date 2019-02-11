@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
-import io.lightcone.core.implicits._
+package io.lightcone.core.testing
 import com.typesafe.config.ConfigFactory
+import io.lightcone.core._
 
-trait OrderAwareSpec extends CommonSpec {
+trait OrderAwareSpec extends CommonSpec with OrderHelper {
   var nextId = 1
-
-  // These are the addresses, not symbols
-  val LRC = "0x00000000002"
-  val GTO = "0x00000000001"
-  val DAI = "0x00000000003"
-  val WETH = "0x00000000004"
 
   val configStr =
     """
@@ -75,33 +69,28 @@ trait OrderAwareSpec extends CommonSpec {
       burnRateForMarket = 0.2,
       burnRateForP2P = 0.2,
       symbol = "LRC",
-      usdPrice = 1.0
-    ),
+      usdPrice = 1.0),
     TokenMetadata(
       address = GTO,
       decimals = 10,
       burnRateForMarket = 0.2,
       burnRateForP2P = 0.2,
       symbol = "GTO",
-      usdPrice = 1400.0
-    ),
+      usdPrice = 1400.0),
     TokenMetadata(
       address = DAI,
       decimals = 20,
       burnRateForMarket = 0.3,
       burnRateForP2P = 0.3,
       symbol = "DAI",
-      usdPrice = 7.0
-    ),
+      usdPrice = 7.0),
     TokenMetadata(
       address = WETH,
       decimals = 23,
       burnRateForMarket = 0.3,
       burnRateForP2P = 0.3,
       symbol = "WETH",
-      usdPrice = 0.5
-    )
-  )
+      usdPrice = 0.5))
   implicit val tm = new MetadataManager()
   tm.reset(tokens, Seq.empty)
 
@@ -124,8 +113,8 @@ trait OrderAwareSpec extends CommonSpec {
     updatedOrders = Map.empty[String, Matchable]
     orderPool.addCallback { order =>
       updatedOrders += order.id -> order
-    // println("----UO: " + order)
-    // log.debug("order: " + order)
+      // println("----UO: " + order)
+      // log.debug("order: " + order)
     }
     accountManager = AccountManager.default()
 
@@ -141,49 +130,42 @@ trait OrderAwareSpec extends CommonSpec {
   }
 
   def sellLRC(
-      amountLRC: BigInt,
-      amountWETH: BigInt,
-      amountFee: BigInt
-    ) = newOrder(LRC, WETH, LRC, amountLRC, amountWETH, amountFee)
+    amountLRC: BigInt,
+    amountWETH: BigInt,
+    amountFee: BigInt) = newOrder(LRC, WETH, LRC, amountLRC, amountWETH, amountFee)
 
   def buyLRC(
-      amountLRC: BigInt,
-      amountWETH: BigInt,
-      amountFee: BigInt
-    ) = newOrder(WETH, LRC, LRC, amountWETH, amountLRC, amountFee)
+    amountLRC: BigInt,
+    amountWETH: BigInt,
+    amountFee: BigInt) = newOrder(WETH, LRC, LRC, amountWETH, amountLRC, amountFee)
 
   def sellDAI(
-      amountDAI: BigInt,
-      amountWETH: BigInt,
-      amountFee: BigInt
-    ) = newOrder(DAI, WETH, LRC, amountDAI, amountWETH, amountFee)
+    amountDAI: BigInt,
+    amountWETH: BigInt,
+    amountFee: BigInt) = newOrder(DAI, WETH, LRC, amountDAI, amountWETH, amountFee)
 
   def buyDAI(
-      amountDAI: BigInt,
-      amountWETH: BigInt,
-      amountFee: BigInt
-    ) = newOrder(WETH, DAI, LRC, amountWETH, amountDAI, amountFee)
+    amountDAI: BigInt,
+    amountWETH: BigInt,
+    amountFee: BigInt) = newOrder(WETH, DAI, LRC, amountWETH, amountDAI, amountFee)
 
   def sellGTO(
-      amountGTO: BigInt,
-      amountWETH: BigInt,
-      amountFee: BigInt
-    ) = newOrder(GTO, WETH, LRC, amountGTO, amountWETH, amountFee)
+    amountGTO: BigInt,
+    amountWETH: BigInt,
+    amountFee: BigInt) = newOrder(GTO, WETH, LRC, amountGTO, amountWETH, amountFee)
 
   def buyGTO(
-      amountGTO: BigInt,
-      amountWETH: BigInt,
-      amountFee: BigInt
-    ) = newOrder(WETH, GTO, LRC, amountWETH, amountGTO, amountFee)
+    amountGTO: BigInt,
+    amountWETH: BigInt,
+    amountFee: BigInt) = newOrder(WETH, GTO, LRC, amountWETH, amountGTO, amountFee)
 
   def newOrder(
-      tokenS: String,
-      tokenB: String,
-      tokenFee: String,
-      amountS: BigInt,
-      amountB: BigInt,
-      amountFee: BigInt
-    ): Matchable =
+    tokenS: String,
+    tokenB: String,
+    tokenFee: String,
+    amountS: BigInt,
+    amountB: BigInt,
+    amountFee: BigInt): Matchable =
     Matchable(
       getNextId(),
       tokenS,
@@ -191,53 +173,45 @@ trait OrderAwareSpec extends CommonSpec {
       tokenFee,
       amountS,
       amountB,
-      amountFee
-    )
+      amountFee)
 
   def sellLRC(
-      amountLRC: Double,
-      amountWETH: Double,
-      amountFee: Double = 0
-    ) = newOrder(LRC, WETH, LRC, amountLRC, amountWETH, amountFee)
+    amountLRC: Double,
+    amountWETH: Double,
+    amountFee: Double = 0) = newOrder(LRC, WETH, LRC, amountLRC, amountWETH, amountFee)
 
   def buyLRC(
-      amountLRC: Double,
-      amountWETH: Double,
-      amountFee: Double = 0
-    ) = newOrder(WETH, LRC, LRC, amountWETH, amountLRC, amountFee)
+    amountLRC: Double,
+    amountWETH: Double,
+    amountFee: Double = 0) = newOrder(WETH, LRC, LRC, amountWETH, amountLRC, amountFee)
 
   def sellDAI(
-      amountDAI: Double,
-      amountWETH: Double,
-      amountFee: Double = 0
-    ) = newOrder(DAI, WETH, LRC, amountDAI, amountWETH, amountFee)
+    amountDAI: Double,
+    amountWETH: Double,
+    amountFee: Double = 0) = newOrder(DAI, WETH, LRC, amountDAI, amountWETH, amountFee)
 
   def buyDAI(
-      amountDAI: Double,
-      amountWETH: Double,
-      amountFee: Double = 0
-    ) = newOrder(WETH, DAI, LRC, amountWETH, amountDAI, amountFee)
+    amountDAI: Double,
+    amountWETH: Double,
+    amountFee: Double = 0) = newOrder(WETH, DAI, LRC, amountWETH, amountDAI, amountFee)
 
   def sellGTO(
-      amountGTO: Double,
-      amountWETH: Double,
-      amountFee: Double = 0
-    ) = newOrder(GTO, WETH, LRC, amountGTO, amountWETH, amountFee)
+    amountGTO: Double,
+    amountWETH: Double,
+    amountFee: Double = 0) = newOrder(GTO, WETH, LRC, amountGTO, amountWETH, amountFee)
 
   def buyGTO(
-      amountGTO: Double,
-      amountWETH: Double,
-      amountFee: Double = 0
-    ) = newOrder(WETH, GTO, LRC, amountWETH, amountGTO, amountFee)
+    amountGTO: Double,
+    amountWETH: Double,
+    amountFee: Double = 0) = newOrder(WETH, GTO, LRC, amountWETH, amountGTO, amountFee)
 
   def newOrder(
-      tokenS: String,
-      tokenB: String,
-      tokenFee: String,
-      amountS: Double,
-      amountB: Double,
-      amountFee: Double
-    ): Matchable =
+    tokenS: String,
+    tokenB: String,
+    tokenFee: String,
+    amountS: Double,
+    amountB: Double,
+    amountFee: Double): Matchable =
     Matchable(
       getNextId(),
       tokenS,
@@ -245,14 +219,12 @@ trait OrderAwareSpec extends CommonSpec {
       tokenFee,
       amountS.toWei(tokenS),
       amountB.toWei(tokenB),
-      amountFee.toWei(tokenFee)
-    )
+      amountFee.toWei(tokenFee))
 
   def orderState(
-      amountS: BigInt,
-      amountB: BigInt,
-      amountFee: BigInt
-    ) = MatchableState(amountS, amountB, amountFee)
+    amountS: BigInt,
+    amountB: BigInt,
+    amountFee: BigInt) = MatchableState(amountS, amountB, amountFee)
 
   def submitOrder(order: Matchable) = {
     updatedOrders = Map.empty[String, Matchable]
@@ -265,9 +237,8 @@ trait OrderAwareSpec extends CommonSpec {
   }
 
   def adjustOrder(
-      orderId: String,
-      outstandingAmountS: BigInt
-    ) = {
+    orderId: String,
+    outstandingAmountS: BigInt) = {
     updatedOrders = Map.empty[String, Matchable]
     accountManager.adjustOrder(orderId, outstandingAmountS)
   }

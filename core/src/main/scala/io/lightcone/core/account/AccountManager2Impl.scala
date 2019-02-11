@@ -20,7 +20,7 @@ import org.slf4s.Logging
 import scala.concurrent._
 
 final class AccountManager2Impl(
-    val address: String
+    val owner: String
   )(
     implicit
     processor: UpdatedOrdersProcessor,
@@ -151,7 +151,7 @@ final class AccountManager2Impl(
       if (tokens.contains(token)) Future.successful(Some(tokens(token)))
       else if (!mustReturn) Future.successful(None)
       else {
-        provider.getBalanceAndALlowance(address, token).map { result =>
+        provider.getBalanceAndALlowance(owner, token).map { result =>
           val (balance, allowance) = result
           val manager =
             new ReserveManager2Impl(token)
