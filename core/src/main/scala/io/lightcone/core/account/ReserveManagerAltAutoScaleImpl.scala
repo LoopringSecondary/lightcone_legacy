@@ -19,15 +19,17 @@ package io.lightcone.core
 import org.slf4s.Logging
 
 // TODO(dongw): this is not impolemented yet
-private[core] abstract class ReserveManagerAltAutoScaleImpl()(
-  implicit val token: String)
-  extends ReserveManagerAlt
-  with Logging {
+private[core] abstract class ReserveManagerAltAutoScaleImpl(
+  )(
+    implicit
+    val token: String)
+    extends ReserveManagerAlt
+    with Logging {
 
   case class Reserve(
-    orderId: String,
-    requested: BigInt,
-    reserved: BigInt)
+      orderId: String,
+      requested: BigInt,
+      reserved: BigInt)
 
   protected var allowance: BigInt = 0
   protected var balance: BigInt = 0
@@ -45,7 +47,8 @@ private[core] abstract class ReserveManagerAltAutoScaleImpl()(
       allowance,
       balance - reserved,
       allowance - reserved,
-      reserves.size)
+      reserves.size
+    )
 
   def setBalance(balance: BigInt) =
     setBalanceAndAllowance(balance, this.allowance)
@@ -55,8 +58,9 @@ private[core] abstract class ReserveManagerAltAutoScaleImpl()(
 
   // TODO(dongw): reserve for existing orders.
   def setBalanceAndAllowance(
-    balance: BigInt,
-    allowance: BigInt) = this.synchronized {
+      balance: BigInt,
+      allowance: BigInt
+    ) = this.synchronized {
     this.balance = balance
     this.allowance = allowance
     spendable = balance.min(allowance)
@@ -84,8 +88,9 @@ private[core] abstract class ReserveManagerAltAutoScaleImpl()(
   }
 
   def reserve(
-    orderId: String,
-    requestedAmount: BigInt): Set[String] = this.synchronized {
+      orderId: String,
+      requestedAmount: BigInt
+    ): Set[String] = this.synchronized {
     var ordersToDelete = Set.empty[String]
 
     def available = requestedAmount.min(spendable - reserved)
