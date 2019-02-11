@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-@deprecated("use AccountManagerAlt", "02-11-2019")
+//@deprecated("use AccountManagerAlt", "02-11-2019")
 object AccountManager {
 
   def default(
@@ -26,7 +26,7 @@ object AccountManager {
     ): AccountManager = new AccountManagerImpl()
 }
 
-@deprecated("use AccountManagerAlt", "02-11-2019")
+//@deprecated("use AccountManagerAlt", "02-11-2019")
 trait AccountManager {
   def hasReserveManager(token: String): Boolean
   def addReserveManager(tm: ReserveManager): ReserveManager
