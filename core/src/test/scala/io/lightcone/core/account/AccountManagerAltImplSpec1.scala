@@ -18,5 +18,4 @@ package io.lightcone.core
 
 // import scala.concurrent._
 
-abstract class AccountManagerAltImplSpec1
-    extends AccountManagerAltImplSpec_Base {}
+abstract class AccountManagerAltImplSpec1 extends AccountManagerAltImplSpec {}

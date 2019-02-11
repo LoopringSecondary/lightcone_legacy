@@ -19,7 +19,7 @@ package io.lightcone.core
 import scala.concurrent._
 import io.lightcone.core.testing._
 
-abstract class AccountManagerAltImplSpec_Base extends CommonSpec {
+abstract class AccountManagerAltImplSpec extends CommonSpec {
 
   var owner = "owning_address"
   var manager: AccountManagerAlt = _
