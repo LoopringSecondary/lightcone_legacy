@@ -70,96 +70,84 @@ private[core] final class ReserveManagerAltImpl(
     this.allowance = allowance
     spendable = balance.min(allowance)
 
-    reserved = 0
-
-    val ordersToDelete = ListBuffer.empty[String]
-    val buf = ListBuffer.empty[Reserve]
-
-    reserves.foreach { r =>
-      val available = r.requested.min(spendable - reserved)
-      if (available > 0) {
-        if (r.reserved != available) {
-          eventHandler.onTokenReservedForOrder(r.orderId, token, available)
-        }
-        reserved += available
-        buf += r.copy(reserved = available)
-      } else {
-        ordersToDelete += r.orderId
+    rebalance { (reserveMe, _) =>
+      reserves.foreach { r =>
+        reserveMe(r.orderId, r.requested, Some(r.reserved))
       }
     }
-
-    reserves = buf.toList
-    ordersToDelete.toSet
   }
 
   // Release balance/allowance for an order.
-  def release(orderIds: Set[String]): Set[String] = this.synchronized {
-    reserved = 0
-    val ordersToDelete = ListBuffer.empty[String]
-    val buf = ListBuffer.empty[Reserve]
-
-    reserves.foreach { r =>
-      if (orderIds.contains(r.orderId)) {
-        ordersToDelete += r.orderId
-      } else if (r.reserved == r.requested) {
-        reserved += r.reserved
-        buf += r
-      } else {
-        val available = r.requested.min(spendable - reserved)
-        assert(available > 0)
-        if (r.reserved != available) {
-          eventHandler.onTokenReservedForOrder(r.orderId, token, available)
+  def release(orderIds: Set[String]): Set[String] = rebalance {
+    (reserveMe, deleteMe) =>
+      reserves.foreach { r =>
+        if (orderIds.contains(r.orderId)) {
+          deleteMe(r.orderId)
+        } else {
+          reserveMe(r.orderId, r.requested, Some(r.reserved))
         }
-        reserved += available
-        buf += r.copy(reserved = available)
       }
-    }
-
-    reserves = buf.toList
-    ordersToDelete.toSet
   }
 
   def reserve(
       orderId: String,
       requestedAmount: BigInt
-    ): Set[String] = this.synchronized {
+    ): Set[String] = rebalance { (reserveMe, _) =>
     assert(requestedAmount > 0)
 
-    reserved = 0
-    val ordersToDelete = ListBuffer.empty[String]
-    val buf = ListBuffer.empty[Reserve]
-
-    reserves = reserves :+ Reserve(orderId, requestedAmount, 0)
-    var found = false
+    var prevReservedOpt: Option[BigInt] = None
 
     reserves.foreach { r =>
-      if (r.orderId != orderId || !found) {
-        val requested =
-          if (r.orderId == orderId) {
-            found = true
-            requestedAmount
-          } else {
-            r.requested
-          }
-        val available = requested.min(spendable - reserved)
-        if (available == 0) {
-          ordersToDelete += r.orderId
-        } else {
-          if (r.reserved != available) {
-            eventHandler.onTokenReservedForOrder(r.orderId, token, available)
-          }
-          reserved += available
-          buf += Reserve(r.orderId, requested, available)
-        }
+      if (r.orderId == orderId) {
+        prevReservedOpt = Some(r.reserved)
+      } else { // skip exsiting same-order
+        reserveMe(r.orderId, r.requested, Some(r.reserved))
       }
     }
 
-    reserves = buf.toList
-    ordersToDelete.toSet
+    reserveMe(orderId, requestedAmount, prevReservedOpt)
   }
 
   def clearOrders(): Unit = this.synchronized {
     reserved = 0
     reserves = Nil
+  }
+
+  private type RESERVE_METHOD = (String, BigInt, Option[BigInt]) => Unit
+  private type DELETE_METHOD = (String) => Unit
+
+  private def rebalance(
+      func: (RESERVE_METHOD, DELETE_METHOD) => Unit
+    ): Set[String] = {
+
+    this.reserved = 0
+    val ordersToDelete = ListBuffer.empty[String]
+    val buf = ListBuffer.empty[Reserve]
+
+    def deleteMe(orderId: String): Unit = ordersToDelete += orderId
+
+    def reserveMe(
+        orderId: String,
+        requested: BigInt,
+        prevRequestedOpt: Option[BigInt] = None
+      ) = {
+      val available = requested.min(spendable - reserved)
+      if (available == 0) {
+        deleteMe(orderId)
+      } else {
+        this.reserved += available
+        buf += Reserve(orderId, requested, available)
+        prevRequestedOpt match {
+          case Some(amount) if amount == available =>
+          case _ =>
+            eventHandler.onTokenReservedForOrder(orderId, token, available)
+        }
+      }
+    }
+
+    func(reserveMe, deleteMe)
+
+    reserves = buf.toList
+    ordersToDelete.toSet
   }
 }
