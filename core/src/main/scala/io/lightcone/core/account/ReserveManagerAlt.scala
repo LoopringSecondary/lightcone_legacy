@@ -38,6 +38,17 @@ trait ReserveEventHandler {
     ): Unit
 }
 
+object ReserveManagerAlt {
+
+  def default(
+      token: String
+    )(
+      implicit
+      eventHandler: ReserveEventHandler
+    ): ReserveManagerAlt =
+    new ReserveManagerAltClassicImpl(token)
+}
+
 private[core] trait ReserveManagerAlt {
   val token: String
 
