@@ -18,18 +18,18 @@ package io.lightcone.core
 
 // import io.lightcone.core.implicits._
 
-class ReserveManager2ImplSpec extends CommonSpec {
+class ReserveManagerAltImplWithAutoCancellingSpec extends CommonSpec {
 
   implicit val token = "ABC"
-  var manager: ReserveManager2Impl = _
+  var manager: ReserveManagerAltImplWithAutoCancelling = _
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
   override def beforeEach(): Unit = {
-    manager = new ReserveManager2Impl
+    manager = new ReserveManagerAltImplWithAutoCancelling
   }
 
-  "ReserveManager2Impl" should "not reserve in 0 balance or allowance" in {
+  "ReserveManagerAltImplWithAutoCancelling" should "not reserve in 0 balance or allowance" in {
     var result = manager.reserve("order1", 100)
     result should be(Set("order1"))
     manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
@@ -47,7 +47,7 @@ class ReserveManager2ImplSpec extends CommonSpec {
     manager.getAccountInfo should be(AccountInfo(token, 99, 100, 99, 100, 0))
   }
 
-  "ReserveManager2Impl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
+  "ReserveManagerAltImplWithAutoCancelling" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
     manager.setBalanceAndAllowance(100, 110)
 
     var result = manager.reserve("order1", 50)
@@ -68,7 +68,7 @@ class ReserveManager2ImplSpec extends CommonSpec {
     manager.getReserves should be(Seq.empty)
   }
 
-  "ReserveManager2Impl" should "release multiple orders in one operation" in {
+  "ReserveManagerAltImplWithAutoCancelling" should "release multiple orders in one operation" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders
@@ -120,7 +120,7 @@ class ReserveManager2ImplSpec extends CommonSpec {
     manager.getAccountInfo should be(AccountInfo(token, 100, 100, 30, 30, 1))
   }
 
-  "an existing order" should "not reserve if the new size is greater than its origin reserved amount plus all orders prior to this order" in {
+  "an existing order" should "NOT reserve if the new size is greater than its origin reserved amount plus all orders prior to this order" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders

@@ -18,7 +18,7 @@ package io.lightcone.core
 
 import scala.concurrent._
 
-object AccountManager2 {
+object AccountManagerAlt {
 
   def default(
       address: String
@@ -28,10 +28,10 @@ object AccountManager2 {
       provider: BalanceAndAllowanceProvider,
       ec: ExecutionContext,
       orderPool: AccountOrderPool with UpdatedOrdersTracing
-    ): AccountManager2 = new AccountManager2Impl(address)
+    ): AccountManagerAlt = new AccountManagerAltImpl(address)
 }
 
-trait AccountManager2 {
+trait AccountManagerAlt {
   val address: String
 
   def getAccountInfo(token: String): Future[AccountInfo]
