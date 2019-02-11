@@ -30,7 +30,8 @@ private[core] final class ReserveManagerAltAutoScaleImpl(
   case class Reserve(
       orderId: String,
       requested: BigInt,
-      reserved: BigInt)
+      reserved: BigInt,
+      timestamp: Long = System.currentTimeMillis)
 
   protected var allowance: BigInt = 0
   protected var balance: BigInt = 0
@@ -127,27 +128,15 @@ private[core] final class ReserveManagerAltAutoScaleImpl(
       }
     } else {
       // this is an existing order to scale down/up
-      val reserve = reserves(idx)
+      val r = reserves(idx)
+      val pos = reserves.size - idx
+      reserved -= r.reserved
+      reserves = reserves.patch(idx, Nil, 1)
 
-      // if (reserve.requested != requestedAmount) {
-
-      //   val head = reserves.head
-
-      //   while (head.orderId != orderId && spendable - reserved < requestedAmount) {
-      //     //
-
-      //   }
-
-      //   while (reserves.nonEmpty && reserves.head.orderId !=) if (available == 0) {
-      //     ordersToDelete += orderId
-      //     reserves = reserves.patch(idx, Nil, 1)
-      //   } else {
-      //     reserved += available
-      //     val reserve = Reserve(orderId, requestedAmount, available)
-      //     reserves = reserves.patch(idx, Seq(reserve), 1)
-      //     eventHandler.onTokenReservedForOrder(orderId, token, available)
-      //   }
-
+      ordersToDelete ++= rebalance(requestedAmount)
+      val idx2 = (reserves.size - pos).max(0)
+      val updated = Reserve(orderId, requestedAmount, available)
+      reserves = reserves.patch(idx2, Seq(updated), 1)
     }
     ordersToDelete
   }
