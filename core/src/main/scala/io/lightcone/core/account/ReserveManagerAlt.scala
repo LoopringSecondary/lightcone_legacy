@@ -46,7 +46,7 @@ object ReserveManagerAlt {
       implicit
       eventHandler: ReserveEventHandler
     ): ReserveManagerAlt =
-    new ReserveManagerAltClassicImpl(token)
+    new ReserveManagerAltImpl(token)
 }
 
 private[core] trait ReserveManagerAlt {
@@ -69,8 +69,8 @@ private[core] trait ReserveManagerAlt {
     ): Set[String]
 
   // Release balance/allowance for an order, returns the order ids to cancel.
-  def release(orderIds: Seq[String]): Set[String]
-  def release(orderId: String): Set[String] = release(Seq(orderId))
+  def release(orderIds: Set[String]): Set[String]
+  def release(orderId: String): Set[String] = release(Set(orderId))
 
   def clearOrders(): Unit
 }

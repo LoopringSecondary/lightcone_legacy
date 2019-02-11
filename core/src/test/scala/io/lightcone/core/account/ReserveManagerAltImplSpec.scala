@@ -18,10 +18,10 @@ package io.lightcone.core
 
 import io.lightcone.core.testing._
 
-class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
+class ReserveManagerAltImplSpec extends CommonSpec {
 
   implicit val token = "ABC"
-  var manager: ReserveManagerAltAutoScaleImpl = _
+  var manager: ReserveManagerAltImpl = _
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
@@ -37,49 +37,80 @@ class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
   }
 
   override def beforeEach(): Unit = {
-    manager = new ReserveManagerAltAutoScaleImpl(token)
+    manager = new ReserveManagerAltImpl(token)
   }
 
-  "ReserveManagerAltAutoScaleImpl" should "not reserve in 0 balance or allowance" in {
+  "ReserveManagerAltImpl" should "not reserve in 0 balance or allowance" in {
     var result = manager.reserve("order1", 100)
     result should be(Set("order1"))
     manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
-
-    // Set balance big enought, but allowance a bit smaller than 100
-    manager.setBalanceAndAllowance(100, 99)
-    result = manager.reserve("order1", 100)
-    result should be(Set.empty[String])
-    manager.getAccountInfo should be(AccountInfo(token, 100, 99, 1, 0, 1))
-
-    // Set allowance big enought, but balance a bit smaller than 100
-    manager.setBalanceAndAllowance(99, 100)
-    result = manager.reserve("order2", 100)
-    result should be(Set("order2"))
-    manager.getAccountInfo should be(AccountInfo(token, 99, 100, 0, 1, 1))
   }
 
-  // "ReserveManagerAltAutoScaleImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
-  //   manager.setBalanceAndAllowance(100, 110)
+  "ReserveManagerAltImpl" should "partially reserve and scale up " in {
+    // Set balance big enought, but allowance a bit smaller than 100
+    manager.setBalanceAndAllowance(110, 80)
+    var result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 110, 80, 30, 0, 1))
 
-  //   var result = manager.reserve("order1", 50)
-  //   result should be(Set.empty[String])
-  //   manager.getAccountInfo should be(AccountInfo(token, 100, 110, 50, 60, 1))
+    manager.setBalanceAndAllowance(110, 90)
+    result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 110, 90, 20, 0, 1))
 
-  //   result = manager.reserve("order2", 50)
-  //   result should be(Set.empty[String])
-  //   manager.getAccountInfo should be(AccountInfo(token, 100, 110, 0, 10, 2))
+    manager.setBalanceAndAllowance(110, 100)
+    result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 110, 100, 10, 0, 1))
 
-  //   result = manager.release("order1")
-  //   result should be(Set("order1"))
-  //   manager.getAccountInfo should be(AccountInfo(token, 100, 110, 50, 60, 1))
+    manager.setBalanceAndAllowance(110, 110)
+    result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 110, 110, 10, 10, 1))
 
-  //   result = manager.release("order2")
-  //   result should be(Set("order2"))
-  //   manager.getAccountInfo should be(AccountInfo(token, 100, 110, 100, 110, 0))
-  //   manager.getReserves should be(Seq.empty)
-  // }
+    manager.setBalanceAndAllowance(100, 110)
+    result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 110, 0, 10, 1))
 
-  // "ReserveManagerAltAutoScaleImpl" should "release multiple orders in one operation" in {
+    manager.setBalanceAndAllowance(90, 110)
+    result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 90, 110, 0, 20, 1))
+
+    manager.setBalanceAndAllowance(80, 110)
+    result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 80, 110, 0, 30, 1))
+
+    manager.setBalanceAndAllowance(0, 110)
+    result = manager.reserve("order1", 100)
+    result should be(Set("order1"))
+    manager.getAccountInfo should be(AccountInfo(token, 0, 110, 0, 110, 0))
+  }
+
+  "ReserveManagerAltImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
+    manager.setBalanceAndAllowance(100, 110)
+
+    var result = manager.reserve("order1", 50)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 110, 50, 60, 1))
+
+    result = manager.reserve("order2", 50)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 110, 0, 10, 2))
+
+    result = manager.release("order1")
+    result should be(Set("order1"))
+    manager.getAccountInfo should be(AccountInfo(token, 100, 110, 50, 60, 1))
+
+    result = manager.release("order2")
+    result should be(Set("order2"))
+    manager.getAccountInfo should be(AccountInfo(token, 100, 110, 100, 110, 0))
+    manager.getReserves should be(Seq.empty)
+  }
+
+  // "ReserveManagerAltImpl" should "release multiple orders in one operation" in {
   //   manager.setBalanceAndAllowance(100, 100)
 
   //   // create 10 orders
@@ -163,30 +194,30 @@ class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
   //   manager.getAccountInfo should be(AccountInfo(token, 103, 103, 3, 3, 10))
   // }
 
-  // "setting allowanxe/balance to smaller values" should "drop old orders" in {
-  //   manager.setBalanceAndAllowance(100, 100)
+  "setting allowanxe/balance to smaller values" should "drop newer orders" in {
+    manager.setBalanceAndAllowance(100, 100)
 
-  //   // create 10 orders
-  //   val orderIds = (1 to 10).map("order" + _).toSeq
-  //   orderIds.foreach { orderId =>
-  //     manager.reserve(orderId, 10)
-  //   }
-  //   manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
+    // create 10 orders
+    val orderIds = (1 to 10).map("order" + _).toSeq
+    orderIds.foreach { orderId =>
+      manager.reserve(orderId, 10)
+    }
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
 
-  //   var result = manager.setBalance(99)
-  //   result should be(Set("order1"))
-  //   manager.getAccountInfo should be(AccountInfo(token, 99, 100, 9, 10, 9))
+    var result = manager.setBalance(99)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 99, 100, 0, 1, 10))
 
-  //   result = manager.setAllowance(90)
-  //   result should be(Set.empty[String])
-  //   manager.getAccountInfo should be(AccountInfo(token, 99, 90, 9, 0, 9))
+    result = manager.setAllowance(90)
+    result should be(Set("order10"))
+    manager.getAccountInfo should be(AccountInfo(token, 99, 90, 9, 0, 9))
 
-  //   result = manager.setAllowance(89)
-  //   result should be(Set("order2"))
-  //   manager.getAccountInfo should be(AccountInfo(token, 99, 89, 19, 9, 8))
+    result = manager.setAllowance(89)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 99, 89, 10, 0, 9))
 
-  //   result = manager.setAllowance(0)
-  //   result should be((3 to 10).map("order" + _).toSet)
-  //   manager.getAccountInfo should be(AccountInfo(token, 99, 0, 99, 0, 0))
-  // }
+    result = manager.setAllowance(0)
+    result should be((1 to 9).map("order" + _).toSet)
+    manager.getAccountInfo should be(AccountInfo(token, 99, 0, 99, 0, 0))
+  }
 }
