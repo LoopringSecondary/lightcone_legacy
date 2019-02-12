@@ -226,7 +226,7 @@ final class AccountManagerAltImpl(
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
-      //todo(hongyu)：暂时简单增加filter过滤，但不确定是否正确
+      //todo(hongyu)：删除订单时，已经删除过了，不能重复删除，暂时简单增加filter过滤，但不确定是否正确
       orderIdsToDelete = invoke(manager).filter(id => orderPool.contains(id))
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ <- Future.sequence {
