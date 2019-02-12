@@ -30,7 +30,7 @@ trait BlockingReceive { me: Actor with Stash =>
   // this actor to become `blockingReceive` and wait for a SYNC_NOTIFY message
   // to become `normalReceive` again.
   def blocking(future: => Future[_]) = {
-    context.become(blockingReceive)
+    context.become(blockingReceive, discardOld = false)
     for {
       result <- future
       _ = self ! SYNC_NOTIFY
