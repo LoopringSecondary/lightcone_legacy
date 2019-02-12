@@ -100,11 +100,7 @@ case class Matchable(
           MatchableState(v, 0, reserved.amountFee)
         }
       } else if (token == tokenFee) {
-        if (token == tokenB) {
-          MatchableState(reserved.amountS, 0, v + outstanding.amountB)
-        } else {
-          MatchableState(reserved.amountS, 0, v)
-        }
+        MatchableState(reserved.amountS, 0, v)
       } else {
         throw new Exception("")
       }
@@ -114,6 +110,23 @@ case class Matchable(
 
     println(s"!!!!!!!!!! " + x)
     x
+  }
+
+  private def updateActual() = {
+    val r =
+      if (amountFee <= 0)
+        Rational(reserved.amountS, amountS)
+      else if (tokenFee == tokenB) {
+        if (amountFee <= amountB) Rational(reserved.amountS, amountS)
+        else
+          Rational(reserved.amountS, amountS)
+            .min(Rational(reserved.amountFee, amountFee - amountB))
+      } else {
+        Rational(reserved.amountS, amountS)
+          .min(Rational(reserved.amountFee, amountFee))
+      }
+
+    copy(_actual = Some(original.scaleBy(r)))
   }
 
   // Private methods
@@ -180,20 +193,6 @@ case class Matchable(
     ) = {
     if (tokenS == marketPair.quoteToken) fromWei(tokenS, matchable.amountS)
     else fromWei(tokenB, matchable.amountB)
-  }
-
-  private def updateActual() = {
-    var r = Rational(reserved.amountS, amountS)
-    if (amountFee > 0) {
-      if (tokenFee == tokenB && reserved.amountFee > 0) {
-        r = r min Rational(reserved.amountFee, amountFee - amountB)
-      } else if (tokenFee == tokenB && reserved.amountFee == 0) {
-        // r = r
-      } else {
-        r = r min Rational(reserved.amountFee, amountFee)
-      }
-    }
-    copy(_actual = Some(original.scaleBy(r)))
   }
 
   private def fromWei(

@@ -81,123 +81,123 @@ case class Matchable(
 class AccountManagerAltImplSpec_Orders extends AccountManagerAltImplSpec {
   import OrderStatus._
 
-  // "AccountManagerAltImpl" should "allow cancelling non-existing orders" in {
-  //   val (success, orderMap) = manager.cancelOrder("order0").await
-  //   success should be(false)
-  //   orderMap.size should be(0)
+  "AccountManagerAltImpl" should "allow cancelling non-existing orders" in {
+    val (success, orderMap) = manager.cancelOrder("order0").await
+    success should be(false)
+    orderMap.size should be(0)
 
-  //   var map = manager.cancelOrders(Seq("order0", "order1")).await
-  //   map.size should be(0)
+    var map = manager.cancelOrders(Seq("order0", "order1")).await
+    map.size should be(0)
 
-  //   map = manager.cancelOrders(LRC <-> WETH).await
-  //   map.size should be(0)
+    map = manager.cancelOrders(LRC <-> WETH).await
+    map.size should be(0)
 
-  //   map = manager.cancelAllOrders().await
-  //   map.size should be(0)
-  // }
+    map = manager.cancelAllOrders().await
+    map.size should be(0)
+  }
 
-  // it should "submit order with full reserve without fee and cancel it" in {
-  //   stubBalanceAndAllowance(owner, LRC, 1000, 1000)
+  it should "submit order with full reserve without fee and cancel it" in {
+    stubBalanceAndAllowance(owner, LRC, 1000, 1000)
 
-  //   val order = (owner |> 100.0.lrc --> 1.0.weth)
-  //     .copy(
-  //       validSince = 123L, // keep as-is
-  //       submittedAt = 456L, // keep as-is
-  //       numAttempts = 12, // keep as-is
-  //       walletSplitPercentage = 0.3, // keep as-is
-  //       _reserved = Some(MatchableState(-1, -1, -1)), // update
-  //       _actual = Some(MatchableState(-2, -2, -2))
-  //     ) // update
+    val order = (owner |> 100.0.lrc --> 1.0.weth)
+      .copy(
+        validSince = 123L, // keep as-is
+        submittedAt = 456L, // keep as-is
+        numAttempts = 12, // keep as-is
+        walletSplitPercentage = 0.3, // keep as-is
+        _reserved = Some(MatchableState(-1, -1, -1)), // update
+        _actual = Some(MatchableState(-2, -2, -2))
+      ) // update
 
-  //   val expectedOrder = order.copy(
-  //     status = STATUS_PENDING,
-  //     _reserved = Some(MatchableState(100, 0, 0)),
-  //     _actual = Some(MatchableState(100, 1, 0))
-  //   )
+    val expectedOrder = order.copy(
+      status = STATUS_PENDING,
+      _reserved = Some(MatchableState(100, 0, 0)),
+      _actual = Some(MatchableState(100, 1, 0))
+    )
 
-  //   // submit the order
-  //   {
-  //     val (success, orderMap) = manager.resubmitOrder(order).await
-  //     success should be(true)
-  //     orderMap.size should be(1)
-  //     orderMap(order.id) should be(expectedOrder)
-  //   }
-  //   // cancel this order
-  //   {
-  //     val (success, orderMap) = manager.cancelOrder(order.id).await
-  //     success should be(true)
-  //     orderMap.size should be(1)
-  //     orderMap(order.id) should be {
-  //       expectedOrder.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
-  //     }
-  //   }
-  // }
+    // submit the order
+    {
+      val (success, orderMap) = manager.resubmitOrder(order).await
+      success should be(true)
+      orderMap.size should be(1)
+      orderMap(order.id) should be(expectedOrder)
+    }
+    // cancel this order
+    {
+      val (success, orderMap) = manager.cancelOrder(order.id).await
+      success should be(true)
+      orderMap.size should be(1)
+      orderMap(order.id) should be {
+        expectedOrder.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
+      }
+    }
+  }
 
-  // it should "submit order with partial reserve without fee and cancel it" in {
-  //   stubBalanceAndAllowance(owner, LRC, 2000, 250)
+  it should "submit order with partial reserve without fee and cancel it" in {
+    stubBalanceAndAllowance(owner, LRC, 2000, 250)
 
-  //   val order = (owner |> 1000.0.lrc --> 60.0.weth)
-  //     .copy(_outstanding = Some(MatchableState(500, 30, 0))) // will use these values
+    val order = (owner |> 1000.0.lrc --> 60.0.weth)
+      .copy(_outstanding = Some(MatchableState(500, 30, 0))) // will use these values
 
-  //   info("and use the '_outstanding' field if it is not None ")
-  //   val expectedOrder = order.copy(
-  //     status = STATUS_PENDING,
-  //     _reserved = Some(MatchableState(250, 0, 0)),
-  //     _actual = Some(MatchableState(250, 15, 0))
-  //   )
+    info("and use the '_outstanding' field if it is not None ")
+    val expectedOrder = order.copy(
+      status = STATUS_PENDING,
+      _reserved = Some(MatchableState(250, 0, 0)),
+      _actual = Some(MatchableState(250, 15, 0))
+    )
 
-  //   // submit the order
-  //   {
-  //     val (success, orderMap) = manager.resubmitOrder(order).await
-  //     success should be(true)
-  //     orderMap.size should be(1)
-  //     orderMap(order.id) should be(expectedOrder)
-  //   }
-  //   // cancel this order
-  //   {
-  //     val (success, orderMap) = manager.cancelOrder(order.id).await
-  //     success should be(true)
-  //     orderMap.size should be(1)
-  //     orderMap(order.id) should be {
-  //       expectedOrder.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
-  //     }
-  //   }
-  // }
+    // submit the order
+    {
+      val (success, orderMap) = manager.resubmitOrder(order).await
+      success should be(true)
+      orderMap.size should be(1)
+      orderMap(order.id) should be(expectedOrder)
+    }
+    // cancel this order
+    {
+      val (success, orderMap) = manager.cancelOrder(order.id).await
+      success should be(true)
+      orderMap.size should be(1)
+      orderMap(order.id) should be {
+        expectedOrder.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
+      }
+    }
+  }
 
-  // it should "submit order with full reserve with fee (same as tokenS) and cancel it" in {
-  //   stubBalanceAndAllowance(owner, LRC, 1000, 1000)
+  it should "submit order with full reserve with fee (same as tokenS) and cancel it" in {
+    stubBalanceAndAllowance(owner, LRC, 1000, 1000)
 
-  //   val order = owner |> 100.0.lrc --> 1.0.weth -- 5.lrc
+    val order = owner |> 100.0.lrc --> 1.0.weth -- 5.lrc
 
-  //   val expectedOrder = order.copy(
-  //     status = STATUS_PENDING,
-  //     _reserved = Some(MatchableState(100, 0, 5)),
-  //     _actual = Some(MatchableState(100, 1, 5))
-  //   )
+    val expectedOrder = order.copy(
+      status = STATUS_PENDING,
+      _reserved = Some(MatchableState(100, 0, 5)),
+      _actual = Some(MatchableState(100, 1, 5))
+    )
 
-  //   val (success, orderMap) = manager.resubmitOrder(order).await
-  //   success should be(true)
-  //   orderMap.size should be(1)
-  //   orderMap(order.id) should be(expectedOrder)
-  // }
+    val (success, orderMap) = manager.resubmitOrder(order).await
+    success should be(true)
+    orderMap.size should be(1)
+    orderMap(order.id) should be(expectedOrder)
+  }
 
-  // it should "submit order with full reserve with fee (different than tokenS) and cancel it" in {
-  //   stubBalanceAndAllowance(owner, LRC, 1000, 1000)
-  //   stubBalanceAndAllowance(owner, GTO, 10, 10)
+  it should "submit order with full reserve with fee (different than tokenS) and cancel it" in {
+    stubBalanceAndAllowance(owner, LRC, 1000, 1000)
+    stubBalanceAndAllowance(owner, GTO, 10, 10)
 
-  //   val order = owner |> 100.0.lrc --> 1.0.weth -- 5.gto
+    val order = owner |> 100.0.lrc --> 1.0.weth -- 5.gto
 
-  //   val expectedOrder = order.copy(
-  //     status = STATUS_PENDING,
-  //     _reserved = Some(MatchableState(100, 0, 5)),
-  //     _actual = Some(MatchableState(100, 1, 5))
-  //   )
+    val expectedOrder = order.copy(
+      status = STATUS_PENDING,
+      _reserved = Some(MatchableState(100, 0, 5)),
+      _actual = Some(MatchableState(100, 1, 5))
+    )
 
-  //   val (success, orderMap) = manager.resubmitOrder(order).await
-  //   success should be(true)
-  //   orderMap.size should be(1)
-  //   orderMap(order.id) should be(expectedOrder)
-  // }
+    val (success, orderMap) = manager.resubmitOrder(order).await
+    success should be(true)
+    orderMap.size should be(1)
+    orderMap(order.id) should be(expectedOrder)
+  }
 
   "a" should "scale order if amountS not enough" in {
     stubBalanceAndAllowance(owner, LRC, 1000, 500)
@@ -217,7 +217,7 @@ class AccountManagerAltImplSpec_Orders extends AccountManagerAltImplSpec {
     orderMap(order.id) should be(expectedOrder)
   }
 
-  "a" should "scale order if amountFee not enough" in {
+  it should "scale order if amountFee not enough" in {
     stubBalanceAndAllowance(owner, LRC, 1000, 1000)
     stubBalanceAndAllowance(owner, GTO, 10, 10)
 
@@ -234,4 +234,23 @@ class AccountManagerAltImplSpec_Orders extends AccountManagerAltImplSpec {
     orderMap.size should be(1)
     orderMap(order.id) should be(expectedOrder)
   }
+
+  it should "scale order if amountFee and amountS both insufficient" in {
+    stubBalanceAndAllowance(owner, LRC, 400, 1000)
+    stubBalanceAndAllowance(owner, GTO, 10, 10)
+
+    val order = owner |> 1000.0.lrc --> 40.0.weth -- 20.gto
+
+    val expectedOrder = order.copy(
+      status = STATUS_PENDING,
+      _reserved = Some(MatchableState(400, 0, 10)),
+      _actual = Some(MatchableState(400, 16, 8))
+    )
+
+    val (success, orderMap) = manager.resubmitOrder(order).await
+    success should be(true)
+    orderMap.size should be(1)
+    orderMap(order.id) should be(expectedOrder)
+  }
+
 }
