@@ -18,7 +18,7 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-@deprecated("use ReserveManagerAltImpl", "02-11-2019")
+//@deprecated("use ReserveManagerAltImpl", "02-11-2019")
 class ReserveManagerImpl(
     val token: String,
     val maxNumOrders: Int = 1000
