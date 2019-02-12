@@ -117,7 +117,6 @@ class MarketManagerImpl(
     ): MatchResult = this.synchronized {
     this.minRequiredIncome = minRequiredIncome
     matchOrders(order, minRequiredIncome)
-
   }
 
   def triggerMatch(
@@ -135,6 +134,7 @@ class MarketManagerImpl(
       minRequiredIncome: Double
     ): MatchResult = {
     if (order.numAttempts > maxSettementFailuresPerOrder) {
+      // TODO(dongw): 是否发消息给AccountManager了？
       MatchResult(
         order.copy(status = STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES)
       )
@@ -143,8 +143,8 @@ class MarketManagerImpl(
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
     } else {
-      //todo(hongyu):需要先删除该订单，否则深度中还存在该金额，但不确定，这么改是否正确，因为可能还有提交顺序相关的操作
-      removeOrder(order.id)
+      // 不能removeOrder，因为深度是现有订单减去pending ring中的订单的，因此深度应该是正确的。
+      // removeOrder(order.id)
       var taker = updateOrderMatchable(order).copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
       var ordersToAddBack = Seq.empty[Matchable]
