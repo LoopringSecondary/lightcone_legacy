@@ -19,6 +19,8 @@ package io.lightcone.core.testing
 import org.scalatest._
 import org.scalamock.scalatest._
 import org.slf4s.Logging
+import scala.concurrent._
+import scala.concurrent.duration._
 
 trait CommonSpec
     extends FlatSpec
@@ -26,11 +28,17 @@ trait CommonSpec
     with BeforeAndAfterAll
     with Matchers
     with MockFactory
+    with Constants
+    with OrderHelper
     with Logging {
 
   override def beforeAll(): Unit = {
     println(
       s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
     )
+  }
+
+  implicit class RichFuture[T](f: => Future[T]) {
+    def await(): T = Await.result(f, Duration.Inf)
   }
 }

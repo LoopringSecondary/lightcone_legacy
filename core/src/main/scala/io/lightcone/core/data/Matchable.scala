@@ -72,49 +72,49 @@ case class Matchable(
     withOutstandingAmountS((amountS - filledAmountS).max(0))
 
   // Advance methods with implicit contextual arguments
-  private[core] def requestedAmount(implicit token: String): BigInt =
-    if (token == tokenS && tokenFee == tokenS) {
-      outstanding.amountS + outstanding.amountFee
-    } else if (token == tokenS && tokenFee != tokenS) {
-      outstanding.amountS
-    } else if (token != tokenS && tokenFee == tokenB) {
-      if (outstanding.amountFee > outstanding.amountB)
-        outstanding.amountFee - outstanding.amountB
-      else 0
+  private[core] def requestedAmount(implicit token: String): BigInt = {
+    if (token == tokenS) {
+      if (token == tokenFee) outstanding.amountS + outstanding.amountFee
+      else outstanding.amountS
+    } else if (token == tokenFee) {
+      if (token != tokenB) outstanding.amountFee
+      else (outstanding.amountFee - outstanding.amountB).max(0)
     } else {
-      outstanding.amountFee
+      throw new Exception("")
     }
+  }
 
   private[core] def reservedAmount()(implicit token: String) =
-    if (token == tokenS && tokenFee == tokenS) {
-      reserved.amountS + reserved.amountFee
-    } else if (token == tokenS && tokenFee != tokenS) {
-      reserved.amountS
-    } else if (token != tokenS && tokenFee == tokenB) {
-      reserved.amountB + reserved.amountFee
-    } else {
-      reserved.amountFee
-    }
+    throw new UnsupportedOperationException
 
   // 注意: v < requestBigInt
-  private[core] def withReservedAmount(v: BigInt)(implicit token: String) =
-    if (token == tokenS && tokenFee == tokenS) {
-      val r = Rational(amountS, amountFee + amountS)
-      val reservedAmountS = (Rational(v) * r).toBigInt
-      copy(
-        _reserved =
-          Some(MatchableState(reservedAmountS, 0, v - reservedAmountS))
-      ).updateActual()
-    } else if (token == tokenS && tokenFee != tokenS) {
-      copy(_reserved = Some(MatchableState(v, 0, reserved.amountFee)))
-        .updateActual()
-    } else if (token != tokenS && tokenFee == tokenB) {
-      copy(_reserved = Some(MatchableState(reserved.amountS, 0, v)))
-        .updateActual()
-    } else {
-      copy(_reserved = Some(MatchableState(reserved.amountS, 0, v)))
-        .updateActual()
+  private[core] def withReservedAmount(v: BigInt)(implicit token: String) = {
+    println(s" ------- $v $token " + this)
+    val newReseved = {
+      if (token == tokenS) {
+        if (token == tokenFee) {
+          val r = Rational(amountS, amountFee + amountS)
+          val reservedAmountS = (Rational(v) * r).toBigInt
+          MatchableState(reservedAmountS, 0, v - reservedAmountS)
+        } else {
+          MatchableState(v, 0, reserved.amountFee)
+        }
+      } else if (token == tokenFee) {
+        if (token == tokenB) {
+          MatchableState(reserved.amountS, 0, v + outstanding.amountB)
+        } else {
+          MatchableState(reserved.amountS, 0, v)
+        }
+      } else {
+        throw new Exception("")
+      }
     }
+
+    val x = copy(_reserved = Some(newReseved)).updateActual()
+
+    println(s"!!!!!!!!!! " + x)
+    x
+  }
 
   // Private methods
   private[core] def as(status: OrderStatus) = {

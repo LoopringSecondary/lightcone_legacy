@@ -18,9 +18,10 @@ package io.lightcone.core.testing
 
 import io.lightcone.core._
 
-trait OrderHelper extends Object with Constants {
+trait OrderHelper extends Constants {
 
   val rand = new scala.util.Random(31)
+  private def getNextOrderId() = "order" + rand.nextLong.abs
 
   case class AmountToken(
       amount: Double,
@@ -44,13 +45,15 @@ trait OrderHelper extends Object with Constants {
     def dai = AmountToken(v, DAI)
   }
 
-  implicit class Rich_StringAddress(owner: String) {
+  implicit class Rich_StringAddress(addr: String) {
+
+    def <->(another: String) = MarketPair(addr, another)
 
     // TODO(hongyu): need to make sure signature are all calculated. this is mostly
     // for integration testing.
     def |>>>(or: OrderRep): RawOrder =
       RawOrder(
-        owner = owner,
+        owner = addr,
         tokenS = or.sell.tokenAddress,
         tokenB = or.buy.tokenAddress
       )
@@ -59,7 +62,7 @@ trait OrderHelper extends Object with Constants {
     // trailing 0s to amountS, amountB, and amountFee, in other world, convert to wei.
     def |>>(or: OrderRep): Matchable =
       Matchable(
-        id = rand.nextString(20),
+        id = getNextOrderId,
         tokenS = or.sell.tokenAddress,
         tokenB = or.buy.tokenAddress,
         tokenFee = or.fee.getOrElse(or.sell).tokenAddress,
@@ -75,13 +78,13 @@ trait OrderHelper extends Object with Constants {
 
     def |>(or: OrderRep): Matchable =
       Matchable(
-        id = rand.nextString(20),
+        id = getNextOrderId,
         tokenS = or.sell.tokenAddress,
         tokenB = or.buy.tokenAddress,
         tokenFee = or.fee.getOrElse(or.sell).tokenAddress,
         amountS = BigInt(or.sell.amount.toLong),
         amountB = BigInt(or.buy.amount.toLong),
-        amountFee = BigInt(or.fee.getOrElse(or.sell).amount.toLong),
+        amountFee = BigInt(or.fee.map(_.amount.toLong).getOrElse(0L)),
         validSince = 0,
         submittedAt = 0,
         numAttempts = 0,

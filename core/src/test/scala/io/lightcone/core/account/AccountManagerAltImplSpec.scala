@@ -22,38 +22,37 @@ import io.lightcone.core.testing._
 abstract class AccountManagerAltImplSpec extends CommonSpec {
 
   var owner = "owning_address"
-  var manager: AccountManagerAlt = _
-
-  var balanceMap =
-    Map.empty[String, (BigInt /*balance*/, BigInt /*allowance*/ )]
-
-  def processOneOrder(order: Matchable): Unit = println(s"==> order: $order")
-
   implicit val _ec: ExecutionContext = ExecutionContext.Implicits.global
 
-  implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-
-  implicit val baProvider = new BalanceAndAllowanceProvider {
-
-    def getBalanceAndALlowance(
-        address: String,
-        token: String
-      ): Future[(BigInt, BigInt)] = Future.successful {
-      balanceMap.getOrElse(token, (BigInt(0), BigInt(0)))
-    }
-  }
+  implicit val baProvider = stub[BalanceAndAllowanceProvider]
 
   implicit val updatdOrderProcessor = new UpdatedOrdersProcessor {
     val ec = _ec
 
-    def processOrder(order: Matchable): Future[Any] = {
-      processOneOrder(order)
-      Future.unit
-    }
+    def processOrder(order: Matchable): Future[Any] =
+      Future { processOneOrder(order) }
 
   }
 
+  implicit var orderPool: AccountOrderPool with UpdatedOrdersTracing = _
+  var manager: AccountManagerAlt = _
+
+  var processOneOrder: Matchable => Unit = { order =>
+    println(s"==> order: $order")
+  }
+
+  def stubBalanceAndAllowance(
+      owner: String,
+      token: String,
+      balance: BigInt,
+      allowance: BigInt
+    ) =
+    (baProvider.getBalanceAndALlowance _)
+      .when(owner, token)
+      .returns(Future.successful((balance, allowance)))
+
   override def beforeEach(): Unit = {
+    orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
     manager = AccountManagerAlt.default(owner)
   }
 }

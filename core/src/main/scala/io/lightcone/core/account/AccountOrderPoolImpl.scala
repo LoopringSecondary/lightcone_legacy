@@ -18,6 +18,7 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
+// This class is not thread safe.
 class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
 
   private var callbacks = Set.empty[Callback]
@@ -29,15 +30,15 @@ class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
   def size: Int = orderMap.size
   def orders() = orderMap.values
 
-  def addCallback(callback: Callback) = this.synchronized {
+  def addCallback(callback: Callback) = {
     callbacks += callback
   }
 
-  def removeCallback(callback: Callback) = this.synchronized {
+  def removeCallback(callback: Callback) = {
     callbacks -= callback
   }
 
-  def +=(order: Matchable) = this.synchronized {
+  def +=(order: Matchable) = {
     getOrder(order.id) match {
       case Some(existing) if existing == order =>
       case _ =>

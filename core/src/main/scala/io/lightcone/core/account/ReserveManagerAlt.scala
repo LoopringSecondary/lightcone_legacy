@@ -17,6 +17,7 @@
 package io.lightcone.core
 
 import scala.concurrent._
+import io.lightcone.lib.FutureUtil._
 
 trait UpdatedOrdersProcessor {
   implicit val ec: ExecutionContext
@@ -24,8 +25,7 @@ trait UpdatedOrdersProcessor {
   def processOrder(order: Matchable): Future[Any]
 
   def processOrders(orders: Map[String, Matchable]): Future[Any] = {
-    val futures = orders.values.map(processOrder)
-    Future.sequence(futures)
+    serializeFutures(orders.values)(processOrder)
   }
 }
 
