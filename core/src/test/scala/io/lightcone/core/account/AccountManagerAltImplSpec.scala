@@ -38,7 +38,7 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
   var manager: AccountManagerAlt = _
 
   var processOneOrder: Matchable => Unit = { order =>
-    println(s"==> order: $order")
+    // println(s"==> order: $order")
   }
 
   def stubBalanceAndAllowance(

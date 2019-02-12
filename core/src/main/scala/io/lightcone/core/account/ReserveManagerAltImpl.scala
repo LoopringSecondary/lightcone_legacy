@@ -94,8 +94,6 @@ private[core] final class ReserveManagerAltImpl(
     ): Set[String] = rebalance { (reserveMe, _) =>
     assert(requestedAmount > 0)
 
-    println(s"====: $token $orderId $requestedAmount")
-
     var prevReservedOpt: Option[BigInt] = None
 
     reserves.foreach { r =>
@@ -150,7 +148,6 @@ private[core] final class ReserveManagerAltImpl(
     func(reserveMe, deleteMe)
 
     reserves = buf.toList
-    println(s"==========>>>>> $token -> $reserves")
     ordersToDelete.toSet
   }
 }

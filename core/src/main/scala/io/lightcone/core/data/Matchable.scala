@@ -89,7 +89,6 @@ case class Matchable(
 
   // 注意: v < requestBigInt
   private[core] def withReservedAmount(v: BigInt)(implicit token: String) = {
-    println(s" ------- $v $token " + this)
     val newReseved = {
       if (token == tokenS) {
         if (token == tokenFee) {
@@ -106,10 +105,7 @@ case class Matchable(
       }
     }
 
-    val x = copy(_reserved = Some(newReseved)).updateActual()
-
-    println(s"!!!!!!!!!! " + x)
-    x
+    copy(_reserved = Some(newReseved)).updateActual()
   }
 
   private def updateActual() = {

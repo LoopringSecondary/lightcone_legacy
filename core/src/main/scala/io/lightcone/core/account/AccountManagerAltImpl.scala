@@ -143,7 +143,6 @@ final class AccountManagerAltImpl(
       ) = {
       val order = orderPool(orderId)
       orderPool += order.withReservedAmount(amount)(token)
-      println(s"~~~ $token $amount")
     }
   }
 
