@@ -4,7 +4,6 @@ option java_multiple_files = true;
 package io.lightcone.relayer.rpc;
 
 import "core.proto";
-import "actors_data.proto";
 
 message SubmitOrder{
     message Result {
@@ -16,7 +15,7 @@ message SubmitOrder{
 message GetOrders{
     message Params {
        string owner = 1;
-       MarketId market = 2;
+       io.lightcone.core.MarketPair market = 2;
        repeated string statuses = 3;
        string sort = 4;
        int32 page_num = 5;
@@ -27,7 +26,7 @@ message GetOrders{
 message GetTrades{
     message Params {
         string owner = 1;
-        MarketId market = 2;
+        io.lightcone.core.MarketPair market = 2;
         string sort = 3;
         int32 page_num = 4;
         int32 page_size = 5;
@@ -57,13 +56,13 @@ message GetTransactions{
 message GetTokens{
 
   message  Result {
-     repeated TokenMetadata tokens  =1;
+     repeated io.lightcone.core.TokenMetadata tokens  =1;
   }
 }
 
 message GetMarkets{
 
     message  Result {
-        repeated MarketMetadata markets  =1;
+        repeated io.lightcone.core.MarketMetadata markets  =1;
     }
 }

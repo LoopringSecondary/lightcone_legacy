@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer
 
+import io.lightcone.core.RawOrder
 import io.lightcone.relayer.jsonrpc.JsonRpcModule
 import io.lightcone.relayer.data._
 
@@ -28,7 +29,7 @@ trait RpcBinding extends JsonRpcModule {
 
   method("submit_order") //
     .accepts[RawOrder, SubmitOrder.Req] //
-    .replies[SubmitOrder.Res, rpcdata.SubmitOrder.Result]
+    .replies[SubmitOrder.Res, rpc.SubmitOrder.Result]
 
   method("cancel_order") // TODO 需要验签支持，目前结构中没有sig字段
     .accepts[CancelOrder.Req] //
@@ -36,19 +37,19 @@ trait RpcBinding extends JsonRpcModule {
 
   // // db query
   method("get_orders") //TODO GetOrdersForUser.Res 中缺少pageNum 和 pageSize
-    .accepts[rpcdata.GetOrders.Params, GetOrdersForUser.Req]
+    .accepts[rpc.GetOrders.Params, GetOrdersForUser.Req]
     .replies[GetOrdersForUser.Res]
 
   method("get_trades") //TODO GetTrades.Res 中缺少pageNum 和 pageSize
-    .accepts[rpcdata.GetTrades.Params, GetTrades.Req]
+    .accepts[rpc.GetTrades.Params, GetTrades.Req]
     .replies[GetTrades.Res]
 
   method("get_rings") //TODO GetRings.Res 中缺少pageNum 和 pageSize
-    .accepts[rpcdata.GetRings.Params, GetRings.Req]
+    .accepts[rpc.GetRings.Params, GetRings.Req]
     .replies[GetRings.Res]
 
   method("get_transactions") //TODO GetTransactionRecords.Res 中缺少pageNum, pageSize 和 total
-    .accepts[rpcdata.GetTransactions.Params, GetTransactionRecords.Req]
+    .accepts[rpc.GetTransactions.Params, GetTransactionRecords.Req]
     .replies[GetTransactionRecords.Res]
 
   //TODO 需要修改成get_nonce,暂未实现
@@ -63,11 +64,11 @@ trait RpcBinding extends JsonRpcModule {
 
   method("get_tokens")
     .accepts[GetMetadatas.Req]
-    .replies[GetMetadatas.Res, rpcdata.GetTokens.Result]
+    .replies[GetMetadatas.Res, rpc.GetTokens.Result]
 
   method("get_market")
     .accepts[GetMetadatas.Req]
-    .replies[GetMetadatas.Res, rpcdata.GetMarkets.Result]
+    .replies[GetMetadatas.Res, rpc.GetMarkets.Result]
 
   //Ethereum Query
   method("get_allowance")

@@ -16,10 +16,10 @@
 
 package io.lightcone.relayer
 
+import io.lightcone.core.{OrderStatus, RawOrder}
+import io.lightcone.persistence.{CursorPaging, Paging, SortingType}
 import io.lightcone.relayer.data._
-import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.proto.GetTrades.Req
 
 object RpcDataConversions {
 
@@ -31,11 +31,11 @@ object RpcDataConversions {
 
   implicit def convertSubmitOrderRes(
       r: SubmitOrder.Res
-    ): rpcdata.SubmitOrder.Result =
+    ): rpc.SubmitOrder.Result =
     rpcdata.SubmitOrder.Result(orderHash = r.order.get.id)
 
   implicit def convertGetOrdersReq(
-      r: rpcdata.GetOrders.Params
+      r: rpc.GetOrders.Params
     ): GetOrdersForUser.Req = {
     val market = r.market.map { market =>
       GetOrdersForUser.Req.Market(
@@ -64,7 +64,7 @@ object RpcDataConversions {
     )
   }
 
-  implicit def convertGetTrades(r: rpcdata.GetTrades.Params): GetTrades.Req = {
+  implicit def convertGetTrades(r: rpc.GetTrades.Params): GetTrades.Req = {
     val market = r.market.map { market =>
       GetTrades.Req.Market(
         market.baseToken,
@@ -87,7 +87,7 @@ object RpcDataConversions {
     )
   }
 
-  implicit def convertGetRingsReq(r: rpcdata.GetRings.Params): GetRings.Req = {
+  implicit def convertGetRingsReq(r: rpc.GetRings.Params): GetRings.Req = {
     val pageNum = if (r.pageNum == 0) 1 else r.pageNum
     val pageSize = if (r.pageSize == 0) 20 else r.pageSize
 
@@ -115,7 +115,7 @@ object RpcDataConversions {
   }
 
   implicit def convertGetTransactionsReq(
-      r: rpcdata.GetTransactions.Params
+      r: rpc.GetTransactions.Params
     ): GetTransactionRecords.Req = {
     val pageNum = if (r.pageNum == 0) 1 else r.pageNum
     val pageSize = if (r.pageSize == 0) 20 else r.pageSize
@@ -138,14 +138,12 @@ object RpcDataConversions {
     )
   }
 
-  implicit def convertGetTokensRes(
-      r: GetMetadatas.Res
-    ): rpcdata.GetTokens.Result =
+  implicit def convertGetTokensRes(r: GetMetadatas.Res): rpc.GetTokens.Result =
     rpcdata.GetTokens.Result(r.tokens)
 
   implicit def convertGetMarketsRes(
       r: GetMetadatas.Res
-    ): rpcdata.GetMarkets.Result =
+    ): rpc.GetMarkets.Result =
     rpcdata.GetMarkets.Result(r.markets)
 
 }
