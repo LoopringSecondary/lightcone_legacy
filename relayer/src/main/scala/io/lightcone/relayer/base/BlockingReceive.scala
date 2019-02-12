@@ -27,8 +27,7 @@ trait BlockingReceive { me: Actor with Stash =>
   private val RESUME = Notify("blocking_receive_resume")
 
   // Guarantees all futures that modifies this actor's internal state will force
-  // this actor to become `blockingReceive` and wait for a RESUME message
-  // to become `normalReceive` again.
+  // this actor to become `blockingReceive` and wait for a RESUME message to unbecome.
   def blocking[T](future: => Future[T]): Future[T] = {
     context.become(blockingReceive, discardOld = false)
     future.andThen {
