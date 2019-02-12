@@ -51,6 +51,7 @@ class AccountManagerAltActor(
     extends Actor
     with AccountManagerUpdatedOrdersProcessor
     with Stash
+    with BlockingReceive
     with ActorLogging {
 
   import ErrorCode._
@@ -112,120 +113,141 @@ class AccountManagerAltActor(
           throw e
       }
     case Notify("initialized", _) =>
-      context.become(normalReceive)
+      context.become(ready)
       unstashAll()
     case _ =>
       stash()
   }
 
-  def normalReceive: Receive = LoggingReceive {
+  def ready: Receive = LoggingReceive {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
-      resubmitOrder(xraworder).map { _ =>
-        ActorRecover.OrderRecoverResult(xraworder.hash, true)
-      }.sendTo(sender)
+      blocking {
+        resubmitOrder(xraworder).map { _ =>
+          ActorRecover.OrderRecoverResult(xraworder.hash, true)
+        }.sendTo(sender)
+      }
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
-      (for {
-        accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
-        _ = assert(tokens.size == accountInfos.size)
-        balanceAndAllowanceMap = accountInfos.map { i =>
-          i.token -> i
-        }.toMap.map {
-          case (token, ai) =>
-            token -> BalanceAndAllowance(
-              ai.balance,
-              ai.allowance,
-              ai.availableBalance,
-              ai.availableAllowance
-            )
-        }
-        result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
-      } yield result).sendTo(sender)
+      blocking {
+        (for {
+          accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
+          _ = assert(tokens.size == accountInfos.size)
+          balanceAndAllowanceMap = accountInfos.map { i =>
+            i.token -> i
+          }.toMap.map {
+            case (token, ai) =>
+              token -> BalanceAndAllowance(
+                ai.balance,
+                ai.allowance,
+                ai.availableBalance,
+                ai.availableAllowance
+              )
+          }
+          result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
+        } yield result).sendTo(sender)
+      }
 
     case req @ SubmitOrder.Req(Some(raworder)) =>
-      (for {
-        //check通过再保存到数据库，以及后续处理
-        _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
-        _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
-        newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
-          raworder.withStatus(STATUS_PENDING_ACTIVE)
-        } else raworder
+      blocking {
+        (for {
+          //check通过再保存到数据库，以及后续处理
+          _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
+          _ <- checkOrderCanceled(raworder) //取消订单，单blocking{独查询以太坊
+          newRaworder = if (raworder.validSince > timeProvider
+                              .getTimeSeconds()) {
+            raworder.withStatus(STATUS_PENDING_ACTIVE)
+          } else raworder
 
-        resRawOrder <- (orderPersistenceActor ? req
-          .copy(rawOrder = Some(newRaworder)))
-          .mapAs[RawOrder]
+          resRawOrder <- (orderPersistenceActor ? req
+            .copy(rawOrder = Some(newRaworder)))
+            .mapAs[RawOrder]
 
-        resOrder <- (resRawOrder.getState.status match {
-          case STATUS_PENDING_ACTIVE =>
-            Future.successful(resRawOrder.toOrder)
-          case _ => resubmitOrder(resRawOrder)
-        }).mapAs[Order]
+          resOrder <- (resRawOrder.getState.status match {
+            case STATUS_PENDING_ACTIVE =>
+              Future.successful(resRawOrder.toOrder)
+            case _ => resubmitOrder(resRawOrder)
+          }).mapAs[Order]
 
-        result = SubmitOrder.Res(Some(resOrder))
-      } yield result) sendTo sender
+          result = SubmitOrder.Res(Some(resOrder))
+        } yield result) sendTo sender
+      }
 
-    case req @ CancelOrder.Req("", addr, _, None, _) => //按照Owner取消订单
-      (for {
-        updatedOrders <- manager.cancelAllOrders()
-        result = {
-          if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
-          else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
-        }
-      } yield result).sendTo(sender)
+    case req @ CancelOrder.Req("", addr, _, None, _) =>
+      blocking { //按照Owner取消订单
+        (for {
+          updatedOrders <- manager.cancelAllOrders()
+          result = {
+            if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
+            else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
+          }
+        } yield result).sendTo(sender)
+      }
 
     case req @ CancelOrder
-          .Req("", owner, _, Some(marketPair), _) => //按照Owner-MarketPair取消订单
-      (for {
-        updatedOrders <- manager.cancelOrders(marketPair)
-        result = {
-          if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
-          else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
-        }
-      } yield result).sendTo(sender)
+          .Req("", owner, _, Some(marketPair), _) =>
+      blocking { //按照Owner-MarketPair取消订单
+        (for {
+          updatedOrders <- manager.cancelOrders(marketPair)
+          result = {
+            if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
+            else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
+          }
+        } yield result).sendTo(sender)
+      }
 
     case req @ CancelOrder.Req(id, addr, status, _, _) =>
-      assert(addr == owner)
-      val originalSender = sender
-      (for {
-        // Make sure PENDING-ACTIVE orders can be cancelled.
-        result <- (orderPersistenceActor ? req).mapAs[CancelOrder.Res]
-        (successful, updatedOrders) <- manager.cancelOrder(req.id)
-        _ = {
-          if (successful) {
-            marketManagerActor.tell(req, originalSender)
-          } else {
-            throw ErrorException(
-              ERR_FAILED_HANDLE_MSG,
-              s"no order found with id: ${req.id}"
-            )
+      blocking {
+        assert(addr == owner)
+        val originalSender = sender
+        (for {
+          // Make sure PENDING-ACTIVE orders can be cancelled.
+          result <- (orderPersistenceActor ? req).mapAs[CancelOrder.Res]
+          (successful, updatedOrders) <- manager.cancelOrder(req.id)
+          _ = {
+            if (successful) {
+              marketManagerActor.tell(req, originalSender)
+            } else {
+              throw ErrorException(
+                ERR_FAILED_HANDLE_MSG,
+                s"no order found with id: ${req.id}"
+              )
+            }
           }
-        }
-      } yield result) sendTo sender
+        } yield result) sendTo sender
+      }
 
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case req: AddressBalanceUpdated =>
-      assert(req.address == owner)
-      manager
-        .setBalance(req.token, BigInt(req.balance.toByteArray))
+      blocking {
+        assert(req.address == owner)
+        manager
+          .setBalance(req.token, BigInt(req.balance.toByteArray))
+      }
 
     case req: AddressAllowanceUpdated =>
-      assert(req.address == owner)
-      manager.setAllowance(req.token, BigInt(req.allowance.toByteArray))
+      blocking {
+        assert(req.address == owner)
+        manager.setAllowance(req.token, BigInt(req.allowance.toByteArray))
+      }
 
     // ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) //
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
-      accountCutoffState.setCutoff(cutoff)
-      manager.handleCutoff(cutoff)
+      blocking {
+        accountCutoffState.setCutoff(cutoff)
+        manager.handleCutoff(cutoff)
+      }
 
     // ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) //
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
-      accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
-      manager.handleCutoff(cutoff, marketHash)
+      blocking {
+        accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
+        manager.handleCutoff(cutoff, marketHash)
+      }
 
     // Currently we do not support broker-level cutoff
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) //
@@ -234,10 +256,12 @@ class AccountManagerAltActor(
 
     case req: OrderFilledEvent //
         if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
-      for {
-        orderOpt <- dbModule.orderService.getOrder(req.orderHash)
-        _ <- swap(orderOpt.map(resubmitOrder))
-      } yield Unit
+      blocking {
+        for {
+          orderOpt <- dbModule.orderService.getOrder(req.orderHash)
+          _ <- swap(orderOpt.map(resubmitOrder))
+        } yield Unit
+      }
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {
