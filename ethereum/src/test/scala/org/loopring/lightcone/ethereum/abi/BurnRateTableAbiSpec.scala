@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package io.lightcone.ethereum.abi
 
 import org.scalatest._
 
@@ -25,18 +25,18 @@ class BurnRateTableAbiSpec
 
   val burnRateTableAbi = BurnRateTableAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
-  "encodeBURN_BASE_PERCENTAGEFunction" should "encode BURN_BASE_PERCENTAGEFunction Params to input" in {
+  "encodeBurnBasePercentageFunction" should "encode BurnBasePercentageFunction Params to input" in {
     val input = burnRateTableAbi.burn_BASE_PERCENTAGE.pack(
-      BURN_BASE_PERCENTAGEFunction.Params()
+      BurnBasePercentageFunction.Params()
     )
     input should be("0xfed4dd1e")
   }
 
-  "decodeBURN_BASE_PERCENTAGEFunctionResult" should "decode result of eth_call to BURN_BASE_PERCENTAGEFunction Result" in {
+  "decodeBurnBasePercentageFunctionResult" should "decode result of eth_call to BurnBasePercentageFunction Result" in {
     val resp =
       "0x00000000000000000000000000000000000000000000000000000000000003e8"
     val result = burnRateTableAbi.burn_BASE_PERCENTAGE.unpackResult(resp)

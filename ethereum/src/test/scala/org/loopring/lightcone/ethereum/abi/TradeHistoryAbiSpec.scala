@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package io.lightcone.ethereum.abi
 
 import org.web3j.utils.Numeric
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest._
 
 class TradeHistoryAbiSpec
     extends FlatSpec
@@ -26,7 +26,7 @@ class TradeHistoryAbiSpec
 
   val tradeHistoryAbi = TradeHistoryAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

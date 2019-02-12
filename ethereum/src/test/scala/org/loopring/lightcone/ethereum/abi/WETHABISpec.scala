@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package io.lightcone.ethereum.abi
 
 import org.scalatest._
-import org.web3j.utils.Numeric
 
-class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
+class WETHAbiSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  val weth = WETHABI()
+  val weth = WETHAbi()
 
   override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")

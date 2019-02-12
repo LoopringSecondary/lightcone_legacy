@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package io.lightcone.ethereum.abi
 
 import org.scalatest._
 import org.web3j.utils.Numeric
@@ -26,21 +26,21 @@ class RingSubmitterAbiSpec
 
   val ringSubmitterAbi = RingSubmitterAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
-  "encodeFEE_PERCENTAGE_BASEFunction" should "encode FEE_PERCENTAGE_BASEFunction Params to input" in {
-    val input = ringSubmitterAbi.fEE_PERCENTAGE_BASE.pack(
-      FEE_PERCENTAGE_BASEFunction.Params()
+  "encodeFeePercentageBaseFunction" should "encode FEE_PERCENTAGE_BASEFunction Params to input" in {
+    val input = ringSubmitterAbi.feePercentageBase.pack(
+      feePercentageBaseFunction.Params()
     )
     input should be("0xcd117ae6")
   }
 
-  "decodeFEE_PERCENTAGE_BASEFunctionResult" should "decode eth_call return data to FEE_PERCENTAGE_BASEFunction Result" in {
+  "decodeFeePercentageBaseFunctionResult" should "decode eth_call return data to FEE_PERCENTAGE_BASEFunction Result" in {
     val data =
       "0x00000000000000000000000000000000000000000000000000000000000003e8"
-    val result = ringSubmitterAbi.fEE_PERCENTAGE_BASE.unpackResult(data)
+    val result = ringSubmitterAbi.feePercentageBase.unpackResult(data)
 
     result.map { res =>
       res.base.toString() should be("1000")
@@ -93,9 +93,8 @@ class RingSubmitterAbiSpec
   "decodeInvalidRingEvent" should "decode data to InvalidRingEvent result " in {
     val data =
       "0xea7d4e25f31194081fa0749437799e324b762e131575e7d3f9043b079503f77d"
-    val topics = Seq(
-      "0x977ca9d66ddf6e18cac50dbf89ee6dcce72d4635c60a13314945868798f73cdc"
-    )
+    val topics =
+      Seq("0x977ca9d66ddf6e18cac50dbf89ee6dcce72d4635c60a13314945868798f73cdc")
     val result = ringSubmitterAbi.invalidRingEvent.unpack(data, topics.toArray)
     result.map { res =>
       res._ringHash should be(

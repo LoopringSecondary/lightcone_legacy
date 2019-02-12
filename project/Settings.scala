@@ -11,9 +11,30 @@ import sbtdocker.mutable.Dockerfile
 import sbtdocker.{ BuildOptions, DockerPlugin, ImageName }
 import sbtdocker.DockerKeys._
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport.scalafmtOnCompile
+import scalafix.sbt.ScalafixPlugin.autoImport._
+import com.sksamuel.scapegoat.sbt.ScapegoatSbtPlugin.autoImport._
 
 object Settings {
-  lazy val basicSettings: Seq[Setting[_]] = Seq(
+
+  lazy val myScalafixSettings: Seq[Setting[_]] = Seq(
+    addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
+    javacOptions := Seq( //"-source", Globals.jvmVersion,
+    ),
+    scalacOptions := Seq(
+      "-encoding", "utf8", // Option and arguments on same line
+      "-Yrangepos", // required by SemanticDB compiler plugin
+      "-Ywarn-unused-import", // required by `RemoveUnused` rule
+      "-language:implicitConversions",
+      "-language:higherKinds",
+      "-language:existentials",
+      "-language:postfixOps",
+      "-g:vars",
+      "-unchecked",
+      "-deprecation",
+      "-Yresolve-term-conflict:package",
+      "-feature"))
+
+  lazy val basicSettings: Seq[Setting[_]] = myScalafixSettings ++ Seq(
     scalaVersion := Globals.scalaVersion,
     organization := "org.loopring",
     organizationName := "Loopring Foundation",
@@ -24,8 +45,7 @@ object Settings {
         name = "Loopring Developers",
         email = "foundation@loopring.org",
         url = url("https://loopring.org"))),
-    scmInfo := Some(
-      ScmInfo(url(Globals.projectGitHttpUrl), "scm:" + Globals.projectGitUrl)),
+    scmInfo := Some(ScmInfo(url(Globals.projectGitHttpUrl), "scm:" + Globals.projectGitUrl)),
     autoScalaLibrary := false,
     resolvers += "mvnrepository" at "http://mvnrepository.com/artifact/",
     resolvers += "ethereumlibrepository" at "https://dl.bintray.com/ethereum/maven/",
@@ -37,23 +57,9 @@ object Settings {
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"),
-    javacOptions := Seq( //"-source", Globals.jvmVersion,
-    ),
-    scalacOptions := Seq(
-      "-encoding", "utf8", // Option and arguments on same line
-      "-language:implicitConversions",
-      "-language:higherKinds",
-      "-language:existentials",
-      "-language:postfixOps",
-      "-g:vars",
-      "-unchecked",
-      "-deprecation",
-      "-Yresolve-term-conflict:package",
-      "-feature",
-      "-Xfatal-warnings"),
     fork in Test := false,
-    // conflictManager := ConflictManager.strict,
     parallelExecution in Test := false,
+    scapegoatVersion in ThisBuild := "1.3.8",
     startYear := Some(2018),
     licenses += ("Apache-2.0", new URL(
       "https://www.apache.org/licenses/LICENSE-2.0.txt")),

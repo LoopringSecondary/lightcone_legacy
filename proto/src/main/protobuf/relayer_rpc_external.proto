@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+package io.lightcone.relayer.rpc;
+
+import "core.proto";
+import "actors_data.proto";
+
+message SubmitOrder{
+    message Result {
+        string order_hash = 1;
+    }
+}
+
+
+message GetOrders{
+    message Params {
+       string owner = 1;
+       MarketId market = 2;
+       repeated string statuses = 3;
+       string sort = 4;
+       int32 page_num = 5;
+       int32 page_size = 6;
+    }
+}
+
+message GetTrades{
+    message Params {
+        string owner = 1;
+        MarketId market = 2;
+        string sort = 3;
+        int32 page_num = 4;
+        int32 page_size = 5;
+    }
+}
+
+message GetRings{
+    message Params {
+        string ringHash = 1;
+        string ringIndex = 2;
+        string sort = 3;
+        int32 page_num = 4;
+        int32 page_size = 5;
+    }
+}
+
+message GetTransactions{
+    message Params {
+        string owner = 1;
+        string type = 2;
+        string sort = 3;
+        int32 page_num = 4;
+        int32 page_size = 5;
+    }
+}
+
+message GetTokens{
+
+  message  Result {
+     repeated TokenMetadata tokens  =1;
+  }
+}
+
+message GetMarkets{
+
+    message  Result {
+        repeated MarketMetadata markets  =1;
+    }
+}

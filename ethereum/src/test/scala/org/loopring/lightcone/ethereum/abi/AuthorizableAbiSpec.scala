@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package io.lightcone.ethereum.abi
 
 import org.scalatest._
 
@@ -25,7 +25,7 @@ class AuthorizableAbiSpec
 
   val authorizableAbi = AuthorizableAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

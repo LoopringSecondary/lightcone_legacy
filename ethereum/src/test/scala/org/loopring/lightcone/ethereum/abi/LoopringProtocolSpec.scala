@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package io.lightcone.ethereum.abi
 
 import org.scalatest._
 import org.web3j.utils.Numeric
@@ -26,7 +26,7 @@ class LoopringProtocolSpec
 
   val loopringProtocolAbi = LoopringProtocolAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
