@@ -40,7 +40,7 @@ class CutOffEventExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(1000)
+      Thread.sleep(2000)
 
       info("this order must be saved in db.")
       val getOrder2 = Await.result(
@@ -57,7 +57,7 @@ class CutOffEventExtractorSpec
         cancelAllOrders(timeProvider.getTimeSeconds())(account0),
         timeout.duration
       )
-      Thread.sleep(1000)
+      Thread.sleep(2000)
       val getOrder2_2 = Await.result(
         dbModule.orderService.getOrder(order1.hash),
         timeout.duration
@@ -73,7 +73,7 @@ class CutOffEventExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(1000)
+      Thread.sleep(2000)
 
       info("this order must be saved in db.")
       val getOrder3 = Await.result(
@@ -91,7 +91,7 @@ class CutOffEventExtractorSpec
         cancelAllOrdersByTokenPair(timeProvider.getTimeSeconds())(account0),
         timeout.duration
       )
-      Thread.sleep(1000)
+      Thread.sleep(2000)
       val getOrder3_2 = Await.result(
         dbModule.orderService.getOrder(order3.hash),
         timeout.duration
