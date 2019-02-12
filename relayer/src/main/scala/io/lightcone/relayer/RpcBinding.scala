@@ -24,9 +24,9 @@ import RpcDataConversions._
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
 
-  method("get_orderbook")
-  // .accepts[rpcdata.GetOrderbook.Req, GetOrderbook.Req]
-  // .replies[GetOrderbook.Res, rpcdata.GetOrderbook.Res]
+  method("get_order_book")
+    .accepts[GetOrderbook.Req]
+    .replies[GetOrderbook.Res]
 
   method("submit_order") //
     .accepts[RawOrder, SubmitOrder.Req] //
