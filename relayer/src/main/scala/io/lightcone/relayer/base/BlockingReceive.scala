@@ -32,7 +32,14 @@ trait BlockingReceive { me: Actor with Stash =>
   def blocking(future: => Future[_]) = {
     context.become(blockingReceive, discardOld = false)
     for {
-      result <- future
+      result <- future.recover {
+        case e: Exception =>
+          //todo(hongyu)：暂时发现改问题，这种方式解决，还未考虑是否合理
+          println(
+            s" occurs error:${e.getMessage}, ${e.printStackTrace}",
+            " when blocking."
+          )
+      }
       _ = self ! SYNC_NOTIFY
     } yield result
   }
