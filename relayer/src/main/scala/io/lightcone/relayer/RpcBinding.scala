@@ -19,6 +19,7 @@ package io.lightcone.relayer
 import io.lightcone.core.RawOrder
 import io.lightcone.relayer.jsonrpc.JsonRpcModule
 import io.lightcone.relayer.data._
+import RpcDataConversions._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {

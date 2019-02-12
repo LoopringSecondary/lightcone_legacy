@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.core.{OrderStatus, RawOrder}
+import io.lightcone.core._
 import io.lightcone.persistence.{CursorPaging, Paging, SortingType}
 import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
@@ -32,7 +32,7 @@ object RpcDataConversions {
   implicit def convertSubmitOrderRes(
       r: SubmitOrder.Res
     ): rpc.SubmitOrder.Result =
-    rpcdata.SubmitOrder.Result(orderHash = r.order.get.id)
+    rpc.SubmitOrder.Result(orderHash = r.order.get.id)
 
   implicit def convertGetOrdersReq(
       r: rpc.GetOrders.Params
@@ -139,11 +139,11 @@ object RpcDataConversions {
   }
 
   implicit def convertGetTokensRes(r: GetMetadatas.Res): rpc.GetTokens.Result =
-    rpcdata.GetTokens.Result(r.tokens)
+    rpc.GetTokens.Result(r.tokens)
 
   implicit def convertGetMarketsRes(
       r: GetMetadatas.Res
     ): rpc.GetMarkets.Result =
-    rpcdata.GetMarkets.Result(r.markets)
+    rpc.GetMarkets.Result(r.markets)
 
 }
