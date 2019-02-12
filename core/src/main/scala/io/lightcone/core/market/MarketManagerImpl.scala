@@ -143,6 +143,8 @@ class MarketManagerImpl(
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
     } else {
+      //todo(hongyu):需要先删除该订单，但不确定，这么改是否正确，因为可能还有提交顺序相关的操作
+      removeOrder(order.id)
       var taker = updateOrderMatchable(order).copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
       var ordersToAddBack = Seq.empty[Matchable]
