@@ -80,7 +80,7 @@ case class Matchable(
       if (token != tokenB) outstanding.amountFee
       else (outstanding.amountFee - outstanding.amountB).max(0)
     } else {
-      throw new Exception("")
+      throw new IllegalStateException("requestedAmount")
     }
   }
 
@@ -101,7 +101,7 @@ case class Matchable(
       } else if (token == tokenFee) {
         MatchableState(reserved.amountS, 0, v)
       } else {
-        throw new Exception("")
+        throw new IllegalStateException("withReservedAmount")
       }
     }
 
