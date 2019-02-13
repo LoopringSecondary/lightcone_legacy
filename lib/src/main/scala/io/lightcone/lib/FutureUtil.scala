@@ -14,8 +14,24 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
-package object implicits {
-  implicit class Rich_Double(v: Double) extends RichDouble(v)
+import scala.concurrent._
+
+object FutureUtil {
+
+  def serializeFutures[A, B](
+      items: Iterable[A]
+    )(fn: A => Future[B]
+    )(
+      implicit
+      ec: ExecutionContext
+    ): Future[List[B]] =
+    items.foldLeft(Future(List.empty[B])) { (previousFuture, next) =>
+      for {
+        previousResults <- previousFuture
+        next <- fn(next)
+      } yield previousResults :+ next
+    }
+
 }

@@ -16,7 +16,40 @@
 
 package io.lightcone.core
 
-trait ReserveManager2 {
+import scala.concurrent._
+import io.lightcone.lib.FutureUtil._
+
+trait UpdatedOrdersProcessor {
+  implicit val ec: ExecutionContext
+
+  def processOrder(order: Matchable): Future[Any]
+
+  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
+    serializeFutures(orders.values)(processOrder)
+  }
+}
+
+trait ReserveEventHandler {
+
+  def onTokenReservedForOrder(
+      orderId: String,
+      token: String,
+      amount: BigInt
+    ): Unit
+}
+
+object ReserveManagerAlt {
+
+  def default(
+      token: String
+    )(
+      implicit
+      eventHandler: ReserveEventHandler
+    ): ReserveManagerAlt =
+    new ReserveManagerAltImpl(token)
+}
+
+private[core] trait ReserveManagerAlt {
   val token: String
 
   def getAccountInfo(): AccountInfo
@@ -36,8 +69,8 @@ trait ReserveManager2 {
     ): Set[String]
 
   // Release balance/allowance for an order, returns the order ids to cancel.
-  def release(orderIds: Seq[String]): Set[String]
-  def release(orderId: String): Set[String] = release(Seq(orderId))
+  def release(orderIds: Set[String]): Set[String]
+  def release(orderId: String): Set[String] = release(Set(orderId))
 
   def clearOrders(): Unit
 }

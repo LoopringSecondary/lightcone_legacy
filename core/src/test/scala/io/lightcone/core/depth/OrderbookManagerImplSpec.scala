@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.testing._
+
 class OrderbookManagerImplSpec extends CommonSpec {
   var obm: OrderbookManager = _
 

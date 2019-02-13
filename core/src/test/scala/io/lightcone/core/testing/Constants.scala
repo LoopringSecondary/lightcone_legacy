@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.core.testing
 
-trait IntegrationConstants {
+trait Constants {
 
-  val LRC = "LRC"
-  val GTO = "GTO"
-  val WETH = "WETH"
+  private val rand = new scala.util.Random(31)
+
+  val LRC = "LRC_token_address"
+  val GTO = "GTO_token_address"
+  val DAI = "DAI_token_address"
+  val WETH = "WETH_token_address"
 
   object Addr {
+    def apply() = rand.alphanumeric.take(22).mkString("")
     def apply(idx: Int) = addresses(idx)
-    val addresses = Seq("a1", "a2", "a3")
+    val addresses = Seq("addr0", "addr1", "addr2")
   }
 }

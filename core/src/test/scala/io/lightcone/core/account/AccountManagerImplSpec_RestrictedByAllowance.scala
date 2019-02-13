@@ -15,7 +15,7 @@
  */
 
 package io.lightcone.core
-import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
 
 class AccountManagerImplSpec_RestrictedByAllowance extends OrderAwareSpec {
 

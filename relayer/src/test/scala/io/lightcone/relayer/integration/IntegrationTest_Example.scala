@@ -20,15 +20,16 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 // Please make sure in `mysql.conf` all database dals use the same database configuration.
-class ExampleIntegrationSpec extends IntegrationTesting {
-
-  "foo" must "bar" in {
-    testRpc {
-      val order: RawOrder = Addr(0) >> 12.1.lrc -> 23.0.weth -- 10.0.lrc
-      SubmitOrder.Req(Some(order))
-    } {
-      SubmitOrder.Res()
-    }
-  }
-
-}
+//todo(hongyu):暂时去掉，需要确认mysql、postgres、ethereum等的启动问题
+//class IntegrationTest_Example extends IntegrationTest with testing.Constants {
+//
+//  "foo" must "bar" in {
+//    testRpc {
+//      val order /*: RawOrder*/ = Addr(0) |>>> 12.1.lrc --> 23.0.weth -- 10.0.lrc
+//      SubmitOrder.Req(Some(order))
+//    } {
+//      SubmitOrder.Res()
+//    }
+//  }
+//
+//}

@@ -90,6 +90,7 @@ class CoreModule(
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
+    bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
@@ -97,6 +98,7 @@ class CoreModule(
     bind[RingService].to[RingServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
+    bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
