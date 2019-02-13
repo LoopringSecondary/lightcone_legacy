@@ -15,10 +15,6 @@
  */
 
 package io.lightcone.relayer
-
-import io.lightcone.relayer.data._
-import io.lightcone.core._
-
 // Please make sure in `mysql.conf` all database dals use the same database configuration.
 //todo(hongyu):暂时去掉，需要确认mysql、postgres、ethereum等的启动问题
 //class IntegrationTest_Example extends IntegrationTest with testing.Constants {

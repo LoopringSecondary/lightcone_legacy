@@ -95,7 +95,7 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
     orderMap(orderId)
   }
 
-  def submitRandomOrder(maxSize: Int) {
+  def submitRandomOrder(maxSize: Int): Unit = {
     val r = rand.nextInt(TOKENS.size)
     val tokenS = TOKENS(r)
     val tokenB = TOKENS((r + 1) % TOKENS.size)

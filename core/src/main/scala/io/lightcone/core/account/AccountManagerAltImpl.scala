@@ -42,11 +42,9 @@ final class AccountManagerAltImpl(
     getReserveManagerOption(token, true).map(_.get.getAccountInfo)
 
   def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]] =
-    getReserveManagers(tokens_, true).map {
-      _.map {
-        case (token, manager) => token -> manager.getAccountInfo
-      }
-    }
+    getReserveManagers(tokens_, true).map(_.map {
+      case (token, manager) => token -> manager.getAccountInfo
+    })
 
   def setBalanceAndAllowance(
       token: String,
