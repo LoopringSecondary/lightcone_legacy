@@ -133,7 +133,6 @@ class MarketManagerImpl(
       minRequiredIncome: Double
     ): MatchResult = {
     if (order.numAttempts > maxSettementFailuresPerOrder) {
-      // TODO(dongw): 是否发消息给AccountManager了？
       MatchResult(
         order.copy(status = STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES)
       )
@@ -143,6 +142,7 @@ class MarketManagerImpl(
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
     } else {
       // 不能removeOrder，因为深度是现有订单减去pending ring中的订单的，因此深度应该是正确的。
+      //TODO(hongyu):需要先删除，否则在订单金额变动时，会再次提交订单，深度金额会累加
       removeOrder(order.id)
       var taker = updateOrderMatchable(order).copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
