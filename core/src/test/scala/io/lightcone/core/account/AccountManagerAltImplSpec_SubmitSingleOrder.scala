@@ -54,7 +54,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
       AccountInfo(LRC, 1000, 1000, 900, 900, 1)
     )
 
-    cancelSingleOrderExpectingSuccess(order.id) {
+    softCancelSingleOrderExpectingSuccess(order.id) {
       order.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
     }
 
@@ -78,7 +78,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
       )
     }
 
-    cancelSingleOrderExpectingSuccess(order.id) {
+    softCancelSingleOrderExpectingSuccess(order.id) {
       order.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
     }
   }

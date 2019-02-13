@@ -135,8 +135,9 @@ final class AccountManagerAltImpl(
       marketHash: String
     ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
     orderPool.orders.filter { order =>
-      order.validSince <= cutoff &&
-      MarketHash(MarketPair(order.tokenS, order.tokenB)).toString == marketHash
+      order.validSince <= cutoff && MarketHash(
+        MarketPair(order.tokenS, order.tokenB)
+      ).hashString == marketHash
     }
   }
 

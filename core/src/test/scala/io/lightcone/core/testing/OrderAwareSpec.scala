@@ -118,7 +118,6 @@ trait OrderAwareSpec extends CommonSpec with OrderHelper {
     updatedOrders = Map.empty[String, Matchable]
     orderPool.addCallback { order =>
       updatedOrders += order.id -> order
-    // println("----UO: " + order)
     // log.debug("order: " + order)
     }
     accountManager = AccountManager.default()

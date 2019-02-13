@@ -87,7 +87,7 @@ private[core] final class ReserveManagerAltImpl(
 
     rebalance { (reserveMe, _) =>
       reserves.foreach { r =>
-        reserveMe(r.orderId, r.requested, Some(r.reserved))
+        reserveMe(r.orderId, r.requested, false, Some(r.reserved))
       }
     }
   }
@@ -99,7 +99,7 @@ private[core] final class ReserveManagerAltImpl(
         if (orderIds.contains(r.orderId)) {
           deleteMe(r.orderId)
         } else {
-          reserveMe(r.orderId, r.requested, Some(r.reserved))
+          reserveMe(r.orderId, r.requested, false, Some(r.reserved))
         }
       }
     }
@@ -117,13 +117,19 @@ private[core] final class ReserveManagerAltImpl(
       reserves.foreach { r =>
         if (r.orderId == orderId) {
           prevReservedOpt = Some(r.reserved)
-          // skip exsiting same-order
+
+          if (requestedAmount <= r.reserved) {
+            reserveMe(r.orderId, requestedAmount, true, Some(r.reserved))
+          }
         } else {
-          reserveMe(r.orderId, r.requested, Some(r.reserved))
+          reserveMe(r.orderId, r.requested, false, Some(r.reserved))
         }
       }
-
-      reserveMe(orderId, requestedAmount, prevReservedOpt)
+      prevReservedOpt match {
+        case Some(amount) if amount >= requestedAmount =>
+        case _ =>
+          reserveMe(orderId, requestedAmount, true, prevReservedOpt)
+      }
     }
   }
 
@@ -132,7 +138,8 @@ private[core] final class ReserveManagerAltImpl(
     reserves = Nil
   }
 
-  private type RESERVE_METHOD = (String, BigInt, Option[BigInt]) => Unit
+  private type RESERVE_METHOD =
+    (String, BigInt, Boolean, Option[BigInt]) => Unit
   private type DELETE_METHOD = (String) => Unit
 
   private def rebalance(
@@ -148,6 +155,7 @@ private[core] final class ReserveManagerAltImpl(
     def reserveMe(
         orderId: String,
         requested: BigInt,
+        forceEventHandling: Boolean,
         prevRequestedOpt: Option[BigInt] = None
       ) = {
       val available = requested.min(spendable - reserved)
@@ -156,8 +164,9 @@ private[core] final class ReserveManagerAltImpl(
       } else {
         this.reserved += available
         buf += Reserve(orderId, requested, available)
+
         prevRequestedOpt match {
-          case Some(amount) if amount == available =>
+          case Some(amount) if !forceEventHandling && amount == available =>
           case _ =>
             eventHandler.onTokenReservedForOrder(orderId, token, available)
         }
