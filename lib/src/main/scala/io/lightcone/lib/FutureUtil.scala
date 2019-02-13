@@ -14,10 +14,24 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
-// import scala.concurrent._
+import scala.concurrent._
 
-abstract class AccountManagerAltImplSpec1 extends AccountManagerAltImplSpec {
-  //
+object FutureUtil {
+
+  def serializeFutures[A, B](
+      items: Iterable[A]
+    )(fn: A => Future[B]
+    )(
+      implicit
+      ec: ExecutionContext
+    ): Future[List[B]] =
+    items.foldLeft(Future(List.empty[B])) { (previousFuture, next) =>
+      for {
+        previousResults <- previousFuture
+        next <- fn(next)
+      } yield previousResults :+ next
+    }
+
 }

@@ -18,7 +18,9 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 import scala.concurrent._
+import io.lightcone.lib.FutureUtil._
 
+// This class is not thread safe.
 final class AccountManagerAltImpl(
     val owner: String
   )(
@@ -184,10 +186,10 @@ final class AccountManagerAltImpl(
     )(orders: Iterable[Matchable]
     ) = {
     for {
-      _ <- Future.sequence(orders.map { order =>
+      _ <- serializeFutures(orders) { order =>
         orderPool += order.copy(status = status)
         onToken(order.tokenS, _.release(order.id))
-      })
+      }
       updatedOrders = orderPool.takeUpdatedOrders
       _ <- {
         if (skipProcessingUpdatedOrders) Future.unit
@@ -206,15 +208,14 @@ final class AccountManagerAltImpl(
     } else
       for {
         _ <- Future.unit
-        f1 = onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
-        f2 = {
+        r1 <- onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
+        r2 <- {
           if (order.tokenFee == order.tokenS || requestedAmountFee == 0)
             Future.successful(Set.empty[String])
-          else
+          else {
             onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
+          }
         }
-        r1 <- f1
-        r2 <- f2
         orderIdsToDelete = r1 ++ r2
       } yield orderIdsToDelete
   }
@@ -228,17 +229,22 @@ final class AccountManagerAltImpl(
       manager = managerOpt.get
       orderIdsToDelete = invoke(manager).filter(orderPool.contains)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ <- Future.sequence {
-        ordersToDelete.map { order =>
-          Seq(order.tokenS, order.tokenFee)
-            .filter(_ != token)
-            .map { t =>
-              getReserveManagerOption(t, false).map { managerOpt =>
-                managerOpt.foreach(_.release(order.id))
-              }
-            }
-
-        }.flatten
+      // we cannot parallel execute these following operations
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (token == order.tokenS) Future.unit
+        else {
+          getReserveManagerOption(order.tokenS, false).map { managerOpt =>
+            managerOpt.foreach(_.release(order.id))
+          }
+        }
+      }
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (token == order.tokenFee) Future.unit
+        else {
+          getReserveManagerOption(order.tokenFee, false).map { managerOpt =>
+            managerOpt.foreach(_.release(order.id))
+          }
+        }
       }
     } yield orderIdsToDelete
 

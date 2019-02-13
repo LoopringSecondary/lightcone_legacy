@@ -37,6 +37,7 @@ object MarketManagerImpl {
   }
 }
 
+// This class is not thread safe.
 class MarketManagerImpl(
     val marketPair: MarketPair,
     val metadataManager: MetadataManager,
@@ -90,10 +91,8 @@ class MarketManagerImpl(
   // If an order is in one or more pending rings, that
   // part of the order will not be cancelled.
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
-    this.synchronized {
-      removeOrder(orderId) map { _ =>
-        aggregator.getOrderbookUpdate()
-      }
+    removeOrder(orderId) map { _ =>
+      aggregator.getOrderbookUpdate()
     }
 
   def deleteRing(
@@ -114,7 +113,7 @@ class MarketManagerImpl(
   def submitOrder(
       order: Matchable,
       minRequiredIncome: Double
-    ): MatchResult = this.synchronized {
+    ): MatchResult = {
     this.minRequiredIncome = minRequiredIncome
     matchOrders(order, minRequiredIncome)
   }
@@ -123,7 +122,7 @@ class MarketManagerImpl(
       sellOrderAsTaker: Boolean,
       minFiatValue: Double = 0,
       offset: Int = 0
-    ): Option[MatchResult] = this.synchronized {
+    ): Option[MatchResult] = {
     val side = if (sellOrderAsTaker) sells else buys
     val takerOption = side.drop(offset).headOption
     takerOption.map(submitOrder(_, minFiatValue))
