@@ -22,6 +22,7 @@ import io.lightcone.core.testing._
 abstract class AccountManagerAltImplSpec extends CommonSpec {
 
   var owner = "owning_address"
+  var numOfOrdersProcessed = 0
   implicit val _ec: ExecutionContext = ExecutionContext.Implicits.global
 
   implicit val baProvider = stub[BalanceAndAllowanceProvider]
@@ -30,7 +31,10 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
     val ec = _ec
 
     def processOrder(order: Matchable): Future[Any] =
-      Future { processOneOrder(order) }
+      Future {
+        numOfOrdersProcessed += 1
+        processOneOrder(order)
+      }
 
   }
 
@@ -41,6 +45,7 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
     // println(s"==> order: $order")
   }
   override def beforeEach(): Unit = {
+    numOfOrdersProcessed = 0
     orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
     manager = AccountManagerAlt.default(owner, true)
   }
@@ -84,12 +89,22 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
     orderMap(order.id)
   }
 
-  def cancelSingleOrderExpectingSuccess(
+  def softCancelSingleOrderExpectingSuccess(
       orderId: String
     )(expectdOrder: Matchable
     ): Matchable = {
     val (success, orderMap) = manager.cancelOrder(orderId).await
     success should be(true)
+    orderMap.size should be(1)
+    orderMap(orderId) should be(expectdOrder)
+    orderMap(orderId)
+  }
+
+  def hardCancelSingleOrderExpectingSuccess(
+      orderId: String
+    )(expectdOrder: Matchable
+    ): Matchable = {
+    val orderMap = manager.hardCancelOrder(orderId).await
     orderMap.size should be(1)
     orderMap(orderId) should be(expectdOrder)
     orderMap(orderId)

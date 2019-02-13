@@ -18,7 +18,6 @@ package io.lightcone.core
 
 class AccountManagerAltImplSpec_QueryBalanceAllowance
     extends AccountManagerAltImplSpec {
-  // import OrderStatus._
 
   "query balance/allowance" should "get data from Ethereum for the first time but not later" in {
     setBalanceAllowance(owner, LRC, 100, 200)
@@ -46,35 +45,6 @@ class AccountManagerAltImplSpec_QueryBalanceAllowance
       case (t, (b, a)) => t -> AccountInfo(t, b, a, b, a, 0)
     }
     manager.getAccountInfo(TOKENS.toSet).await should be(accountInfoMap)
-  }
-
-  "canceling all existing orders" should "relase all resources" in {
-    val balance = BigInt("100000000000000000")
-    val allowance = BigInt("200000000000000000")
-
-    TOKENS.foreach { t =>
-      setBalanceAllowance(owner, t, balance, allowance)
-    }
-
-    val now = System.currentTimeMillis
-    val num = 5000
-    (1 to num) foreach { _ =>
-      submitRandomOrder(Int.MaxValue)
-    }
-
-    manager.cancelAllOrders().await
-
-    val cost = (System.currentTimeMillis - now).toDouble / num
-    info(
-      s"submitting $num orders then cancel them all " +
-        s"cost $cost millsecond per order"
-    )
-
-    TOKENS.foreach { t =>
-      manager.getAccountInfo(t).await should be(
-        AccountInfo(t, balance, allowance, balance, allowance, 0)
-      )
-    }
   }
 
 }

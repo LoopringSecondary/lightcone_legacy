@@ -20,10 +20,10 @@ trait Constants {
 
   private val rand = new scala.util.Random(31)
 
-  val LRC = "LRC"
-  val GTO = "GTO"
-  val DAI = "DAI"
-  val WETH = "WETH"
+  val LRC = "0x0000012341111111111111"
+  val GTO = "0x000002222442222222222"
+  val DAI = "0x0000033333242333333333"
+  val WETH = "0x003424444444444444444"
 
   val TOKENS = Seq(LRC, GTO, DAI, WETH)
 
