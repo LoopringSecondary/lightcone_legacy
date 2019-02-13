@@ -41,15 +41,14 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
     // println(s"==> order: $order")
   }
 
-  def stubBalanceAndAllowance(
+  def setSpendable(
       owner: String,
       token: String,
-      balance: BigInt,
-      allowance: BigInt
+      spendable: BigInt
     ) =
     (baProvider.getBalanceAndALlowance _)
       .when(owner, token)
-      .returns(Future.successful((balance, allowance)))
+      .returns(Future.successful((spendable, spendable)))
 
   override def beforeEach(): Unit = {
     orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing

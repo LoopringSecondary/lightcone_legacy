@@ -21,7 +21,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   import OrderStatus._
 
   "If fee is 0, submitOrder" should "fail when tokenS balance/allowance is 0" in {
-    stubBalanceAndAllowance(owner, LRC, 0, 1000)
+    setSpendable(owner, LRC, 0)
 
     submitSingleOrderExpectingFailure {
       owner |> 100.0.lrc --> 1.0.weth
@@ -31,7 +31,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when tokenS balance/allowance is suffcient" in {
-    stubBalanceAndAllowance(owner, LRC, 1000, 1000)
+    setSpendable(owner, LRC, 1000)
 
     val order = submitSingleOrderExpectingSuccess {
       (owner |> 100.0.lrc --> 1.0.weth).copy(
@@ -56,7 +56,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when tokenS balance/allowance is insuffcient but non-zero" in {
-    stubBalanceAndAllowance(owner, LRC, 2000, 250)
+    setSpendable(owner, LRC, 250)
 
     val order = submitSingleOrderExpectingSuccess {
       (owner |> 1000.0.lrc --> 60.0.weth)
@@ -76,8 +76,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
 
   "If fee >0 and tokenFee != tokenS & tokenFee != tokenB, submitOrder" should
     "fail when tokenS balance/allowance is 0" in {
-    stubBalanceAndAllowance(owner, LRC, 0, 1000)
-    stubBalanceAndAllowance(owner, GTO, 100, 100)
+    setSpendable(owner, LRC, 0)
+    setSpendable(owner, GTO, 100)
 
     submitSingleOrderExpectingFailure {
       owner |> 100.0.lrc --> 1.0.weth -- 10.gto
@@ -91,8 +91,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "fail when tokenFee balance/allowance is 0" in {
-    stubBalanceAndAllowance(owner, LRC, 1000, 1000)
-    stubBalanceAndAllowance(owner, GTO, 0, 100)
+    setSpendable(owner, LRC, 1000)
+    setSpendable(owner, GTO, 0)
 
     submitSingleOrderExpectingFailure {
       owner |> 100.0.lrc --> 1.0.weth -- 10.gto
@@ -107,8 +107,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
 
   it should "succeed when tokenS and tokenFee balance/allowance are both suffcient" in {
 
-    stubBalanceAndAllowance(owner, LRC, 1000, 1000)
-    stubBalanceAndAllowance(owner, GTO, 10, 10)
+    setSpendable(owner, LRC, 1000)
+    setSpendable(owner, GTO, 10)
 
     submitSingleOrderExpectingSuccess {
       owner |> 100.0.lrc --> 1.0.weth -- 5.gto
@@ -121,8 +121,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
     }
   }
   it should "succeed when tokenS is suffcient but tokenFee is not" in {
-    stubBalanceAndAllowance(owner, LRC, 1000, 500)
-    stubBalanceAndAllowance(owner, GTO, 20, 20)
+    setSpendable(owner, LRC, 500)
+    setSpendable(owner, GTO, 20)
 
     submitSingleOrderExpectingSuccess {
       owner |> 1000.0.lrc --> 10.0.weth -- 20.gto
@@ -137,8 +137,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
 
   it should "succeed when tokenFee is suffcient but tokenS is not" in {
 
-    stubBalanceAndAllowance(owner, LRC, 1000, 1000)
-    stubBalanceAndAllowance(owner, GTO, 10, 10)
+    setSpendable(owner, LRC, 1000)
+    setSpendable(owner, GTO, 10)
 
     submitSingleOrderExpectingSuccess {
       owner |> 1000.0.lrc --> 10.0.weth -- 20.gto
@@ -152,8 +152,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when tokenS and tokenFee are both insuffcient" in {
-    stubBalanceAndAllowance(owner, LRC, 400, 1000)
-    stubBalanceAndAllowance(owner, GTO, 10, 10)
+    setSpendable(owner, LRC, 400)
+    setSpendable(owner, GTO, 10)
 
     submitSingleOrderExpectingSuccess {
       owner |> 1000.0.lrc --> 40.0.weth -- 20.gto
@@ -167,7 +167,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   "If fee >0 and tokenFee == tokenS, submitOrder" should "fail when tokenS balance/allowance is 0" in {
-    stubBalanceAndAllowance(owner, LRC, 0, 1000)
+    setSpendable(owner, LRC, 0)
 
     submitSingleOrderExpectingFailure {
       owner |> 100.0.lrc --> 1.0.weth -- 10.0.lrc
@@ -177,7 +177,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when tokenS balance/allowance is suffcient" in {
-    stubBalanceAndAllowance(owner, LRC, 2000, 2000)
+    setSpendable(owner, LRC, 2000)
 
     submitSingleOrderExpectingSuccess {
       owner |> 990.0.lrc --> 20.0.weth -- 10.0.lrc
@@ -191,7 +191,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when tokenS balance/allowance is insuffcient" in {
-    stubBalanceAndAllowance(owner, LRC, 500, 1000)
+    setSpendable(owner, LRC, 500)
 
     submitSingleOrderExpectingSuccess {
       owner |> 990.0.lrc --> 20.0.weth -- 10.0.lrc
@@ -206,7 +206,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
 
   "If fee > 0 and tokenFee == tokenB, submitOrder" should
     "fail when tokenS balance/allowance is 0" in {
-    stubBalanceAndAllowance(owner, LRC, 0, 2000)
+    setSpendable(owner, LRC, 0)
 
     submitSingleOrderExpectingFailure {
       owner |> 1000.0.lrc --> 20.0.weth -- 4.0.weth
@@ -216,7 +216,7 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when amountFee <= amountB  and not attemp to reserve the fee token" in {
-    stubBalanceAndAllowance(owner, LRC, 2000, 2000)
+    setSpendable(owner, LRC, 2000)
 
     submitSingleOrderExpectingSuccess {
       owner |> 1000.0.lrc --> 20.0.weth -- 4.0.weth
@@ -230,8 +230,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "fail when amountFee > amountB and tokenFee balance/allowance is 0" in {
-    stubBalanceAndAllowance(owner, LRC, 2000, 2000)
-    stubBalanceAndAllowance(owner, WETH, 0, 2000)
+    setSpendable(owner, LRC, 2000)
+    setSpendable(owner, WETH, 0)
 
     submitSingleOrderExpectingFailure {
       owner |> 1000.0.lrc --> 20.0.weth -- 40.0.weth
@@ -245,8 +245,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when amountFee > amountB amountB and tokenFee balance/allowance insuffcient" in {
-    stubBalanceAndAllowance(owner, LRC, 2000, 2000)
-    stubBalanceAndAllowance(owner, WETH, 10, 10)
+    setSpendable(owner, LRC, 2000)
+    setSpendable(owner, WETH, 10)
 
     submitSingleOrderExpectingSuccess {
       owner |> 1000.0.lrc --> 20.0.weth -- 40.0.weth
@@ -260,8 +260,8 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
   }
 
   it should "succeed when amountFee > amountB amountB and tokenFee balance/allowance suffcient" in {
-    stubBalanceAndAllowance(owner, LRC, 2000, 2000)
-    stubBalanceAndAllowance(owner, WETH, 100, 100)
+    setSpendable(owner, LRC, 2000)
+    setSpendable(owner, WETH, 100)
 
     submitSingleOrderExpectingSuccess {
       owner |> 1000.0.lrc --> 20.0.weth -- 40.0.weth
