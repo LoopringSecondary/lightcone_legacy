@@ -52,6 +52,10 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-http" % "10.1.5",
     "de.heikoseeberger" %% "akka-http-json4s" % "1.22.0")
 
+  lazy val socketDependency = Seq(
+    "com.corundumstudio.socketio" % "netty-socketio" % "1.7.16" exclude("jackson-core","com.fasterxml.jackson.core")
+  )
+
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "0.20",
@@ -96,6 +100,7 @@ object Dependencies {
 
   lazy val dependency4Relayer = dependency4Persistence ++
     httpDependency ++
+    socketDependency ++
     akkaDependency ++
     json4sDependency ++
     monitoringDependencies ++
