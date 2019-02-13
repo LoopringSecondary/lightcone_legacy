@@ -33,7 +33,6 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with OrderCutoffSupport
     with OrderGenerateSupport {
 
   "AccountMangerActor should reject orders after receive cutoff event" must {
@@ -72,7 +71,6 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       )
       val sendCutoffF = Future.sequence(
         Seq(
-          actors.get(OrderCutoffHandlerActor.name) ? cutoff,
           actors.get(MultiAccountManagerActor.name) ? cutoff
         )
       )

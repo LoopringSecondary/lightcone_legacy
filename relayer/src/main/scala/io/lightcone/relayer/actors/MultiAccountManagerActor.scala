@@ -79,6 +79,7 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
     case req: AddressAllowanceUpdated     => req.address
     case req: CutoffEvent                 => req.owner // TODO:暂不支持broker
     case req: OrderFilledEvent            => req.owner
+    case req: OrdersCancelledEvent        => req.owner
 
     case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
@@ -175,6 +176,9 @@ class MultiAccountManagerActor(
   }
 
   def ready: Receive = {
+    case req: MetadataChanged =>
+      accountManagerActors.all() foreach { _ ! req }
+
     case req: Any => handleRequest(req)
   }
 

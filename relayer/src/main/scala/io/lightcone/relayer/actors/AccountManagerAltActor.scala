@@ -123,11 +123,43 @@ class AccountManagerAltActor(
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
-    case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
+    case ActorRecover.RecoverOrderReq(Some(raworder)) =>
+      //恢复时，如果订单已被取消，需要更新数据库状态
       blocking {
-        resubmitOrder(xraworder).map { _ =>
-          ActorRecover.OrderRecoverResult(xraworder.hash, true)
-        }.sendTo(sender)
+        val marketHash = MarketPair(raworder.tokenS, raworder.tokenB).hashString
+        (for {
+          canceledStatus <- isOrderCanceled(raworder)
+          status = if (canceledStatus) {
+            STATUS_ONCHAIN_CANCELLED_BY_USER
+          } else if (accountCutoffState
+                       .isOrderCutoffByOwner(raworder.validSince)) {
+            STATUS_ONCHAIN_CANCELLED_BY_USER
+          } else if (accountCutoffState.isOrderCutoffByTradingPair(
+                       marketHash,
+                       raworder.validSince
+                     )) {
+            STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
+          } else {
+            STATUS_PENDING
+          }
+          res <- status match {
+            case STATUS_ONCHAIN_CANCELLED_BY_USER |
+                STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR =>
+              marketManagerActor ! CancelOrder.Req(
+                id = raworder.hash,
+                marketPair = Some(MarketPair(raworder.tokenS, raworder.tokenB))
+              )
+              dbModule.orderService
+                .updateOrderStatus(raworder.hash, status)
+                .map { _ =>
+                  ActorRecover.OrderRecoverResult(raworder.hash, true)
+                }
+            case _ =>
+              resubmitOrder(raworder).map { _ =>
+                ActorRecover.OrderRecoverResult(raworder.hash, true)
+              }
+          }
+        } yield res).sendTo(sender)
       }
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
@@ -152,10 +184,32 @@ class AccountManagerAltActor(
 
     case req @ SubmitOrder.Req(Some(raworder)) =>
       blocking {
+        val marketHash = MarketPair(raworder.tokenS, raworder.tokenB).hashString
         (for {
-          //check通过再保存到数据库，以及后续处理
-          _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
-          _ <- checkOrderCanceled(raworder) //取消订单，单blocking{独查询以太坊
+          _ <- Future {
+            if (accountCutoffState.isOrderCutoffByOwner(raworder.validSince)) {
+              throw ErrorException(
+                ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+                s"this address has set cutoff>=${raworder.getParams.validUntil}."
+              )
+            } else if (accountCutoffState.isOrderCutoffByTradingPair(
+                         marketHash,
+                         raworder.validSince
+                       )) {
+              throw ErrorException(
+                ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+                s"the market ${raworder.tokenS}-${raworder.tokenB} " +
+                  s"of this address has set cutoff > =${raworder.getParams.validUntil}."
+              )
+            }
+          }
+          canceled <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
+          _ = if (canceled)
+            throw ErrorException(
+              ERR_ORDER_VALIDATION_INVALID_CANCELED,
+              s"this order has been canceled."
+            )
+
           newRaworder = if (raworder.validSince > timeProvider
                               .getTimeSeconds()) {
             raworder.withStatus(STATUS_PENDING_ACTIVE)
@@ -254,6 +308,22 @@ class AccountManagerAltActor(
         if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
       log.warning(s"not support this event yet: $req")
 
+    case req: OrdersCancelledEvent
+        if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
+      for {
+        orders <- dbModule.orderService.getOrders(req.orderHashes)
+        _ = orders.foreach { o =>
+          val req = CancelOrder.Req(
+            id = o.hash,
+            owner = o.owner,
+            marketPair =
+              Some(MarketPair(baseToken = o.tokenS, quoteToken = o.tokenB)),
+            status = STATUS_ONCHAIN_CANCELLED_BY_USER
+          )
+          self ! req
+        }
+      } yield Unit
+
     case req: OrderFilledEvent //
         if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
       blocking {
@@ -262,6 +332,18 @@ class AccountManagerAltActor(
           _ <- swap(orderOpt.map(resubmitOrder))
         } yield Unit
       }
+
+    case req: MetadataChanged =>
+      //将terminate的market的订单从内存中删除，terminate的市场等已经被停止删除了，
+      // 因此不需要再发送给已经停止的market了，也不需要更改数据库状态，保持原状态就可以了
+      val marketPairs =
+        metadataManager
+          .getMarkets(Set(MarketMetadata.Status.TERMINATED))
+          .map(_.getMarketPair)
+      marketPairs map { marketPair =>
+        manager.purgeOrders(marketPair)
+      }
+
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {
@@ -301,18 +383,13 @@ class AccountManagerAltActor(
     } yield result
   }
 
-  private def checkOrderCanceled(rawOrder: RawOrder) =
+  def isOrderCanceled(rawOrder: RawOrder) =
     for {
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
         broker = rawOrder.owner,
         orderHash = rawOrder.hash
       )).mapAs[GetOrderCancellation.Res]
-      _ = if (res.cancelled)
-        throw ErrorException(
-          ERR_ORDER_VALIDATION_INVALID_CANCELED,
-          s"this order has been canceled."
-        )
-    } yield Unit
+    } yield res.cancelled
 
   private def swap[T](o: Option[Future[T]]): Future[Option[T]] =
     o.map(_.map(Some(_))).getOrElse(Future.successful(None))

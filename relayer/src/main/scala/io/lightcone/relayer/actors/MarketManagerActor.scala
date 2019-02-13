@@ -159,7 +159,6 @@ class MarketManagerActor(
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
-  protected def metadataRefresher = actors.get(MetadataRefresher.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
   var gasPrice: BigInt = _
@@ -190,7 +189,6 @@ class MarketManagerActor(
           )
         }
       }
-      _ = metadataRefresher ! SubscribeMetadataChanged()
     } yield Unit
 
   def recover: Receive = {

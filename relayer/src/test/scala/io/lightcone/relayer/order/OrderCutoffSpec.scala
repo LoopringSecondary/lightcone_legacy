@@ -33,8 +33,7 @@ class OrderCutoffSpec
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with OrderGenerateSupport
-    with OrderCutoffSupport {
+    with OrderGenerateSupport {
 
   val account = getUniqueAccountWithoutEth
 
@@ -136,10 +135,12 @@ class OrderCutoffSpec
       // 4. send cutoff
       val txHash = "0x999"
       val cutoff = CutoffEvent(
+        header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_SUCCESS)),
         owner = owner,
+        broker = owner,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
-      actors.get(OrderCutoffHandlerActor.name) ? cutoff
+      actors.get(MultiAccountManagerActor.name) ? cutoff
 
       Thread.sleep(5000)
       // 5. get orderbook first， waiting cutoffevent finish
