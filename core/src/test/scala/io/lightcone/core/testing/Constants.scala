@@ -20,10 +20,16 @@ trait Constants {
 
   private val rand = new scala.util.Random(31)
 
-  val LRC = "LRC_token_address"
-  val GTO = "GTO_token_address"
-  val DAI = "DAI_token_address"
-  val WETH = "WETH_token_address"
+  val LRC = "LRC"
+  val GTO = "GTO"
+  val DAI = "DAI"
+  val WETH = "WETH"
+
+  val TOKENS = Seq(LRC, GTO, DAI, WETH)
+
+  def randomToken() = {
+    TOKENS(rand.nextInt(TOKENS.size))
+  }
 
   object Addr {
     def apply() = rand.alphanumeric.take(22).mkString("")

@@ -50,7 +50,6 @@ case class Matchable(
     _actual: Option[MatchableState] = None,
     _matchable: Option[MatchableState] = None) {
 
-  import OrderStatus._
   import ErrorCode._
 
   lazy val original = MatchableState(amountS, amountB, amountFee)
@@ -127,7 +126,6 @@ case class Matchable(
 
   // Private methods
   private[core] def as(status: OrderStatus) = {
-    assert(status != STATUS_PENDING)
     copy(status = status).clearStates
   }
 

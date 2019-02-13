@@ -41,12 +41,13 @@ trait ReserveEventHandler {
 object ReserveManagerAlt {
 
   def default(
-      token: String
+      token: String,
+      enableTracing: Boolean = false
     )(
       implicit
       eventHandler: ReserveEventHandler
     ): ReserveManagerAlt =
-    new ReserveManagerAltImpl(token)
+    new ReserveManagerAltImpl(token, enableTracing)
 }
 
 private[core] trait ReserveManagerAlt {

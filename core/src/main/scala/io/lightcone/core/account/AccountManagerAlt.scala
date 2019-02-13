@@ -21,7 +21,8 @@ import scala.concurrent._
 object AccountManagerAlt {
 
   def default(
-      owner: String
+      owner: String,
+      enableTracing: Boolean = false
     )(
       implicit
       processor: UpdatedOrdersProcessor,
@@ -35,6 +36,8 @@ trait AccountManagerAlt {
   val owner: String
 
   def getAccountInfo(token: String): Future[AccountInfo]
+
+  def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]]
 
   def setBalanceAndAllowance(
       token: String,

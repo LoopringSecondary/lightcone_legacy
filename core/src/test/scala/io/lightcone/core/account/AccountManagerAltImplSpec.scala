@@ -40,18 +40,72 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
   var processOneOrder: Matchable => Unit = { order =>
     // println(s"==> order: $order")
   }
+  override def beforeEach(): Unit = {
+    orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
+    manager = AccountManagerAlt.default(owner, true)
+  }
+
+  def setBalanceAllowance(
+      owner: String,
+      token: String,
+      balance: BigInt,
+      allowance: BigInt
+    ) =
+    (baProvider.getBalanceAndALlowance _)
+      .when(owner, token)
+      .returns(Future.successful((balance, allowance)))
+      .once
 
   def setSpendable(
       owner: String,
       token: String,
       spendable: BigInt
-    ) =
-    (baProvider.getBalanceAndALlowance _)
-      .when(owner, token)
-      .returns(Future.successful((spendable, spendable)))
+    ) = setBalanceAllowance(owner, token, spendable, spendable)
 
-  override def beforeEach(): Unit = {
-    orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-    manager = AccountManagerAlt.default(owner)
+  def submitSingleOrderExpectingSuccess(
+      order: Matchable
+    )(genExpectedOrder: Matchable => Matchable
+    ): Matchable = {
+    val (success, orderMap) = manager.resubmitOrder(order).await
+    success should be(true)
+    orderMap.size should be(1)
+    orderMap(order.id) should be(genExpectedOrder(order))
+    orderMap(order.id)
+  }
+
+  def submitSingleOrderExpectingFailure(
+      order: Matchable
+    )(genExpectedOrder: Matchable => Matchable
+    ): Matchable = {
+    val (success, orderMap) = manager.resubmitOrder(order).await
+    success should be(false)
+    orderMap.size should be(1)
+    orderMap(order.id) should be(genExpectedOrder(order))
+    orderMap(order.id)
+  }
+
+  def cancelSingleOrderExpectingSuccess(
+      orderId: String
+    )(expectdOrder: Matchable
+    ): Matchable = {
+    val (success, orderMap) = manager.cancelOrder(orderId).await
+    success should be(true)
+    orderMap.size should be(1)
+    orderMap(orderId) should be(expectdOrder)
+    orderMap(orderId)
+  }
+
+  def submitRandomOrder(maxSize: Int) {
+    val r = rand.nextInt(TOKENS.size)
+    val tokenS = TOKENS(r)
+    val tokenB = TOKENS((r + 1) % TOKENS.size)
+    val tokenFee = randomToken()
+
+    val amountS: Double = (rand.nextInt(maxSize / 2) + maxSize / 2 + 1).toDouble
+    val amountB: Double = (rand.nextInt(maxSize / 2) + maxSize / 2 + 1).toDouble
+    val amountFee: Double = (rand.nextInt(maxSize / 2)).toDouble
+
+    val order = owner |> (amountS ^ tokenS) --> (amountB ^ tokenB) -- (amountFee ^ tokenFee)
+    manager.resubmitOrder(order).await
   }
 }
