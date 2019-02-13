@@ -16,13 +16,13 @@
 
 package io.lightcone.relayer.event
 
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
-import io.lightcone.core._
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.actors.OHLCDataHandlerActor
-import org.web3j.crypto.Credentials
 import akka.pattern._
+import io.lightcone.core._
+import io.lightcone.relayer.actors.OHLCDataHandlerActor
+import io.lightcone.relayer.base._
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.support._
+
 import scala.concurrent.Await
 
 // TODO(yadong): this test fail if you run `sbt relayer/test` but will success if you run it alone.
@@ -39,13 +39,9 @@ class OHLCRawDataExtractorSpec
       val getBaMethod = "get_balance_and_allowance"
       val submit_order = "submit_order"
       val account0 = accounts.head
-      val account1 = Credentials.create(
-        "0x1a9a50f04f21ed5c0f1ed8da1d44c238de3184b99f38108f475c7e1959fb0fb6"
-      )
-      val account2 = Credentials.create(
-        "0x649b8fc4b2a8cd2d222977878e3dc95565df8e794e7fcc2fabae0a70c935ee07"
-      )
-
+      val account1 = getUniqueAccountWithoutEth
+      val account2 = getUniqueAccountWithoutEth
+      val account3 = getUniqueAccountWithoutEth
       Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
@@ -67,11 +63,25 @@ class OHLCRawDataExtractorSpec
         timeout.duration
       )
       Await.result(
-        transferEth(account1.getAddress, "100")(account0),
+        singleRequest(
+          GetBalanceAndAllowances.Req(
+            account3.getAddress,
+            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+          ),
+          getBaMethod
+        ).mapAs[GetBalanceAndAllowances.Res],
         timeout.duration
       )
       Await.result(
-        transferEth(account2.getAddress, "100")(account0),
+        transferEth(account1.getAddress, "10")(account0),
+        timeout.duration
+      )
+      Await.result(
+        transferEth(account2.getAddress, "10")(account0),
+        timeout.duration
+      )
+      Await.result(
+        transferEth(account3.getAddress, "10")(account0),
         timeout.duration
       )
       info("transfer to account1 1000 LRC and approve")
@@ -90,7 +100,25 @@ class OHLCRawDataExtractorSpec
       info(s"${account2.getAddress} approve WETH")
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
-      Thread.sleep(1000)
+      info("transfer to account3 1000 LRC and approve")
+      Await.result(
+        transferLRC(account3.getAddress, "1000")(account0),
+        timeout.duration
+      )
+      info(s"${account3.getAddress} approve LRC")
+      Await.result(approveLRCToDelegate("1000000")(account3), timeout.duration)
+
+      expectBalanceRes(
+        GetBalanceAndAllowances.Req(
+          account3.getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        (res: GetBalanceAndAllowances.Res) => {
+          BigInt(
+            res.balanceAndAllowanceMap(LRC_TOKEN.address).allowance.toByteArray
+          ) > 0
+        }
+      )
       val order1 = createRawOrder()(account1)
       val order2 = createRawOrder(
         tokenB = LRC_TOKEN.address,
@@ -98,6 +126,7 @@ class OHLCRawDataExtractorSpec
         amountB = 2 * BigInt(order1.amountS.toByteArray),
         amountS = 2 * BigInt(order1.amountB.toByteArray)
       )(account2)
+      val order3 = createRawOrder()(account3)
       Await.result(
         singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
           .mapAs[SubmitOrder.Res],
@@ -108,26 +137,19 @@ class OHLCRawDataExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(1000)
-      val order3 = createRawOrder()(account1)
       Await.result(
         singleRequest(SubmitOrder.Req(Some(order3)), submit_order)
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(2000)
+      expectTradeRes(
+        GetTrades.Req(owner = account3.getAddress),
+        (res: GetTrades.Res) => {
+          res.trades.length == 1
+        }
+      )
       val marketHash =
         MarketHash(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)).toString
-      //      val ohlcDatas = Await.result(
-      //        dbModule.ohlcDataDal.getOHLCData(
-      //          marketHash,
-      //          60,
-      //          timeProvider.getTimeSeconds() - 600,
-      //          timeProvider.getTimeSeconds()
-      //        ),
-      //        timeout.duration
-      //      )
-
       val oHLCDatas = Await.result(
         (oHLCDataHandlerActor ? GetOHLCData.Req(
           marketHash,

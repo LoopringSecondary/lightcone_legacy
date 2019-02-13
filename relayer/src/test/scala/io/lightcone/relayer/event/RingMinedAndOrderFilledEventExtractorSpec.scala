@@ -16,14 +16,14 @@
 
 package io.lightcone.relayer.event
 
+import akka.util.Timeout
 import io.lightcone.relayer.base._
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
-import org.web3j.crypto.Credentials
-import io.lightcone.relayer.data._
+import scala.concurrent.duration._
+
 import scala.concurrent.Await
 
-// TODO(yadong): this test fail if you run `sbt relayer/test` but will success if you run it alone.
 class RingMinedAndOrderFilledEventExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport
@@ -33,12 +33,8 @@ class RingMinedAndOrderFilledEventExtractorSpec
       val getBaMethod = "get_balance_and_allowance"
       val submit_order = "submit_order"
       val account0 = accounts.head
-      val account1 = Credentials.create(
-        "0xdd2c4a5c56cb9b02f52d6c4bc56da9219290c3adbe76efc082dbfb98542a9641"
-      )
-      val account2 = Credentials.create(
-        "0x2cc04482d2fba83ff646d0aeacc7f5195fa2532859fdec917354ba4691e8444a"
-      )
+      val account1 = getUniqueAccountWithoutEth
+      val account2 = getUniqueAccountWithoutEth
       Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
@@ -92,8 +88,7 @@ class RingMinedAndOrderFilledEventExtractorSpec
           BigInt(
             res.balanceAndAllowanceMap(WETH_TOKEN.address).balance.toByteArray
           ) > 0
-        },
-        timeout
+        }
       )
 
       val ba1_1 = Await.result(
@@ -142,8 +137,18 @@ class RingMinedAndOrderFilledEventExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(10000)
-
+      expectBalanceRes(
+        GetBalanceAndAllowances.Req(
+          account1.getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        (res: GetBalanceAndAllowances.Res) => {
+          BigInt(
+            res.balanceAndAllowanceMap(LRC_TOKEN.address).balance.toByteArray
+          ) < "1000".zeros(LRC_TOKEN.decimals)
+        },
+        Timeout(10 seconds)
+      )
       val ba1_2 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(

@@ -39,7 +39,7 @@ class OrdersCancelledEventExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(1000)
+      Thread.sleep(2000)
 
       info("this order must be saved in db.")
       val getOrder = Await.result(
