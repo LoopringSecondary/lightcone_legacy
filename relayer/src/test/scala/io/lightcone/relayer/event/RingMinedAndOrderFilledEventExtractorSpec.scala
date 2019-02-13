@@ -83,7 +83,19 @@ class RingMinedAndOrderFilledEventExtractorSpec
       info(s"${account2.getAddress} approve WETH")
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
-      Thread.sleep(1000)
+      expectBalanceRes(
+        GetBalanceAndAllowances.Req(
+          account2.getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        (res: GetBalanceAndAllowances.Res) => {
+          BigInt(
+            res.balanceAndAllowanceMap(WETH_TOKEN.address).balance.toByteArray
+          ) > 0
+        },
+        timeout
+      )
+
       val ba1_1 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
@@ -173,9 +185,6 @@ class RingMinedAndOrderFilledEventExtractorSpec
       (BigInt(lrc_ba2_2.balance.toByteArray) - BigInt(
         lrc_ba2_1.balance.toByteArray
       )).toString() should be("7" + "0" * LRC_TOKEN.decimals)
-
-      println("---------" + weth_ba2_1.balance)
-      println("---------" + weth_ba2_2.balance)
 
       (BigInt(weth_ba2_1.balance.toByteArray) - BigInt(
         weth_ba2_2.balance.toByteArray

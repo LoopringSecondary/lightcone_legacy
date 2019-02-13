@@ -24,21 +24,19 @@ import scala.concurrent._
 trait BlockingReceive { me: Actor with Stash =>
   implicit val ec: ExecutionContext
 
-  private val SYNC_NOTIFY = Notify("sync")
+  private val RESUME = Notify("blocking_receive_resume")
 
   // Guarantees all futures that modifies this actor's internal state will force
-  // this actor to become `blockingReceive` and wait for a SYNC_NOTIFY message
-  // to become `normalReceive` again.
-  def blocking(future: => Future[_]) = {
-    context.become(blockingReceive)
-    for {
-      result <- future
-      _ = self ! SYNC_NOTIFY
-    } yield result
+  // this actor to become `blockingReceive` and wait for a RESUME message to unbecome.
+  def blocking[T](future: => Future[T]): Future[T] = {
+    context.become(blockingReceive, discardOld = false)
+    future.andThen {
+      case _ => self ! RESUME
+    }
   }
 
   private val blockingReceive: Receive = {
-    case SYNC_NOTIFY =>
+    case RESUME =>
       context.unbecome()
       unstashAll()
 

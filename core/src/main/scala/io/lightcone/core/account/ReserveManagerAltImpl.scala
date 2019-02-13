@@ -19,9 +19,9 @@ package io.lightcone.core
 import org.slf4s.Logging
 import scala.collection.mutable.ListBuffer
 
+// This class is not thread safe.
 // orderOrdersHavePriority = true
 // allowPartialReserve = true
-
 private[core] final class ReserveManagerAltImpl(
     val token: String
   )(
@@ -99,7 +99,8 @@ private[core] final class ReserveManagerAltImpl(
     reserves.foreach { r =>
       if (r.orderId == orderId) {
         prevReservedOpt = Some(r.reserved)
-      } else { // skip exsiting same-order
+        // skip exsiting same-order
+      } else {
         reserveMe(r.orderId, r.requested, Some(r.reserved))
       }
     }

@@ -37,6 +37,7 @@ object MarketManagerImpl {
   }
 }
 
+// This class is not thread safe.
 class MarketManagerImpl(
     val marketPair: MarketPair,
     val metadataManager: MetadataManager,
@@ -90,10 +91,8 @@ class MarketManagerImpl(
   // If an order is in one or more pending rings, that
   // part of the order will not be cancelled.
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
-    this.synchronized {
-      removeOrder(orderId) map { _ =>
-        aggregator.getOrderbookUpdate()
-      }
+    removeOrder(orderId) map { _ =>
+      aggregator.getOrderbookUpdate()
     }
 
   def deleteRing(
@@ -114,17 +113,16 @@ class MarketManagerImpl(
   def submitOrder(
       order: Matchable,
       minRequiredIncome: Double
-    ): MatchResult = this.synchronized {
+    ): MatchResult = {
     this.minRequiredIncome = minRequiredIncome
     matchOrders(order, minRequiredIncome)
-
   }
 
   def triggerMatch(
       sellOrderAsTaker: Boolean,
       minFiatValue: Double = 0,
       offset: Int = 0
-    ): Option[MatchResult] = this.synchronized {
+    ): Option[MatchResult] = {
     val side = if (sellOrderAsTaker) sells else buys
     val takerOption = side.drop(offset).headOption
     takerOption.map(submitOrder(_, minFiatValue))
@@ -135,6 +133,7 @@ class MarketManagerImpl(
       minRequiredIncome: Double
     ): MatchResult = {
     if (order.numAttempts > maxSettementFailuresPerOrder) {
+      // TODO(dongw): 是否发消息给AccountManager了？
       MatchResult(
         order.copy(status = STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES)
       )
@@ -143,6 +142,8 @@ class MarketManagerImpl(
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
     } else {
+      // 不能removeOrder，因为深度是现有订单减去pending ring中的订单的，因此深度应该是正确的。
+      removeOrder(order.id)
       var taker = updateOrderMatchable(order).copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
       var ordersToAddBack = Seq.empty[Matchable]

@@ -87,8 +87,8 @@ class AccountManagerAltActor(
         BatchGetCutoffs.Req((metadataManager.getValidMarketPairs map {
           case (marketHash, marketPair) =>
             GetCutoff
-              .Req(owner = owner, marketHash = marketHash)
-        }).toSeq :+ GetCutoff.Req(owner = owner))
+              .Req(broker = owner, owner = owner, marketHash = marketHash)
+        }).toSeq :+ GetCutoff.Req(broker = owner, owner = owner))
 
       val syncCutoff = for {
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
@@ -304,6 +304,7 @@ class AccountManagerAltActor(
   private def checkOrderCanceled(rawOrder: RawOrder) =
     for {
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
+        broker = rawOrder.owner,
         orderHash = rawOrder.hash
       )).mapAs[GetOrderCancellation.Res]
       _ = if (res.cancelled)
