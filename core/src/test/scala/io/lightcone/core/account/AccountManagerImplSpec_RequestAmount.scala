@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.testing._
+
 class AccountManagerImplSpec_RequestAmount extends OrderAwareSpec {
 
   "AccountManagerImpl" should "calulate request amount correctly (legacy code)" in {

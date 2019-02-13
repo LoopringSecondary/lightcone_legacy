@@ -95,6 +95,7 @@ class MarketManagerActor(
     extends InitializationRetryActor
     with ShardingEntityAware
     with RepeatedJobActor
+    with BlockingReceive
     with ActorLogging {
   import ErrorCode._
   import OrderStatus._
@@ -219,7 +220,9 @@ class MarketManagerActor(
       sender ! req
 
     case SubmitSimpleOrder(_, Some(order)) =>
-      submitOrder(order).sendTo(sender)
+      blocking {
+        submitOrder(order).sendTo(sender)
+      }
 
     case req: CancelOrder.Req =>
       manager.cancelOrder(req.id) foreach { orderbookUpdate =>
@@ -334,9 +337,6 @@ class MarketManagerActor(
       orderbookManagerActor ! ou.copy(marketPair = Some(marketPair))
     }
   }
-
-  def recoverOrder(xraworder: RawOrder): Future[Any] =
-    submitOrder(xraworder.toOrder)
 
   def syncGasPrice(): Future[Unit] =
     for {

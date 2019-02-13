@@ -123,14 +123,14 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
           assert(sells.nonEmpty)
           assert(
             sells(0).price == "0.050000" &&
-              sells(0).amount == "20.00000" &&
-              sells(0).total == "1.00000"
+              sells(0).amount == "24.80000" &&
+              sells(0).total == "1.24000"
           )
           assert(buys.isEmpty)
         case _ => assert(false)
       }
 
-      info("then cancel the first one, the depth should be changed to empty.")
+      info("then cancel the first one, the depth should be changed.")
       val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,
@@ -165,17 +165,22 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       })
 
       info(
-        "the result of orderbook should be empty after cancel the first order."
+        "the result of orderbook should be the second order's amount after cancel the first order."
       )
 
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.isEmpty
+        (orderbook: Orderbook) => orderbook.sells(0).amount == "20.00000"
       )
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
-          assert(sells.isEmpty && buys.isEmpty)
+          assert(sells.nonEmpty)
+          assert(
+            sells(0).price == "0.050000" &&
+              sells(0).amount == "20.00000" &&
+              sells(0).total == "1.00000"
+          )
         case _ => assert(false)
       }
     }

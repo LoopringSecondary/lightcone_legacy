@@ -14,21 +14,31 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.core.testing
 
-import io.lightcone.relayer.data._
-import io.lightcone.core._
+import org.scalatest._
+import org.scalamock.scalatest._
+import org.slf4s.Logging
+import scala.concurrent._
+import scala.concurrent.duration._
 
-// Please make sure in `mysql.conf` all database dals use the same database configuration.
-class ExampleIntegrationSpec extends IntegrationTesting {
+trait CommonSpec
+    extends FlatSpec
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with Matchers
+    with MockFactory
+    with Constants
+    with OrderHelper
+    with Logging {
 
-  "foo" must "bar" in {
-    testRpc {
-      val order: RawOrder = Addr(0) >> 12.1.lrc -> 23.0.weth -- 10.0.lrc
-      SubmitOrder.Req(Some(order))
-    } {
-      SubmitOrder.Res()
-    }
+  override def beforeAll(): Unit = {
+    println(
+      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
+    )
   }
 
+  implicit class RichFuture[T](f: => Future[T]) {
+    def await(): T = Await.result(f, Duration.Inf)
+  }
 }

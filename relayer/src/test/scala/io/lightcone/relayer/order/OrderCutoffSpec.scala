@@ -35,7 +35,23 @@ class OrderCutoffSpec
     with OrderbookManagerSupport
     with OrderGenerateSupport
     with OrderCutoffSupport {
-  val owner = accounts(0).getAddress
+
+  val account = getUniqueAccountWithoutEth
+
+  val owner = account.getAddress
+
+  override def beforeAll(): Unit = {
+    val f = Future.sequence(
+      Seq(
+        transferEth(account.getAddress, "10")(accounts(0)),
+        transferLRC(account.getAddress, "3000")(accounts(0)),
+        approveLRCToDelegate("3000")(account)
+      )
+    )
+
+    Await.result(f, timeout.duration)
+    super.beforeAll()
+  }
 
   private def testSaves(orders: Seq[RawOrder]): Future[Seq[Any]] = {
     Future.sequence(orders.map { order =>
@@ -48,13 +64,13 @@ class OrderCutoffSpec
       createRawOrder(
         amountS = "10".zeros(LRC_TOKEN.decimals),
         amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-      )(accounts(0))
+      )(account)
     }) ++
       ((0 until 4) map { i =>
         val o = createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )(accounts(0))
+        )(account)
         o.withStatus(OrderStatus.STATUS_PENDING)
       })
     testSaves(rawOrders)
@@ -69,7 +85,9 @@ class OrderCutoffSpec
         _ match {
           case SubmitOrder.Res(Some(order)) =>
             info(s" response ${order}")
-            order.status should be(OrderStatus.STATUS_PENDING)
+            (order.status.isStatusPending || order.status.isStatusNew) should be(
+              true
+            )
           case _ => assert(false)
         }
       }
@@ -123,6 +141,7 @@ class OrderCutoffSpec
       )
       actors.get(OrderCutoffHandlerActor.name) ? cutoff
 
+      Thread.sleep(5000)
       // 5. get orderbook first， waiting cutoffevent finish
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook1,

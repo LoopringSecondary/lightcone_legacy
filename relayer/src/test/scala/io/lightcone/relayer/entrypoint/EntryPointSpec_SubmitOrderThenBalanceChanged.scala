@@ -42,7 +42,8 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
     val f = Future.sequence(
       Seq(
         transferEth(account.getAddress, "10")(accounts(0)),
-        transferLRC(account.getAddress, "25")(accounts(0))
+        transferLRC(account.getAddress, "25")(accounts(0)),
+        approveLRCToDelegate("15")(account)
       )
     )
 
@@ -75,7 +76,12 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
         singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
       })
 
-      val res = Await.result(f1, timeout.duration)
+      try {
+        Await.result(f1, timeout.duration)
+      } catch {
+        case e: ErrorException =>
+          assert(e.getMessage().contains("(ERR_LOW_BALANCE"))
+      }
 
       info(
         "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING"
@@ -86,6 +92,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
         } yield {
           orderOpt match {
             case Some(order) =>
+              info(s"### orderOpt ${order}")
               assert(order.sequenceId > 0)
               assert(order.getState.status == OrderStatus.STATUS_PENDING)
             case None =>
@@ -103,12 +110,16 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       )
       val orderbookRes = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.isEmpty
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
-          assert(sells.isEmpty && buys.isEmpty)
+          assert(
+            sells(0).price == "0.050000" &&
+              sells(0).amount == "12.50000" &&
+              sells(0).total == "0.62500"
+          )
         case _ => assert(false)
       }
 
@@ -116,16 +127,17 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       val setAllowanceF = approveErc20(
         config.getString("loopring_protocol.delegate-address"),
         LRC_TOKEN.address,
-        "15".zeros(LRC_TOKEN.decimals)
+        "25".zeros(LRC_TOKEN.decimals)
       )(account)
       Await.result(setAllowanceF, timeout.duration)
 
       actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdated(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        ByteString.copyFrom("15".zeros(LRC_TOKEN.decimals).toByteArray)
+        ByteString.copyFrom("25".zeros(LRC_TOKEN.decimals).toByteArray)
       )
 
+      Thread.sleep(2000)
       info("the depth should not be empty after allowance has been set.")
 
       val orderbookRes1 = expectOrderbookRes(
@@ -138,8 +150,8 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
           assert(sells.size == 1)
           assert(
             sells(0).price == "0.050000" &&
-              sells(0).amount == "12.50000" &&
-              sells(0).total == "0.62500"
+              sells(0).amount == "20.00000" &&
+              sells(0).total == "1.00000"
           )
           assert(buys.isEmpty)
         case _ => assert(false)

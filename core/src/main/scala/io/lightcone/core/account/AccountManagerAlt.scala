@@ -18,23 +18,26 @@ package io.lightcone.core
 
 import scala.concurrent._
 
-object AccountManager2 {
+object AccountManagerAlt {
 
   def default(
-      address: String
+      owner: String,
+      enableTracing: Boolean = false
     )(
       implicit
       processor: UpdatedOrdersProcessor,
       provider: BalanceAndAllowanceProvider,
       ec: ExecutionContext,
       orderPool: AccountOrderPool with UpdatedOrdersTracing
-    ): AccountManager2 = new AccountManager2Impl(address)
+    ): AccountManagerAlt = new AccountManagerAltImpl(owner)
 }
 
-trait AccountManager2 {
-  val address: String
+trait AccountManagerAlt {
+  val owner: String
 
   def getAccountInfo(token: String): Future[AccountInfo]
+
+  def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]]
 
   def setBalanceAndAllowance(
       token: String,

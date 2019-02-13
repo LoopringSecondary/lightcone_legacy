@@ -16,14 +16,26 @@
 
 package io.lightcone.core
 
-import scala.concurrent._
+class AccountManagerAltImplSpec_Orders extends AccountManagerAltImplSpec {
+  // import OrderStatus._
 
-trait UpdatedOrdersProcessor {
-  implicit val ec: ExecutionContext
-  def processOrder(order: Matchable): Future[Any]
+  "cancelling non-existing orders" should "return empty result" in {
+    val (success, orderMap) = manager.cancelOrder("order0").await
+    success should be(false)
+    orderMap.size should be(0)
 
-  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
-    val futures = orders.values.map(processOrder)
-    Future.sequence(futures)
+    var map = manager.cancelOrders(Seq("order0", "order1")).await
+    map.size should be(0)
+
+    map = manager.cancelOrders(LRC <-> WETH).await
+    map.size should be(0)
+
+    map = manager.cancelAllOrders().await
+    map.size should be(0)
   }
+
+  // "canceling existing orders" should work {
+
+  // }
+
 }

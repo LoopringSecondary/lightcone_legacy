@@ -16,21 +16,17 @@
 
 package io.lightcone.core
 
-import org.scalatest._
-import org.scalamock.scalatest._
-import org.slf4s.Logging
+import io.lightcone.core.testing._
 
-trait CommonSpec
-    extends FlatSpec
-    with BeforeAndAfterEach
-    with BeforeAndAfterAll
-    with Matchers
-    with MockFactory
-    with Logging {
+class MarketHashSpec extends CommonSpec {
 
-  override def beforeAll(): Unit = {
-    println(
-      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
-    )
+  "marketHash" must "calculate a market hash by two address" in {
+    val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
+    val address2 = "0x6d0643f40c625a46d4ede0b11031b0907bc197d1"
+    val marketHash1 = MarketHash(MarketPair(address1, address2)).toString
+    val marketHash2 = MarketHash(MarketPair(address2, address1)).toString
+    val t = MarketHash(MarketPair(address1, address2)).toString
+    marketHash1 should be(marketHash2)
+    t should be("0x3d6ede5134aa557420825295bf6c2d96b8f101e2")
   }
 }

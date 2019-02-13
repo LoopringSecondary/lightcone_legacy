@@ -196,15 +196,35 @@ class MultiAccountManagerActor(
       )
   }
 
-  protected def accountManagerActorFor(address: String): ActorRef = {
-    if (!accountManagerActors.contains(address)) {
-      log.info(s"created new account manager for address $address")
-      accountManagerActors.add(
-        address,
-        context.actorOf(Props(new AccountManagerActor(address)), address)
-      )
+  implicit private val baProvider = new BalanceAndAllowanceProvider {
+
+    def getBalanceAndALlowance(
+        address: String,
+        token: String
+      ): Future[(BigInt, BigInt)] = {
+      val ethereumQueryActor = actors.get(EthereumQueryActor.name)
+      for {
+        res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
+          address,
+          Seq(token)
+        )).mapAs[GetBalanceAndAllowances.Res]
+        ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
+        balance = BigInt(ba.balance.toByteArray)
+        allowance = BigInt(ba.allowance.toByteArray)
+      } yield (balance, allowance)
     }
-    accountManagerActors.get(address)
   }
+
+  private def accountManagerActorFor(address: String): ActorRef =
+    this.synchronized {
+      if (!accountManagerActors.contains(address)) {
+        log.info(s"created new account manager for address $address")
+        accountManagerActors.add(
+          address,
+          context.actorOf(Props(new AccountManagerAltActor(address)), address)
+        )
+      }
+      accountManagerActors.get(address)
+    }
 
 }

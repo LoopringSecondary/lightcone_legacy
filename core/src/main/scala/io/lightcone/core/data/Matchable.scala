@@ -50,7 +50,6 @@ case class Matchable(
     _actual: Option[MatchableState] = None,
     _matchable: Option[MatchableState] = None) {
 
-  import OrderStatus._
   import ErrorCode._
 
   lazy val original = MatchableState(amountS, amountB, amountFee)
@@ -72,53 +71,61 @@ case class Matchable(
     withOutstandingAmountS((amountS - filledAmountS).max(0))
 
   // Advance methods with implicit contextual arguments
-  private[core] def requestedAmount(implicit token: String): BigInt =
-    if (token == tokenS && tokenFee == tokenS) {
-      outstanding.amountS + outstanding.amountFee
-    } else if (token == tokenS && tokenFee != tokenS) {
-      outstanding.amountS
-    } else if (token != tokenS && tokenFee == tokenB) {
-      if (outstanding.amountFee > outstanding.amountB)
-        outstanding.amountFee - outstanding.amountB
-      else 0
+  private[core] def requestedAmount(implicit token: String): BigInt = {
+    if (token == tokenS) {
+      if (token == tokenFee) outstanding.amountS + outstanding.amountFee
+      else outstanding.amountS
+    } else if (token == tokenFee) {
+      if (token != tokenB) outstanding.amountFee
+      else (outstanding.amountFee - outstanding.amountB).max(0)
     } else {
-      outstanding.amountFee
+      throw new IllegalStateException("requestedAmount")
     }
+  }
 
   private[core] def reservedAmount()(implicit token: String) =
-    if (token == tokenS && tokenFee == tokenS) {
-      reserved.amountS + reserved.amountFee
-    } else if (token == tokenS && tokenFee != tokenS) {
-      reserved.amountS
-    } else if (token != tokenS && tokenFee == tokenB) {
-      reserved.amountB + reserved.amountFee
-    } else {
-      reserved.amountFee
-    }
+    throw new UnsupportedOperationException
 
   // 注意: v < requestBigInt
-  private[core] def withReservedAmount(v: BigInt)(implicit token: String) =
-    if (token == tokenS && tokenFee == tokenS) {
-      val r = Rational(amountS, amountFee + amountS)
-      val reservedAmountS = (Rational(v) * r).toBigInt
-      copy(
-        _reserved =
-          Some(MatchableState(reservedAmountS, 0, v - reservedAmountS))
-      ).updateActual()
-    } else if (token == tokenS && tokenFee != tokenS) {
-      copy(_reserved = Some(MatchableState(v, 0, reserved.amountFee)))
-        .updateActual()
-    } else if (token != tokenS && tokenFee == tokenB) {
-      copy(_reserved = Some(MatchableState(reserved.amountS, 0, v)))
-        .updateActual()
-    } else {
-      copy(_reserved = Some(MatchableState(reserved.amountS, 0, v)))
-        .updateActual()
+  private[core] def withReservedAmount(v: BigInt)(implicit token: String) = {
+    val newReseved = {
+      if (token == tokenS) {
+        if (token == tokenFee) {
+          val r = Rational(amountS, amountFee + amountS)
+          val reservedAmountS = (Rational(v) * r).toBigInt
+          MatchableState(reservedAmountS, 0, v - reservedAmountS)
+        } else {
+          MatchableState(v, 0, reserved.amountFee)
+        }
+      } else if (token == tokenFee) {
+        MatchableState(reserved.amountS, 0, v)
+      } else {
+        throw new IllegalStateException("withReservedAmount")
+      }
     }
+
+    copy(_reserved = Some(newReseved)).updateActual()
+  }
+
+  private def updateActual() = {
+    val r =
+      if (amountFee <= 0)
+        Rational(reserved.amountS, amountS)
+      else if (tokenFee == tokenB) {
+        if (amountFee <= amountB) Rational(reserved.amountS, amountS)
+        else
+          Rational(reserved.amountS, amountS)
+            .min(Rational(reserved.amountFee, amountFee - amountB))
+      } else {
+        Rational(reserved.amountS, amountS)
+          .min(Rational(reserved.amountFee, amountFee))
+      }
+
+    copy(_actual = Some(original.scaleBy(r)))
+  }
 
   // Private methods
   private[core] def as(status: OrderStatus) = {
-    assert(status != STATUS_PENDING)
     copy(status = status).clearStates
   }
 
@@ -180,20 +187,6 @@ case class Matchable(
     ) = {
     if (tokenS == marketPair.quoteToken) fromWei(tokenS, matchable.amountS)
     else fromWei(tokenB, matchable.amountB)
-  }
-
-  private def updateActual() = {
-    var r = Rational(reserved.amountS, amountS)
-    if (amountFee > 0) {
-      if (tokenFee == tokenB && reserved.amountFee > 0) {
-        r = r min Rational(reserved.amountFee, amountFee - amountB)
-      } else if (tokenFee == tokenB && reserved.amountFee == 0) {
-        // r = r
-      } else {
-        r = r min Rational(reserved.amountFee, amountFee)
-      }
-    }
-    copy(_actual = Some(original.scaleBy(r)))
   }
 
   private def fromWei(

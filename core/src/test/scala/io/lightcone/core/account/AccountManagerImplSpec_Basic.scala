@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
 
 class AccountManagerImplSpec_Basic extends OrderAwareSpec {
   "submit order" should "fail when tokenS balance is low" in {
