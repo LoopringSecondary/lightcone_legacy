@@ -22,7 +22,8 @@ import io.lightcone.lib.FutureUtil._
 
 // This class is not thread safe.
 final class AccountManagerAltImpl(
-    val owner: String
+    val owner: String,
+    enableTracing: Boolean = false
   )(
     implicit
     processor: UpdatedOrdersProcessor,
@@ -39,6 +40,11 @@ final class AccountManagerAltImpl(
 
   def getAccountInfo(token: String): Future[AccountInfo] =
     getReserveManagerOption(token, true).map(_.get.getAccountInfo)
+
+  def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]] =
+    getReserveManagers(tokens_, true).map(_.map {
+      case (token, manager) => token -> manager.getAccountInfo
+    })
 
   def setBalanceAndAllowance(
       token: String,
@@ -67,7 +73,7 @@ final class AccountManagerAltImpl(
     for {
       _ <- Future.unit
       order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
-      _ = { orderPool += order_.as(STATUS_NEW) } // potentially replace the old one.
+      _ = { orderPool += order_.as(STATUS_PENDING) } // potentially replace the old one.
       orderIdsToDelete <- reserveForOrder(order_)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
@@ -149,23 +155,6 @@ final class AccountManagerAltImpl(
     }
   }
 
-  private def getReserveManagerOption(
-      token: String,
-      mustReturn: Boolean
-    ): Future[Option[ReserveManagerAlt]] = {
-    if (tokens.contains(token)) Future.successful(Some(tokens(token)))
-    else if (!mustReturn) Future.successful(None)
-    else {
-      provider.getBalanceAndALlowance(owner, token).map { result =>
-        val (balance, allowance) = result
-        val manager = ReserveManagerAlt.default(token)
-        manager.setBalanceAndAllowance(balance, allowance)
-        tokens += token -> manager
-        Some(manager)
-      }
-    }
-  }
-
   private def setBalanceAndAllowanceInternal(
       token: String
     )(method: ReserveManagerAlt => Set[String]
@@ -190,8 +179,9 @@ final class AccountManagerAltImpl(
     ) = {
     for {
       _ <- serializeFutures(orders) { order =>
-        orderPool += order.copy(status = status)
-        onToken(order.tokenS, _.release(order.id))
+        onToken(order.tokenS, _.release(order.id)).andThen {
+          case _ => orderPool += order.copy(status = status)
+        }
       }
       updatedOrders = orderPool.takeUpdatedOrders
       _ <- {
@@ -223,6 +213,51 @@ final class AccountManagerAltImpl(
       } yield orderIdsToDelete
   }
 
+  private def getReserveManagers(
+      tokens_ : Set[String],
+      mustReturn: Boolean
+    ): Future[Map[String, ReserveManagerAlt]] = {
+    val (existing, missing) = tokens_.partition(tokens.contains)
+    val existingManagers =
+      existing.map(tokens.apply).map(m => m.token -> m).toMap
+    if (!mustReturn) Future.successful(existingManagers)
+    else {
+      for {
+        balanceAndAllowances <- Future.sequence {
+          missing.map { token =>
+            provider.getBalanceAndALlowance(owner, token)
+          }
+        }
+        tuples = missing.zip(balanceAndAllowances)
+        newManagers = tuples.map {
+          case (token, (balance, allowance)) =>
+            val manager = ReserveManagerAlt.default(token, enableTracing)
+            manager.setBalanceAndAllowance(balance, allowance)
+            tokens += token -> manager
+            token -> manager
+        }.toMap
+      } yield newManagers ++ existingManagers
+    }
+  }
+
+  // Do not use getReserveManagers for best performance
+  private def getReserveManagerOption(
+      token: String,
+      mustReturn: Boolean
+    ): Future[Option[ReserveManagerAlt]] = {
+    if (tokens.contains(token)) Future.successful(Some(tokens(token)))
+    else if (!mustReturn) Future.successful(None)
+    else {
+      provider.getBalanceAndALlowance(owner, token).map { result =>
+        val (balance, allowance) = result
+        val manager = ReserveManagerAlt.default(token, enableTracing)
+        manager.setBalanceAndAllowance(balance, allowance)
+        tokens += token -> manager
+        Some(manager)
+      }
+    }
+  }
+
   private def onToken(
       token: String,
       invoke: ReserveManagerMethod
@@ -230,7 +265,7 @@ final class AccountManagerAltImpl(
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
-      orderIdsToDelete = invoke(manager).filter(orderPool.contains)
+      orderIdsToDelete = invoke(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       // we cannot parallel execute these following operations
       _ <- serializeFutures(ordersToDelete) { order =>
