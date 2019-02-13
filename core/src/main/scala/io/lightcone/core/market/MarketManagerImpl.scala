@@ -143,7 +143,7 @@ class MarketManagerImpl(
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
     } else {
       // 不能removeOrder，因为深度是现有订单减去pending ring中的订单的，因此深度应该是正确的。
-      // removeOrder(order.id)
+      removeOrder(order.id)
       var taker = updateOrderMatchable(order).copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
       var ordersToAddBack = Seq.empty[Matchable]
