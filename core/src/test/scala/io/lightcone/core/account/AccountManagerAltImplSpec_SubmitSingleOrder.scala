@@ -50,9 +50,18 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
       )
     }
 
+    manager.getAccountInfo(LRC).await should be(
+      AccountInfo(LRC, 1000, 1000, 900, 900, 1)
+    )
+
     cancelSingleOrderExpectingSuccess(order.id) {
       order.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
     }
+
+    manager.getAccountInfo(LRC).await should be(
+      AccountInfo(LRC, 1000, 1000, 1000, 1000, 0)
+    )
+
   }
 
   it should "succeed when tokenS balance/allowance is insuffcient but non-zero" in {
@@ -274,36 +283,4 @@ class AccountManagerAltImplSpec_SubmitSingleOrder
     }
   }
 
-  private def submitSingleOrderExpectingSuccess(
-      order: Matchable
-    )(genExpectedOrder: Matchable => Matchable
-    ): Matchable = {
-    val (success, orderMap) = manager.resubmitOrder(order).await
-    success should be(true)
-    orderMap.size should be(1)
-    orderMap(order.id) should be(genExpectedOrder(order))
-    orderMap(order.id)
-  }
-
-  private def submitSingleOrderExpectingFailure(
-      order: Matchable
-    )(genExpectedOrder: Matchable => Matchable
-    ): Matchable = {
-    val (success, orderMap) = manager.resubmitOrder(order).await
-    success should be(false)
-    orderMap.size should be(1)
-    orderMap(order.id) should be(genExpectedOrder(order))
-    orderMap(order.id)
-  }
-
-  private def cancelSingleOrderExpectingSuccess(
-      orderId: String
-    )(expectdOrder: Matchable
-    ): Matchable = {
-    val (success, orderMap) = manager.cancelOrder(orderId).await
-    success should be(true)
-    orderMap.size should be(1)
-    orderMap(orderId) should be(expectdOrder)
-    orderMap(orderId)
-  }
 }
