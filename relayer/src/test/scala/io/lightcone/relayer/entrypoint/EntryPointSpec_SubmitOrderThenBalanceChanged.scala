@@ -92,7 +92,6 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
         } yield {
           orderOpt match {
             case Some(order) =>
-              info(s"### orderOpt ${order}")
               assert(order.sequenceId > 0)
               assert(order.getState.status == OrderStatus.STATUS_PENDING)
             case None =>
