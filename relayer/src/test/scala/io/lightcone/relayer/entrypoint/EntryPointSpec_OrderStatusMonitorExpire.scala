@@ -111,7 +111,7 @@ class EntryPointSpec_OrderStatusMonitorExpire
               assert(order.sequenceId > 0)
               //todo:过期的需要设置状态为STATUS_EXPIRED, 现在是否改变了？
               assert(
-                order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+                order.getState.status.isStatusExpired
               )
             case None =>
               assert(false)

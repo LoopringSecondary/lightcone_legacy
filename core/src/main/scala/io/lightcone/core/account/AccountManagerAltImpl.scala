@@ -83,9 +83,12 @@ final class AccountManagerAltImpl(
     } yield (successful, updatedOrders)
   }
 
-  def cancelOrder(orderId: String) =
+  def cancelOrder(
+      orderId: String,
+      status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
+    ) =
     for {
-      orders <- cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
+      orders <- cancelOrderInternal(status)(
         orderPool.getOrder(orderId).toSeq
       )
     } yield (orders.size > 0, orders)
