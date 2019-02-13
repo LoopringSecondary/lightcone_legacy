@@ -18,12 +18,14 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 import scala.collection.mutable.ListBuffer
+import java.util.concurrent.atomic.AtomicInteger
 
 // This class is not thread safe.
 // orderOrdersHavePriority = true
 // allowPartialReserve = true
 private[core] final class ReserveManagerAltImpl(
-    val token: String
+    val token: String,
+    enableTracing: Boolean = false
   )(
     implicit
     eventHandler: ReserveEventHandler)
@@ -45,6 +47,20 @@ private[core] final class ReserveManagerAltImpl(
 
   def getReserves() = reserves
 
+  val i = new AtomicInteger(0)
+
+  def trace[T](name: String)(fn: => T): T = {
+    if (!enableTracing) {
+      fn
+    } else {
+      val j = i.updateAndGet(_ + 1)
+      log.debug(s" ====== $token: $j > $name ")
+      val result = fn
+      log.debug(s" ====== $token: $j < $name")
+      result
+    }
+  }
+
   def getAccountInfo() =
     AccountInfo(
       token,
@@ -64,7 +80,7 @@ private[core] final class ReserveManagerAltImpl(
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
-    ) = {
+    ) = trace("setBalanceAndAllowance") {
     this.balance = balance
     this.allowance = allowance
     spendable = balance.min(allowance)
@@ -77,8 +93,8 @@ private[core] final class ReserveManagerAltImpl(
   }
 
   // Release balance/allowance for an order.
-  def release(orderIds: Set[String]): Set[String] = rebalance {
-    (reserveMe, deleteMe) =>
+  def release(orderIds: Set[String]): Set[String] = trace("release") {
+    rebalance { (reserveMe, deleteMe) =>
       reserves.foreach { r =>
         if (orderIds.contains(r.orderId)) {
           deleteMe(r.orderId)
@@ -86,29 +102,32 @@ private[core] final class ReserveManagerAltImpl(
           reserveMe(r.orderId, r.requested, Some(r.reserved))
         }
       }
+    }
   }
 
   def reserve(
       orderId: String,
       requestedAmount: BigInt
-    ): Set[String] = rebalance { (reserveMe, _) =>
-    assert(requestedAmount > 0)
+    ): Set[String] = trace("reserve") {
+    rebalance { (reserveMe, _) =>
+      assert(requestedAmount > 0)
 
-    var prevReservedOpt: Option[BigInt] = None
+      var prevReservedOpt: Option[BigInt] = None
 
-    reserves.foreach { r =>
-      if (r.orderId == orderId) {
-        prevReservedOpt = Some(r.reserved)
-        // skip exsiting same-order
-      } else {
-        reserveMe(r.orderId, r.requested, Some(r.reserved))
+      reserves.foreach { r =>
+        if (r.orderId == orderId) {
+          prevReservedOpt = Some(r.reserved)
+          // skip exsiting same-order
+        } else {
+          reserveMe(r.orderId, r.requested, Some(r.reserved))
+        }
       }
-    }
 
-    reserveMe(orderId, requestedAmount, prevReservedOpt)
+      reserveMe(orderId, requestedAmount, prevReservedOpt)
+    }
   }
 
-  def clearOrders(): Unit = {
+  def clearOrders(): Unit = trace("clearOrders") {
     reserved = 0
     reserves = Nil
   }
