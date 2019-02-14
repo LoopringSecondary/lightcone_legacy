@@ -73,6 +73,10 @@ class MetadataRefresher(
   def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
 
   val numsOfAccountShards = config.getInt("multi_account_manager.num-of-shards")
+  val numsOfMarketManagerShards = config.getInt("market_manager.num-of-shards")
+
+  val numsOfOrderbookManagerShards =
+    config.getInt("orderbook_manager.num-of-shards")
 
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]
@@ -92,9 +96,10 @@ class MetadataRefresher(
 
   def ready: Receive = {
     case req: MetadataChanged =>
+      val validMarketPairs = metadataManager.getValidMarketPairs
       for {
         _ <- refreshMetadata()
-        actors1 <- toNotifyActors()
+        actors1 <- toNotifyActors(validMarketPairs)
         _ = actors1 foreach { actor =>
           actor ! req
         }
@@ -120,10 +125,8 @@ class MetadataRefresher(
       metadataManager.reset(tokens_, markets_)
     }
 
-  //TODO：经过简单的测试，但是仍要在集群环境下确认只会获取本地的actor
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
-  //TODO(hongyu): 测试LocalActor的方法
-  private def toNotifyActors() = {
+  private def toNotifyActors(validMarketPairs: Map[String, MarketPair]) = {
     for {
       accountManagerActors <- Future.sequence {
         (0 until numsOfAccountShards) map { i =>
@@ -134,18 +137,26 @@ class MetadataRefresher(
         }
       }
       marketOrOrderbookManagerActors <- Future.sequence {
-        metadataManager.getValidMarketPairs flatMap {
-          case (_, marketId) =>
-            val entityId = MarketManagerActor.getEntityId(marketId)
-            val orderbookActor = getLocalActorRef(
-              s"akka://${context.system.name}/system/sharding/" +
-                s"${OrderbookManagerActor.name}/${OrderbookManagerActor.name}_${entityId}/${OrderbookManagerActor.name}_${entityId}"
-            )
-            val marketActor = getLocalActorRef(
-              s"akka://${context.system.name}/system/sharding/" +
-                s"${MarketManagerActor.name}/${MarketManagerActor.name}_${entityId}/${MarketManagerActor.name}_${entityId}"
-            )
-            Seq(orderbookActor, marketActor)
+        validMarketPairs flatMap {
+          case (_, marketPair) =>
+            val entityId = MarketManagerActor.getEntityId(marketPair)
+            val orderbookEntityId = s"${OrderbookManagerActor.name}_${entityId}"
+            val marketEntityId = s"${MarketManagerActor.name}_${entityId}"
+            val orderbookActors =
+              getLocalActorRef(
+                s"akka://${context.system.name}/system/sharding/" +
+                  s"${OrderbookManagerActor.name}/" +
+                  s"${(math.abs(orderbookEntityId.hashCode) % numsOfOrderbookManagerShards).toString}/" +
+                  s"$orderbookEntityId"
+              )
+            val marketActors =
+              getLocalActorRef(
+                s"akka://${context.system.name}/system/sharding/" +
+                  s"${MarketManagerActor.name}/" +
+                  s"${(math.abs(marketEntityId.hashCode) % numsOfMarketManagerShards).toString}/" +
+                  s"$marketEntityId"
+              )
+            Seq(orderbookActors, marketActors)
         }
       }
     } yield
@@ -153,6 +164,8 @@ class MetadataRefresher(
         .filterNot(_ == null)
   }
 
+  //可以获取本地的actors，但是不能有通配符，因为resolveOne只会返回一个ActorRef，resolveOne可以满足需求
+  //使用通配符的话，需要另外使用Identify来得到ActorRef
   private def getLocalActorRef(path: String): Future[ActorRef] = {
     context.system
       .actorSelection(path)

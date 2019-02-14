@@ -131,11 +131,16 @@ class OrderbookManagerActor(
         case _: Throwable => None
       }
       metadataOpt match {
-        case None => context.system.stop(self)
+        case None =>
+          log.warning("I'm stopping myself as the market metadata is not found")
+          context.system.stop(self)
         case Some(metadata) if metadata.status.isTerminated =>
+          log.warning(
+            s"I'm stopping myself as the market is terminiated: $metadata"
+          )
           context.system.stop(self)
         case Some(metadata) =>
-          log.debug(
+          log.info(
             s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
           )
       }
