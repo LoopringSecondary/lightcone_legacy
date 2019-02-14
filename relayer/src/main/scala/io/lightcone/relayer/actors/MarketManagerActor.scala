@@ -25,6 +25,8 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
+import io.lightcone.persistence.DatabaseModule
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -46,7 +48,8 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
       rie: RingIncomeEvaluator,
       dustOrderEvaluator: DustOrderEvaluator,
       metadataManager: MetadataManager,
-      deployActorsIgnoringRoles: Boolean
+      deployActorsIgnoringRoles: Boolean,
+      dbModule: DatabaseModule
     ): ActorRef = {
     this.metadataManager = metadataManager
     startSharding(Props(new MarketManagerActor()))
@@ -91,7 +94,8 @@ class MarketManagerActor(
     val tve: TokenValueEvaluator,
     val rie: RingIncomeEvaluator,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val metadataManager: MetadataManager)
+    val metadataManager: MetadataManager,
+    val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with ShardingEntityAware
     with RepeatedJobActor
@@ -160,6 +164,7 @@ class MarketManagerActor(
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def mama = actors.get(MultiAccountManagerActor.name)
 
   var gasPrice: BigInt = _
 
@@ -333,6 +338,21 @@ class MarketManagerActor(
 
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerActor ! ou.copy(marketPair = Some(marketPair))
+    }
+
+    if (matchResult.taker.status == STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES) {
+      for {
+        takerOpt <- dbModule.orderService.getOrder(matchResult.taker.id)
+      } yield {
+        takerOpt.foreach { taker =>
+          mama ! CancelOrder.Req(
+            id = taker.hash,
+            owner = taker.owner,
+            status = matchResult.taker.status,
+            marketPair = Some(MarketPair(taker.tokenS, taker.tokenB))
+          )
+        }
+      }
     }
   }
 
