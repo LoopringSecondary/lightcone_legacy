@@ -63,4 +63,7 @@ package object core {
 
   implicit class Rich_MatchableRing(raw: MatchableRing)
       extends RichMatchableRing(raw)
+
+  implicit class Rich_OrderStatus(status: OrderStatus)
+      extends RichOrderStatus(status)
 }

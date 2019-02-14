@@ -205,7 +205,7 @@ class AccountManagerAltActor(
         (for {
           // Make sure PENDING-ACTIVE orders can be cancelled.
           result <- (orderPersistenceActor ? req).mapAs[CancelOrder.Res]
-          (successful, updatedOrders) <- manager.cancelOrder(req.id)
+          (successful, updatedOrders) <- manager.cancelOrder(req.id, req.status)
           _ = {
             if (successful) {
               marketManagerActor.tell(req, originalSender)
