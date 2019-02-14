@@ -28,14 +28,14 @@ final class AccountManagerAltImpl(
     implicit
     processor: UpdatedOrdersProcessor,
     provider: BalanceAndAllowanceProvider,
-    ec: ExecutionContext,
-    orderPool: AccountOrderPool with UpdatedOrdersTracing)
+    ec: ExecutionContext)
     extends AccountManagerAlt
     with Logging {
 
   import OrderStatus._
 
   type ReserveManagerMethod = ReserveManagerAlt => Set[String]
+  private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   private implicit var tokens = Map.empty[String, ReserveManagerAlt]
 
   def getAccountInfo(token: String): Future[AccountInfo] =

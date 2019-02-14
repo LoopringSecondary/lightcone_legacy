@@ -38,7 +38,6 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
 
   }
 
-  implicit var orderPool: AccountOrderPool with UpdatedOrdersTracing = _
   var manager: AccountManagerAlt = _
 
   var processOneOrder: Matchable => Unit = { order =>
@@ -46,7 +45,6 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
   }
   override def beforeEach(): Unit = {
     numOfOrdersProcessed = 0
-    orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
     manager = AccountManagerAlt.default(owner, true)
   }
 
