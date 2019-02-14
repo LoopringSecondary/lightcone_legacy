@@ -17,7 +17,6 @@
 package io.lightcone.ethereum
 
 import org.json4s._
-import org.json4s.JsonAST.JNothing
 import org.json4s.native.JsonMethods._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.Hash
@@ -26,10 +25,10 @@ trait EIP712Support {
   def getEIP712Message(typedDataJson: String): String
 }
 
-object DefaultEIP712Support extends EIP712Support {
+class DefaultEIP712Support extends EIP712Support {
   implicit val formats = DefaultFormats
 
-  val Eip191Header = "\u0019\u0001"
+  val EIP191Header = "\u0019\u0001"
 
   /* TYPED_MESSAGE_SCHEMA:
    * """
@@ -62,7 +61,7 @@ object DefaultEIP712Support extends EIP712Support {
     val json = parse(typedDataJson)
 
     val messageBuilder = new StringBuilder
-    messageBuilder ++= Eip191Header
+    messageBuilder ++= EIP191Header
 
     val domain = json \ "domain"
     val types = json \ "types"
@@ -117,20 +116,21 @@ object DefaultEIP712Support extends EIP712Support {
       targetType: JValue,
       types: JValue,
       results: Array[JValue]
-    ) {
-    targetType match {
-      case t: JNothing              => results
-      case t if results.contains(t) => results
-      case t =>
-        val fieldTypes = t.foldField(List(): List[JValue])((l, t) => t :: l)
-        fieldTypes
-          .map(
-            fieldType => findTypeDependencies(fieldType, types, results)
-          )
-          .flatten
-          .distinct
-          .toArray
-    }
+    ) = {
+    ???
+    // targetType match {
+    //   case t: JNothing              =>
+    //   case t if results.contains(t) =>
+    //   case t =>
+    //     val fieldTypes = t.foldField(List(): List[JValue])((l, t) => t :: l)
+    //     fieldTypes
+    //       .map(
+    //         fieldType => findTypeDependencies(fieldType, types, results)
+    //       )
+    //       .flatten
+    //       .distinct
+    //       .toArray
+    // }
   }
 
 }
