@@ -20,11 +20,12 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern._
 import akka.util.Timeout
 import com.corundumstudio.socketio.{AckRequest, SocketIOClient}
+import com.google.inject.Inject
 import io.lightcone.core.Address
 import io.lightcone.relayer.actors.MultiAccountManagerActor
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-import javax.inject.Inject
+import io.lightcone.core._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,7 +54,15 @@ class BalanceListener @Inject()(
       .map { res =>
         SubcriberBalanceAndAllowance.Res(
           owner = res.address,
-          balanceAndAllowanceMap = res.balanceAndAllowanceMap
+          balanceAndAllowances = res.balanceAndAllowanceMap.map { data =>
+            SubcriberBalanceAndAllowance.BalanceAndAllowance(
+              address = data._1,
+              balance = data._2.balance,
+              allowance = data._2.allowance,
+              avaliableBalance = data._2.availableBalance,
+              avaliableAllowance = data._2.availableAllowance
+            )
+          }.toSeq
         )
       }
   }

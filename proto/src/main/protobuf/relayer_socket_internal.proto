@@ -19,16 +19,25 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.relayer.data;
 
-import "relayer_common.proto";
+
 
 message SubcriberBalanceAndAllowance{
+
+    message BalanceAndAllowance {
+        string address = 1;
+        string balance = 2;
+        string avaliable_balance = 3;
+        string allowance = 4;
+        string avaliable_allowance = 5;
+    }
+
     message Req{
         string owner =1;
         repeated string tokens =2;
     }
     message Res{
         string owner =1;
-        map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+        repeated BalanceAndAllowance balance_and_allowances = 2;
     }
 }
 
