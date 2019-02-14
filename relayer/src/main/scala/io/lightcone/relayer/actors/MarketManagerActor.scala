@@ -342,7 +342,7 @@ class MarketManagerActor(
       orderbookManagerActor ! ou.copy(marketPair = Some(marketPair))
     }
 
-    if (matchResult.taker.status.isStatusSoftCancelledTooManyRingFailures) {
+    if (matchResult.taker.status == STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES) {
       for {
         takerOpt <- dbModule.orderService.getOrder(matchResult.taker.id)
       } yield {

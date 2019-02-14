@@ -178,18 +178,22 @@ final class AccountManagerAltImpl(
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
-    for {
-      _ <- serializeFutures(orders) { order =>
-        onToken(order.tokenS, _.release(order.id)).andThen {
-          case _ => orderPool += order.copy(status = status)
+    if (!status.isCancelledStatus()) {
+      Future.successful(Map.empty[String, Matchable])
+    } else {
+      for {
+        _ <- serializeFutures(orders) { order =>
+          onToken(order.tokenS, _.release(order.id)).andThen {
+            case _ => orderPool += order.copy(status = status)
+          }
         }
-      }
-      updatedOrders = orderPool.takeUpdatedOrders
-      _ <- {
-        if (skipProcessingUpdatedOrders) Future.unit
-        else processor.processOrders(updatedOrders)
-      }
-    } yield updatedOrders
+        updatedOrders = orderPool.takeUpdatedOrders
+        _ <- {
+          if (skipProcessingUpdatedOrders) Future.unit
+          else processor.processOrders(updatedOrders)
+        }
+      } yield updatedOrders
+    }
   }
 
   private def reserveForOrder(order: Matchable): Future[Set[String]] = {
