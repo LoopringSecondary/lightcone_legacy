@@ -89,9 +89,12 @@ final class AccountManagerAltImpl(
     } yield (successful, updatedOrders)
   }
 
-  def cancelOrder(orderId: String) =
+  def cancelOrder(
+      orderId: String,
+      status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
+    ) =
     for {
-      orders <- cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
+      orders <- cancelOrderInternal(status)(
         orderPool.getOrder(orderId).toSeq
       )
     } yield (orders.size > 0, orders)
@@ -175,18 +178,22 @@ final class AccountManagerAltImpl(
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
-    for {
-      _ <- serializeFutures(orders) { order =>
-        onToken(order.tokenS, _.release(order.id)).andThen {
-          case _ => orderPool += order.copy(status = status)
+    if (!status.isCancelledStatus()) {
+      Future.successful(Map.empty[String, Matchable])
+    } else {
+      for {
+        _ <- serializeFutures(orders) { order =>
+          onToken(order.tokenS, _.release(order.id)).andThen {
+            case _ => orderPool += order.copy(status = status)
+          }
         }
-      }
-      updatedOrders = orderPool.takeUpdatedOrders
-      _ <- {
-        if (skipProcessingUpdatedOrders) Future.unit
-        else processor.processOrders(updatedOrders)
-      }
-    } yield updatedOrders
+        updatedOrders = orderPool.takeUpdatedOrders
+        _ <- {
+          if (skipProcessingUpdatedOrders) Future.unit
+          else processor.processOrders(updatedOrders)
+        }
+      } yield updatedOrders
+    }
   }
 
   private def reserveForOrder(order: Matchable): Future[Set[String]] = {
