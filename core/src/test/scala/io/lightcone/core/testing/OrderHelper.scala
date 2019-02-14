@@ -24,7 +24,7 @@ trait OrderHelper extends Constants {
   private def getNextOrderId() = "order" + rand.nextLong.abs
 
   case class AmountToken(
-      amount: Double,
+      amount: BigInt,
       tokenAddress: String) {
     def -->(another: AmountToken) = OrderRep(this, another, None)
     def <--(another: AmountToken) = OrderRep(another, this, None)
@@ -38,22 +38,28 @@ trait OrderHelper extends Constants {
   }
 
   implicit class Rich_DoubleAmount(v: Double) {
-    def ^(str: String) = AmountToken(v, str)
-    def lrc = AmountToken(v, LRC)
-    def gto = AmountToken(v, GTO)
-    def weth = AmountToken(v, WETH)
-    def dai = AmountToken(v, DAI)
+    def ^(token: String) = AmountToken(BigInt(v.toLong), token)
+    def lrc = AmountToken(BigInt(v.toLong), LRC)
+    def gto = AmountToken(BigInt(v.toLong), GTO)
+    def weth = AmountToken(BigInt(v.toLong), WETH)
+    def dai = AmountToken(BigInt(v.toLong), DAI)
   }
 
-  implicit class Rich_StringAddress(addr: String) {
+  implicit class Rich_String(str: String) {
 
-    def <->(another: String) = MarketPair(addr, another)
+    def ^(token: String) = AmountToken(BigInt(str), token)
+    def lrc = AmountToken(BigInt(str), LRC)
+    def gto = AmountToken(BigInt(str), GTO)
+    def weth = AmountToken(BigInt(str), WETH)
+    def dai = AmountToken(BigInt(str), DAI)
+
+    def <->(another: String) = MarketPair(str, another)
 
     // TODO(hongyu): need to make sure signature are all calculated. this is mostly
     // for integration testing.
     def |>>>(or: OrderRep): RawOrder =
       RawOrder(
-        owner = addr,
+        owner = str,
         tokenS = or.sell.tokenAddress,
         tokenB = or.buy.tokenAddress
       )
@@ -66,9 +72,9 @@ trait OrderHelper extends Constants {
         tokenS = or.sell.tokenAddress,
         tokenB = or.buy.tokenAddress,
         tokenFee = or.fee.getOrElse(or.sell).tokenAddress,
-        amountS = BigInt(or.sell.amount.toLong),
-        amountB = BigInt(or.buy.amount.toLong),
-        amountFee = BigInt(or.fee.getOrElse(or.sell).amount.toLong),
+        amountS = or.sell.amount,
+        amountB = or.buy.amount,
+        amountFee = or.fee.getOrElse(or.sell).amount,
         validSince = 0,
         submittedAt = 0,
         numAttempts = 0,
@@ -82,9 +88,9 @@ trait OrderHelper extends Constants {
         tokenS = or.sell.tokenAddress,
         tokenB = or.buy.tokenAddress,
         tokenFee = or.fee.getOrElse(or.sell).tokenAddress,
-        amountS = BigInt(or.sell.amount.toLong),
-        amountB = BigInt(or.buy.amount.toLong),
-        amountFee = BigInt(or.fee.map(_.amount.toLong).getOrElse(0L)),
+        amountS = or.sell.amount,
+        amountB = or.buy.amount,
+        amountFee = or.fee.map(_.amount).getOrElse(0),
         validSince = 0,
         submittedAt = 0,
         numAttempts = 0,

@@ -17,7 +17,7 @@
 package io.lightcone.core
 
 import org.slf4s.Logging
-import spire.math.Rational
+import spire.math.{Rational => R}
 
 class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
     extends RingMatcher
@@ -53,82 +53,68 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
     } else if (maker.amountS * taker.amountS < maker.amountB * taker.amountB) {
       Left(ERR_MATCHING_ORDERS_NOT_TRADABLE)
     } else {
-      /*合约逻辑：
-    取小的成交量计算，按照订单顺序，如果下一单的卖需要缩减，则第一单为最小单
-    与顺序相关
-    因此生成订单时，按照maker,taker的顺序
-       */
+
+      // 取小的成交量计算，按照订单顺序，如果下一单的卖需要缩减，则第一单为最小单
+      // 与顺序相关
+      // 因此生成订单时，按照maker,taker的顺序
       //taker的卖出大于maker的买入时，taker需要缩减，则认为最小交易量为maker的卖出，否则为taker的买入
 
-      val (makerVolume, takerVolume) =
-        if (taker.matchable.amountS > maker.matchable.amountB) {
+      val ts = taker.amountS
+      val tb = taker.amountB
+      val tms = taker.matchable.amountS
+      val tmb = taker.matchable.amountB
+      val tmf = taker.matchable.amountFee
 
-          (
-            MatchableState(maker.matchable.amountS, maker.matchable.amountB),
-            MatchableState(
-              maker.matchable.amountB,
-              Rational(maker.matchable.amountB) *
-                Rational(taker.amountB, taker.amountS)
-            )
-          )
+      val ms = maker.amountS
+      val mb = maker.amountB
+      val mms = maker.matchable.amountS
+      val mmb = maker.matchable.amountB
+      val mmf = maker.matchable.amountFee
 
-        } else {
-          (
-            MatchableState(
-              taker.matchable.amountB,
-              Rational(taker.matchable.amountB) *
-                Rational(maker.amountB, maker.amountS)
-            ),
-            MatchableState(taker.matchable.amountS, taker.matchable.amountB)
-          )
-        }
+      val makerVolume =
+        if (tms > mmb) MatchableState(mms, mmb)
+        else MatchableState(tmb, R(tmb) * R(mb, ms))
+
+      val takerVolume =
+        if (tms > mmb) MatchableState(mmb, R(mmb) * R(tb, ts))
+        else MatchableState(tms, tmb)
 
       //fee 按照卖出的比例计算
-      val makerFee = maker.matchable.amountFee *
-        makerVolume.amountS /
-        maker.matchable.amountS
-
-      val takerFee = taker.matchable.amountFee *
-        takerVolume.amountS /
-        taker.matchable.amountS
+      val makerFee = mmf * makerVolume.amountS / mms
+      val takerFee = tmf * takerVolume.amountS / tms
 
       val makerMargin = makerVolume.amountS - takerVolume.amountB
       val takerMargin = takerVolume.amountS - makerVolume.amountB
 
-      // println(s"------- takerVolume.amountS: ${takerVolume.amountS}")
-      // println(s"------- makerVolume.amountB: ${makerVolume.amountB}")
-      // println(s"======== makerMargin: $makerMargin")
-      // println(s"======== takerMargin: $takerMargin")
-      Right(
-        MatchableRing(
-          maker = ExpectedMatchableFill(
-            order = maker.copy(
-              _matchable = Some(
-                MatchableState(
-                  maker.matchable.amountS - makerVolume.amountS,
-                  maker.matchable.amountB - makerVolume.amountB,
-                  maker.matchable.amountFee - makerFee
-                )
-              )
-            ),
-            pending = makerVolume.copy(amountFee = makerFee),
-            amountMargin = makerMargin
-          ),
-          taker = ExpectedMatchableFill(
-            order = taker.copy(
-              _matchable = Some(
-                MatchableState(
-                  taker.matchable.amountS - takerVolume.amountS,
-                  taker.matchable.amountB - takerVolume.amountB,
-                  taker.matchable.amountFee - takerFee
-                )
-              )
-            ),
-            pending = takerVolume.copy(amountFee = takerFee),
-            amountMargin = takerMargin
+      val maker_ = ExpectedMatchableFill(
+        maker.copy(
+          _matchable = Some(
+            MatchableState(
+              mms - makerVolume.amountS,
+              mmb - makerVolume.amountB,
+              mmf - makerFee
+            )
           )
-        )
+        ),
+        makerVolume.copy(amountFee = makerFee),
+        makerMargin
       )
+
+      val taker_ = ExpectedMatchableFill(
+        taker.copy(
+          _matchable = Some(
+            MatchableState(
+              tms - takerVolume.amountS,
+              tmb - takerVolume.amountB,
+              tmf - takerFee
+            )
+          )
+        ),
+        takerVolume.copy(amountFee = takerFee),
+        takerMargin
+      )
+
+      Right(MatchableRing(maker_, taker_))
     }
   }
 }

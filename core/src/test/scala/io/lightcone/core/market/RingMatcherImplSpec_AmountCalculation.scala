@@ -19,7 +19,7 @@ package io.lightcone.core
 import io.lightcone.core.testing._
 import spire.math.Rational
 
-class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
+class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
 
   implicit val alwaysProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
@@ -29,51 +29,65 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
         fiatValueThreshold: Double
       ) = true
   }
-  val matcher = new RingMatcherImpl()
 
-  val maker = sellDAI(100000000000.0, 10000000000.0, 10.0)
-  val taker = buyDAI(100000000000.0, 10000000000.0, 10.0)
+  var matcher: RingMatcher = _
+  override def beforeEach(): Unit = {
+    matcher = new RingMatcherImpl()
+  }
 
-  // "price just match" should "full fill if matchable is raw amount" in {
-  //   val res = matcher.matchOrders(
-  //     taker.copy(_matchable = Some(taker.original)),
-  //     maker.copy(_matchable = Some(maker.original))
-  //   )
-  //   val expectRing = MatchableRing(
-  //     taker = ExpectedMatchableFill(
-  //       order = taker.copy(_matchable = Some(MatchableState())),
-  //       pending = taker.original,
-  //       amountMargin = 0 !
-  //     ),
-  //     maker = ExpectedMatchableFill(
-  //       order = maker.copy(_matchable = Some(MatchableState())),
-  //       pending = maker.original,
-  //       amountMargin = 0 !
-  //     )
-  //   )
-  //   res.right.toOption should be(Some(expectRing))
-  // }
+  "price just match" should "full fill if matchable is raw amount" in {
+    val taker =
+      (Addr() |> "100000000000".weth --> "10000000000".dai -- "10".lrc).matchableAsOriginal
+
+    val maker =
+      (Addr() |> "100000000000".dai --> "10000000000".weth -- "10".lrc).matchableAsOriginal
+
+    val expectRing = MatchableRing(
+      taker = ExpectedMatchableFill(
+        order = taker.copy(_matchable = Some(MatchableState())),
+        pending = taker.original,
+        amountMargin = 0
+      ),
+      maker = ExpectedMatchableFill(
+        order = maker.copy(_matchable = Some(MatchableState())),
+        pending = maker.original,
+        amountMargin = 0
+      )
+    )
+
+    matcher.matchOrders(taker, maker, 0) should be(Right(expectRing))
+  }
 
   "price just match" should "part fill if both matchables are half raw amount" in {
     def testScale(scale: Rational): Unit = {
+      val taker =
+        (Addr() |> "100000".weth --> "100".dai -- "10".lrc)
+
+      val maker =
+        (Addr() |> "100".dai --> "100000".weth -- "10".lrc)
+
       val res = matcher.matchOrders(
         taker.copy(_matchable = Some(taker.original.scaleBy(scale))),
-        maker.copy(_matchable = Some(maker.original.scaleBy(scale)))
+        maker.copy(_matchable = Some(maker.original.scaleBy(scale))),
+        0
       )
+
       val pending = maker.original.scaleBy(scale)
+
       val expectRing = MatchableRing(
         taker = ExpectedMatchableFill(
           order = taker.copy(_matchable = Some(MatchableState())),
           pending = taker.original.scaleBy(scale),
-          amountMargin = 33 !
+          amountMargin = 33
         ),
         maker = ExpectedMatchableFill(
           order = maker.copy(_matchable = Some(MatchableState(amountB = 33))),
           pending = pending.copy(amountB = pending.amountB - 33),
-          amountMargin = 0 !
+          amountMargin = 0
         )
       )
-      res.right.toOption should be(Some(expectRing))
+
+      res should be(Right(expectRing))
     }
 
     // testScale(Rational(1, 2))
