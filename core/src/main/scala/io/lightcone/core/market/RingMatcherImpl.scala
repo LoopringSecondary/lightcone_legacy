@@ -17,19 +17,18 @@
 package io.lightcone.core
 
 import org.slf4s.Logging
-import spire.math.{Rational => R}
+import spire.math.{ Rational => R }
 
 class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
-    extends RingMatcher
-    with Logging {
+  extends RingMatcher
+  with Logging {
 
   import ErrorCode._
 
   def matchOrders(
-      taker: Matchable,
-      maker: Matchable,
-      minRequiredIncome: Double = 0
-    ): Either[ErrorCode, MatchableRing] = {
+    taker: Matchable,
+    maker: Matchable,
+    minRequiredIncome: Double = 0): Either[ErrorCode, MatchableRing] = {
     val ringOpt = makeRing(maker, taker)
     ringOpt match {
       case Right(ring) if !rie.isProfitable(ring, minRequiredIncome) =>
@@ -39,9 +38,8 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
   }
 
   private def makeRing(
-      maker: Matchable,
-      taker: Matchable
-    ): Either[ErrorCode, MatchableRing] = {
+    maker: Matchable,
+    taker: Matchable): Either[ErrorCode, MatchableRing] = {
     if (taker.amountB <= 0 || taker.amountS <= 0) {
       Left(ERR_MATCHING_INVALID_TAKER_ORDER)
     } else if (maker.amountB <= 0 || maker.amountS <= 0) {
@@ -57,7 +55,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
       // 取小的成交量计算，按照订单顺序，如果下一单的卖需要缩减，则第一单为最小单
       // 与顺序相关
       // 因此生成订单时，按照maker,taker的顺序
-      //taker的卖出大于maker的买入时，taker需要缩减，则认为最小交易量为maker的卖出，否则为taker的买入
+      // taker的卖出大于maker的买入时，taker需要缩减，则认为最小交易量为maker的卖出，否则为taker的买入
 
       val ts = taker.amountS
       val tb = taker.amountB
@@ -92,13 +90,9 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
             MatchableState(
               mms - makerVolume.amountS,
               mmb - makerVolume.amountB,
-              mmf - makerFee
-            )
-          )
-        ),
+              mmf - makerFee))),
         makerVolume.copy(amountFee = makerFee),
-        makerMargin
-      )
+        makerMargin)
 
       val taker_ = ExpectedMatchableFill(
         taker.copy(
@@ -106,13 +100,9 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
             MatchableState(
               tms - takerVolume.amountS,
               tmb - takerVolume.amountB,
-              tmf - takerFee
-            )
-          )
-        ),
+              tmf - takerFee))),
         takerVolume.copy(amountFee = takerFee),
-        takerMargin
-      )
+        takerMargin)
 
       Right(MatchableRing(maker_, taker_))
     }
