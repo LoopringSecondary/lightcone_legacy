@@ -20,37 +20,76 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern._
 import akka.util.Timeout
 import com.corundumstudio.socketio.{AckRequest, SocketIOClient}
-import com.corundumstudio.socketio.listener.DataListener
+import io.lightcone.core.Address
 import io.lightcone.relayer.actors.MultiAccountManagerActor
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data.GetBalanceAndAllowances
+import io.lightcone.relayer.data._
+import javax.inject.Inject
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object BalanceListener {
-  val name = ""
+  val eventName = "balance"
 }
 
-class BalanceListener(
-  )(
+class BalanceListener @Inject()(
     implicit
-    system: ActorSystem,
-    ec: ExecutionContext,
-    timeout: Timeout,
-    actors: Lookup[ActorRef])
-    extends DataListener[GetBalanceAndAllowances.Req] {
+    val system: ActorSystem,
+    val ec: ExecutionContext,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef])
+    extends WrappedDataListener[SubcriberBalanceAndAllowance.Req] {
 
+  var clients = Seq.empty[WrappedSocketClient[SubcriberBalanceAndAllowance.Req]]
   def accountManager = actors.get(MultiAccountManagerActor.name)
 
   def queryData(
-      req: GetBalanceAndAllowances.Req
-    ): Future[GetBalanceAndAllowances.Res] = {
-    (accountManager ? req).mapAs[GetBalanceAndAllowances.Res]
+      req: SubcriberBalanceAndAllowance.Req
+    ): Future[SubcriberBalanceAndAllowance.Res] = {
+    val getBalanceAndAllowancesReq =
+      GetBalanceAndAllowances.Req(address = req.owner, tokens = req.tokens)
+    (accountManager ? getBalanceAndAllowancesReq)
+      .mapAs[GetBalanceAndAllowances.Res]
+      .map { res =>
+        SubcriberBalanceAndAllowance.Res(
+          owner = res.address,
+          balanceAndAllowanceMap = res.balanceAndAllowanceMap
+        )
+      }
   }
 
   def onData(
       client: SocketIOClient,
-      data: GetBalanceAndAllowances.Req,
+      data: SubcriberBalanceAndAllowance.Req,
       ackSender: AckRequest
-    ): Unit = {}
+    ): Unit = {
+    val wrappedSocketClient =
+      new WrappedSocketClient(BalanceListener.eventName, client, data)
+    val (_clients, outDatedClients) =
+      clients.partition(!_.equals(wrappedSocketClient))
+    outDatedClients.foreach(_.stop)
+    wrappedSocketClient.start()(queryData)
+    clients = _clients.+:(wrappedSocketClient)
+  }
+
+  def dataChanged(msg: Any): Unit = {
+    clearDisConnectedClient
+    msg match {
+      case req: AddressBalanceOrAllowanceUpdated =>
+        clients.foreach { client =>
+          if (Address(req.owner)
+                .equals(Address(client.req.owner)) && client.req.tokens
+                .exists(token => Address(token).equals(Address(req.token)))) {
+            client.restart()(queryData)
+          }
+        }
+    }
+  }
+
+  def clearDisConnectedClient = {
+    val (_clients, disConnectedClients) =
+      clients.partition(_.client.isChannelOpen)
+    clients = _clients
+    disConnectedClients.foreach(_.stop)
+  }
 }

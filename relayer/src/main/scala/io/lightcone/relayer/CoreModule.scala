@@ -34,6 +34,8 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.socket.{BalanceListener, WrappedDataListener}
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -160,6 +162,10 @@ class CoreModule(
     bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
+    //bind socket listener
+    bind[WrappedDataListener[SubcriberBalanceAndAllowance.Req]]
+      .to[BalanceListener]
+
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
 
@@ -199,6 +205,15 @@ class CoreModule(
       blockGasPricesDispatcher,
       tokenBurnRateChangedEventDispatcher
     )
+
+  @Provides
+  def getListeners(
+      balanceListener: WrappedDataListener[SubcriberBalanceAndAllowance.Req]
+    ): Lookup[WrappedDataListener[_]] = {
+    val listeners = new MapBasedLookup[WrappedDataListener[_]]()
+    listeners.add(BalanceListener.eventName, balanceListener)
+    listeners
+  }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

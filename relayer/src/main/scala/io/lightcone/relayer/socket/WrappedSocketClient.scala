@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.socket
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Cancellable}
 import com.corundumstudio.socketio.SocketIOClient
 
 import scala.concurrent.duration._
@@ -25,18 +25,36 @@ import scala.concurrent.{ExecutionContext, Future}
 class WrappedSocketClient[R](
     eventName: String,
     val client: SocketIOClient,
-    req: R
+    val req: R
   )(
     implicit
     system: ActorSystem,
     ec: ExecutionContext) {
 
-  def response()(queryData: R => Future[AnyRef]): Unit = {
-    system.scheduler.schedule(0 second, 1 seconds, new Runnable {
+  var scheduler: Cancellable = null
+
+  def start()(queryData: R => Future[AnyRef]): Unit = {
+    scheduler = system.scheduler.schedule(0 second, 1 seconds, new Runnable {
       override def run(): Unit = {
-        queryData(req).map(data => client.sendEvent(eventName, data))
+        if (client.isChannelOpen) {
+          queryData(req).map(data => client.sendEvent(eventName, data))
+        } else {
+          stop
+        }
       }
     })
+  }
+
+  def stop = {
+    if (scheduler != null) {
+      scheduler.cancel()
+      scheduler = null
+    }
+  }
+
+  def restart()(queryData: R => Future[AnyRef]): Unit = {
+    stop
+    start()(queryData)
   }
 
   override def equals(obj: scala.Any): Boolean = {
