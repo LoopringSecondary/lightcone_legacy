@@ -16,11 +16,12 @@
 
 package io.lightcone.relayer.event
 
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.base._
-import scala.concurrent.duration._
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.support._
+
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class TradesAndRingsExtractorSpec
     extends CommonSpec
@@ -59,7 +60,18 @@ class TradesAndRingsExtractorSpec
       info(s"${account2.getAddress} approve WETH")
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
-      Thread.sleep(1000)
+      expectBalanceRes(
+        GetBalanceAndAllowances.Req(
+          account2.getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        (res: GetBalanceAndAllowances.Res) => {
+          BigInt(
+            res.balanceAndAllowanceMap(WETH_TOKEN.address).allowance.toByteArray
+          ) > 0
+        },
+        timeout
+      )
       val order1 = createRawOrder()(account1)
       val order2 = createRawOrder(
         tokenB = LRC_TOKEN.address,
@@ -78,32 +90,31 @@ class TradesAndRingsExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-
-      Thread.sleep(2000)
-
+      expectTradeRes(
+        GetTrades.Req(owner = account1.getAddress),
+        (res: GetTrades.Res) => {
+          res.trades.length == 1
+        }
+      )
       info("query trades: by owner")
-      val treq1 = GetTrades.Req(owner = account1.getAddress)
       val tres1 = Await.result(
-        singleRequest(treq1, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(GetTrades.Req(owner = account1.getAddress), "get_trades")
+          .mapTo[GetTrades.Res],
         5.second
       )
-
-      assert(tres1.trades.length == 1)
-      println(tres1.trades.head)
-
-      val treq2 = GetTrades.Req(owner = account2.getAddress)
+      tres1.trades.length should be(1)
       val tres2 = Await.result(
-        singleRequest(treq2, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(GetTrades.Req(owner = account2.getAddress), "get_trades")
+          .mapTo[GetTrades.Res],
         5.second
       )
-      assert(tres2.trades.length == 1)
-      println(tres2.trades.head)
+      tres2.trades.length should be(1)
       val req = GetRings.Req()
       val res = Await.result(
         singleRequest(req, "get_rings").mapTo[GetRings.Res],
         5.second
       )
-      assert(res.rings.nonEmpty)
+      res.rings.nonEmpty should be(true)
     }
   }
 

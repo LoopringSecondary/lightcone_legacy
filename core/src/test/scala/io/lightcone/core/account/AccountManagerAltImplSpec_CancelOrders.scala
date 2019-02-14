@@ -16,8 +16,8 @@
 
 package io.lightcone.core
 
-class AccountManagerAltImplSpec_Orders extends AccountManagerAltImplSpec {
-  // import OrderStatus._
+class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
+  import OrderStatus._
 
   "cancelling non-existing orders" should "return empty result" in {
     val (success, orderMap) = manager.cancelOrder("order0").await
@@ -32,10 +32,238 @@ class AccountManagerAltImplSpec_Orders extends AccountManagerAltImplSpec {
 
     map = manager.cancelAllOrders().await
     map.size should be(0)
+
+    map = manager.hardCancelOrder("order0").await
+    map.size should be(0)
   }
 
-  // "canceling existing orders" should work {
+  "soft cancelling one order" should "work" in {
+    val amount = 1000
+    setSpendable(owner, LRC, amount)
 
-  // }
+    val order = submitSingleOrderExpectingSuccess {
+      owner |> 100.0.lrc --> 1.0.weth
+    } {
+      _.copy(
+        status = STATUS_PENDING,
+        _reserved = Some(MatchableState(100, 0, 0)),
+        _actual = Some(MatchableState(100, 1, 0))
+      )
+    }
 
+    softCancelSingleOrderExpectingSuccess(order.id) {
+      order.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
+    }
+
+    manager.getAccountInfo(LRC).await should be(
+      AccountInfo(LRC, amount, amount, amount, amount, 0)
+    )
+  }
+
+  "hard cancelling one order" should "work" in {
+    val amount = 1000
+    setSpendable(owner, LRC, amount)
+
+    val order = submitSingleOrderExpectingSuccess {
+      owner |> 100.0.lrc --> 1.0.weth
+    } {
+      _.copy(
+        status = STATUS_PENDING,
+        _reserved = Some(MatchableState(100, 0, 0)),
+        _actual = Some(MatchableState(100, 1, 0))
+      )
+    }
+
+    hardCancelSingleOrderExpectingSuccess(order.id) {
+      order.copy(status = STATUS_ONCHAIN_CANCELLED_BY_USER)
+    }
+
+    manager.getAccountInfo(LRC).await should be(
+      AccountInfo(LRC, amount, amount, amount, amount, 0)
+    )
+  }
+
+  "canceling all orders in a market" should "work" in {
+    val amount = 10000000L
+    setSpendable(owner, LRC, amount)
+    setSpendable(owner, WETH, amount)
+
+    (1 to 100) foreach { _ =>
+      submitSingleOrderExpectingSuccess {
+        (owner |> 10.0.lrc --> 1.0.weth)
+      } {
+        _.copy(
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(10, 0, 0)),
+          _actual = Some(MatchableState(10, 1, 0))
+        )
+      }
+    }
+
+    (1 to 100) foreach { _ =>
+      submitSingleOrderExpectingSuccess {
+        (owner |> 1.0.weth --> 110.lrc)
+      } {
+        _.copy(
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(1, 0, 0)),
+          _actual = Some(MatchableState(1, 110, 0))
+        )
+      }
+    }
+    numOfOrdersProcessed should be(200)
+
+    manager.cancelOrders(MarketPair(LRC, WETH)).await.size should be(200)
+    numOfOrdersProcessed should be(400)
+
+    Seq(LRC, WETH) foreach { t =>
+      manager.getAccountInfo(t).await should be {
+        AccountInfo(t, amount, amount, amount, amount, 0)
+      }
+    }
+  }
+
+  "purge orders" should "not process those orders" in {
+    val amount = 10000000L
+    setSpendable(owner, LRC, amount)
+    setSpendable(owner, WETH, amount)
+
+    (1 to 100) foreach { _ =>
+      submitSingleOrderExpectingSuccess {
+        (owner |> 10.0.lrc --> 1.0.weth)
+      } {
+        _.copy(
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(10, 0, 0)),
+          _actual = Some(MatchableState(10, 1, 0))
+        )
+      }
+    }
+
+    (1 to 100) foreach { _ =>
+      submitSingleOrderExpectingSuccess {
+        (owner |> 1.0.weth --> 110.lrc)
+      } {
+        _.copy(
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(1, 0, 0)),
+          _actual = Some(MatchableState(1, 110, 0))
+        )
+      }
+    }
+    numOfOrdersProcessed should be(200)
+
+    manager.purgeOrders(MarketPair(LRC, WETH)).await.size should be(200)
+    numOfOrdersProcessed should be(200)
+
+    Seq(LRC, WETH) foreach { t =>
+      manager.getAccountInfo(t).await should be {
+        AccountInfo(t, amount, amount, amount, amount, 0)
+      }
+    }
+  }
+
+  "canceling all existing orders" should "relase all resources" in {
+    val balance = BigInt("100000000000000000")
+    val allowance = BigInt("200000000000000000")
+
+    TOKENS.foreach { t =>
+      setBalanceAllowance(owner, t, balance, allowance)
+    }
+
+    val now = System.currentTimeMillis
+    val num = 5000
+    (1 to num) foreach { _ =>
+      submitRandomOrder(Int.MaxValue)
+    }
+    numOfOrdersProcessed should be(num)
+
+    manager.cancelAllOrders().await.size should be(num)
+    numOfOrdersProcessed should be(num * 2)
+
+    val cost = (System.currentTimeMillis - now).toDouble / num
+    info(
+      s"submitting $num orders then cancel them all " +
+        s"cost $cost millsecond per order"
+    )
+
+    TOKENS.foreach { t =>
+      manager.getAccountInfo(t).await should be(
+        AccountInfo(t, balance, allowance, balance, allowance, 0)
+      )
+    }
+  }
+
+  "handleCutoff" should "remove all older orders whose validSince field is smaller" in {
+    val amount = 10000000L
+    setSpendable(owner, LRC, amount)
+    // setSpendable(owner, WETH, amount)
+
+    val orders = (1 to 100).map { i =>
+      (owner |> 10.0.lrc --> 1.0.weth)
+        .copy(validSince = i)
+    }
+
+    orders.foreach { order =>
+      submitSingleOrderExpectingSuccess(order) {
+        _.copy(
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(10, 0, 0)),
+          _actual = Some(MatchableState(10, 1, 0))
+        )
+      }
+    }
+
+    numOfOrdersProcessed should be(100)
+    val result = manager.handleCutoff(40).await
+    result.size should be(40)
+    result.keys.toSet should be(orders.take(40).map(_.id).toSet)
+
+    numOfOrdersProcessed should be(140)
+  }
+
+  "handleCutoff for traiding pair" should "remove all older orders in the trading pair whose validSince field is smaller" in {
+    val amount = 10000000L
+    setSpendable(owner, LRC, amount)
+    setSpendable(owner, WETH, amount)
+
+    val orders1 = (1 to 100).map { i =>
+      (owner |> 10.0.lrc --> 1.0.weth)
+        .copy(validSince = i)
+    }
+
+    orders1.foreach { order =>
+      submitSingleOrderExpectingSuccess(order) {
+        _.copy(
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(10, 0, 0)),
+          _actual = Some(MatchableState(10, 1, 0))
+        )
+      }
+    }
+
+    val orders2 = (1 to 100).map { i =>
+      (owner |> 10.0.weth --> 1.0.gto)
+        .copy(validSince = i)
+
+    }
+
+    orders2.foreach { order =>
+      submitSingleOrderExpectingSuccess(order) {
+        _.copy(
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(10, 0, 0)),
+          _actual = Some(MatchableState(10, 1, 0))
+        )
+      }
+    }
+
+    val marketHash = MarketHash(MarketPair(LRC, WETH)).hashString
+    numOfOrdersProcessed should be(200)
+    val result = manager.handleCutoff(40, marketHash).await
+    result.size should be(40)
+    result.keys.toSet should be(orders1.take(40).map(_.id).toSet)
+
+    numOfOrdersProcessed should be(240)
+  }
 }

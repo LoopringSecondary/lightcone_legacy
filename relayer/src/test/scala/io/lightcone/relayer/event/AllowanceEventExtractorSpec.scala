@@ -16,10 +16,10 @@
 
 package io.lightcone.relayer.event
 
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.base._
-import org.web3j.crypto.Credentials
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.support._
+
 import scala.concurrent.Await
 
 class AllowanceEventExtractorSpec
@@ -29,9 +29,7 @@ class AllowanceEventExtractorSpec
   "ethereum event extractor actor test" must {
     "correctly extract Approval events from ethereum blocks" in {
       val getBaMethod = "get_balance_and_allowance"
-      val account1 = Credentials.create(
-        "0xd90ff3f9d2d9778f27965930480c222a7a49ef3e3a8c64fae78a1d841456847d"
-      )
+      val account1 = getUniqueAccountWithoutEth
       val ba = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
@@ -42,12 +40,8 @@ class AllowanceEventExtractorSpec
         ).mapAs[GetBalanceAndAllowances.Res],
         timeout.duration
       )
-
       val lrc_ba = ba.balanceAndAllowanceMap(LRC_TOKEN.address)
       val weth_ba = ba.balanceAndAllowanceMap(WETH_TOKEN.address)
-      info(
-        s"${account1.getAddress} allowance is ${BigInt(lrc_ba.allowance.toByteArray)}"
-      )
       Await.result(
         transferEth(account1.getAddress, "1000")(accounts.head),
         timeout.duration
@@ -56,7 +50,17 @@ class AllowanceEventExtractorSpec
       Await.result(approveLRCToDelegate("1000000")(account1), timeout.duration)
       info(s"${account1.getAddress} approve WETH")
       Await.result(approveWETHToDelegate("1000000")(account1), timeout.duration)
-      Thread.sleep(1000)
+      expectBalanceRes(
+        GetBalanceAndAllowances.Req(
+          account1.getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        (res: GetBalanceAndAllowances.Res) => {
+          BigInt(
+            res.balanceAndAllowanceMap(WETH_TOKEN.address).allowance.toByteArray
+          ) > 0
+        }
+      )
       val ba2 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
@@ -69,12 +73,6 @@ class AllowanceEventExtractorSpec
       )
       val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
       val weth_ba2 = ba2.balanceAndAllowanceMap(WETH_TOKEN.address)
-      info(
-        s"${account1.getAddress} LRC allowance is ${BigInt(lrc_ba2.allowance.toByteArray)}"
-      )
-      info(
-        s"${account1.getAddress} WETH allowance is ${BigInt(weth_ba2.allowance.toByteArray)}"
-      )
 
       (BigInt(lrc_ba2.allowance.toByteArray) - BigInt(
         lrc_ba.allowance.toByteArray
