@@ -33,6 +33,7 @@ final class AccountManagerAltImpl(
     with Logging {
 
   import OrderStatus._
+  import ErrorCode._
 
   type ReserveManagerMethod = ReserveManagerAlt => Set[String]
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
@@ -94,9 +95,7 @@ final class AccountManagerAltImpl(
       status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
     ) =
     for {
-      orders <- cancelOrderInternal(status)(
-        orderPool.getOrder(orderId).toSeq
-      )
+      orders <- cancelOrderInternal(status)(orderPool.getOrder(orderId).toSeq)
     } yield (orders.size > 0, orders)
 
   def cancelOrders(orderIds: Seq[String]) =
@@ -178,8 +177,27 @@ final class AccountManagerAltImpl(
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
-    if (!status.isCancelledStatus()) {
-      Future.successful(Map.empty[String, Matchable])
+    val statusIsInvalid = status match {
+      case STATUS_EXPIRED | //
+          STATUS_DUST_ORDER | //
+          STATUS_COMPLETELY_FILLED | //
+          STATUS_SOFT_CANCELLED_BY_USER | //
+          STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR | //
+          STATUS_ONCHAIN_CANCELLED_BY_USER | //
+          STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
+          STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
+          STATUS_SOFT_CANCELLED_LOW_BALANCE | //
+          STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
+          STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET | //
+          STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS | //
+          STATUS_SOFT_CANCELLED_DUPLICIATE =>
+        false
+
+      case _ => true
+    }
+
+    if (statusIsInvalid) {
+      Future.failed(ErrorException(ERR_INTERNAL_UNKNOWN, status.toString))
     } else {
       for {
         _ <- serializeFutures(orders) { order =>
