@@ -29,8 +29,7 @@ object AccountManagerAlt {
       implicit
       processor: UpdatedOrdersProcessor,
       provider: BalanceAndAllowanceProvider,
-      ec: ExecutionContext,
-      orderPool: AccountOrderPool with UpdatedOrdersTracing
+      ec: ExecutionContext
     ): AccountManagerAlt = new AccountManagerAltImpl(owner)
 }
 
