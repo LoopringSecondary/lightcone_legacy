@@ -20,9 +20,10 @@ import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.Hash
+import io.lightcone.core._
 
 trait EIP712Support {
-  def getEIP712Message(typedDataJson: String): String
+  def getEIP712Message(typedDataJson: String): Either[ErrorCode, String]
 }
 
 class DefaultEIP712Support extends EIP712Support {
@@ -57,7 +58,7 @@ class DefaultEIP712Support extends EIP712Support {
    * }
    * """
    */
-  def getEIP712Message(typedDataJson: String): String = {
+  def getEIP712Message(typedDataJson: String): Either[ErrorCode, String] = {
     val json = parse(typedDataJson)
 
     val messageBuilder = new StringBuilder
@@ -66,50 +67,58 @@ class DefaultEIP712Support extends EIP712Support {
     val domain = json \ "domain"
     val types = json \ "types"
     val eip712DomainType = types \ "EIP712Domain"
-    val domainHash = hashStruct(eip712DomainType, domain, types)
+    val domainHash =
+      hashStruct(eip712DomainType.asInstanceOf[JArray], domain, types)
     messageBuilder ++= domainHash
 
-    val primaryTypeName = (json \ "primaryType").extract[String]
-    val primaryType = json \ primaryTypeName
-    val message = json \ "message"
-    val typesHash = hashStruct(primaryType, message, types)
-    messageBuilder ++= typesHash
+    println(s"eip712DomainType: ${eip712DomainType}")
 
-    Numeric.toHexString(Hash.sha3(messageBuilder.map(_.toByte).toArray))
+    val primaryTypeObj = (json \ "primaryType")
+    println(s"primaryTypeObj: $primaryTypeObj")
+    val primaryTypeName = primaryTypeObj.asInstanceOf[JString].values
+    val primaryType = types \ primaryTypeName
+    val message = json \ "message"
+    val typesHash = hashStruct(primaryType.asInstanceOf[JArray], message, types)
+    messageBuilder ++= typesHash
+    println(s"primaryType: $primaryType")
+
+    Right(Numeric.toHexString(Hash.sha3(messageBuilder.map(_.toByte).toArray)))
   }
 
   private def hashStruct(
-      primaryType: JValue,
+      dataTypeArray: JArray,
       data: JValue,
       types: JValue
     ): String = {
-    val encodedString = encodeData(primaryType, data, types)
+    val encodedString = encodeData(dataTypeArray, data, types)
     Numeric.toHexString(Hash.sha3(encodedString.getBytes))
   }
 
   private def encodeData(
-      primaryType: JValue,
+      dataTypeArray: JArray,
       data: JValue,
       types: JValue
     ): String = {
     var encodedTypes = List("Bytes32")
+
     var encodedValues = List()
 
-    ???
+    ""
   }
 
   private def hashType(
       primaryTypeName: String,
       types: JValue
     ) = {
-    Numeric.toHexString(Hash.sha3(encodeType(primaryTypeName, types)))
+    val encodedTypeStr = encodeType(primaryTypeName, types)
+    Numeric.toHexString(Hash.sha3(encodedTypeStr.getBytes))
   }
 
   private def encodeType(
       primaryTypeName: String,
       types: JValue
     ) = {
-    ???
+    ""
   }
 
   private def findTypeDependencies(
@@ -117,7 +126,7 @@ class DefaultEIP712Support extends EIP712Support {
       types: JValue,
       results: Array[JValue]
     ) = {
-    ???
+    ""
     // targetType match {
     //   case t: JNothing              =>
     //   case t if results.contains(t) =>

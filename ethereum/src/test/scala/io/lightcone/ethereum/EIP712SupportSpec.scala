@@ -21,7 +21,7 @@ import org.scalatest._
 class EIP712SupportSpec extends FlatSpec with Matchers {
   val eip712Support: EIP712Support = new DefaultEIP712Support
 
-  "calculateOrderHash" should "be able to get hash of an order" in {
+  "getEIP712Message" should "be able to calculate hash for json data with EIP712 type definitions" in {
     val typedDataJson1 =
       """
         |{
@@ -68,6 +68,9 @@ class EIP712SupportSpec extends FlatSpec with Matchers {
         |  }
         |}
     """.stripMargin
+
+    val message = eip712Support.getEIP712Message(typedDataJson1)
+    println(s"message: $message")
 
     assert(true)
   }
