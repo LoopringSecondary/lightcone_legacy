@@ -132,7 +132,7 @@ class AccountManagerAltActor(
           res = ActorRecover.OrderRecoverResult(rawOrder.hash, true)
         } yield res
 
-        f.recoverWith {
+        val f1 = f.recoverWith {
           case e: ErrorException =>
             e.error.code match {
 
@@ -156,7 +156,7 @@ class AccountManagerAltActor(
             }
         }
 
-        f.sendTo(sender)
+        f1.sendTo(sender)
       }
 
     case req @ SubmitOrder.Req(Some(rawOrder)) =>
@@ -173,7 +173,7 @@ class AccountManagerAltActor(
           result = SubmitOrder.Res(Some(resOrder), true)
         } yield result
 
-        f.recoverWith {
+        val f1 = f.recoverWith {
           case e: ErrorException =>
             e.error.code match {
 
@@ -198,7 +198,7 @@ class AccountManagerAltActor(
             }
         }
 
-        f.sendTo(sender)
+        f1.sendTo(sender)
       }
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
