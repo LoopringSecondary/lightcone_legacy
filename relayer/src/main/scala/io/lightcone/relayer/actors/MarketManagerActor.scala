@@ -26,7 +26,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-
+import kamon.Kamon
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -118,9 +118,16 @@ class MarketManagerActor(
     }
   }
 
-  log.info(
-    s"=======> starting MarketManagerActor ${self.path} for ${marketPair}"
-  )
+  private val metricPrefix: String = {
+    def symbol(token: String) = metadataManager.getToken(token).get.meta.symbol
+    symbol(marketPair.baseToken) + "_" + symbol(marketPair.quoteToken)
+  }
+
+  val numOfOrdersGauge = Kamon.gauge(s"${metricPrefix}_num-orders")
+  val numOfOrdersHisto = Kamon.histogram(s"${metricPrefix}_num-orders")
+  val numOfOrdersTimer = Kamon.timer(s"${metricPrefix}_num-orders")
+
+  log.info("===> starting MarketManagerActor ${self.path} for ${marketPair}")
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 
@@ -226,7 +233,12 @@ class MarketManagerActor(
 
     case SubmitSimpleOrder(_, Some(order)) =>
       blocking {
-        submitOrder(order).sendTo(sender)
+        submitOrder(order).sendTo(sender).andThen {
+          case _ =>
+            val numOfOrders = manager.getNumOfOrders
+            numOfOrdersGauge.set(numOfOrders)
+            numOfOrdersHisto.record(numOfOrders)
+        }
       }
 
     case req: CancelOrder.Req =>
