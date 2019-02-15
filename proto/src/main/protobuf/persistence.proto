@@ -57,3 +57,23 @@ message BlockData {
     bytes  uncle_reward         = 16;
     bytes  extra_data           = 17;
 }
+
+message TokenTickerInfo {
+    int32  token_id = 1;
+    string name = 2;
+    string symbol = 3;
+    string website_slug = 4;
+    string market= 5;
+    int32  rank = 6;
+    double circulating_supply = 7;
+    double total_supply = 8;
+    double max_supply = 9;
+    double price = 10;
+    double volume_24h = 11;
+    double market_cap = 12;
+    double percent_change_1h = 13;
+    double percent_change_24h = 14;
+    double percent_change_7d = 15;
+    int64  last_updated = 16;
+    string pair = 17;
+}

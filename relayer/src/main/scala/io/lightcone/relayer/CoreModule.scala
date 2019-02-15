@@ -78,6 +78,7 @@ class CoreModule(
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
+      "dbconfig-dal-token-ticker-info",
       "dbconfig-dal-ohlc-data"
     )
 
@@ -90,6 +91,7 @@ class CoreModule(
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
+    bind[TokenTickerInfoDal].to[TokenTickerInfoDalImpl].asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------

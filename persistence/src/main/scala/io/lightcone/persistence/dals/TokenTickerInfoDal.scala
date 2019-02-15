@@ -16,29 +16,15 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.persistence.TokenTickerInfo
 import io.lightcone.persistence.base._
-import io.lightcone.core._
 import scala.concurrent._
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+trait TokenTickerInfoDal
+    extends BaseDalImpl[TokenTickerInfoTable, TokenTickerInfo] {
 
-  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def saveOrUpdate(tickers: Seq[TokenTickerInfo]): Future[Seq[Int]]
 
-  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]]
+  def getAll(): Future[Seq[TokenTickerInfo]]
 
-  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
-
-  def updateTokenPrice(tokenMetadata: TokenMetadata): Future[ErrorCode]
-
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]]
-
-  def getTokens(): Future[Seq[TokenMetadata]]
-
-  def updateBurnRate(
-      token: String,
-      burnRateForMarket: Double,
-      burnRateForP2P: Double
-    ): Future[ErrorCode]
-
-  def InvalidateToken(address: String): Future[ErrorCode]
 }

@@ -163,6 +163,7 @@ class CoreDeployer @Inject()(
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
+      actors.add(CMCCrawlerActor.name, CMCCrawlerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
@@ -202,6 +203,8 @@ class CoreDeployer @Inject()(
       actors.add(MetadataRefresher.name, MetadataRefresher.start)
 
       actors.add(KeepAliveActor.name, KeepAliveActor.start)
+
+      actors.add(TokenTickerRefresher.name, TokenTickerRefresher.start)
 
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
