@@ -53,8 +53,8 @@ class DynamicAdjustMarketsSpec
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case SubmitOrder.Res(Some(order)) =>
-//          info(s" response ${order}")
+        case SubmitOrder.Res(Some(order), _) =>
+          //          info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
       }
@@ -128,9 +128,7 @@ class DynamicAdjustMarketsSpec
         UpdateMarketMetadata.Req(
           Some(
             metadataManager
-              .getMarketMetadata(
-                market.hashString
-              )
+              .getMarketMetadata(market.hashString)
               .copy(status = MarketMetadata.Status.ACTIVE)
           )
         )
@@ -164,9 +162,7 @@ class DynamicAdjustMarketsSpec
         .Req(
           Some(
             metadataManager
-              .getMarketMetadata(
-                market.hashString
-              )
+              .getMarketMetadata(market.hashString)
               .copy(status = MarketMetadata.Status.READONLY)
           )
         )
