@@ -137,21 +137,12 @@ class AccountManagerAltActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED |
+                  ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
                 dbModule.orderService
                   .updateOrderStatus(
                     rawOrder.hash,
                     STATUS_ONCHAIN_CANCELLED_BY_USER
-                  )
-                  .map(
-                    _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false)
-                  )
-
-              case ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
-                dbModule.orderService
-                  .updateOrderStatus(
-                    rawOrder.hash,
-                    STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
                   )
                   .map(
                     _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false)
@@ -187,14 +178,9 @@ class AccountManagerAltActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED |
+                  ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
                 val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
-                Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
-
-              case ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
-                val o = rawOrder.withStatus(
-                  STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
-                )
                 Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
 
               case ERR_ORDER_PENDING_ACTIVE =>
