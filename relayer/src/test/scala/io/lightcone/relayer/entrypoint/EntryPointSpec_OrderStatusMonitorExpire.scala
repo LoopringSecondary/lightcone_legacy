@@ -17,9 +17,11 @@
 package io.lightcone.relayer.entrypoint
 
 import akka.util.Timeout
+import io.lightcone.core.OrderStatus.{STATUS_EXPIRED, STATUS_PENDING}
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -58,13 +60,8 @@ class EntryPointSpec_OrderStatusMonitorExpire
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
         } yield {
-          orderOpt match {
-            case Some(order) =>
-              assert(order.sequenceId > 0)
-              assert(order.getState.status == OrderStatus.STATUS_PENDING)
-            case None =>
-              assert(false)
-          }
+          orderOpt.nonEmpty should be(true)
+          orderOpt.get.getState.status should be(STATUS_PENDING)
         }
       })
 
@@ -80,12 +77,8 @@ class EntryPointSpec_OrderStatusMonitorExpire
           orderbook.sells.nonEmpty && orderbook.sells(0).amount == "50.00000",
         Some(Timeout(20 second))
       )
-      orderbookRes match {
-        case Some(Orderbook(lastPrice, sells, buys)) =>
-          info(s"sells:${sells}, buys:${buys}")
-          assert(sells.nonEmpty)
-        case _ => assert(false)
-      }
+      orderbookRes.nonEmpty should be(true)
+      orderbookRes.get.sells.nonEmpty should be(true)
 
       info(
         "the sells in orderbook should be empty, because of the orders has been expired."
@@ -95,27 +88,15 @@ class EntryPointSpec_OrderStatusMonitorExpire
         (orderbook: Orderbook) => orderbook.sells.isEmpty,
         Some(Timeout(15 second))
       )
-      orderbookRes1 match {
-        case Some(Orderbook(lastPrice, sells, buys)) =>
-          info(s"sells:${sells}, buys:${buys}")
-          assert(sells.isEmpty)
-        case _ => assert(false)
-      }
+      orderbookRes1.nonEmpty should be(true)
+      orderbookRes1.get.sells.isEmpty should be(true)
 
       val assertOrderFromDbF1 = Future.sequence(orders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
         } yield {
-          orderOpt match {
-            case Some(order) =>
-              assert(order.sequenceId > 0)
-              //todo:过期的需要设置状态为STATUS_EXPIRED, 现在是否改变了？
-              assert(
-                order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
-              )
-            case None =>
-              assert(false)
-          }
+          orderOpt.nonEmpty should be(true)
+          orderOpt.get.getState.status should be(STATUS_EXPIRED)
         }
       })
 
