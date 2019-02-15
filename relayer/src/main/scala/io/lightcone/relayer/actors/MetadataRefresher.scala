@@ -99,8 +99,8 @@ class MetadataRefresher(
       val validMarketPairs = metadataManager.getValidMarketPairs
       for {
         _ <- refreshMetadata()
-        actors1 <- toNotifyActors(validMarketPairs)
-        _ = actors1 foreach { actor =>
+        actorSelections = toNotifyActors(validMarketPairs)
+        _ = actorSelections foreach { actor =>
           actor ! req
         }
       } yield Unit
@@ -127,52 +127,18 @@ class MetadataRefresher(
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
   private def toNotifyActors(validMarketPairs: Map[String, MarketPair]) = {
-    for {
-      accountManagerActors <- Future.sequence {
-        (0 until numsOfAccountShards) map { i =>
-          getLocalActorRef(
-            s"akka://${context.system.name}/system/sharding/" +
-              s"${MultiAccountManagerActor.name}/${i}/${MultiAccountManagerActor.name}_${i}"
-          )
-        }
-      }
-      marketOrOrderbookManagerActors <- Future.sequence {
-        validMarketPairs flatMap {
-          case (_, marketPair) =>
-            val entityId = MarketManagerActor.getEntityId(marketPair)
-            val orderbookEntityId = s"${OrderbookManagerActor.name}_${entityId}"
-            val marketEntityId = s"${MarketManagerActor.name}_${entityId}"
-            val orderbookActors =
-              getLocalActorRef(
-                s"akka://${context.system.name}/system/sharding/" +
-                  s"${OrderbookManagerActor.name}/" +
-                  s"${(math.abs(orderbookEntityId.hashCode) % numsOfOrderbookManagerShards).toString}/" +
-                  s"$orderbookEntityId"
-              )
-            val marketActors =
-              getLocalActorRef(
-                s"akka://${context.system.name}/system/sharding/" +
-                  s"${MarketManagerActor.name}/" +
-                  s"${(math.abs(marketEntityId.hashCode) % numsOfMarketManagerShards).toString}/" +
-                  s"$marketEntityId"
-              )
-            Seq(orderbookActors, marketActors)
-        }
-      }
-    } yield
-      (accountManagerActors ++ marketOrOrderbookManagerActors)
-        .filterNot(_ == null)
-  }
+    val marketPath = s"akka://${context.system.name}/system/sharding/" +
+      s"${OrderbookManagerActor.name}/*/*"
+    val orderbookPath = s"akka://${context.system.name}/system/sharding/" +
+      s"${OrderbookManagerActor.name}/*/*"
+    val accountManagerPath = s"akka://${context.system.name}/system/sharding/" +
+      s"${MultiAccountManagerActor.name}/*/*"
 
-  //可以获取本地的actors，但是不能有通配符，因为resolveOne只会返回一个ActorRef，resolveOne可以满足需求
-  //使用通配符的话，需要另外使用Identify来得到ActorRef
-  private def getLocalActorRef(path: String): Future[ActorRef] = {
-    context.system
-      .actorSelection(path)
-      .resolveOne()
-      .recover {
-        case _: Throwable => null
-      }
+    Seq(
+      context.system.actorSelection(marketPath),
+      context.system.actorSelection(orderbookPath),
+      context.system.actorSelection(accountManagerPath)
+    )
   }
 
 }
