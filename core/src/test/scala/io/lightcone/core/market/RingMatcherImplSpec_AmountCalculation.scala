@@ -40,7 +40,7 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
       (Addr() |> "100000000000".weth --> "10000000000".dai -- "10".lrc).matchableAsOriginal
 
     val maker =
-      (Addr() |> "100000000000".dai --> "10000000000".weth -- "10".lrc).matchableAsOriginal
+      (Addr() |> "10000000000".dai --> "100000000000".weth -- "10".lrc).matchableAsOriginal
 
     val expectRing = MatchableRing(
       taker = ExpectedMatchableFill(
@@ -73,20 +73,18 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
       )
 
       val pending = maker.original.scaleBy(scale)
-
       val expectRing = MatchableRing(
         taker = ExpectedMatchableFill(
           order = taker.copy(_matchable = Some(MatchableState())),
           pending = taker.original.scaleBy(scale),
-          amountMargin = 33
+          amountMargin = 333
         ),
         maker = ExpectedMatchableFill(
-          order = maker.copy(_matchable = Some(MatchableState(amountB = 33))),
-          pending = pending.copy(amountB = pending.amountB - 33),
+          order = maker.copy(_matchable = Some(MatchableState(amountB = 333))),
+          pending = pending.copy(amountB = pending.amountB - 333),
           amountMargin = 0
         )
       )
-
       res should be(Right(expectRing))
     }
 
