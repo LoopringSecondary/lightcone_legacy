@@ -184,10 +184,12 @@ class AccountManagerAltActor(
                 Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
 
               case ERR_ORDER_PENDING_ACTIVE =>
-                val o = rawOrder.withStatus(STATUS_PENDING_ACTIVE)
                 for {
                   resRawOrder <- (orderPersistenceActor ? req
-                    .copy(rawOrder = Some(o)))
+                    .copy(
+                      rawOrder =
+                        Some(rawOrder.withStatus(STATUS_PENDING_ACTIVE))
+                    ))
                     .mapAs[RawOrder]
                   resp = SubmitOrder.Res(Some(resRawOrder.toOrder), true)
                 } yield resp
