@@ -18,15 +18,14 @@ package io.lightcone.core
 
 import spire.math.Rational
 
-class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
+class RingMatcherImplSpec_Amount extends MarketManagerImplSpec {
 
   implicit val alwaysProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-        ring: MatchableRing,
-        fiatValueThreshold: Double
-      ) = true
+      ring: MatchableRing,
+      fiatValueThreshold: Double) = true
   }
 
   var matcher: RingMatcher = _
@@ -45,14 +44,11 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
       taker = ExpectedMatchableFill(
         order = taker.copy(_matchable = Some(MatchableState())),
         pending = taker.original,
-        amountMargin = 0
-      ),
+        amountMargin = 0),
       maker = ExpectedMatchableFill(
         order = maker.copy(_matchable = Some(MatchableState())),
         pending = maker.original,
-        amountMargin = 0
-      )
-    )
+        amountMargin = 0))
 
     matcher.matchOrders(taker, maker, 0) should be(Right(expectRing))
   }
@@ -68,22 +64,18 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
       val res = matcher.matchOrders(
         taker.copy(_matchable = Some(taker.original.scaleBy(scale))),
         maker.copy(_matchable = Some(maker.original.scaleBy(scale))),
-        0
-      )
+        0)
 
       val pending = maker.original.scaleBy(scale)
       val expectRing = MatchableRing(
         taker = ExpectedMatchableFill(
           order = taker.copy(_matchable = Some(MatchableState())),
           pending = taker.original.scaleBy(scale),
-          amountMargin = 333
-        ),
+          amountMargin = 333),
         maker = ExpectedMatchableFill(
           order = maker.copy(_matchable = Some(MatchableState(amountB = 333))),
           pending = pending.copy(amountB = pending.amountB - 333),
-          amountMargin = 0
-        )
-      )
+          amountMargin = 0))
       res should be(Right(expectRing))
     }
 
@@ -101,22 +93,17 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
     val res = matcher.matchOrders(
       taker.copy(_matchable = Some(taker.original.scaleBy(1.0 / 3))),
       maker.copy(_matchable = Some(maker.original.scaleBy(1.0 / 3))),
-      0
-    )
+      0)
     val expectRing = MatchableRing(
       taker = ExpectedMatchableFill(
         order = taker.copy(_matchable = Some(MatchableState())),
         pending = taker.original.scaleBy(1.0 / 3),
-        amountMargin = 0
-      ),
+        amountMargin = 0),
       maker = ExpectedMatchableFill(
         order = maker.copy(
-          _matchable = Some(MatchableState())
-        ),
+          _matchable = Some(MatchableState())),
         pending = maker.original.scaleBy(1.0 / 3),
-        amountMargin = 0
-      )
-    )
+        amountMargin = 0))
     res.right.toOption should be(Some(expectRing))
   }
 
@@ -130,49 +117,34 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
           MatchableState(
             amountS = taker.amountS / 2,
             amountB = taker.amountB / 2,
-            amountFee = taker.amountFee / 2
-          )
-        )
-      ),
+            amountFee = taker.amountFee / 2))),
       maker.copy(
         _matchable = Some(
           MatchableState(
             amountS = maker.amountS / 2,
             amountB = maker.amountB / 2,
-            amountFee = maker.amountFee / 2
-          )
-        )
-      ),
-      0
-    )
+            amountFee = maker.amountFee / 2))),
+      0)
     val expectRing = MatchableRing(
       taker = ExpectedMatchableFill(
         order = taker.copy(_matchable = Some(MatchableState())),
         pending = MatchableState(
           amountS = taker.amountS / 2,
           amountB = taker.amountB / 2,
-          amountFee = taker.amountFee / 2
-        ),
-        amountMargin = BigInt("2000000000")
-      ),
+          amountFee = taker.amountFee / 2),
+        amountMargin = BigInt("2000000000")),
       maker = ExpectedMatchableFill(
         order = maker.copy(
           _matchable = Some(
             MatchableState(
               amountS = BigInt("700000000000"),
               amountB = BigInt("42000000000"),
-              amountFee = BigInt("42")
-            )
-          )
-        ),
+              amountFee = BigInt("42")))),
         pending = MatchableState(
           amountS = BigInt("50000000000"),
           amountB = BigInt("3000000000"),
-          amountFee = BigInt("3")
-        ),
-        amountMargin = 0
-      )
-    )
+          amountFee = BigInt("3")),
+        amountMargin = 0))
     res.right.toOption should be(Some(expectRing))
   }
 }
