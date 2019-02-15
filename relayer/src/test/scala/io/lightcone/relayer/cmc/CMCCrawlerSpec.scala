@@ -36,13 +36,28 @@ class CMCCrawlerSpec
     with MetadataManagerSupport
     with CMCSupport {
 
-  val probe = TestProbe()
+  def crawlerActor = actors.get(CMCCrawlerActor.name)
+  def refresherActor = actors.get(TokenTickerRefresher.name)
 
-  def actor = actors.get(CMCCrawlerActor.name)
+  "cmc crawler" must {
+    info("waiting for job to be completed")
+    Thread.sleep(15000)
+    "get all tickers" in {
+      val q1 = Await.result(
+        (refresherActor ? GetTokenTickers.Req()).mapTo[GetTokenTickers.Res],
+        5.second
+      )
+      info(s"all tickers length:${q1.tickers.length}")
+      q1.tickers.nonEmpty should be (true)
+    }
 
-  "aaa" must {
-    "bbb" in {
-      Thread.sleep(30000)
+    "get WETH market tickers" in {
+      val q1 = Await.result(
+        (refresherActor ? GetTokenTickers.Req("WETH")).mapTo[GetTokenTickers.Res],
+        5.second
+      )
+      info(s"WETH market tickers length:${q1.tickers.length}")
+      q1.tickers.nonEmpty should be (true)
     }
   }
 
