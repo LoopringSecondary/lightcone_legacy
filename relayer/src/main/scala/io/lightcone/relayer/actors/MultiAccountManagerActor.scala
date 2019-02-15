@@ -227,8 +227,8 @@ class MultiAccountManagerActor(
       ): Future[(BigInt, BigInt)] = {
 
       val t = timer.refine("label" -> "get_balance_allowance").start
-
       val ethereumQueryActor = actors.get(EthereumQueryActor.name)
+
       (for {
         res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
           address,

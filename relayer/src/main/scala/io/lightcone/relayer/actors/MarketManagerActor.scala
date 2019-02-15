@@ -343,15 +343,18 @@ class MarketManagerActor(
           context.system.stop(self)
 
         case Some(metadata) =>
-          log.info(s"metadata changed: $metadata")
           count.refine("label" -> "metadata_updated").increment()
+          log.info(s"metadata changed: $metadata")
+
       }
 
     case req: GetOrderbookSlots.Req =>
+      count.refine("label" -> "get_orderbook").increment()
+
       sender ! GetOrderbookSlots.Res(
         Some(manager.getOrderbookSlots(req.numOfSlots))
       )
-      count.refine("label" -> "get_orderbook").increment()
+
   }
 
   private def submitOrder(order: Order): Future[MatchResult] = Future {

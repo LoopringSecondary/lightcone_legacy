@@ -60,9 +60,8 @@ class AccountManagerAltActor(
   import OrderStatus._
   import TxStatus._
 
-  val metricName = "account_manager"
-  val count = Kamon.counter(metricName)
-  val timer = Kamon.timer(metricName)
+  val count = Kamon.counter("account_manager")
+  val timer = Kamon.timer("account_manager")
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   implicit val uoProcessor: UpdatedOrdersProcessor = this
@@ -148,6 +147,7 @@ class AccountManagerAltActor(
       }
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
+      count.refine("label" -> "get_balance_allowance").increment()
       blocking(timer, "get_balance_allowance") {
         (for {
           accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
@@ -164,13 +164,11 @@ class AccountManagerAltActor(
               )
           }
           result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
-        } yield result).andThen {
-          case _ =>
-            count.refine("label" -> "get_balance_allowance").increment()
-        }.sendTo(sender)
+        } yield result).sendTo(sender)
       }
 
     case req @ SubmitOrder.Req(Some(raworder)) =>
+      count.refine("label" -> "submit_order").increment()
       blocking {
         (for {
           //check通过再保存到数据库，以及后续处理
@@ -192,13 +190,11 @@ class AccountManagerAltActor(
           }).mapAs[Order]
 
           result = SubmitOrder.Res(Some(resOrder))
-        } yield result).andThen {
-          case _ =>
-            count.refine("label" -> "submit_order").increment()
-        }.sendTo(sender)
+        } yield result).sendTo(sender)
       }
 
     case req @ CancelOrder.Req("", addr, _, None, _) =>
+      count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner取消订单
         (for {
           updatedOrders <- manager.cancelAllOrders()
@@ -206,14 +202,12 @@ class AccountManagerAltActor(
             if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
             else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
           }
-        } yield result).andThen {
-          case _ =>
-            count.refine("label" -> "cancel_order").increment()
-        }.sendTo(sender)
+        } yield result).sendTo(sender)
       }
 
     case req @ CancelOrder
           .Req("", owner, _, Some(marketPair), _) =>
+      count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner-MarketPair取消订单
         (for {
           updatedOrders <- manager.cancelOrders(marketPair)
@@ -221,13 +215,12 @@ class AccountManagerAltActor(
             if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
             else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
           }
-        } yield result).andThen {
-          case _ =>
-            count.refine("label" -> "cancel_order").increment()
-        }.sendTo(sender)
+        } yield result).sendTo(sender)
       }
 
     case req @ CancelOrder.Req(id, addr, status, _, _) =>
+      count.refine("label" -> "cancel_order").increment()
+
       blocking {
         assert(addr == owner)
         val originalSender = sender
@@ -245,53 +238,45 @@ class AccountManagerAltActor(
               )
             }
           }
-        } yield result).andThen {
-          case _ =>
-            count.refine("label" -> "cancel_order").increment()
-        }.sendTo(sender)
+        } yield result).sendTo(sender)
       }
 
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case req: AddressBalanceUpdated =>
+      count.refine("label" -> "balance_updated").increment()
+
       blocking {
         assert(req.address == owner)
-        manager.setBalance(req.token, BigInt(req.balance.toByteArray)).andThen {
-          case _ =>
-            count.refine("label" -> "balance_updated").increment()
-        }
+        manager.setBalance(req.token, BigInt(req.balance.toByteArray))
       }
 
     case req: AddressAllowanceUpdated =>
+      count.refine("label" -> "allowance_updated").increment()
+
       blocking {
         assert(req.address == owner)
         manager
           .setAllowance(req.token, BigInt(req.allowance.toByteArray))
-          .andThen {
-            case _ =>
-              count.refine("label" -> "allowance_updated").increment()
-          }
+
       }
 
     // ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) //
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+      count.refine("label" -> "cutoff").increment()
       blocking {
         accountCutoffState.setCutoff(cutoff)
-        manager.handleCutoff(cutoff).andThen {
-          case _ =>
-            count.refine("label" -> "cutoff").increment()
-        }
+        manager.handleCutoff(cutoff)
       }
 
     // ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) //
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+      count.refine("label" -> "cutoff_market").increment()
+
       blocking {
         accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
-        manager.handleCutoff(cutoff, marketHash).andThen {
-          case _ =>
-            count.refine("label" -> "cutoff_market").increment()
-        }
+        manager.handleCutoff(cutoff, marketHash)
       }
 
     // Currently we do not support broker-level cutoff
@@ -301,14 +286,12 @@ class AccountManagerAltActor(
 
     case req: OrderFilledEvent //
         if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
+      count.refine("label" -> "order_filled").increment()
       blocking {
         (for {
           orderOpt <- dbModule.orderService.getOrder(req.orderHash)
           _ <- swap(orderOpt.map(resubmitOrder))
-        } yield Unit).andThen {
-          case _ =>
-            count.refine("label" -> "order_filled").increment()
-        }
+        } yield Unit)
       }
   }
 
