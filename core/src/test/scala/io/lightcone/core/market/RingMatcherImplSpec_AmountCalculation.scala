@@ -40,7 +40,7 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
       (Addr() |> "100000000000".weth --> "10000000000".dai -- "10".lrc).matchableAsOriginal
 
     val maker =
-      (Addr() |> "100000000000".dai --> "10000000000".weth -- "10".lrc).matchableAsOriginal
+      (Addr() |> "10000000000".dai --> "100000000000".weth -- "10".lrc).matchableAsOriginal
 
     val expectRing = MatchableRing(
       taker = ExpectedMatchableFill(
@@ -73,20 +73,18 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
       )
 
       val pending = maker.original.scaleBy(scale)
-
       val expectRing = MatchableRing(
         taker = ExpectedMatchableFill(
           order = taker.copy(_matchable = Some(MatchableState())),
           pending = taker.original.scaleBy(scale),
-          amountMargin = 33
+          amountMargin = 333
         ),
         maker = ExpectedMatchableFill(
-          order = maker.copy(_matchable = Some(MatchableState(amountB = 33))),
-          pending = pending.copy(amountB = pending.amountB - 33),
+          order = maker.copy(_matchable = Some(MatchableState(amountB = 333))),
+          pending = pending.copy(amountB = pending.amountB - 333),
           amountMargin = 0
         )
       )
-
       res should be(Right(expectRing))
     }
 
@@ -96,280 +94,86 @@ class RingMatcherImplSpec_AmountCalculation extends MarketManagerImplSpec {
     // testScale(Rational(1, 7))
   }
 
-  // "price3 just match" should "part fill if both matchables are a third of raw amount" in {
-  //   //taker.amountB的计算通过amountS，因为精度问题，所以taker.amountB会在amountS的精度后为0
-  //   val res = matcher.matchOrders(
-  //     taker.copy(_matchable = Some(taker.original.scaleBy(1.0 / 3))),
-  //     maker.copy(_matchable = Some(maker.original.scaleBy(1.0 / 3)))
-  //   )
-  //   val expectRing = MatchableRing(
-  //     taker = ExpectedMatchableFill(
-  //       order = taker.copy(_matchable = Some(MatchableState())),
-  //       pending = taker.original.scaleBy(1.0 / 3),
-  //       amountMargin = 0!
-  //     ),
-  //     maker = ExpectedMatchableFill(
-  //       order =
-  //         maker.copy(_matchable = Some(MatchableState(amountS = 3, amountFee = 1))),
-  //       pending = maker.original.scaleBy(1.0 / 3),
-  //       amountMargin = 0!
-  //     )
-  //   )
-  //   res.right.toOption should be(Some(expectRing))
-  // }
+  "price3 just match" should "part fill if both matchables are a third of raw amount" in {
+    //taker.amountB的计算通过amountS，因为精度问题，所以taker.amountB会在amountS的精度后为0
+    val maker = (Addr() |> "100000000000".dai --> "100000000000".weth -- "10".lrc)
+    val taker = (Addr() |> "100000000000".weth --> "100000000000".dai -- "10".lrc)
 
-  // "price just match" should "part fill if one matchable is half of raw amount" in {
-  //   val res = matcher.matchOrders(
-  //     taker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = taker.amountS / 2,
-  //           amountB = taker.amountB/2,
-  //           amountFee = taker.amountFee / 2
-  //         )
-  //       )
-  //     ),
-  //     maker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = maker.amount,
-  //           amountB = maker.amountB,
-  //           amountFee = maker.amountFee
-  //         )
-  //       )
-  //     )
-  //   )
+    val res = matcher.matchOrders(
+      taker.copy(_matchable = Some(taker.original.scaleBy(1.0 / 3))),
+      maker.copy(_matchable = Some(maker.original.scaleBy(1.0 / 3))),
+      0
+    )
+    val expectRing = MatchableRing(
+      taker = ExpectedMatchableFill(
+        order = taker.copy(_matchable = Some(MatchableState())),
+        pending = taker.original.scaleBy(1.0 / 3),
+        amountMargin = 0
+      ),
+      maker = ExpectedMatchableFill(
+        order = maker.copy(
+          _matchable = Some(MatchableState())
+        ),
+        pending = maker.original.scaleBy(1.0 / 3),
+        amountMargin = 0
+      )
+    )
+    res.right.toOption should be(Some(expectRing))
+  }
 
-  //   val expectRing = MatchableRing(
-  //     taker = ExpectedMatchableFill(
-  //       order = taker.copy(_matchable = Some(MatchableState())),
-  //       pending = MatchableState(
-  //         amountS = taker.amountS / 2,
-  //         amountB = taker.amountB/2,
-  //         amountFee = taker.amountFee / 2
-  //       ),
-  //       amountMargin = 0!
-  //     ),
-  //     maker = ExpectedMatchableFill(
-  //       order = maker.copy(
-  //         _matchable = Some(
-  //           MatchableState(
-  //             amountS = maker.amount - taker.amountB/2,
-  //             amountB = maker.amountB, - taker.amountS / 2,
-  //             amountFee = Rational(maker.amountFee) - Rational(
-  //               maker.amountFee * (maker.amount - taker.amountB/2),
-  //               maker.amount
-  //             )
-  //           )
-  //         )
-  //       ),
-  //       pending = MatchableState(
-  //         amountS =
-  //           taker.amountB/2,
-  //         amountB = taker.amountS / 2,
-  //         amountFee =
-  //           Rational(maker.amountFee * (maker.amount - taker.amountB/2), maker.amount)
-  //       ),
-  //       amountMargin = 0!
-  //     )
-  //   )
-  //   res.right.toOption should be(Some(expectRing))
-  // }
+  "price1 with margin" should " fill if matchable is raw amount" in {
+    val maker = (Addr() |> "1500000000000".dai --> "90000000000".weth -- "90".lrc)
+    val taker = (Addr() |> "10000000000".weth --> "100000000000".dai -- "10".lrc)
 
-  // "price2 just match" should "fill with different decimal and raw amount isn't divisible by matchable " in {
-  //   val otherDecimal = decimal.substring(0, 8)
-  //   info(decimal)
-  //   info(otherDecimal)
-  //   val (taker.amountS, taker.amountB, taker.amountFee) = (
-  //     BigInt("11" + otherDecimal),
-  //     BigInt("110" + decimal),
-  //     BigInt("10" + decimal)
-  //   )
-  //   val (maker.amount, maker.amountB, maker.amountFee) = (
-  //     BigInt("110" + decimal),
-  //     BigInt("11" + otherDecimal),
-  //     BigInt("10" + decimal)
-  //   )
-  //   val maker = sellDAI(maker.amount, maker.amountB, maker.amountFee)
-  //   val taker = buyDAI(taker.amountS, taker.amountB, taker.amountFee)
-  //   val res = matcher.matchOrders(
-  //     taker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = BigInt("333333333"),
-  //           amountB = BigInt("33333333300000000000"),
-  //           amountFee = BigInt("3030303027272727272")
-  //         )
-  //       )
-  //     ),
-  //     maker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = BigInt("33333333333333333333"),
-  //           amountB = BigInt("333333333"),
-  //           amountFee = BigInt("3030303030303030303")
-  //         )
-  //       )
-  //     )
-  //   )
-  //   val expectRing = MatchableRing(
-  //     taker = ExpectedMatchableFill(
-  //       order = taker.copy(_matchable = Some(MatchableState())),
-  //       pending = MatchableState(
-  //         amountS = BigInt("333333333"),
-  //         amountB = BigInt("33333333300000000000"),
-  //         amountFee = BigInt("3030303027272727272")
-  //       ),
-  //       amountMargin = 0!
-  //     ),
-  //     maker = ExpectedMatchableFill(
-  //       order = maker.copy(
-  //         _matchable = Some(
-  //           MatchableState(
-  //             amountS = BigInt("33333333333"),
-  //             amountFee = BigInt("3030303031")
-  //           )
-  //         )
-  //       ),
-  //       pending = MatchableState(
-  //         amountS = BigInt("33333333300000000000"),
-  //         amountB = BigInt("333333333"),
-  //         amountFee = BigInt("3030303027272727272")
-  //       ),
-  //       amountMargin = 0!
-  //     )
-  //   )
-  //   res.right.toOption should be(Some(expectRing))
-  // }
-
-  // "price1 with margin" should " fill if matchable is raw amount" in {
-  //   val (maker.amount, maker.amountB, maker.amountFee) = (
-  //     BigInt("1500000000000" + decimal),
-  //     BigInt("90000000000" + decimal),
-  //     BigInt("90" + decimal)
-  //   )
-  //   val (taker.amountS, taker.amountB, taker.amountFee) = (
-  //     BigInt("10000000000" + decimal),
-  //     BigInt("100000000000" + decimal),
-  //     BigInt("10" + decimal)
-  //   )
-  //   val maker = sellDAI(maker.amount, maker.amountB, maker.amountFee)
-  //   val taker = buyDAI(taker.amountS, taker.amountB, taker.amountFee)
-
-  //   val res = matcher.matchOrders(
-  //     taker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = taker.amountS / 2,
-  //           amountB = taker.amountB/2,
-  //           amountFee = taker.amountFee / 2
-  //         )
-  //       )
-  //     ),
-  //     maker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = maker.amountS / 2,
-  //           amountB = maker.amountB/2,
-  //           amountFee = maker.amountFee / 2
-  //         )
-  //       )
-  //     )
-  //   )
-  //   val expectRing = MatchableRing(
-  //     taker = ExpectedMatchableFill(
-  //       order = taker.copy(_matchable = Some(MatchableState())),
-  //       pending = MatchableState(
-  //         amountS = taker.amountS / 2,
-  //         amountB = taker.amountB/2,
-  //         amountFee = taker.amountFee / 2
-  //       ),
-  //       amountMargin = BigInt("2000000000" + decimal)
-  //     ),
-  //     maker = ExpectedMatchableFill(
-  //       order = maker.copy(
-  //         _matchable = Some(
-  //           MatchableState(
-  //             amountS = BigInt("700000000000" + decimal),
-  //             amountB = BigInt("42000000000" + decimal),
-  //             amountFee = BigInt("42" + decimal)
-  //           )
-  //         )
-  //       ),
-  //       pending = MatchableState(
-  //         amountS = BigInt("50000000000" + decimal),
-  //         amountB = BigInt("3000000000" + decimal),
-  //         amountFee = BigInt("3" + decimal)
-  //       ),
-  //       amountMargin = 0!
-  //     )
-  //   )
-  //   res.right.toOption should be(Some(expectRing))
-  // }
-
-  // "price with margin" should " fill if matchable is raw amount" in {
-  //   val (maker.amount, maker.amountB, maker.amountFee) = (
-  //     BigInt("1500000000000" + decimal),
-  //     BigInt("90000000000" + decimal),
-  //     BigInt("90" + decimal)
-  //   )
-  //   val (taker.amountS, taker.amountB, taker.amountFee) = (
-  //     BigInt("10000000000" + decimal),
-  //     BigInt("100000000000" + decimal),
-  //     BigInt("10" + decimal)
-  //   )
-  //   val maker = sellDAI(maker.amount, maker.amountB, maker.amountFee)
-  //   val taker = buyDAI(taker.amountS, taker.amountB, taker.amountFee)
-
-  //   val res = matcher.matchOrders(
-  //     taker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = taker.amountS,
-  //           amountB = taker.amountB,
-  //           amountFee = taker.amountFee
-  //         )
-  //       )
-  //     ),
-  //     maker.copy(
-  //       _matchable = Some(
-  //         MatchableState(
-  //           amountS = maker.amount,
-  //           amountB = maker.amountB,
-  //           amountFee = maker.amountFee
-  //         )
-  //       )
-  //     )
-  //   )
-  //   val expectRing = MatchableRing(
-  //     taker = ExpectedMatchableFill(
-  //       order = taker.copy(_matchable = Some(MatchableState())),
-  //       pending = MatchableState(
-  //         amountS = taker.amountS,
-  //         amountB = taker.amountB,
-  //         amountFee = taker.amountFee
-  //       ),
-  //       amountMargin = BigInt("4000000000" + decimal)
-  //     ),
-  //     maker = ExpectedMatchableFill(
-  //       order = maker.copy(
-  //         _matchable = Some(
-  //           MatchableState(
-  //             amountS = BigInt("1400000000000" + decimal),
-  //             amountB = BigInt("84000000000" + decimal),
-  //             amountFee = BigInt("84" + decimal)
-  //           )
-  //         )
-  //       ),
-  //       pending = MatchableState(
-  //         amountS = BigInt("100000000000" + decimal),
-  //         amountB = BigInt("6000000000" + decimal),
-  //         amountFee = BigInt("6" + decimal)
-  //       ),
-  //       amountMargin = 0!
-  //     )
-  //   )
-  //   res.right.toOption should be(Some(expectRing))
-
-  // }
+    val res = matcher.matchOrders(
+      taker.copy(
+        _matchable = Some(
+          MatchableState(
+            amountS = taker.amountS / 2,
+            amountB = taker.amountB / 2,
+            amountFee = taker.amountFee / 2
+          )
+        )
+      ),
+      maker.copy(
+        _matchable = Some(
+          MatchableState(
+            amountS = maker.amountS / 2,
+            amountB = maker.amountB / 2,
+            amountFee = maker.amountFee / 2
+          )
+        )
+      ),
+      0
+    )
+    val expectRing = MatchableRing(
+      taker = ExpectedMatchableFill(
+        order = taker.copy(_matchable = Some(MatchableState())),
+        pending = MatchableState(
+          amountS = taker.amountS / 2,
+          amountB = taker.amountB / 2,
+          amountFee = taker.amountFee / 2
+        ),
+        amountMargin = BigInt("2000000000")
+      ),
+      maker = ExpectedMatchableFill(
+        order = maker.copy(
+          _matchable = Some(
+            MatchableState(
+              amountS = BigInt("700000000000"),
+              amountB = BigInt("42000000000"),
+              amountFee = BigInt("42")
+            )
+          )
+        ),
+        pending = MatchableState(
+          amountS = BigInt("50000000000"),
+          amountB = BigInt("3000000000"),
+          amountFee = BigInt("3")
+        ),
+        amountMargin = 0
+      )
+    )
+    res.right.toOption should be(Some(expectRing))
+  }
 }
