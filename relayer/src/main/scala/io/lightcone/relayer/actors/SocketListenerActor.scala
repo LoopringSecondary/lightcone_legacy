@@ -16,14 +16,29 @@
 
 package io.lightcone.relayer.actors
 
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import com.google.inject.Inject
-import io.lightcone.relayer.base.Lookup
+import io.lightcone.relayer.base.{DeployedAsSingleton, Lookup}
 import io.lightcone.relayer.data.AddressBalanceOrAllowanceUpdated
 import io.lightcone.relayer.socket.{BalanceListener, WrappedDataListener}
 
 import scala.concurrent.ExecutionContext
+
+object SocketListenerActor extends DeployedAsSingleton {
+  val name = "socket_listener"
+
+  def start(
+      implicit
+      system: ActorSystem,
+      ec: ExecutionContext,
+      timeout: Timeout,
+      listeners: Lookup[WrappedDataListener[_]],
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
+    startSingleton(Props(new SocketListenerActor()))
+  }
+}
 
 class SocketListenerActor @Inject()(
     implicit

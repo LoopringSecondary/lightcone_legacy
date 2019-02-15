@@ -81,7 +81,10 @@ class BalanceListener @Inject()(
         BalanceListener.eventName,
         delayInSeconds,
         client,
-        data
+        data.copy(
+          owner = Address.normalize(data.owner),
+          tokens = data.tokens.map(Address.normalize)
+        )
       )
     val (_clients, outDatedClients) =
       clients.partition(!_.equals(wrappedSocketClient))

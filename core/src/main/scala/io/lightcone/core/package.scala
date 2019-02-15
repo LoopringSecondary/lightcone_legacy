@@ -51,7 +51,7 @@ package object core {
     ByteString.copyFrom(bytes)
 
   implicit def byteString2HexString(bytes: ByteString): String = {
-    Numeric.toHexString(bytes.toByteArray)
+    Numeric.toHexStringWithPrefix(bytes.bigInteger)
   }
 
   /// -----implicit classes -----

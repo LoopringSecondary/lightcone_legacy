@@ -16,16 +16,29 @@
 
 package io.lightcone.relayer.socket
 
+import io.lightcone.relayer.actors.SocketListenerActor
+import io.lightcone.relayer.data.AddressBalanceOrAllowanceUpdated
 import io.lightcone.relayer.support._
 
 class SocketSpec
     extends CommonSpec
-    with EthereumSupport
-    with MultiAccountManagerSupport
+    with EthereumEventExtractorSupport
     with SocketSupport {
 
   "socket server  test" must {
     "socket server starts normally and can subscriber and received correct data" in {
+
+//      def socketListener = actors.get(SocketListenerActor.name)
+//      Thread.sleep(10 * 1000)
+//      val account0 = accounts.head
+//      val account1 = getUniqueAccountWithoutEth
+//      transferWETH(account1.getAddress, "100")(account0).map { _ =>
+//        socketListener ! AddressBalanceOrAllowanceUpdated(
+//          owner = account0.getAddress,
+//          token = WETH_TOKEN.address
+//        )
+//        println("transfer 100 weth")
+//      }
 //      Thread.sleep(Int.MaxValue)
     }
   }

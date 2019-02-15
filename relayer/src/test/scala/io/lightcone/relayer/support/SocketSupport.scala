@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer.support
 
+import io.lightcone.relayer.actors.SocketListenerActor
 import io.lightcone.relayer.base.MapBasedLookup
 import io.lightcone.relayer.socket._
 
@@ -23,6 +24,9 @@ trait SocketSupport {
   com: CommonSpec =>
   implicit val listeners = new MapBasedLookup[WrappedDataListener[_]]
   listeners.add(BalanceListener.eventName, new BalanceListener())
+
+  actors.add(SocketListenerActor.name, SocketListenerActor.start)
+
   val socketServer = new SocketServer with SocketRegister
   socketServer.start()
   println(s"${"." * 10}start socket server${"." * 10}")
