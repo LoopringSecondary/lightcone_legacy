@@ -359,8 +359,12 @@ class AccountManagerAltActor(
           throw ErrorException(ERR_ORDER_PENDING_ACTIVE)
         }
       }
-      canceled <- isOrderCanceled(rawOrder) //取消订单，单独查询以太坊
-      _ = if (canceled) {
+      res <- (ethereumQueryActor ? GetOrderCancellation.Req(
+        broker = rawOrder.owner,
+        orderHash = rawOrder.hash
+      )).mapAs[GetOrderCancellation.Res]
+
+      _ = if (res.cancelled) {
         throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
       }
     } yield Unit
@@ -402,14 +406,6 @@ class AccountManagerAltActor(
       result: Order = updatedOrder.copy(_reserved = None, _outstanding = None)
     } yield result
   }
-
-  def isOrderCanceled(rawOrder: RawOrder) =
-    for {
-      res <- (ethereumQueryActor ? GetOrderCancellation.Req(
-        broker = rawOrder.owner,
-        orderHash = rawOrder.hash
-      )).mapAs[GetOrderCancellation.Res]
-    } yield res.cancelled
 
   private def swap[T](o: Option[Future[T]]): Future[Option[T]] =
     o.map(_.map(Some(_))).getOrElse(Future.successful(None))

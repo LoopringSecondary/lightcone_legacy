@@ -66,18 +66,6 @@ class MetadataRefresher(
 
   val mediator = DistributedPubSub(context.system).mediator
 
-  def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-
-  def marketManagerActor = actors.get(MarketManagerActor.name)
-
-  def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
-
-  val numsOfAccountShards = config.getInt("multi_account_manager.num-of-shards")
-  val numsOfMarketManagerShards = config.getInt("market_manager.num-of-shards")
-
-  val numsOfOrderbookManagerShards =
-    config.getInt("orderbook_manager.num-of-shards")
-
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]
 
@@ -99,10 +87,7 @@ class MetadataRefresher(
       val validMarketPairs = metadataManager.getValidMarketPairs
       for {
         _ <- refreshMetadata()
-        actorSelections = toNotifyActors(validMarketPairs)
-        _ = actorSelections foreach { actor =>
-          actor ! req
-        }
+        _ = getLocalActors(validMarketPairs).foreach(_ ! req)
       } yield Unit
 
     case _: GetMetadatas.Req =>
@@ -126,18 +111,13 @@ class MetadataRefresher(
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
-  private def toNotifyActors(validMarketPairs: Map[String, MarketPair]) = {
-    val marketPath = s"akka://${context.system.name}/system/sharding/" +
-      s"${OrderbookManagerActor.name}/*/*"
-    val orderbookPath = s"akka://${context.system.name}/system/sharding/" +
-      s"${OrderbookManagerActor.name}/*/*"
-    val accountManagerPath = s"akka://${context.system.name}/system/sharding/" +
-      s"${MultiAccountManagerActor.name}/*/*"
+  private def getLocalActors(validMarketPairs: Map[String, MarketPair]) = {
+    val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
 
     Seq(
-      context.system.actorSelection(marketPath),
-      context.system.actorSelection(orderbookPath),
-      context.system.actorSelection(accountManagerPath)
+      context.system.actorSelection(str.format(OrderbookManagerActor.name)),
+      context.system.actorSelection(str.format(OrderbookManagerActor.name)),
+      context.system.actorSelection(str.format(MultiAccountManagerActor.name))
     )
   }
 
