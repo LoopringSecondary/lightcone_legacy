@@ -29,6 +29,8 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
+import kamon.Kamon
+import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -58,6 +60,10 @@ class AccountManagerAltActor(
   import OrderStatus._
   import TxStatus._
 
+  val metricName = "account_manager"
+  val count = Kamon.counter(metricName)
+  val timer = Kamon.timer(metricName)
+
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   implicit val uoProcessor: UpdatedOrdersProcessor = this
 
@@ -67,6 +73,8 @@ class AccountManagerAltActor(
   def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   def marketManagerActor = actors.get(MarketManagerActor.name)
   def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
+
+  var recoverTimer: Option[StartedTimer] = None
 
   override def preStart() = {
     self ! Notify("initialize")
@@ -83,6 +91,8 @@ class AccountManagerAltActor(
 
   def initialReceive: Receive = {
     case Notify("initialize", _) =>
+      recoverTimer = Some(timer.refine("label" -> "recover").start)
+
       val batchCutoffReq =
         BatchGetCutoffs.Req((metadataManager.getValidMarketPairs map {
           case (marketHash, marketPair) =>
@@ -109,12 +119,18 @@ class AccountManagerAltActor(
       syncCutoff onComplete {
         case Success(_) =>
           self ! Notify("initialized")
+
         case Failure(e) =>
           throw e
       }
+
     case Notify("initialized", _) =>
       context.become(ready)
       unstashAll()
+
+      recoverTimer.foreach(_.stop)
+      recoverTimer = None
+
     case _ =>
       stash()
   }
@@ -122,16 +138,17 @@ class AccountManagerAltActor(
   def ready: Receive = LoggingReceive {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
+      count.refine("label" -> "notify").increment()
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
-      blocking {
+      blocking(timer, "recover_order") {
         resubmitOrder(xraworder).map { _ =>
           ActorRecover.OrderRecoverResult(xraworder.hash, true)
         }.sendTo(sender)
       }
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
-      blocking {
+      blocking(timer, "get_balance_allowance") {
         (for {
           accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
           _ = assert(tokens.size == accountInfos.size)
@@ -147,7 +164,10 @@ class AccountManagerAltActor(
               )
           }
           result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
-        } yield result).sendTo(sender)
+        } yield result).andThen {
+          case _ =>
+            count.refine("label" -> "get_balance_allowance").increment()
+        }.sendTo(sender)
       }
 
     case req @ SubmitOrder.Req(Some(raworder)) =>
@@ -172,7 +192,10 @@ class AccountManagerAltActor(
           }).mapAs[Order]
 
           result = SubmitOrder.Res(Some(resOrder))
-        } yield result) sendTo sender
+        } yield result).andThen {
+          case _ =>
+            count.refine("label" -> "submit_order").increment()
+        }.sendTo(sender)
       }
 
     case req @ CancelOrder.Req("", addr, _, None, _) =>
@@ -183,7 +206,10 @@ class AccountManagerAltActor(
             if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
             else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
           }
-        } yield result).sendTo(sender)
+        } yield result).andThen {
+          case _ =>
+            count.refine("label" -> "cancel_order").increment()
+        }.sendTo(sender)
       }
 
     case req @ CancelOrder
@@ -195,7 +221,10 @@ class AccountManagerAltActor(
             if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
             else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
           }
-        } yield result).sendTo(sender)
+        } yield result).andThen {
+          case _ =>
+            count.refine("label" -> "cancel_order").increment()
+        }.sendTo(sender)
       }
 
     case req @ CancelOrder.Req(id, addr, status, _, _) =>
@@ -216,21 +245,31 @@ class AccountManagerAltActor(
               )
             }
           }
-        } yield result) sendTo sender
+        } yield result).andThen {
+          case _ =>
+            count.refine("label" -> "cancel_order").increment()
+        }.sendTo(sender)
       }
 
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case req: AddressBalanceUpdated =>
       blocking {
         assert(req.address == owner)
-        manager
-          .setBalance(req.token, BigInt(req.balance.toByteArray))
+        manager.setBalance(req.token, BigInt(req.balance.toByteArray)).andThen {
+          case _ =>
+            count.refine("label" -> "balance_updated").increment()
+        }
       }
 
     case req: AddressAllowanceUpdated =>
       blocking {
         assert(req.address == owner)
-        manager.setAllowance(req.token, BigInt(req.allowance.toByteArray))
+        manager
+          .setAllowance(req.token, BigInt(req.allowance.toByteArray))
+          .andThen {
+            case _ =>
+              count.refine("label" -> "allowance_updated").increment()
+          }
       }
 
     // ownerCutoff
@@ -238,7 +277,10 @@ class AccountManagerAltActor(
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       blocking {
         accountCutoffState.setCutoff(cutoff)
-        manager.handleCutoff(cutoff)
+        manager.handleCutoff(cutoff).andThen {
+          case _ =>
+            count.refine("label" -> "cutoff").increment()
+        }
       }
 
     // ownerTokenPairCutoff  tokenPair ！= ""
@@ -246,7 +288,10 @@ class AccountManagerAltActor(
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       blocking {
         accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
-        manager.handleCutoff(cutoff, marketHash)
+        manager.handleCutoff(cutoff, marketHash).andThen {
+          case _ =>
+            count.refine("label" -> "cutoff_market").increment()
+        }
       }
 
     // Currently we do not support broker-level cutoff
@@ -257,10 +302,13 @@ class AccountManagerAltActor(
     case req: OrderFilledEvent //
         if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
       blocking {
-        for {
+        (for {
           orderOpt <- dbModule.orderService.getOrder(req.orderHash)
           _ <- swap(orderOpt.map(resubmitOrder))
-        } yield Unit
+        } yield Unit).andThen {
+          case _ =>
+            count.refine("label" -> "order_filled").increment()
+        }
       }
   }
 

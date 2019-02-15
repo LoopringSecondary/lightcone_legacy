@@ -27,6 +27,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import kamon.Kamon
+import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -118,14 +119,15 @@ class MarketManagerActor(
     }
   }
 
-  private val metricPrefix: String = {
+  private val metricName: String = {
     def symbol(token: String) = metadataManager.getToken(token).get.meta.symbol
-    symbol(marketPair.baseToken) + "_" + symbol(marketPair.quoteToken)
+    s"market_${symbol(marketPair.baseToken)}_${symbol(marketPair.quoteToken)}"
   }
 
-  val numOfOrdersGauge = Kamon.gauge(s"${metricPrefix}_num-orders")
-  val numOfOrdersHisto = Kamon.histogram(s"${metricPrefix}_num-orders")
-  val numOfOrdersTimer = Kamon.timer(s"${metricPrefix}_num-orders")
+  val count = Kamon.counter(metricName)
+  val gauge = Kamon.gauge(metricName)
+  val histo = Kamon.histogram(metricName)
+  val timer = Kamon.timer(metricName)
 
   log.info("===> starting MarketManagerActor ${self.path} for ${marketPair}")
 
@@ -175,8 +177,10 @@ class MarketManagerActor(
   protected def mama = actors.get(MultiAccountManagerActor.name)
 
   var gasPrice: BigInt = _
+  var recoverTimer: Option[StartedTimer] = None
 
-  override def initialize() =
+  override def initialize() = {
+    recoverTimer = Some(timer.refine("label" -> "recover").start)
     for {
       _ <- syncGasPrice()
       _ <- if (skiprecover) Future.successful {
@@ -204,10 +208,12 @@ class MarketManagerActor(
       }
       _ = metadataRefresher ! SubscribeMetadataChanged()
     } yield Unit
+  }
 
   def recover: Receive = {
 
     case SubmitSimpleOrder(_, Some(order)) =>
+      count.refine("label" -> "recover_order").increment()
       submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
 
     case msg @ ActorRecover.Finished(timeout) =>
@@ -216,7 +222,15 @@ class MarketManagerActor(
       s"market manager `${entityId}` recover completed (timeout=${timeout})"
       becomeReady()
 
+      recoverTimer.foreach(_.stop)
+      recoverTimer = None
+
+      val numOfOrders = manager.getNumOfOrders
+      gauge.refine("label" -> "num_orders").set(numOfOrders)
+      histo.refine("label" -> "num_orders").record(numOfOrders)
+
     case msg: Any =>
+      count.refine("label" -> "unhandled_msg_dur_recover").increment()
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
       //sender 是自己时，不再发送Error信息
       if (sender != self) {
@@ -232,16 +246,19 @@ class MarketManagerActor(
       sender ! req
 
     case SubmitSimpleOrder(_, Some(order)) =>
-      blocking {
+      blocking(timer, "submit_order") {
         submitOrder(order).sendTo(sender).andThen {
           case _ =>
             val numOfOrders = manager.getNumOfOrders
-            numOfOrdersGauge.set(numOfOrders)
-            numOfOrdersHisto.record(numOfOrders)
+            gauge.refine("label" -> "num_orders").set(numOfOrders)
+            histo.refine("label" -> "num_orders").record(numOfOrders)
+            count.refine("label" -> "submit_order").increment()
         }
       }
 
     case req: CancelOrder.Req =>
+      val t = timer.refine("label" -> "cancel_order").start()
+
       manager.cancelOrder(req.id) foreach { orderbookUpdate =>
         orderbookManagerActor ! orderbookUpdate.copy(
           marketPair = Some(marketPair)
@@ -249,33 +266,64 @@ class MarketManagerActor(
       }
       sender ! CancelOrder.Res(error = ERR_NONE, status = req.status)
 
+      t.stop()
+      val numOfOrders = manager.getNumOfOrders
+      gauge.refine("label" -> "num_orders").set(numOfOrders)
+      histo.refine("label" -> "num_orders").record(numOfOrders)
+      count.refine("label" -> "cancel_order").increment()
+
     case GasPriceUpdated(_gasPrice) =>
+      val t = timer.refine("label" -> "rematch").start()
+
       this.gasPrice = _gasPrice
       manager.triggerMatch(true, getRequiredMinimalIncome()) foreach {
         matchResult =>
           updateOrderbookAndSettleRings(matchResult)
       }
 
+      t.stop()
+      val numOfOrders = manager.getNumOfOrders
+      gauge.refine("label" -> "num_orders").set(numOfOrders)
+      histo.refine("label" -> "num_orders").record(numOfOrders)
+      count.refine("label" -> "rematch").increment()
+
     case TriggerRematch(sellOrderAsTaker, offset) =>
+      val t = timer.refine("label" -> "rematch").start()
+
       manager
         .triggerMatch(sellOrderAsTaker, getRequiredMinimalIncome(), offset)
         .foreach { updateOrderbookAndSettleRings(_) }
 
+      t.stop()
+      val numOfOrders = manager.getNumOfOrders
+      gauge.refine("label" -> "num_orders").set(numOfOrders)
+      histo.refine("label" -> "num_orders").record(numOfOrders)
+      count.refine("label" -> "rematch").increment()
+
     case RingMinedEvent(Some(header), _, _, _, fills, _) =>
-      Future {
-        val ringhash =
-          createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)
-        if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
-          manager.deleteRing(ringhash, true)
-        } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
-          val matchResults = manager.deleteRing(ringhash, false)
-          if (matchResults.nonEmpty) {
-            matchResults.foreach { matchResult =>
-              updateOrderbookAndSettleRings(matchResult)
+      blocking(timer, "handle_ring_mind_event") {
+        Future {
+          val ringhash =
+            createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)
+
+          val result = if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
+            manager.deleteRing(ringhash, true)
+          } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
+            val matchResults = manager.deleteRing(ringhash, false)
+            if (matchResults.nonEmpty) {
+              matchResults.foreach { matchResult =>
+                updateOrderbookAndSettleRings(matchResult)
+              }
             }
           }
-        }
-      } sendTo sender
+
+          val numOfOrders = manager.getNumOfOrders
+          gauge.refine("label" -> "num_orders").set(numOfOrders)
+          histo.refine("label" -> "num_orders").record(numOfOrders)
+          count.refine("label" -> "ring_mined_evnet").increment()
+
+        } sendTo sender
+      }
 
     case req: MetadataChanged =>
       val metadataOpt = try {
@@ -296,12 +344,14 @@ class MarketManagerActor(
 
         case Some(metadata) =>
           log.info(s"metadata changed: $metadata")
+          count.refine("label" -> "metadata_updated").increment()
       }
 
     case req: GetOrderbookSlots.Req =>
       sender ! GetOrderbookSlots.Res(
         Some(manager.getOrderbookSlots(req.numOfSlots))
       )
+      count.refine("label" -> "get_orderbook").increment()
   }
 
   private def submitOrder(order: Order): Future[MatchResult] = Future {
