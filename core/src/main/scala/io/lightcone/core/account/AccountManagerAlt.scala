@@ -36,6 +36,8 @@ object AccountManagerAlt {
 trait AccountManagerAlt {
   val owner: String
 
+  def getNumOfOrders(): Int
+
   def getAccountInfo(token: String): Future[AccountInfo]
 
   def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]]
