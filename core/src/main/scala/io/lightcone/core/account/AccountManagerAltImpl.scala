@@ -39,6 +39,8 @@ final class AccountManagerAltImpl(
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   private implicit var tokens = Map.empty[String, ReserveManagerAlt]
 
+  def getNumOfOrders() = orderPool.size
+
   def getAccountInfo(token: String): Future[AccountInfo] =
     getReserveManagerOption(token, true).map(_.get.getAccountInfo)
 

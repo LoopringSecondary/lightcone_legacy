@@ -19,6 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import io.lightcone.relayer.data._
 import scala.concurrent._
+import kamon.metric.TimerMetric
 
 // Owner: dongw
 trait BlockingReceive { me: Actor with Stash =>
@@ -28,6 +29,21 @@ trait BlockingReceive { me: Actor with Stash =>
 
   // Guarantees all futures that modifies this actor's internal state will force
   // this actor to become `blockingReceive` and wait for a RESUME message to unbecome.
+  def blocking[T](
+      tm: TimerMetric,
+      label: String
+    )(future: => Future[T]
+    ): Future[T] = {
+    context.become(blockingReceive, discardOld = false)
+    val t = tm.refine("label" -> label).start()
+
+    future.andThen {
+      case _ =>
+        self ! RESUME
+        t.stop()
+    }
+  }
+
   def blocking[T](future: => Future[T]): Future[T] = {
     context.become(blockingReceive, discardOld = false)
     future.andThen {

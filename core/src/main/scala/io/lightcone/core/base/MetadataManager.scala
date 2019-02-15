@@ -122,7 +122,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   def hasSymbol(symbol: String) = symbolMap.contains(symbol.toUpperCase())
 
-  def getToken(addr: String) = {
+  def getToken(addr: String): Option[Token] = {
     // assert(hasToken(addr.toLowerCase()), s"token no found for address $addr")
     addressMap.get(addr.toLowerCase())
   }
