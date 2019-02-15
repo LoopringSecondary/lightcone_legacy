@@ -21,6 +21,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.corundumstudio.socketio.{AckRequest, SocketIOClient}
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import io.lightcone.core.Address
 import io.lightcone.relayer.actors.MultiAccountManagerActor
 import io.lightcone.relayer.base._
@@ -37,11 +38,13 @@ class BalanceListener @Inject()(
     implicit
     val system: ActorSystem,
     val ec: ExecutionContext,
+    val config: Config,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
     extends WrappedDataListener[SubcriberBalanceAndAllowance.Req] {
 
   var clients = Seq.empty[WrappedSocketClient[SubcriberBalanceAndAllowance.Req]]
+  val delayInSeconds = config.getInt("socketio.balance.dalay-in-seconds")
   def accountManager = actors.get(MultiAccountManagerActor.name)
 
   def queryData(
@@ -52,18 +55,19 @@ class BalanceListener @Inject()(
     (accountManager ? getBalanceAndAllowancesReq)
       .mapAs[GetBalanceAndAllowances.Res]
       .map { res =>
-        SubcriberBalanceAndAllowance.Res(
-          owner = res.address,
-          balanceAndAllowances = res.balanceAndAllowanceMap.map { data =>
-            SubcriberBalanceAndAllowance.BalanceAndAllowance(
-              address = data._1,
-              balance = data._2.balance,
-              allowance = data._2.allowance,
-              avaliableBalance = data._2.availableBalance,
-              avaliableAllowance = data._2.availableAllowance
-            )
-          }.toSeq
-        )
+        SubcriberBalanceAndAllowance
+          .Res(
+            owner = res.address,
+            balanceAndAllowances = res.balanceAndAllowanceMap.map { data =>
+              SubcriberBalanceAndAllowance.BalanceAndAllowance(
+                address = data._1,
+                balance = data._2.balance,
+                allowance = data._2.allowance,
+                availableBalance = data._2.availableBalance,
+                availableAllowance = data._2.availableAllowance
+              )
+            }.toSeq
+          )
       }
   }
 
@@ -73,7 +77,12 @@ class BalanceListener @Inject()(
       ackSender: AckRequest
     ): Unit = {
     val wrappedSocketClient =
-      new WrappedSocketClient(BalanceListener.eventName, client, data)
+      new WrappedSocketClient(
+        BalanceListener.eventName,
+        delayInSeconds,
+        client,
+        data
+      )
     val (_clients, outDatedClients) =
       clients.partition(!_.equals(wrappedSocketClient))
     outDatedClients.foreach(_.stop)

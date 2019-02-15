@@ -16,18 +16,20 @@
 
 package io.lightcone.relayer.socket
 
+import com.corundumstudio.socketio.protocol.JacksonJsonSupport
 import com.corundumstudio.socketio.{Configuration, SocketIOServer}
 import com.typesafe.config.Config
 import io.lightcone.relayer.base.Lookup
-
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 abstract class SocketServer(
     implicit
     val config: Config,
     val listeners: Lookup[WrappedDataListener[_]]) {
-  val selfConfig = config.getConfig("socket")
+  val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
   socketConfig.setHostname(selfConfig.getString("host"))
   socketConfig.setPort(selfConfig.getInt("port"))
+  socketConfig.setJsonSupport(new JacksonJsonSupport(DefaultScalaModule))
   val server = new SocketIOServer(socketConfig)
 
   def start(): Unit = server.start()

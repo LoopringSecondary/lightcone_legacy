@@ -16,13 +16,17 @@
 
 package io.lightcone.relayer.socket
 
-import com.corundumstudio.socketio.listener.DataListener
+import io.lightcone.relayer.support._
 
-import scala.concurrent.Future
+class SocketSpec
+    extends CommonSpec
+    with EthereumSupport
+    with MultiAccountManagerSupport
+    with SocketSupport {
 
-trait WrappedDataListener[R] extends DataListener[R] {
-
-  def dataChanged(msg: Any): Unit
-
-  def queryData(req: R): Future[AnyRef]
+  "socket server  test" must {
+    "socket server starts normally and can subscriber and received correct data" in {
+//      Thread.sleep(Int.MaxValue)
+    }
+  }
 }

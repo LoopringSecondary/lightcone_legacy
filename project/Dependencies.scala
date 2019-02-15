@@ -53,7 +53,8 @@ object Dependencies {
     "de.heikoseeberger" %% "akka-http-json4s" % "1.22.0")
 
   lazy val socketDependency = Seq(
-    "com.corundumstudio.socketio" % "netty-socketio" % "1.7.16" exclude("jackson-core","com.fasterxml.jackson.core")
+    "com.corundumstudio.socketio" % "netty-socketio" % "1.7.7",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.8"
   )
 
   lazy val driverDependency = Seq(

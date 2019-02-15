@@ -20,15 +20,14 @@ option java_multiple_files = true;
 package io.lightcone.relayer.data;
 
 
-
 message SubcriberBalanceAndAllowance{
 
     message BalanceAndAllowance {
         string address = 1;
         string balance = 2;
-        string avaliable_balance = 3;
+        string available_balance = 3;
         string allowance = 4;
-        string avaliable_allowance = 5;
+        string available_allowance = 5;
     }
 
     message Req{

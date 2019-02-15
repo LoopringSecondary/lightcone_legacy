@@ -18,12 +18,16 @@ package io.lightcone.relayer.socket
 
 import akka.actor.{ActorSystem, Cancellable}
 import com.corundumstudio.socketio.SocketIOClient
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization
+import org.json4s.native.JsonMethods.parse
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 class WrappedSocketClient[R](
     eventName: String,
+    val delayInSeconds: Int = 1,
     val client: SocketIOClient,
     val req: R
   )(
@@ -31,18 +35,31 @@ class WrappedSocketClient[R](
     system: ActorSystem,
     ec: ExecutionContext) {
 
+  implicit val formats = DefaultFormats
+
   var scheduler: Cancellable = null
 
   def start()(queryData: R => Future[AnyRef]): Unit = {
-    scheduler = system.scheduler.schedule(0 second, 1 seconds, new Runnable {
-      override def run(): Unit = {
-        if (client.isChannelOpen) {
-          queryData(req).map(data => client.sendEvent(eventName, data))
-        } else {
-          stop
+    scheduler = system.scheduler.schedule(
+      0 second,
+      delayInSeconds seconds,
+      new Runnable {
+        override def run(): Unit = {
+          if (client.isChannelOpen) {
+            queryData(req).map { data =>
+              client.sendEvent(
+                eventName,
+                //使用protobuf时，序列化时会有fields信息。使用case class 或者Map
+                parse(Serialization.write(data)).values
+                  .asInstanceOf[Map[String, Any]]
+              )
+            }
+          } else {
+            stop
+          }
         }
       }
-    })
+    )
   }
 
   def stop = {
