@@ -23,7 +23,7 @@ import slick.jdbc.MySQLProfile.api._
 class TokenTickerInfoTable(tag: Tag)
     extends BaseTable[TokenTickerInfo](tag, "T_TOKEN_TICKER_INFO") {
 
-  def id = tokenId.toString
+  def id = pair
   def tokenId = column[Int]("token_id")
   def name = column[String]("name")
   def symbol = column[String]("symbol", O.SqlType("VARCHAR(30)"))
