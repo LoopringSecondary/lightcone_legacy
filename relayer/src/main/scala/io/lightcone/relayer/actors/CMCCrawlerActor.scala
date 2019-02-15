@@ -154,7 +154,6 @@ class CMCCrawlerActor(
 
   private def publish() = {
     mediator ! Publish(CMCCrawlerActor.pubsubTopic, TokenTickerChanged())
-    mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
   }
 
   private def updateTokenPrice(
@@ -211,7 +210,7 @@ class CMCCrawlerActor(
         val priceQuote = usdQuote.get
         val quoteMap = marketTickers.foldLeft(usdTicker.quote) {
           (map, marketQuote) =>
-            //添加市场代币的Quote ("LRC", "ETH", "TUSD", "USDT")
+            //添加市场代币的Quote ("LRC", "WETH", "TUSD", "USDT")
             map + (marketQuote._1 -> convertQuote(priceQuote, marketQuote._2))
         }
         //更新token的quote属性
@@ -226,7 +225,9 @@ class CMCCrawlerActor(
       tickers: Seq[CMCTickerData]
     ): Seq[(String, Quote)] = {
     markets.map { s =>
-      val priceQuote = tickers.find(_.symbol == s).flatMap(_.quote.get("USD"))
+      val symbol = if (s == "WETH") "ETH" else s
+      val priceQuote =
+        tickers.find(_.symbol == symbol).flatMap(_.quote.get("USD"))
       (
         s,
         priceQuote.getOrElse(

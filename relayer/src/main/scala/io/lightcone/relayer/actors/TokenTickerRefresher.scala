@@ -79,8 +79,13 @@ class TokenTickerRefresher(
     case _: TokenTickerChanged =>
       refreshTickers()
 
-    case _: GetTokenTickers.Req =>
-      sender ! GetTokenTickers.Res(tickers)
+    case req: GetTokenTickers.Req =>
+      val tickers_ = if (req.market.isEmpty) {
+        tickers
+      } else {
+        tickers.filter(_.market == req.market)
+      }
+      sender ! GetTokenTickers.Res(tickers_)
   }
 
   private def refreshTickers() =

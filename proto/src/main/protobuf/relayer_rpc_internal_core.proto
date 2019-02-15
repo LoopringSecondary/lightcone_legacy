@@ -338,7 +338,7 @@ message TokenTickerChanged {}
 
 message GetTokenTickers {
     message Req {
-
+        string market = 1;
     }
 
     message Res {
