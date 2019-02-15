@@ -29,6 +29,7 @@ import io.lightcone.core._
 import org.web3j.utils._
 import scala.concurrent._
 import scala.concurrent.duration._
+import kamon.Kamon
 
 // Owner: Hongyu
 object MultiAccountManagerActor extends DeployedAsShardedByAddress {
@@ -100,6 +101,9 @@ class MultiAccountManagerActor(
     with ActorLogging {
 
   import ErrorCode._
+
+  val getBalanceAndALlowanceCounter =
+    Kamon.counter("mama.get-balance-and-allowance")
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
@@ -202,6 +206,7 @@ class MultiAccountManagerActor(
         address: String,
         token: String
       ): Future[(BigInt, BigInt)] = {
+      getBalanceAndALlowanceCounter.increment()
       val ethereumQueryActor = actors.get(EthereumQueryActor.name)
       for {
         res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
