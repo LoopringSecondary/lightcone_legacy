@@ -123,43 +123,94 @@ class AccountManagerAltActor(
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
-    case ActorRecover.RecoverOrderReq(Some(raworder)) =>
+    case ActorRecover.RecoverOrderReq(Some(rawOrder)) =>
       //恢复时，如果订单已被取消，需要更新数据库状态
       blocking {
-        val marketHash = MarketPair(raworder.tokenS, raworder.tokenB).hashString
-        (for {
-          canceledStatus <- isOrderCanceled(raworder)
-          status = if (canceledStatus) {
-            STATUS_ONCHAIN_CANCELLED_BY_USER
-          } else if (accountCutoffState
-                       .isOrderCutoffByOwner(raworder.validSince)) {
-            STATUS_ONCHAIN_CANCELLED_BY_USER
-          } else if (accountCutoffState.isOrderCutoffByTradingPair(
-                       marketHash,
-                       raworder.validSince
-                     )) {
-            STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
-          } else {
-            STATUS_PENDING
-          }
-          res <- status match {
-            case STATUS_ONCHAIN_CANCELLED_BY_USER |
-                STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR =>
-              marketManagerActor ! CancelOrder.Req(
-                id = raworder.hash,
-                marketPair = Some(MarketPair(raworder.tokenS, raworder.tokenB))
-              )
-              dbModule.orderService
-                .updateOrderStatus(raworder.hash, status)
-                .map { _ =>
-                  ActorRecover.OrderRecoverResult(raworder.hash, true)
-                }
-            case _ =>
-              resubmitOrder(raworder).map { _ =>
-                ActorRecover.OrderRecoverResult(raworder.hash, true)
-              }
-          }
-        } yield res).sendTo(sender)
+        val f = for {
+          _ <- checkOrderNotCancelledNorPending(rawOrder)
+          _ <- resubmitOrder(rawOrder)
+          res = ActorRecover.OrderRecoverResult(rawOrder.hash, true)
+        } yield res
+
+        f.recoverWith {
+          case e: ErrorException =>
+            e.error.code match {
+
+              case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
+                dbModule.orderService
+                  .updateOrderStatus(
+                    rawOrder.hash,
+                    STATUS_ONCHAIN_CANCELLED_BY_USER
+                  )
+                  .map(
+                    _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false)
+                  )
+
+              case ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
+                dbModule.orderService
+                  .updateOrderStatus(
+                    rawOrder.hash,
+                    STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
+                  )
+                  .map(
+                    _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false)
+                  )
+
+              case ERR_ORDER_PENDING_ACTIVE =>
+                log.error("received orders of PENDIGN_ACTIVE during recovery")
+                throw e
+
+              case _ => throw e
+            }
+        }
+
+        f.sendTo(sender)
+      }
+
+    case req @ SubmitOrder.Req(Some(rawOrder)) =>
+      blocking {
+        val f = for {
+          _ <- checkOrderNotCancelledNorPending(rawOrder)
+
+          resRawOrder <- (orderPersistenceActor ? req
+            .copy(rawOrder = Some(rawOrder.withStatus(STATUS_PENDING_ACTIVE))))
+            .mapAs[RawOrder]
+
+          resOrder <- resubmitOrder(resRawOrder)
+
+          result = SubmitOrder.Res(Some(resOrder), true)
+        } yield result
+
+        f.recoverWith {
+          case e: ErrorException =>
+            e.error.code match {
+
+              case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
+                val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
+                Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
+
+              case ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
+                val o = rawOrder.withStatus(
+                  STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
+                )
+                Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
+
+              case ERR_ORDER_PENDING_ACTIVE =>
+                val o = rawOrder.withStatus(STATUS_PENDING_ACTIVE)
+                for {
+                  resRawOrder <- (orderPersistenceActor ? req
+                    .copy(rawOrder = Some(o)))
+                    .mapAs[RawOrder]
+                  resp = SubmitOrder.Res(Some(resRawOrder.toOrder), true)
+                } yield resp
+
+              case _ => throw e
+            }
+        }
+
+        f.sendTo(sender)
       }
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
@@ -180,53 +231,6 @@ class AccountManagerAltActor(
           }
           result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
         } yield result).sendTo(sender)
-      }
-
-    case req @ SubmitOrder.Req(Some(raworder)) =>
-      blocking {
-        val marketHash = MarketPair(raworder.tokenS, raworder.tokenB).hashString
-        (for {
-          _ <- Future {
-            if (accountCutoffState.isOrderCutoffByOwner(raworder.validSince)) {
-              throw ErrorException(
-                ERR_ORDER_VALIDATION_INVALID_CUTOFF,
-                s"this address has set cutoff>=${raworder.getParams.validUntil}."
-              )
-            } else if (accountCutoffState.isOrderCutoffByTradingPair(
-                         marketHash,
-                         raworder.validSince
-                       )) {
-              throw ErrorException(
-                ERR_ORDER_VALIDATION_INVALID_CUTOFF,
-                s"the market ${raworder.tokenS}-${raworder.tokenB} " +
-                  s"of this address has set cutoff > =${raworder.getParams.validUntil}."
-              )
-            }
-          }
-          canceled <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
-          _ = if (canceled)
-            throw ErrorException(
-              ERR_ORDER_VALIDATION_INVALID_CANCELED,
-              s"this order has been canceled."
-            )
-
-          newRaworder = if (raworder.validSince > timeProvider
-                              .getTimeSeconds()) {
-            raworder.withStatus(STATUS_PENDING_ACTIVE)
-          } else raworder
-
-          resRawOrder <- (orderPersistenceActor ? req
-            .copy(rawOrder = Some(newRaworder)))
-            .mapAs[RawOrder]
-
-          resOrder <- (resRawOrder.getState.status match {
-            case STATUS_PENDING_ACTIVE =>
-              Future.successful(resRawOrder.toOrder)
-            case _ => resubmitOrder(resRawOrder)
-          }).mapAs[Order]
-
-          result = SubmitOrder.Res(Some(resOrder))
-        } yield result) sendTo sender
       }
 
     case req @ CancelOrder.Req("", addr, _, None, _) =>
@@ -344,6 +348,34 @@ class AccountManagerAltActor(
         manager.purgeOrders(marketPair)
       }
 
+  }
+
+  private def checkOrderNotCancelledNorPending(
+      rawOrder: RawOrder
+    ): Future[Unit] = {
+    for {
+      _ <- Future {
+        if (accountCutoffState.isOrderCutoffByOwner(rawOrder.validSince)) {
+          throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CUTOFF)
+        }
+        val cutoffTrdingPair = accountCutoffState.isOrderCutoffByTradingPair(
+          rawOrder.getMarketHash,
+          rawOrder.validSince
+        )
+
+        if (cutoffTrdingPair) {
+          throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR)
+        }
+
+        if (rawOrder.validSince > timeProvider.getTimeSeconds) {
+          throw ErrorException(ERR_ORDER_PENDING_ACTIVE)
+        }
+      }
+      canceled <- isOrderCanceled(rawOrder) //取消订单，单独查询以太坊
+      _ = if (canceled) {
+        throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
+      }
+    } yield Unit
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {

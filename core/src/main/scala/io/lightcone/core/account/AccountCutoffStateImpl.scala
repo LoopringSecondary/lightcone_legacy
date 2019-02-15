@@ -40,18 +40,19 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
   }
 
   def setCutoff(cutoff: Long) = {
-    if (!(cutoff <= timeProvider.getTimeSeconds()))
-      if (ownerCutoff < cutoff) ownerCutoff = cutoff
+    if (cutoff > timeProvider.getTimeSeconds && cutoff > ownerCutoff) {
+      ownerCutoff = cutoff
+    }
   }
 
-  def isOrderCutoffByOwner(validSince: Long) =
+  def isOrderCutoffByOwner(validSince: Long) = {
     ownerCutoff >= validSince
+  }
 
   def isOrderCutoffByTradingPair(
       marketHash: String,
       validSince: Long
     ) = {
-    marketPairCutoffs.contains(marketHash) &&
-    marketPairCutoffs(marketHash) >= validSince
+    marketPairCutoffs.getOrElse(marketHash, 0L) >= validSince
   }
 }
