@@ -20,19 +20,11 @@ import kamon.Kamon
 
 object KamonSupport {
 
-  def counter(metricName: String) = {
-    Kamon.counter(s"counter_$metricName")
-  }
+  def counter(metricName: String) = Kamon.counter(s"c_$metricName")
 
-  def gauge(metricName: String) = {
-    Kamon.gauge(s"gauge_$metricName")
-  }
+  def gauge(metricName: String) = Kamon.gauge(s"g_$metricName")
 
-  def histogram(metricName: String) = {
-    Kamon.histogram(s"histogram_$metricName")
-  }
+  def histogram(metricName: String) = Kamon.histogram(s"h_$metricName")
 
-  def timer(metricName: String) = {
-    Kamon.timer(s"timer_$metricName")
-  }
+  def timer(metricName: String) = Kamon.timer(s"t_$metricName")
 }
