@@ -66,10 +66,12 @@ object Dependencies {
     "io.kamon" %% "kamon-core" % "1.1.0",
     "io.kamon" %% "kamon-jmx" % "0.6.7",
     "io.kamon" %% "kamon-akka-2.5" % "1.0.1",
+    "io.kamon" %% "kamon-akka-remote-2.5" % "1.0.1",
     "io.kamon" %% "kamon-akka-http-2.5" % "1.0.1",
     "io.kamon" %% "kamon-zipkin" % "1.0.0",
     "io.kamon" %% "kamon-datadog" % "1.0.0",
-    "io.kamon" %% "kamon-prometheus" % "1.1.1")
+    "io.kamon" %% "kamon-prometheus" % "1.1.1",
+    "io.kamon" %% "kamon-scala-future" % "1.0.0")
 
   lazy val dependency4Lib = commonDependency ++
     json4sDependency ++

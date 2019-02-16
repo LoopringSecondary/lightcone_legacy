@@ -27,6 +27,8 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.web3j.utils._
+import kamon.Kamon
+import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -102,11 +104,20 @@ class MultiAccountManagerActor(
 
   import ErrorCode._
 
-  log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
+  val metricName = s"multi_account_${entityId}"
+  val count = Kamon.counter(metricName)
+  val gauge = Kamon.gauge(metricName)
+  val histo = Kamon.histogram(metricName)
+  val timer = Kamon.timer(metricName)
+
+  val getBalanceAndALlowanceCounter =
+    Kamon.counter("mama.get-balance-and-allowance")
 
   val selfConfig = config.getConfig(MultiAccountManagerActor.name)
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
+
+  log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
@@ -117,6 +128,7 @@ class MultiAccountManagerActor(
     MultiAccountManagerActor.extractShardingObject.lift
 
   var autoSwitchBackToReady: Option[Cancellable] = None
+  var recoverTimer: Option[StartedTimer] = None
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
   // TODO: 完成recovery后，需要再次测试异常恢复情况
@@ -131,6 +143,8 @@ class MultiAccountManagerActor(
     }
 
   override def initialize() = {
+    recoverTimer = Some(timer.refine("label" -> "recover").start)
+
     if (skiprecover) Future.successful {
       log.debug(s"actor recover skipped: ${self.path}")
       becomeReady()
@@ -164,6 +178,13 @@ class MultiAccountManagerActor(
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
       becomeReady()
 
+      recoverTimer.foreach(_.stop)
+      recoverTimer = None
+
+      val numOfAccounts = accountManagerActors.size
+      gauge.refine("label" -> "num_accounts").set(numOfAccounts)
+      histo.refine("label" -> "num_accounts").record(numOfAccounts)
+
     case msg: Any =>
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
       //sender 是自己时，不再发送Error信息
@@ -190,7 +211,9 @@ class MultiAccountManagerActor(
             _: CutoffEvent | _: OrderFilledEvent =>
           if (accountManagerActors.contains(address))
             accountManagerActorFor(address) forward req
-        case _ => accountManagerActorFor(address) forward req
+
+        case _ =>
+          accountManagerActorFor(address) forward req
       }
     }
     case None =>
@@ -206,8 +229,11 @@ class MultiAccountManagerActor(
         address: String,
         token: String
       ): Future[(BigInt, BigInt)] = {
+
+      val t = timer.refine("label" -> "get_balance_allowance").start
       val ethereumQueryActor = actors.get(EthereumQueryActor.name)
-      for {
+
+      (for {
         res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
           address,
           Seq(token)
@@ -215,7 +241,11 @@ class MultiAccountManagerActor(
         ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
         balance = BigInt(ba.balance.toByteArray)
         allowance = BigInt(ba.allowance.toByteArray)
-      } yield (balance, allowance)
+      } yield (balance, allowance)).andThen {
+        case _ =>
+          t.stop()
+          count.refine("label" -> "get_balance_allowance").increment()
+      }
     }
   }
 
