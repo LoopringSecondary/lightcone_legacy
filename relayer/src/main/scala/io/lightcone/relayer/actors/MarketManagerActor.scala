@@ -109,19 +109,21 @@ class MarketManagerActor(
     with ActorLogging {
   import ErrorCode._
   import OrderStatus._
+  import MarketMetadata.Status._
   import MarketManager.MatchResult
 
   val selfConfig = config.getConfig(MarketManagerActor.name)
 
   implicit val marketPair = {
-    metadataManager.getValidMarketPairs.values
-      .find(m => MarketManagerActor.getEntityId(m) == entityId) match {
-      case Some(pair) => pair
-      case None =>
+    metadataManager
+      .getMarkets(ACTIVE, READONLY)
+      .find(m => MarketManagerActor.getEntityId(m.marketPair.get) == entityId)
+      .map(_.marketPair.get)
+      .getOrElse {
         val error = s"unable to find market pair matching entity id ${entityId}"
         log.error(error)
         throw new IllegalStateException(error)
-    }
+      }
   }
 
   private val metricName: String = {
@@ -158,7 +160,7 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  def marketMetadata = metadataManager.getMarketMetadata(marketPair)
+  def marketMetadata = metadataManager.getMarket(marketPair)
 
   implicit val aggregator = new OrderbookAggregatorImpl(
     marketMetadata.priceDecimals,
@@ -331,7 +333,7 @@ class MarketManagerActor(
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarketMetadata(marketPair))
+        Option(metadataManager.getMarket(marketPair))
       } catch {
         case _: Throwable => None
       }

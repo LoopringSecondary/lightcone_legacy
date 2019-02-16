@@ -17,6 +17,7 @@
 package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
+import io.lightcone.core._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
 import org.rnorth.ducttape.TimeoutException
@@ -30,18 +31,21 @@ trait MarketManagerSupport
     with MetadataManagerSupport {
   me: CommonSpec with EthereumSupport =>
 
+  import MarketMetadata.Status._
+
   actors.add(MarketManagerActor.name, MarketManagerActor.start)
 
   try Unreliables.retryUntilTrue(
     10,
     TimeUnit.SECONDS,
     () => {
-      val f = Future.sequence(metadataManager.getValidMarketPairs.values.map {
-        marketPair =>
-          actors.get(MarketManagerActor.name) ? GetOrderbookSlots.Req(
-            Some(marketPair)
-          )
-      })
+      val f =
+        Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY).map {
+          meta =>
+            val marketPair = meta.marketPair.get
+            actors.get(MarketManagerActor.name) ? GetOrderbookSlots
+              .Req(Some(marketPair))
+        })
       val res =
         Await.result(f.mapTo[Seq[GetOrderbookSlots.Res]], timeout.duration)
       res.nonEmpty

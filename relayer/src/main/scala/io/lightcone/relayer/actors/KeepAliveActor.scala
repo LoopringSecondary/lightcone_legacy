@@ -62,6 +62,7 @@ class KeepAliveActor @Inject()(
     extends InitializationRetryActor
     with RepeatedJobActor {
 
+  import MarketMetadata.Status._
   val numsOfAccountShards = config.getInt("multi_account_manager.num-of-shards")
 
   def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
@@ -91,8 +92,9 @@ class KeepAliveActor @Inject()(
   // TODO: market的配置读取，可以等待永丰处理完毕再优化
   private def initOrderbookManager(): Future[Unit] =
     for {
-      _ <- Future.sequence(metadataManager.getValidMarketPairs map {
-        case (_, marketPair) =>
+      _ <- Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY) map {
+        case meta =>
+          val marketPair = meta.marketPair.get
           orderbookManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
             marketPair.baseToken + "-" + marketPair.quoteToken
@@ -102,8 +104,9 @@ class KeepAliveActor @Inject()(
 
   private def initMarketManager(): Future[Unit] =
     for {
-      _ <- Future.sequence(metadataManager.getValidMarketPairs map {
-        case (_, marketPair) =>
+      _ <- Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY) map {
+        case meta =>
+          val marketPair = meta.marketPair.get
           marketManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
             marketPair.baseToken + "-" + marketPair.quoteToken

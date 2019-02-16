@@ -58,6 +58,7 @@ class AccountManagerAltActor(
   import ErrorCode._
   import OrderStatus._
   import TxStatus._
+  import MarketMetadata.Status._
 
   val count = KamonSupport.counter("account_manager")
   val timer = KamonSupport.timer("account_manager")
@@ -92,10 +93,10 @@ class AccountManagerAltActor(
       recoverTimer = Some(timer.refine("label" -> "recover").start)
 
       val batchCutoffReq =
-        BatchGetCutoffs.Req((metadataManager.getValidMarketPairs map {
-          case (marketHash, marketPair) =>
+        BatchGetCutoffs.Req((metadataManager.getMarkets(ACTIVE, READONLY) map {
+          meta =>
             GetCutoff
-              .Req(broker = owner, owner = owner, marketHash = marketHash)
+              .Req(broker = owner, owner = owner, marketHash = meta.marketHash)
         }).toSeq :+ GetCutoff.Req(broker = owner, owner = owner))
 
       val syncCutoff = for {
@@ -363,7 +364,7 @@ class AccountManagerAltActor(
       count.refine("label" -> "metadata_changed").increment()
       val marketPairs =
         metadataManager
-          .getMarkets(Set(MarketMetadata.Status.TERMINATED))
+          .getMarkets(MarketMetadata.Status.TERMINATED)
           .map(_.getMarketPair)
       marketPairs map { marketPair =>
         manager.purgeOrders(marketPair)

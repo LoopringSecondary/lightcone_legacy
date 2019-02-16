@@ -74,23 +74,24 @@ class OrderbookManagerActor(
     with ShardingEntityAware
     with RepeatedJobActor {
 
+  import MarketMetadata.Status._
+
   val selfConfig = config.getConfig(OrderbookManagerActor.name)
   val orderbookRecoverSize = selfConfig.getInt("orderbook-recover-size")
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  val marketPair = {
-    metadataManager.getValidMarketPairs.values
-      .find(m => OrderbookManagerActor.getEntityId(m) == entityId) match {
-      case Some(pair) => pair
-      case None =>
-        val error = s"unable to find market pair matching entity id ${entityId}"
-        log.error(error)
-        throw new IllegalStateException(error)
+  val marketPair = metadataManager
+    .getMarkets(ACTIVE, READONLY)
+    .find(m => OrderbookManagerActor.getEntityId(m.marketPair.get) == entityId)
+    .map(_.marketPair.get)
+    .getOrElse {
+      val error = s"unable to find market pair matching entity id ${entityId}"
+      log.error(error)
+      throw new IllegalStateException(error)
     }
-  }
 
-  def marketMetadata = metadataManager.getMarketMetadata(marketPair)
+  def marketMetadata = metadataManager.getMarket(marketPair)
   def marketManagerActor = actors.get(MarketManagerActor.name)
   val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
@@ -126,7 +127,7 @@ class OrderbookManagerActor(
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarketMetadata(marketPair))
+        Option(metadataManager.getMarket(marketPair))
       } catch {
         case _: Throwable => None
       }

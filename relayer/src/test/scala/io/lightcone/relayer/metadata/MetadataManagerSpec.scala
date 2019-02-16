@@ -35,6 +35,7 @@ class MetadataManagerSpec
     with EthereumSupport
     with DatabaseModuleSupport
     with MetadataManagerSupport {
+  import MarketMetadata.Status._
 
   val probe = TestProbe()
   val mediator = DistributedPubSub(system).mediator
@@ -59,11 +60,13 @@ class MetadataManagerSpec
         )
       }
       info("check markets: market addresses at lower and upper case")
-      assert(metadataManager.getValidMarketPairs.size >= MARKETS.length)
+      assert(
+        metadataManager.getMarkets(ACTIVE, READONLY).size >= MARKETS.length
+      )
       MARKETS.foreach { m =>
         val meta1 =
-          metadataManager.getMarketMetadata(m.marketHash.toLowerCase())
-        val meta2 = metadataManager.getMarketMetadata(
+          metadataManager.getMarket(m.marketHash.toLowerCase())
+        val meta2 = metadataManager.getMarket(
           "0x" + m.marketHash.substring(2).toUpperCase()
         )
         assert(
@@ -71,13 +74,13 @@ class MetadataManagerSpec
             .toLowerCase()
         )
 
-        val meta3 = metadataManager.getMarketMetadata(
+        val meta3 = metadataManager.getMarket(
           MarketPair(
             baseToken = m.marketPair.get.baseToken.toLowerCase(),
             quoteToken = m.marketPair.get.quoteToken.toLowerCase()
           )
         )
-        val meta4 = metadataManager.getMarketMetadata(
+        val meta4 = metadataManager.getMarket(
           MarketPair(
             baseToken = "0x" + m.marketPair.get.baseToken
               .substring(2)
