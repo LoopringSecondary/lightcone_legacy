@@ -71,14 +71,17 @@ class TokenMetadataDalImpl @Inject()(
       }
     }
 
-  def updateTokenPrice(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+  def updateTokenPrice(
+      token: String,
+      usdPrice: Double
+    ): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.address === tokenMetadata.address)
+          .filter(_.address === token)
           .map(c => (c.usdPrice, c.updateAt))
           .update(
-            tokenMetadata.usdPrice,
+            usdPrice,
             timeProvider.getTimeMillis()
           )
       )

@@ -178,10 +178,12 @@ class CMCCrawlerActor(
       }
     }
     Future.sequence(changedTokens.map { token =>
-      dbModule.tokenMetadataDal.updateTokenPrice(token).map { r =>
-        if (r != ErrorCode.ERR_NONE)
-          log.error(s"failed to update token price:$token")
-      }
+      dbModule.tokenMetadataDal
+        .updateTokenPrice(token.address, token.usdPrice)
+        .map { r =>
+          if (r != ErrorCode.ERR_NONE)
+            log.error(s"failed to update token price:$token")
+        }
     })
   }
 
