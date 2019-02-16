@@ -65,15 +65,16 @@ class MetadataRefresher(
   def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
-  mediator ! Subscribe(MetadataManagerActor.pubsubTopic, self)
 
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]
 
-  private var subscribees = Seq.empty[ActorRef]
-
   override def initialize() = {
-    val f = refreshMetadata()
+    val f = for {
+      _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
+      _ <- refreshMetadata()
+    } yield {}
+
     f onComplete {
       case Success(_) => becomeReady()
       case Failure(e) => throw e
@@ -83,11 +84,10 @@ class MetadataRefresher(
 
   def ready: Receive = {
     case req: MetadataChanged =>
-      refreshMetadata()
-      subscribees.foreach(_ ! req)
-
-    case req: SubscribeMetadataChanged =>
-      subscribees = subscribees :+ sender
+      for {
+        _ <- refreshMetadata()
+        _ = getLocalActors().foreach(_ ! req)
+      } yield Unit
 
     case _: GetMetadatas.Req =>
       sender ! GetMetadatas.Res(tokens = tokens, markets = markets)
@@ -108,4 +108,16 @@ class MetadataRefresher(
       markets = markets_.map(MetadataManager.normalizeMarket)
       metadataManager.reset(tokens_, markets_)
     }
+
+  //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
+  private def getLocalActors() = {
+    val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
+
+    Seq(
+      context.system.actorSelection(str.format(OrderbookManagerActor.name)),
+      context.system.actorSelection(str.format(OrderbookManagerActor.name)),
+      context.system.actorSelection(str.format(MultiAccountManagerActor.name))
+    )
+  }
+
 }

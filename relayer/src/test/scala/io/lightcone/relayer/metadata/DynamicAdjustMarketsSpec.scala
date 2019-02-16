@@ -16,12 +16,14 @@
 
 package io.lightcone.relayer.metadata
 
+import akka.actor._
 import akka.pattern._
 import io.lightcone.relayer.actors._
 import io.lightcone.core._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
-import scala.concurrent.Await
+
+import scala.concurrent._
 
 class DynamicAdjustMarketsSpec
     extends CommonSpec
@@ -44,12 +46,15 @@ class DynamicAdjustMarketsSpec
       val amountB = "1"
       val rawOrder =
         createRawOrder(amountS = amountS.zeros(18), amountB = amountB.zeros(18))
+
+      val market = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
+
       val f = singleRequest(SubmitOrder.Req(Some(rawOrder)), "submit_order")
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case SubmitOrder.Res(Some(order)) =>
-          info(s" response ${order}")
+        case SubmitOrder.Res(Some(order), _) =>
+          //          info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
       }
@@ -87,13 +92,25 @@ class DynamicAdjustMarketsSpec
         case _ => assert(false)
       }
 
+      info("check the status of MarketManagerActor and OrderbookManagerActor")
+      val checkActorAliveRes1 =
+        Await.result(checkActorAlive(system, market), timeout.duration)
+      checkActorAliveRes1 should be(true)
+
       info("send TERMINATE event")
 
       val terminateMarketF = actors.get(MetadataManagerActor.name) ? TerminateMarket
-        .Req(MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString)
+        .Req(market.hashString)
       Await.result(terminateMarketF, timeout.duration)
       actors.get(MetadataRefresher.name) ! MetadataChanged()
       Thread.sleep(1000) //等待changed事件执行完毕
+
+      info(
+        "the status of MarketManagerActor and OrderbookManagerActor must be stopped"
+      )
+      val checkActorAliveRes2 =
+        Await.result(checkActorAlive(system, market), timeout.duration)
+      checkActorAliveRes2 should be(false)
 
       info("check the response of submiting an order")
       val rawOrder1 =
@@ -111,9 +128,7 @@ class DynamicAdjustMarketsSpec
         UpdateMarketMetadata.Req(
           Some(
             metadataManager
-              .getMarketMetadata(
-                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
-              )
+              .getMarketMetadata(market.hashString)
               .copy(status = MarketMetadata.Status.ACTIVE)
           )
         )
@@ -128,6 +143,7 @@ class DynamicAdjustMarketsSpec
       val f2 = singleRequest(SubmitOrder.Req(Some(rawOrder1)), "submit_order")
       Await.result(f2, timeout.duration)
 
+      info("check the status of orderbook after ACTIVE")
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook,
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
@@ -146,9 +162,7 @@ class DynamicAdjustMarketsSpec
         .Req(
           Some(
             metadataManager
-              .getMarketMetadata(
-                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
-              )
+              .getMarketMetadata(market.hashString)
               .copy(status = MarketMetadata.Status.READONLY)
           )
         )
@@ -156,7 +170,7 @@ class DynamicAdjustMarketsSpec
       actors.get(MetadataRefresher.name) ! MetadataChanged()
 
       Thread.sleep(1000)
-      info("can't submit order in mode of READONLY")
+      info("make sure that can't submit order in mode of READONLY")
       val rawOrder4 =
         createRawOrder(amountS = amountS.zeros(18), amountB = amountB.zeros(18))
       val f4 = singleRequest(SubmitOrder.Req(Some(rawOrder4)), "submit_order")
@@ -180,6 +194,47 @@ class DynamicAdjustMarketsSpec
         case _ => assert(false)
       }
     }
+  }
+
+  private def checkActorAlive(
+      system: ActorSystem,
+      market: MarketPair
+    ): Future[Boolean] = {
+    val entityId = MarketManagerActor.getEntityId(market)
+    val numsOfMarketManagerShards =
+      config.getInt("market_manager.num-of-shards")
+    val numsOfOrderbookManagerShards =
+      config.getInt("orderbook_manager.num-of-shards")
+
+    val orderbookEntityId = s"${OrderbookManagerActor.name}_${entityId}"
+    val marketManagerEntityId = s"${MarketManagerActor.name}_${entityId}"
+
+    val marketManagerPath = s"akka://${system.name}/system/sharding/" +
+      s"${MarketManagerActor.name}/" +
+      s"${(math.abs(marketManagerEntityId.hashCode) % numsOfMarketManagerShards).toString}/" +
+      s"${marketManagerEntityId}"
+    val orderbookManagerPath = s"akka://${system.name}/system/sharding/" +
+      s"${OrderbookManagerActor.name}/" +
+      s"${(math.abs(orderbookEntityId.hashCode) % numsOfOrderbookManagerShards).toString}/" +
+      s"${orderbookEntityId}"
+
+    for {
+      marketManagerActor <- getLocalActorRef(system, marketManagerPath)
+      orderbookManagerActor <- getLocalActorRef(system, orderbookManagerPath)
+    } yield marketManagerActor != null && orderbookManagerActor != null
+
+  }
+
+  private def getLocalActorRef(
+      system: ActorSystem,
+      path: String
+    ): Future[ActorRef] = {
+    system
+      .actorSelection(path)
+      .resolveOne()
+      .recover {
+        case _: Throwable => null
+      }
   }
 
 }

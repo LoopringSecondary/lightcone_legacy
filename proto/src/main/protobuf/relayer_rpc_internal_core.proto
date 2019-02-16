@@ -86,6 +86,7 @@ message SubmitOrder {
 
     message Res {
         Order order = 1;
+        bool success = 2;
     }
 }
 
