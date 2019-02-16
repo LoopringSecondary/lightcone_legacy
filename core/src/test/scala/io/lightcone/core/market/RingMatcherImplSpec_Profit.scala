@@ -16,9 +16,7 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.testing._
-
-class RingMatcherImplSpec_Profit extends OrderAwareSpec {
+class RingMatcherImplSpec_Profit extends testing.CommonSpec {
 
   import ErrorCode._
 
@@ -40,9 +38,11 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
       ) = true
   }
 
-  val maker = sellDAI(10, 10).matchableAsOriginal
-  val taker = buyDAI(10, 10).matchableAsOriginal
+  val maker =
+    (Addr() |> "100000000000".dai --> "10000000".weth -- "10".lrc).matchableAsOriginal
 
+  val taker =
+    (Addr() |> "10000000".weth --> "100000000000".dai -- "10".lrc).matchableAsOriginal
   "RingMatcherImpl" should "not match orders if the ring is not profitable" in {
     implicit val rie = nonProfitable
     val matcher = new RingMatcherImpl()
@@ -63,13 +63,20 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 
     matcher
       .matchOrders(
-        sellDAI(10, 10).matchableAsOriginal,
-        buyDAI(10, 10).matchableAsOriginal
+        maker,
+        taker
       )
       .isRight should be(true)
 
     // match the same orders with `_matchable`
-    matcher.matchOrders(sellDAI(10, 10), buyDAI(10, 10)) should be(
+    matcher.matchOrders(
+      maker.copy(
+        _matchable = Some(
+          MatchableState()
+        )
+      ),
+      taker
+    ) should be(
       Left(ERR_MATCHING_TAKER_COMPLETELY_FILLED)
     )
   }

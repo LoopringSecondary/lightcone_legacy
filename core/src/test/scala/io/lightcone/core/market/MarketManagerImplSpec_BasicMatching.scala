@@ -14,122 +14,122 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+// package io.lightcone.core
 
-import io.lightcone.core.testing._
+// import io.lightcone.core.testing._
 
-class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
+// class MarketManagerImplSpec_BasicMatching extends MarketManagerImplSpec {
 
-  import OrderStatus._
-  import ErrorCode._
+//   import OrderStatus._
+//   import ErrorCode._
 
-  "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_INCOME_TOO_SMALL error " +
-    "and should put order inside the orderbook" in {
-    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-    var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+//   "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_INCOME_TOO_SMALL error " +
+//     "and should put order inside the orderbook" in {
+//     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+//     var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-    (fackRingMatcher
-      .matchOrders(_: Matchable, _: Matchable, _: Double))
-      .when(*, *, *)
-      .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
+//     (fakeRingMatcher
+//       .matchOrders(_: Matchable, _: Matchable, _: Double))
+//       .when(*, *, *)
+//       .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
 
-    val sellResult = marketManager.submitOrder(sellOrder, 1)
-    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
+//     val sellResult = marketManager.submitOrder(sellOrder, 1)
+//     sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
-    val buyResult = marketManager.submitOrder(buyOrder, 2)
-    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
-  }
+//     val buyResult = marketManager.submitOrder(buyOrder, 2)
+//     buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
+//   }
 
-  "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_ORDERS_NOT_TRADABLE error " +
-    "and should put order inside the orderbook" in {
-    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-    var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+//   "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_ORDERS_NOT_TRADABLE error " +
+//     "and should put order inside the orderbook" in {
+//     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+//     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-    (fackRingMatcher
-      .matchOrders(_: Matchable, _: Matchable, _: Double))
-      .when(*, *, *)
-      .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
+//     (fakeRingMatcher
+//       .matchOrders(_: Matchable, _: Matchable, _: Double))
+//       .when(*, *, *)
+//       .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
 
-    val sellResult = marketManager.submitOrder(sellOrder, 1)
-    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
+//     val sellResult = marketManager.submitOrder(sellOrder, 1)
+//     sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
-    val buyResult = marketManager.submitOrder(buyOrder, 2)
-    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
-  }
+//     val buyResult = marketManager.submitOrder(buyOrder, 2)
+//     buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
+//   }
 
-  "MarketManager" should "generate a ring for sell order as taker" in {
-    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-    var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+//   "MarketManager" should "generate a ring for sell order as taker" in {
+//     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+//     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-    val ring = MatchableRing(null, null)
-    (fackRingMatcher
-      .matchOrders(_: Matchable, _: Matchable, _: Double))
-      .when(*, *, *)
-      .returns(Right(ring))
+//     val ring = MatchableRing(null, null)
+//     (fakeRingMatcher
+//       .matchOrders(_: Matchable, _: Matchable, _: Double))
+//       .when(*, *, *)
+//       .returns(Right(ring))
 
-    val sellResult = marketManager.submitOrder(sellOrder, 1)
-    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
+//     val sellResult = marketManager.submitOrder(sellOrder, 1)
+//     sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
-    val buyResult = marketManager.submitOrder(buyOrder, 2)
-    buyResult should be(
-      MarketManager
-        .MatchResult(
-          buyOrder.asPending,
-          Seq(ring),
-          Orderbook
-            .Update()
-            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
-        )
-    )
+//     val buyResult = marketManager.submitOrder(buyOrder, 2)
+//     buyResult should be(
+//       MarketManager
+//         .MatchResult(
+//           buyOrder.asPending,
+//           Seq(ring),
+//           Orderbook
+//             .Update()
+//             .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
+//         )
+//     )
 
-    marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
+//     marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
 
-    marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))
+//     marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))
 
-    (fakePendingRingPool.addRing _).verify(ring).once
-  }
+//     (fakePendingRingPool.addRing _).verify(ring).once
+//   }
 
-  "MarketManager" should "generate a ring for buy order as taker" in {
-    var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
-    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+//   "MarketManager" should "generate a ring for buy order as taker" in {
+//     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+//     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
 
-    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-    val ring = MatchableRing(null, null)
-    (fackRingMatcher
-      .matchOrders(_: Matchable, _: Matchable, _: Double))
-      .when(*, *, *)
-      .returns(Right(ring))
+//     val ring = MatchableRing(null, null)
+//     (fakeRingMatcher
+//       .matchOrders(_: Matchable, _: Matchable, _: Double))
+//       .when(*, *, *)
+//       .returns(Right(ring))
 
-    val buyResult = marketManager.submitOrder(buyOrder, 1)
-    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
+//     val buyResult = marketManager.submitOrder(buyOrder, 1)
+//     buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
 
-    val sellResult = marketManager.submitOrder(sellOrder, 2)
-    sellResult should be(
-      MarketManager
-        .MatchResult(
-          sellOrder.asPending,
-          Seq(ring),
-          Orderbook
-            .Update()
-            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
-        )
-    )
+//     val sellResult = marketManager.submitOrder(sellOrder, 2)
+//     sellResult should be(
+//       MarketManager
+//         .MatchResult(
+//           sellOrder.asPending,
+//           Seq(ring),
+//           Orderbook
+//             .Update()
+//             .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
+//         )
+//     )
 
-    marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
-    marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))
+//     marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
+//     marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))
 
-    (fakePendingRingPool.addRing _).verify(ring).once
-  }
+//     (fakePendingRingPool.addRing _).verify(ring).once
+//   }
 
-}
+// }
