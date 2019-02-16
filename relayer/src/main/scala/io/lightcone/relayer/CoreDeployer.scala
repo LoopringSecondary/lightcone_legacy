@@ -34,11 +34,8 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
-import io.lightcone.relayer.socket.{
-  SocketRegister,
-  SocketServer,
-  WrappedDataListener
-}
+import io.lightcone.relayer.socket.Listeners.WrappedDataListener
+import io.lightcone.relayer.socket._
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}

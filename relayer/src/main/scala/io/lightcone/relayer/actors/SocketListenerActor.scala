@@ -20,8 +20,8 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import com.google.inject.Inject
 import io.lightcone.relayer.base.{DeployedAsSingleton, Lookup}
-import io.lightcone.relayer.data.AddressBalanceOrAllowanceUpdated
-import io.lightcone.relayer.socket.{BalanceListener, WrappedDataListener}
+import io.lightcone.relayer.data.GetBalanceAndAllowances
+import io.lightcone.relayer.socket.Listeners._
 
 import scala.concurrent.ExecutionContext
 
@@ -49,7 +49,7 @@ class SocketListenerActor @Inject()(
     extends Actor {
 
   def receive: Receive = {
-    case req: AddressBalanceOrAllowanceUpdated =>
+    case req: GetBalanceAndAllowances.Res =>
       listeners.get(BalanceListener.eventName).dataChanged(req)
   }
 }

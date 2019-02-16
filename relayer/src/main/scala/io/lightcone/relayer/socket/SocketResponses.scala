@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package io.lightcone.relayer.socket
 
-option java_multiple_files = true;
-package io.lightcone.relayer.data;
+case class BalanceAndAllowance(
+    address: String,
+    balance: String,
+    allowance: String,
+    availableBalance: String,
+    availableAllowance: String)
 
-message SubcribeBalanceAndAllowance{
-    message Req{
-        repeated string addresses =1;
-        repeated string tokens =2;
-    }
-}
-
+case class BalanceAndAllowanceResponse(
+    owner: String,
+    balanceAndAllowances: Seq[BalanceAndAllowance])

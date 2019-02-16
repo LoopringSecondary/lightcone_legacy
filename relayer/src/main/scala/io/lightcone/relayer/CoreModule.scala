@@ -34,7 +34,10 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.socket.{BalanceListener, WrappedDataListener}
+import io.lightcone.relayer.socket.Listeners.{
+  BalanceListener,
+  WrappedDataListener
+}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -163,7 +166,7 @@ class CoreModule(
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     //bind socket listener
-    bind[WrappedDataListener[SubcriberBalanceAndAllowance.Req]]
+    bind[WrappedDataListener[SubcribeBalanceAndAllowance.Req]]
       .to[BalanceListener]
 
     // --- bind primative types ---------------------
@@ -208,7 +211,7 @@ class CoreModule(
 
   @Provides
   def getListeners(
-      balanceListener: WrappedDataListener[SubcriberBalanceAndAllowance.Req]
+      balanceListener: WrappedDataListener[SubcribeBalanceAndAllowance.Req]
     ): Lookup[WrappedDataListener[_]] = {
     val listeners = new MapBasedLookup[WrappedDataListener[_]]()
     listeners.add(BalanceListener.eventName, balanceListener)

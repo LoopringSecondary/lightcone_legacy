@@ -18,6 +18,10 @@ package io.lightcone.relayer.support
 
 import io.lightcone.relayer.actors.SocketListenerActor
 import io.lightcone.relayer.base.MapBasedLookup
+import io.lightcone.relayer.socket.Listeners.{
+  BalanceListener,
+  WrappedDataListener
+}
 import io.lightcone.relayer.socket._
 
 trait SocketSupport {

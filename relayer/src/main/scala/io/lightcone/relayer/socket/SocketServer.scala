@@ -21,6 +21,7 @@ import com.corundumstudio.socketio.{Configuration, SocketIOServer}
 import com.typesafe.config.Config
 import io.lightcone.relayer.base.Lookup
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import io.lightcone.relayer.socket.Listeners.WrappedDataListener
 abstract class SocketServer(
     implicit
     val config: Config,

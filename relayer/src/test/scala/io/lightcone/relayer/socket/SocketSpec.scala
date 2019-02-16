@@ -17,8 +17,9 @@
 package io.lightcone.relayer.socket
 
 import io.lightcone.relayer.actors.SocketListenerActor
-import io.lightcone.relayer.data.AddressBalanceOrAllowanceUpdated
+import io.lightcone.relayer.data.GetBalanceAndAllowances
 import io.lightcone.relayer.support._
+import io.lightcone.relayer.base._
 
 class SocketSpec
     extends CommonSpec
@@ -32,13 +33,25 @@ class SocketSpec
 //      Thread.sleep(10 * 1000)
 //      val account0 = accounts.head
 //      val account1 = getUniqueAccountWithoutEth
-//      transferWETH(account1.getAddress, "100")(account0).map { _ =>
-//        socketListener ! AddressBalanceOrAllowanceUpdated(
-//          owner = account0.getAddress,
-//          token = WETH_TOKEN.address
-//        )
-//        println("transfer 100 weth")
-//      }
+//      val getBaMethod = "get_balance_and_allowance"
+//      singleRequest(
+//        GetBalanceAndAllowances.Req(
+//          account0.getAddress,
+//          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+//        ),
+//        getBaMethod
+//      ).mapAs[GetBalanceAndAllowances.Res].foreach(res => socketListener ! res)
+//      Thread.sleep(2000)
+//      transferWETH(account1.getAddress, "100")(account0)
+//      Thread.sleep(3000)
+//      singleRequest(
+//        GetBalanceAndAllowances.Req(
+//          account0.getAddress,
+//          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+//        ),
+//        getBaMethod
+//      ).mapAs[GetBalanceAndAllowances.Res].foreach(res => socketListener ! res)
+//
 //      Thread.sleep(Int.MaxValue)
     }
   }
