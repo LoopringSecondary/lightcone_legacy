@@ -38,7 +38,7 @@ class RingMinedEventExtractor @Inject()(
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
   implicit val ringBatchContext = RingBatchContext(
-    lrcAddress = metadataManager.getTokenBySymbol("lrc").get.meta.address
+    lrcAddress = metadataManager.getTokenWithSymbol("lrc").get.meta.address
   )
   val fillLength: Int = 8 * 64
 

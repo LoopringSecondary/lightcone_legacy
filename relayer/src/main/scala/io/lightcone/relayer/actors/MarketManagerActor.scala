@@ -36,6 +36,8 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
 
   var metadataManager: MetadataManager = _
 
+  import MarketMetadata.Status._
+
   def start(
       implicit
       system: ActorSystem,
@@ -59,14 +61,18 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
   //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractShardingObject: PartialFunction[Any, MarketPair] = {
     case SubmitSimpleOrder(_, Some(order))
-        if metadataManager.isMarketActiveOrReadOnly(
-          MarketPair(order.tokenS, order.tokenB)
+        if metadataManager.isMarketStatus(
+          MarketPair(order.tokenS, order.tokenB),
+          ACTIVE,
+          READONLY
         ) =>
       MarketPair(order.tokenS, order.tokenB)
 
     case req: CancelOrder.Req
-        if req.marketPair.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
-          req.getMarketPair
+        if req.marketPair.nonEmpty && metadataManager.isMarketStatus(
+          req.getMarketPair,
+          ACTIVE,
+          READONLY
         ) =>
       req.getMarketPair
 
@@ -103,23 +109,26 @@ class MarketManagerActor(
     with ActorLogging {
   import ErrorCode._
   import OrderStatus._
+  import MarketMetadata.Status._
   import MarketManager.MatchResult
 
   val selfConfig = config.getConfig(MarketManagerActor.name)
 
   implicit val marketPair = {
-    metadataManager.getValidMarketPairs.values
-      .find(m => MarketManagerActor.getEntityId(m) == entityId) match {
-      case Some(pair) => pair
-      case None =>
+    metadataManager
+      .getMarkets(ACTIVE, READONLY)
+      .find(m => MarketManagerActor.getEntityId(m.marketPair.get) == entityId)
+      .map(_.marketPair.get)
+      .getOrElse {
         val error = s"unable to find market pair matching entity id ${entityId}"
         log.error(error)
         throw new IllegalStateException(error)
-    }
+      }
   }
 
   private val metricName: String = {
-    def symbol(token: String) = metadataManager.getToken(token).get.meta.symbol
+    def symbol(token: String) =
+      metadataManager.getTokenWithAddress(token).get.meta.symbol
     s"market_${symbol(marketPair.baseToken)}_${symbol(marketPair.quoteToken)}"
   }
 
@@ -151,9 +160,9 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  def marketMetadata = metadataManager.getMarketMetadata(marketPair)
+  def marketMetadata = metadataManager.getMarket(marketPair)
 
-  implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
+  implicit val aggregator = new OrderbookAggregatorImpl(
     marketMetadata.priceDecimals,
     marketMetadata.precisionForAmount,
     marketMetadata.precisionForTotal
@@ -324,7 +333,7 @@ class MarketManagerActor(
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarketMetadata(marketPair))
+        Option(metadataManager.getMarket(marketPair))
       } catch {
         case _: Throwable => None
       }

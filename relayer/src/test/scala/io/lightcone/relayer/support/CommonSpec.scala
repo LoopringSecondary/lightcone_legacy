@@ -64,7 +64,7 @@ abstract class CommonSpec(configStr: String = "")
 
   //  log.info(s"init config: ${config}")
 
-  implicit val metadataManager = new MetadataManager()
+  implicit val metadataManager = new MetadataManagerImpl()
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()

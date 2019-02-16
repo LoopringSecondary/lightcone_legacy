@@ -196,21 +196,15 @@ case class Matchable(
       implicit
       metadataManager: MetadataManager
     ) = {
-    if (!metadataManager.hasToken(tokenAddr)) {
-
-      throw ErrorException(
-        ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
-        s"no metadata available for token $tokenAddr"
-      )
-    }
-    val token = metadataManager
-      .getToken(tokenAddr)
-      .getOrElse(
+    metadataManager
+      .getTokenWithAddress(tokenAddr)
+      .map(_.fromWei(amount))
+      .getOrElse {
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found token:$tokenAddr"
+          ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
+          s"token not found for $tokenAddr"
         )
-      )
-    token.fromWei(amount)
+      }
   }
+
 }

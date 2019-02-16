@@ -128,7 +128,7 @@ class DynamicAdjustMarketsSpec
         UpdateMarketMetadata.Req(
           Some(
             metadataManager
-              .getMarketMetadata(market.hashString)
+              .getMarket(market.hashString)
               .copy(status = MarketMetadata.Status.ACTIVE)
           )
         )
@@ -162,7 +162,7 @@ class DynamicAdjustMarketsSpec
         .Req(
           Some(
             metadataManager
-              .getMarketMetadata(market.hashString)
+              .getMarket(market.hashString)
               .copy(status = MarketMetadata.Status.READONLY)
           )
         )

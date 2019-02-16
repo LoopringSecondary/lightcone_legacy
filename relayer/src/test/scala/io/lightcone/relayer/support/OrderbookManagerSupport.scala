@@ -18,6 +18,7 @@ package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
 import akka.pattern._
+import io.lightcone.core._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
@@ -31,6 +32,7 @@ trait OrderbookManagerSupport
     with DatabaseModuleSupport
     with MarketManagerSupport {
   me: CommonSpec with EthereumSupport =>
+  import MarketMetadata.Status._
 
   def startOrderbookSupport() = {
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
@@ -48,11 +50,13 @@ trait OrderbookManagerSupport
       10,
       TimeUnit.SECONDS,
       () => {
-        val f = Future.sequence(metadataManager.getValidMarketPairs.values.map {
-          marketPair =>
-            val orderBookInit = GetOrderbook.Req(0, 100, Some(marketPair))
-            actors.get(OrderbookManagerActor.name) ? orderBookInit
-        })
+        val f =
+          Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY).map {
+            meta =>
+              val marketPair = meta.marketPair.get
+              val orderBookInit = GetOrderbook.Req(0, 100, Some(marketPair))
+              actors.get(OrderbookManagerActor.name) ? orderBookInit
+          })
         val res =
           Await.result(f.mapTo[Seq[GetOrderbook.Res]], timeout.duration)
         res.nonEmpty
@@ -66,9 +70,11 @@ trait OrderbookManagerSupport
     }
 
     // TODO：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
-    metadataManager.getValidMarketPairs.values.map { marketPair =>
+    metadataManager.getMarkets(ACTIVE, READONLY).map { meta =>
+      val marketPair = meta.marketPair.get
       val orderBookInit = GetOrderbook.Req(0, 100, Some(marketPair))
-      val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
+      val orderBookInitF = actors
+        .get(OrderbookManagerActor.name) ? orderBookInit
       Await.result(orderBookInitF, timeout.duration)
     }
   }

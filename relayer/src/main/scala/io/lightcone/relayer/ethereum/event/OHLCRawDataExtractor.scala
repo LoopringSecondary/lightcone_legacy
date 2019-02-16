@@ -30,6 +30,8 @@ class OHLCRawDataExtractor @Inject()(
     val metadataManager: MetadataManager)
     extends EventExtractor[OHLCRawData] {
 
+  import MarketMetadata.Status._
+
   def extract(block: RawBlockData): Future[Seq[OHLCRawData]] = {
     extractor
       .extract(block)
@@ -45,15 +47,16 @@ class OHLCRawDataExtractor @Inject()(
             val marketHash =
               MarketHash(MarketPair(fill.tokenS, fill.tokenB)).toString
 
-            if (!metadataManager.isMarketActiveOrReadOnly(marketHash)) None
+            if (!metadataManager.isMarketStatus(marketHash, ACTIVE, READONLY))
+              None
             else {
               val marketMetadata =
-                metadataManager.getMarketMetadata(marketHash)
+                metadataManager.getMarket(marketHash)
               val marketPair = marketMetadata.getMarketPair
               val baseToken =
-                metadataManager.getToken(marketPair.baseToken).get
+                metadataManager.getTokenWithAddress(marketPair.baseToken).get
               val quoteToken =
-                metadataManager.getToken(marketPair.quoteToken).get
+                metadataManager.getTokenWithAddress(marketPair.quoteToken).get
               val (baseAmount, quoteAmount) =
                 getAmounts(fill, baseToken, quoteToken, marketMetadata)
               Some(

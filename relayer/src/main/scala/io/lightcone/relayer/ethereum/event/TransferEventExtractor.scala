@@ -32,7 +32,7 @@ class TransferEventExtractor @Inject()(
     extends EventExtractor[PTransferEvent] {
 
   val wethAddress = Address(
-    metadataManager.getTokenBySymbol("weth").get.meta.address
+    metadataManager.getTokenWithSymbol("weth").get.meta.address
   )
 
   def extract(block: RawBlockData): Future[Seq[PTransferEvent]] = Future {
