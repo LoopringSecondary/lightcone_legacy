@@ -143,7 +143,9 @@ class AccountManagerActor(
     case req @ SubmitOrder.Req(Some(raworder)) =>
       (for {
         //check通过再保存到数据库，以及后续处理
-        _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
+        _ <- Future {
+          accountCutoffState.isOrderCutoffByOwner(raworder.validSince)
+        }
         _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
           raworder.withStatus(STATUS_PENDING_ACTIVE)

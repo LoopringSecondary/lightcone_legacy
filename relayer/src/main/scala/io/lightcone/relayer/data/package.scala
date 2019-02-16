@@ -187,5 +187,8 @@ package object data {
       val state = order.getState.copy(status = newStatus)
       order.copy(state = Some(state))
     }
+
+    def getMarketHash() =
+      MarketHash(MarketPair(order.tokenS, order.tokenB)).hashString
   }
 }

@@ -67,7 +67,7 @@ class OrderbookRecoverSpec
       val f = testSubmitOrders()
       val res = Await.result(f, timeout.duration)
       res.map {
-        case SubmitOrder.Res(Some(order)) =>
+        case SubmitOrder.Res(Some(order), _) =>
           info(s" response ${order}")
           order.status should be(STATUS_PENDING)
         case _ => assert(false)
