@@ -27,7 +27,7 @@ import io.lightcone.relayer.socket._
 import scala.concurrent.ExecutionContext
 
 object BalanceListener {
-  val eventName = "balance"
+  val eventName = "balances"
 }
 
 class BalanceListener @Inject()(
@@ -43,7 +43,7 @@ class BalanceListener @Inject()(
       ackSender: AckRequest
     ): Unit = {
     if (ackSender.isAckRequested) {
-      ackSender.sendAckData("subscribe for balance successfully")
+      ackSender.sendAckData("subscribe for balances successfully")
     }
     val wrappedSocketClient =
       new WrappedSocketClient(

@@ -19,7 +19,10 @@ package io.lightcone.relayer.socket
 import com.corundumstudio.socketio.SocketIOServer
 import com.corundumstudio.socketio.listener.DataListener
 import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.data.SubcribeBalanceAndAllowance
+import io.lightcone.relayer.data.{
+  SubcribeBalanceAndAllowance,
+  SubcribeTransaction
+}
 import io.lightcone.relayer.socket.Listeners._
 
 trait SocketRegister {
@@ -32,5 +35,13 @@ trait SocketRegister {
     listeners
       .get(BalanceListener.eventName)
       .asInstanceOf[DataListener[SubcribeBalanceAndAllowance.Req]]
+  )
+
+  server.addEventListener(
+    TransactionListener.eventName,
+    classOf[SubcribeTransaction.Req],
+    listeners
+      .get(TransactionListener.eventName)
+      .asInstanceOf[DataListener[SubcribeTransaction.Req]]
   )
 }

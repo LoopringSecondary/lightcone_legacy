@@ -26,3 +26,11 @@ message SubcribeBalanceAndAllowance{
     }
 }
 
+message SubcribeTransaction{
+    message Req{
+       string address =1;
+       string status = 2;
+       string type = 3;
+    }
+}
+

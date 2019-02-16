@@ -26,3 +26,21 @@ case class TokenBalanceAndAllowance(
 case class BalanceAndAllowanceResponse(
     owner: String,
     balanceAndAllowances: Seq[TokenBalanceAndAllowance])
+
+case class Transaction(
+    from: String,
+    to: String,
+    value: String,
+    gasPrice: String,
+    gasLimit: String,
+    gasUsed: String = "0x0",
+    data: String,
+    nonce: String,
+    hash: String,
+    blockNum: String,
+    time: String,
+    status: String)
+
+case class TransactionResponse(
+    owner: String,
+    transactions: Seq[Transaction])

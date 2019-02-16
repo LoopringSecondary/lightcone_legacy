@@ -165,6 +165,7 @@ class CoreModule(
     //bind socket listener
     bind[WrappedDataListener[SubcribeBalanceAndAllowance.Req]]
       .to[BalanceListener]
+    bind[WrappedDataListener[SubcribeTransaction.Req]].to[TransactionListener]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -208,10 +209,12 @@ class CoreModule(
 
   @Provides
   def getListeners(
-      balanceListener: WrappedDataListener[SubcribeBalanceAndAllowance.Req]
+      balanceListener: WrappedDataListener[SubcribeBalanceAndAllowance.Req],
+      transactionListener: WrappedDataListener[SubcribeTransaction.Req]
     ): Lookup[WrappedDataListener[_]] = {
     val listeners = new MapBasedLookup[WrappedDataListener[_]]()
     listeners.add(BalanceListener.eventName, balanceListener)
+    listeners.add(TransactionListener.eventName, transactionListener)
     listeners
   }
 
