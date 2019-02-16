@@ -36,6 +36,8 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
 
   var metadataManager: MetadataManager = _
 
+  import MarketMetadata.Status._
+
   def start(
       implicit
       system: ActorSystem,
@@ -59,14 +61,18 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
   //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractShardingObject: PartialFunction[Any, MarketPair] = {
     case SubmitSimpleOrder(_, Some(order))
-        if metadataManager.isMarketActiveOrReadOnly(
-          MarketPair(order.tokenS, order.tokenB)
+        if metadataManager.isMarketStatus(
+          MarketPair(order.tokenS, order.tokenB),
+          ACTIVE,
+          READONLY
         ) =>
       MarketPair(order.tokenS, order.tokenB)
 
     case req: CancelOrder.Req
-        if req.marketPair.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
-          req.getMarketPair
+        if req.marketPair.nonEmpty && metadataManager.isMarketStatus(
+          req.getMarketPair,
+          ACTIVE,
+          READONLY
         ) =>
       req.getMarketPair
 
@@ -119,7 +125,8 @@ class MarketManagerActor(
   }
 
   private val metricName: String = {
-    def symbol(token: String) = metadataManager.getToken(token).get.meta.symbol
+    def symbol(token: String) =
+      metadataManager.getTokenWithAddress(token).get.meta.symbol
     s"market_${symbol(marketPair.baseToken)}_${symbol(marketPair.quoteToken)}"
   }
 
@@ -153,7 +160,7 @@ class MarketManagerActor(
 
   def marketMetadata = metadataManager.getMarketMetadata(marketPair)
 
-  implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
+  implicit val aggregator = new OrderbookAggregatorImpl(
     marketMetadata.priceDecimals,
     marketMetadata.precisionForAmount,
     marketMetadata.precisionForTotal

@@ -43,7 +43,7 @@
 //       new RingMatcherImpl,
 //       new PendingRingPoolImpl,
 //       fakeDustOrderEvaluator,
-//       new OrderAwareOrderbookAggregatorImpl(
+//       new OrderbookAggregatorImpl(
 //         priceDecimals = 5,
 //         precisionForAmount = 4,
 //         precisionForTotal = 4

@@ -160,7 +160,7 @@ package object data {
     def hashString = MarketHash(marketPair).hashString
     def longId = MarketHash(marketPair).longId
 
-    def toLowerCase() =
+    def normalize() =
       MarketPair(
         baseToken = Address.normalize(marketPair.baseToken),
         quoteToken = Address.normalize(marketPair.quoteToken)

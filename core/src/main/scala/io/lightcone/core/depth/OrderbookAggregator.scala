@@ -21,29 +21,8 @@ trait OrderbookAggregator {
 
   def getOrderbookSlots(num: Int): Orderbook.Update
 
-  def increaseSell(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(true, true, price, amount, total)
-
-  def decreaseSell(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(true, false, price, amount, total)
-
-  def increaseBuy(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(false, true, price, amount, total)
-
-  def decreaseBuy(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(false, false, price, amount, total)
+  def addOrder(order: Matchable): Unit
+  def deleteOrder(order: Matchable): Unit
 
   def adjustAmount(
       isSell: Boolean,

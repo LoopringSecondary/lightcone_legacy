@@ -48,9 +48,11 @@ class MetadataManagerSpec
       info("check tokens: address at lower and upper case")
       assert(metadataManager.getTokens.length >= TOKENS.length) // in case added some tokens after initialized (metadataManager.addToken(token))
       TOKENS.foreach { t =>
-        val meta1 = metadataManager.getToken(t.address.toLowerCase())
+        val meta1 = metadataManager.getTokenWithAddress(t.address.toLowerCase())
         val meta2 =
-          metadataManager.getToken("0x" + t.address.substring(2).toUpperCase())
+          metadataManager.getTokenWithAddress(
+            "0x" + t.address.substring(2).toUpperCase()
+          )
         assert(
           meta1.nonEmpty && meta2.nonEmpty && meta1.get.meta.address == meta2.get.meta.address && meta1.get.meta.address == meta1.get.meta.address
             .toLowerCase()
@@ -433,14 +435,14 @@ class MetadataManagerSpec
         usdPrice = 8
       )
       info("token A and formatedA should same")
-      val formatedA = MetadataManager.normalizeToken(a)
+      val formatedA = MetadataManager.normalize(a)
       assert(
         formatedA.address == a.address && formatedA.symbol == a.symbol
           .toUpperCase()
       )
 
       info("token B formated address and symbol should same with formatedB")
-      val formatedB = MetadataManager.normalizeToken(b)
+      val formatedB = MetadataManager.normalize(b)
       assert(
         b.address.toLowerCase() == formatedB.address && b.symbol
           .toUpperCase() == formatedB.symbol
@@ -465,7 +467,7 @@ class MetadataManagerSpec
         marketPair = Some(marketPair),
         marketHash = MarketHash(MarketPair(BBB, AAA)).toString
       )
-      val formatedMarket = MetadataManager.normalizeMarket(market)
+      val formatedMarket = MetadataManager.normalize(market)
       assert(
         market.baseTokenSymbol == "bbb" &&
           formatedMarket.baseTokenSymbol == "BBB"

@@ -36,12 +36,14 @@ final class OrderbookManagerMessageValidator(
     metadataManager: MetadataManager)
     extends MessageValidator {
 
+  import MarketMetadata.Status._
+
   // Throws exception if validation fails.
   def validate = {
     case msg @ GetOrderbook.Req(_, _, Some(marketPair)) =>
       Future {
-        metadataManager.assertMarketPairIsActiveOrReadOnly(marketPair)
-        msg.copy(marketPair = Some(marketPair.toLowerCase()))
+        metadataManager.assertMarketStatus(marketPair, ACTIVE, READONLY)
+        msg.copy(marketPair = Some(marketPair.normalize))
       }
   }
 }

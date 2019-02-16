@@ -28,12 +28,13 @@ final class CancelOrderValidator(
     metadataManager: MetadataManager)
     extends MessageValidator {
   import ErrorCode._
+  import MarketMetadata.Status._
 
   //TODO：确定签名规则，单个订单，采用订单的签名简单测试
   override def validate = {
     case req: CancelOrder.Req =>
       Future {
-        metadataManager.assertMarketPairIsActive(req.getMarketPair)
+        metadataManager.assertMarketStatus(req.getMarketPair, ACTIVE)
         if (!checkSign(req.owner, req.id, req.sig))
           throw ErrorException(
             ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG,

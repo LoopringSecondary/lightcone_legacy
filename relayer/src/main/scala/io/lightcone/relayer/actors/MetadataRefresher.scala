@@ -104,8 +104,8 @@ class MetadataRefresher(
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokens = tokens_.map(MetadataManager.normalizeToken)
-      markets = markets_.map(MetadataManager.normalizeMarket)
+      tokens = tokens_.map(MetadataManager.normalize)
+      markets = markets_.map(MetadataManager.normalize)
       metadataManager.reset(tokens_, markets_)
     }
 

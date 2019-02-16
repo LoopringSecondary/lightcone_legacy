@@ -23,12 +23,13 @@ import org.web3j.utils.Numeric
 
 import scala.concurrent._
 
-class OHLCRawDataExtractor @Inject()(
-    implicit
-    extractor: RingMinedEventExtractor,
-    val ec: ExecutionContext,
-    val metadataManager: MetadataManager)
-    extends EventExtractor[OHLCRawData] {
+class OHLCRawDataExtractor @Inject() (
+  implicit extractor: RingMinedEventExtractor,
+  val ec: ExecutionContext,
+  val metadataManager: MetadataManager)
+  extends EventExtractor[OHLCRawData] {
+
+  import MarketMetadata.Status._
 
   def extract(block: RawBlockData): Future[Seq[OHLCRawData]] = {
     extractor
@@ -36,8 +37,7 @@ class OHLCRawDataExtractor @Inject()(
       .map { rings =>
         rings.filter(
           ring =>
-            ring.header.isDefined && ring.header.get.txStatus.isTxStatusSuccess
-        )
+            ring.header.isDefined && ring.header.get.txStatus.isTxStatusSuccess)
       }
       .map { rings =>
         rings.flatMap { ring =>
@@ -45,15 +45,15 @@ class OHLCRawDataExtractor @Inject()(
             val marketHash =
               MarketHash(MarketPair(fill.tokenS, fill.tokenB)).toString
 
-            if (!metadataManager.isMarketActiveOrReadOnly(marketHash)) None
+            if (!metadataManager.isMarketStatus(marketHash, ACTIVE, READONLY)) None
             else {
               val marketMetadata =
                 metadataManager.getMarketMetadata(marketHash)
               val marketPair = marketMetadata.getMarketPair
               val baseToken =
-                metadataManager.getToken(marketPair.baseToken).get
+                metadataManager.getTokenWithAddress(marketPair.baseToken).get
               val quoteToken =
-                metadataManager.getToken(marketPair.quoteToken).get
+                metadataManager.getTokenWithAddress(marketPair.quoteToken).get
               val (baseAmount, quoteAmount) =
                 getAmounts(fill, baseToken, quoteToken, marketMetadata)
               Some(
@@ -66,9 +66,7 @@ class OHLCRawDataExtractor @Inject()(
                   quoteAmount = quoteAmount,
                   price = BigDecimal(quoteAmount / baseAmount)
                     .setScale(marketMetadata.priceDecimals)
-                    .doubleValue()
-                )
-              )
+                    .doubleValue()))
             }
           }.filter(_.isDefined).map(_.get).distinct
         }
@@ -77,11 +75,10 @@ class OHLCRawDataExtractor @Inject()(
 
   // LRC-WETH market, LRC is the base token, WETH is the quote token.
   def getAmounts(
-      fill: OrderFilledEvent,
-      baseToken: Token,
-      quoteToken: Token,
-      marketMetadata: MarketMetadata
-    ): (Double, Double) = {
+    fill: OrderFilledEvent,
+    baseToken: Token,
+    quoteToken: Token,
+    marketMetadata: MarketMetadata): (Double, Double) = {
     val amountInWei =
       if (Address(baseToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)

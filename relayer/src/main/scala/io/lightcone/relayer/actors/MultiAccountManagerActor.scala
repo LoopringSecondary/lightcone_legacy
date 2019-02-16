@@ -33,6 +33,9 @@ import scala.concurrent.duration._
 
 // Owner: Hongyu
 object MultiAccountManagerActor extends DeployedAsShardedByAddress {
+
+  import MarketMetadata.Status._
+
   val name = "multi_account_manager"
 
   var metadataManager: MetadataManager = _
@@ -58,20 +61,26 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
   //在validator 中已经做了拦截，该处再做一次，用于recover过滤
   val extractShardingObject: PartialFunction[Any, String] = {
     case SubmitOrder.Req(Some(rawOrder))
-        if metadataManager.isMarketActiveOrReadOnly(
-          MarketPair(rawOrder.tokenS, rawOrder.tokenB)
+        if metadataManager.isMarketStatus(
+          MarketPair(rawOrder.tokenS, rawOrder.tokenB),
+          ACTIVE,
+          READONLY
         ) =>
       rawOrder.owner
 
     case ActorRecover.RecoverOrderReq(Some(raworder))
-        if metadataManager.isMarketActiveOrReadOnly(
-          MarketPair(raworder.tokenS, raworder.tokenB)
+        if metadataManager.isMarketStatus(
+          MarketPair(raworder.tokenS, raworder.tokenB),
+          ACTIVE,
+          READONLY
         ) =>
       raworder.owner
 
     case req: CancelOrder.Req
-        if req.marketPair.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
-          req.getMarketPair
+        if req.marketPair.nonEmpty && metadataManager.isMarketStatus(
+          req.getMarketPair,
+          ACTIVE,
+          READONLY
         ) =>
       req.owner
 

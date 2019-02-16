@@ -44,7 +44,7 @@ class MarketManagerImpl(
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val aggregator: OrderAwareOrderbookAggregator,
+    val aggregator: OrderbookAggregator,
     val maxSettementFailuresPerOrder: Int)
     extends MarketManager
     with Logging {
