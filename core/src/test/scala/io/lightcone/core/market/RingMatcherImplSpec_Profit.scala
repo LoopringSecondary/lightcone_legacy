@@ -70,7 +70,14 @@ class RingMatcherImplSpec_Profit extends testing.CommonSpec {
       .isRight should be(true)
 
     // match the same orders with `_matchable`
-    matcher.matchOrders(maker, taker) should be(
+    matcher.matchOrders(
+      maker.copy(
+        _matchable = Some(
+          MatchableState()
+        )
+      ),
+      taker
+    ) should be(
       Left(ERR_MATCHING_TAKER_COMPLETELY_FILLED)
     )
   }
