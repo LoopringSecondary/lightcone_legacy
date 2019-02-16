@@ -48,16 +48,17 @@ class CMCCrawlerSpec
         5.second
       )
       info(s"all tickers length:${q1.tickers.length}")
-      q1.tickers.nonEmpty should be (true)
+      q1.tickers.nonEmpty should be(true)
     }
 
     "get WETH market tickers" in {
       val q1 = Await.result(
-        (refresherActor ? GetTokenTickers.Req("WETH")).mapTo[GetTokenTickers.Res],
+        (refresherActor ? GetTokenTickers.Req("WETH"))
+          .mapTo[GetTokenTickers.Res],
         5.second
       )
       info(s"WETH market tickers length:${q1.tickers.length}")
-      q1.tickers.nonEmpty should be (true)
+      q1.tickers.nonEmpty should be(true)
     }
   }
 
