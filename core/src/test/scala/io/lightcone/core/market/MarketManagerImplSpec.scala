@@ -15,7 +15,6 @@
  */
 
 package io.lightcone.core
-import io.lightcone.lib._
 
 trait MarketManagerImplSpec extends testing.CommonSpec {
   type MR = MarketManager.MatchResult
