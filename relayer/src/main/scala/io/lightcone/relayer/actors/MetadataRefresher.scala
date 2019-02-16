@@ -84,10 +84,9 @@ class MetadataRefresher(
 
   def ready: Receive = {
     case req: MetadataChanged =>
-      val validMarketPairs = metadataManager.getValidMarketPairs
       for {
         _ <- refreshMetadata()
-        _ = getLocalActors(validMarketPairs).foreach(_ ! req)
+        _ = getLocalActors().foreach(_ ! req)
       } yield Unit
 
     case _: GetMetadatas.Req =>
@@ -111,7 +110,7 @@ class MetadataRefresher(
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
-  private def getLocalActors(validMarketPairs: Map[String, MarketPair]) = {
+  private def getLocalActors() = {
     val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
 
     Seq(
