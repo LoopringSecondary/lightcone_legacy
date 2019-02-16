@@ -129,7 +129,7 @@ class MarketManagerActor(
   val histo = Kamon.histogram(metricName)
   val timer = Kamon.timer(metricName)
 
-  log.info("===> starting MarketManagerActor ${self.path} for ${marketPair}")
+  log.info(s"===> starting MarketManagerActor ${self.path} for ${marketPair}")
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 

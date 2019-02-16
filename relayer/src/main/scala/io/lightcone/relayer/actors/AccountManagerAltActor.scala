@@ -328,10 +328,12 @@ class AccountManagerAltActor(
     // Currently we do not support broker-level cutoff
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) //
         if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
+      count.refine("label" -> "broker_cutoff").increment()
       log.warning(s"not support this event yet: $req")
 
     case req: OrdersCancelledEvent
         if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
+      count.refine("label" -> "order_cancel").increment()
       for {
         orders <- dbModule.orderService.getOrders(req.orderHashes)
         _ = orders.foreach { o =>
@@ -359,6 +361,7 @@ class AccountManagerAltActor(
     case req: MetadataChanged =>
       //将terminate的market的订单从内存中删除，terminate的市场等已经被停止删除了，
       // 因此不需要再发送给已经停止的market了，也不需要更改数据库状态，保持原状态就可以了
+      count.refine("label" -> "metadata_changed").increment()
       val marketPairs =
         metadataManager
           .getMarkets(Set(MarketMetadata.Status.TERMINATED))
