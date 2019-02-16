@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.socket
 
-case class BalanceAndAllowance(
+case class TokenBalanceAndAllowance(
     address: String,
     balance: String,
     allowance: String,
@@ -25,4 +25,4 @@ case class BalanceAndAllowance(
 
 case class BalanceAndAllowanceResponse(
     owner: String,
-    balanceAndAllowances: Seq[BalanceAndAllowance])
+    balanceAndAllowances: Seq[TokenBalanceAndAllowance])

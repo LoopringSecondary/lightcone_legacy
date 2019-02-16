@@ -21,10 +21,7 @@ import com.corundumstudio.socketio.{AckRequest, SocketIOClient}
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core.{Address, _}
-import io.lightcone.relayer.data.{
-  GetBalanceAndAllowances,
-  SubcribeBalanceAndAllowance
-}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.socket._
 
 import scala.concurrent.ExecutionContext
@@ -45,6 +42,9 @@ class BalanceListener @Inject()(
       data: SubcribeBalanceAndAllowance.Req,
       ackSender: AckRequest
     ): Unit = {
+    if (ackSender.isAckRequested) {
+      ackSender.sendAckData("subscribe for balance successfully")
+    }
     val wrappedSocketClient =
       new WrappedSocketClient(
         BalanceListener.eventName,
@@ -73,7 +73,7 @@ class BalanceListener @Inject()(
                   ba._1.equals
                 )
               }.map { ba =>
-                BalanceAndAllowance(
+                TokenBalanceAndAllowance(
                   address = ba._1,
                   balance = ba._2.balance,
                   allowance = ba._2.allowance,
