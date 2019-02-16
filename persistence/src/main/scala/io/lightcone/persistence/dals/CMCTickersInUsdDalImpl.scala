@@ -18,29 +18,27 @@ package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import io.lightcone.core._
-import io.lightcone.lib.TimeProvider
-import io.lightcone.persistence.TokenTickerInfo
-import org.slf4s.Logging
+import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
 
-class TokenTickerInfoDalImpl @Inject()(
+class CMCTickersInUsdDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-dal-token-ticker-info") val dbConfig: DatabaseConfig[
+    @Named("dbconfig-cmc-tickers-in-usd") val dbConfig: DatabaseConfig[
       JdbcProfile
-    ],
-    timeProvider: TimeProvider)
-    extends TokenTickerInfoDal
-    with Logging {
-  val query = TableQuery[TokenTickerInfoTable]
+    ])
+    extends CMCTickersInUsdDal {
 
-  def saveOrUpdate(tickers: Seq[TokenTickerInfo]): Future[Seq[Int]] =
-    Future.sequence(tickers.map(insertOrUpdate))
+  val query = TableQuery[CMCTickersInUsdTable]
 
-  def getAll(): Future[Seq[TokenTickerInfo]] =
-    db.run(query.take(Int.MaxValue).result)
+  def saveTickers(tickers: Seq[CMCTickersInUsd]): Future[Unit] =
+    for {
+      _ <- db.run(query ++= tickers)
+    } yield Unit
+
+  def getTickersByJob(jobId: Int): Future[Seq[CMCTickersInUsd]] =
+    db.run(query.filter(_.batchId === jobId).result)
 }

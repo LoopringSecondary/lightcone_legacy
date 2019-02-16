@@ -34,10 +34,9 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
+import io.lightcone.relayer.external.TickerRequest
 import org.slf4s.Logging
-
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-
 import scala.concurrent._
 
 class CoreDeployer @Inject()(
@@ -62,7 +61,8 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
-    system: ActorSystem)
+    system: ActorSystem,
+    tickerRequest: TickerRequest)
     extends Object
     with Logging {
 

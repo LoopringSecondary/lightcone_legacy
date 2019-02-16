@@ -3,8 +3,31 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.relayer.rpc;
 
-
 message GetOrderbook{
     message Req {}
     message Res {}
+}
+
+message ExternalTickerInfo {
+    string name = 1;
+    string symbol = 2;
+    string market= 3;
+    string pair = 4;
+    int32  rank = 5;
+    double price = 6;
+    double volume_24h = 7;
+    double percent_change_1h = 8;
+    double percent_change_24h = 9;
+    double percent_change_7d = 10;
+    int64  last_updated = 11;
+}
+
+message GetExternalTickers {
+    message Req {
+        string market = 1;
+    }
+
+    message Res {
+        repeated ExternalTickerInfo tickers = 1;
+    }
 }

@@ -17,12 +17,10 @@
 package io.lightcone.relayer.actors
 
 import java.text.SimpleDateFormat
+
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -32,10 +30,9 @@ import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.external.TickerRequest
 import scala.concurrent.{ExecutionContext, Future}
-import scala.collection.JavaConverters._
 import io.lightcone.relayer.jsonrpc._
-import scalapb.json4s.Parser
 import scala.util.{Failure, Success}
 
 // Owner: Yongfeng
@@ -53,15 +50,11 @@ object CMCCrawlerActor extends DeployedAsSingleton {
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
       materializer: ActorMaterializer,
+      tickerRequest: TickerRequest,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new CMCCrawlerActor()))
   }
-
-  def normalizeTicker(ticker: CMCTickerData): CMCTickerData =
-    ticker.copy(
-      symbol = ticker.symbol.toUpperCase()
-    )
 }
 
 class CMCCrawlerActor(
@@ -74,7 +67,8 @@ class CMCCrawlerActor(
     val actors: Lookup[ActorRef],
     val materializer: ActorMaterializer,
     val dbModule: DatabaseModule,
-    val system: ActorSystem)
+    val system: ActorSystem,
+    val tickerRequest: TickerRequest)
     extends InitializationRetryActor
     with JsonSupport
     with RepeatedJobActor
@@ -84,24 +78,9 @@ class CMCCrawlerActor(
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
 
-  val mock = selfConfig.getBoolean("request.mock")
-  val requestHeader = selfConfig.getString("request.header")
-  val apiKey = selfConfig.getString("request.api-key")
-  val prefixUrl = selfConfig.getString("request.prefix-url")
-  val limitSize = selfConfig.getString("request.limit-size")
-  val convertCurrency = selfConfig.getString("request.convert-currency")
-
-  val uri =
-    s"$prefixUrl/v1/cryptocurrency/listings/latest?start=1&limit=${limitSize}&convert=${convertCurrency}"
-  val rawHeader = RawHeader(requestHeader, apiKey)
-  val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
-
   val mediator = DistributedPubSub(context.system).mediator
 
-  val markets =
-    selfConfig.getStringList("markets").asScala.toSeq
-
-  private var tickers: Seq[TokenTickerInfo] = Seq.empty[TokenTickerInfo]
+  private var tickers: Seq[CMCTickersInUsd] = Seq.empty[CMCTickersInUsd]
 
   val repeatedJobs = Seq(
     Job(
@@ -114,7 +93,12 @@ class CMCCrawlerActor(
 
   override def initialize() = {
     val f = for {
-      tickers_ <- dbModule.tokenTickerInfoDal.getAll()
+      latestJob <- dbModule.CMCRequestJobDal.findLatest()
+      tickers_ <- if (latestJob.nonEmpty) {
+        dbModule.CMCTickersInUsdDal.getTickersByJob(latestJob.get.batchId)
+      } else {
+        Future.successful(Seq.empty)
+      }
     } yield {
       if (tickers_ nonEmpty) {
         tickers = tickers_
@@ -131,26 +115,53 @@ class CMCCrawlerActor(
   }
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
-    case _: GetTokenTickers.Req =>
-      sender ! GetTokenTickers.Res(tickers)
+    case _: GetTickers.Req =>
+      sender ! GetTickers.Res(tickers)
   }
 
   private def syncFromCMC() = this.synchronized {
     log.info("CMCCrawlerActor run sync job")
     for {
-      usdTickers <- getCMCTickers()
-      marketTickers = getMarketUSDQuote(usdTickers)
-      tickersWithAllSupportMarket = fillInAllSupportMarkets(
-        usdTickers,
-        marketTickers
+      savedJob <- dbModule.CMCRequestJobDal.saveJob(
+        CMCRequestJob(requestTime = timeProvider.getTimeSeconds())
       )
-      _ <- updateTickers(tickersWithAllSupportMarket)
-      tokens <- dbModule.tokenMetadataDal.getTokens()
-      _ <- updateTokenPrice(usdTickers, tokens)
+      cmcResponse <- tickerRequest.requestCMCTickers()
+      updated <- if (cmcResponse.data.nonEmpty) {
+        val status = cmcResponse.status.getOrElse(TickerStatus())
+        for {
+          _ <- dbModule.CMCRequestJobDal.updateStatusCode(
+            savedJob.batchId,
+            status.errorCode,
+            timeProvider.getTimeSeconds()
+          )
+          _ <- persistTickers(savedJob.batchId, cmcResponse.data)
+          _ <- dbModule.CMCRequestJobDal.updateSuccessfullyPersisted(
+            savedJob.batchId
+          )
+          tokens <- dbModule.tokenMetadataDal.getTokens()
+          _ <- updateTokenPrice(cmcResponse.data, tokens)
+        } yield true
+      } else {
+        Future.successful(false)
+      }
     } yield {
+      if (updated) {
+        // TODO tokenMetadata reload
+      }
       publish()
     }
   }
+
+//  {
+//    marketTickers = getMarketUSDQuote(usdTickers)
+//    tickersWithAllSupportMarket = fillInAllSupportMarkets(
+//      usdTickers,
+//      marketTickers
+//    )
+//    _ <- updateTickers(tickersWithAllSupportMarket)
+//    tokens <- dbModule.tokenMetadataDal.getTokens()
+//    _ <- updateTokenPrice(usdTickers, tokens)
+//  }
 
   private def publish() = {
     mediator ! Publish(CMCCrawlerActor.pubsubTopic, TokenTickerChanged())
@@ -187,17 +198,55 @@ class CMCCrawlerActor(
     })
   }
 
-  private def updateTickers(tickersToUpdate: Seq[CMCTickerData]) =
+  private def persistTickers(
+      batchId: Int,
+      tickers_ : Seq[CMCTickerData]
+    ) =
     for {
       _ <- Future.unit
-      _ = tickers = Seq.empty
-      fixGroup = tickersToUpdate.grouped(20).toList
-      _ = fixGroup.map { group =>
-        val batchTickers = convertToPersistence(group)
-        tickers ++= batchTickers
-        dbModule.tokenTickerInfoDal.saveOrUpdate(batchTickers)
-      }
+      tickersToPersist = convertResponseToPersist(batchId, tickers_)
+      _ = tickers = tickersToPersist
+      fixGroup = tickersToPersist.grouped(20).toList
+      _ = fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
     } yield Unit
+
+  private def convertResponseToPersist(
+      batchId: Int,
+      tickers_ : Seq[CMCTickerData]
+    ) = {
+    tickers_.map { t =>
+      val usdQuote = if (t.quote.get("USD").isEmpty) {
+        log.error(s"CMC not return ${t.symbol} quote for USD")
+        CMCTickersInUsd.Quote()
+      } else {
+        val q = t.quote("USD")
+        CMCTickersInUsd.Quote(
+          q.price,
+          q.volume24H,
+          q.percentChange1H,
+          q.percentChange24H,
+          q.percentChange7D,
+          q.marketCap,
+          q.lastUpdated
+        )
+      }
+      CMCTickersInUsd(
+        t.id,
+        t.name,
+        t.symbol,
+        t.slug,
+        t.circulatingSupply,
+        t.totalSupply,
+        t.maxSupply,
+        t.dateAdded,
+        t.numMarketPairs,
+        t.cmcRank,
+        t.lastUpdated,
+        Some(usdQuote),
+        batchId
+      )
+    }
+  }
 
   private def fillInAllSupportMarkets(
       usdTickers: Seq[CMCTickerData],
@@ -240,47 +289,6 @@ class CMCCrawlerActor(
         )
       )
     }
-  }
-
-  private def requestCMCTickers(
-    )(
-      implicit
-      system: ActorSystem,
-      ec: ExecutionContext
-    ) = {
-    for {
-      response <- Http().singleRequest(
-        HttpRequest(
-          method = HttpMethods.GET,
-          uri = Uri(uri)
-        ).withHeaders(rawHeader)
-      )
-      res <- response match {
-        case HttpResponse(StatusCodes.OK, _, entity, _) =>
-          entity.dataBytes
-            .map(_.utf8String)
-            .runReduce(_ + _)
-            .map(parser.fromJsonString[TickerDataInfo])
-            .map { j =>
-              j.status match {
-                case Some(r) if r.errorCode == 0 =>
-                  j.data.map(CMCCrawlerActor.normalizeTicker)
-                case Some(r) if r.errorCode != 0 =>
-                  log.error(
-                    s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
-                  )
-                  Seq.empty
-                case m =>
-                  log.error(s"Failed request CMC, return:[$m]")
-                  Seq.empty
-              }
-            }
-
-        case m =>
-          log.error(s"get ticker data from coinmarketcap failed:$m")
-          Future.successful(Seq.empty)
-      }
-    } yield res
   }
 
   //锚定市场币的priceQuote换算
@@ -381,20 +389,16 @@ class CMCCrawlerActor(
 
     val res = parser.fromJsonString[TickerDataInfo](fileContents)
     res.status match {
-      case Some(r) if r.errorCode == 0 => Future.successful(res.data.take(300))
+      case Some(r) if r.errorCode == 0 =>
+        Future.successful(res.copy(data = res.data.take(300)))
       case Some(r) if r.errorCode != 0 =>
         log.error(
           s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
         )
-        Future.successful(Seq.empty)
+        Future.successful(res)
       case m =>
         log.error(s"Failed request CMC, return:[$m]")
         Future.successful(Seq.empty)
     }
-  }
-
-  private def getCMCTickers() = {
-    if (mock) getMockedCMCTickers()
-    else requestCMCTickers()
   }
 }

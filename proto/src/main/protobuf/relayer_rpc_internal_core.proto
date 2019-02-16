@@ -336,12 +336,10 @@ message GetOrderbookSlots {
 
 message TokenTickerChanged {}
 
-message GetTokenTickers {
-    message Req {
-        string market = 1;
-    }
+message GetTickers {
+    message Req {}
 
     message Res {
-        repeated io.lightcone.persistence.TokenTickerInfo tickers = 1;
+        repeated io.lightcone.persistence.CMCTickersInUsd tickers = 1;
     }
 }

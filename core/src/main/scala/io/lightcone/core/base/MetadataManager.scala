@@ -91,6 +91,8 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
 
+  private var supportMarketSymbols = Set.empty[String] // LRC, WETH, USDT
+
   def reset(
       tokens: Seq[TokenMetadata],
       markets: Seq[MarketMetadata]
@@ -102,6 +104,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     activeMarkets = Map.empty
     readOnlyMarkets = Map.empty
     marketMetadatasMap = Map.empty
+    supportMarketSymbols = Set.empty
     markets.foreach(addMarket)
   }
 
@@ -144,19 +147,27 @@ final class MetadataManager @Inject()(implicit val config: Config)
     val m = MetadataManager.normalizeMarket(meta)
     marketMetadatasMap += m.marketHash -> m
     val itemMap = m.marketHash -> m.marketPair.get
-
-    m.status match {
-      case MarketMetadata.Status.TERMINATED =>
-        terminatedMarkets += itemMap
-      case MarketMetadata.Status.ACTIVE =>
-        activeMarkets += itemMap
-      case MarketMetadata.Status.READONLY =>
-        readOnlyMarkets += itemMap
-      case m =>
-        throw ErrorException(
-          ERR_INTERNAL_UNKNOWN,
-          s"Unhandled market metadata status:$m"
-        )
+    val quoteToken = getToken(m.marketPair.get.quoteToken)
+    if (quoteToken.isEmpty) {
+      throw ErrorException(
+        ERR_INTERNAL_UNKNOWN,
+        s"Unsupported token:${m.marketPair.get.quoteToken}"
+      )
+    } else {
+      m.status match {
+        case MarketMetadata.Status.TERMINATED =>
+          terminatedMarkets += itemMap
+        case MarketMetadata.Status.ACTIVE =>
+          activeMarkets += itemMap
+          supportMarketSymbols += quoteToken.get.meta.symbol
+        case MarketMetadata.Status.READONLY =>
+          readOnlyMarkets += itemMap
+        case m =>
+          throw ErrorException(
+            ERR_INTERNAL_UNKNOWN,
+            s"Unhandled market metadata status:$m"
+          )
+      }
     }
     this
   }
@@ -225,4 +236,5 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   def getValidMarketPairs = activeMarkets ++ readOnlyMarkets
 
+  def getSupportMarketSymbols = supportMarketSymbols
 }
