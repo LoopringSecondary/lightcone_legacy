@@ -29,7 +29,6 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
-import kamon.Kamon
 import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -60,8 +59,8 @@ class AccountManagerAltActor(
   import OrderStatus._
   import TxStatus._
 
-  val count = Kamon.counter("account_manager")
-  val timer = Kamon.timer("account_manager")
+  val count = KamonSupport.counter("account_manager")
+  val timer = KamonSupport.timer("account_manager")
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   implicit val uoProcessor: UpdatedOrdersProcessor = this

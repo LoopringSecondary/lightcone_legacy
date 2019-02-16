@@ -27,7 +27,6 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.web3j.utils._
-import kamon.Kamon
 import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -105,13 +104,13 @@ class MultiAccountManagerActor(
   import ErrorCode._
 
   val metricName = s"multi_account_${entityId}"
-  val count = Kamon.counter(metricName)
-  val gauge = Kamon.gauge(metricName)
-  val histo = Kamon.histogram(metricName)
-  val timer = Kamon.timer(metricName)
+  val count = KamonSupport.counter(metricName)
+  val gauge = KamonSupport.gauge(metricName)
+  val histo = KamonSupport.histogram(metricName)
+  val timer = KamonSupport.timer(metricName)
 
   val getBalanceAndALlowanceCounter =
-    Kamon.counter("mama.get-balance-and-allowance")
+    KamonSupport.counter("mama.get-balance-and-allowance")
 
   val selfConfig = config.getConfig(MultiAccountManagerActor.name)
 
