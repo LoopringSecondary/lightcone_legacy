@@ -26,7 +26,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import kamon.Kamon
 import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -124,10 +123,10 @@ class MarketManagerActor(
     s"market_${symbol(marketPair.baseToken)}_${symbol(marketPair.quoteToken)}"
   }
 
-  val count = Kamon.counter(metricName)
-  val gauge = Kamon.gauge(metricName)
-  val histo = Kamon.histogram(metricName)
-  val timer = Kamon.timer(metricName)
+  val count = KamonSupport.counter(metricName)
+  val gauge = KamonSupport.gauge(metricName)
+  val histo = KamonSupport.histogram(metricName)
+  val timer = KamonSupport.timer(metricName)
 
   log.info("===> starting MarketManagerActor ${self.path} for ${marketPair}")
 
