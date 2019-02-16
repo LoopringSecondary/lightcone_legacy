@@ -38,9 +38,9 @@ class RingMatcherImplSpec_Profit extends testing.CommonSpec {
       ) = true
   }
 
-
   val maker =
     (Addr() |> "100000000000".dai --> "10000000".weth -- "10".lrc).matchableAsOriginal
+
   val taker =
     (Addr() |> "10000000".weth --> "100000000000".dai -- "10".lrc).matchableAsOriginal
   "RingMatcherImpl" should "not match orders if the ring is not profitable" in {
