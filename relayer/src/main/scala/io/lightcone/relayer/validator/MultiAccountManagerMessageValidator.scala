@@ -46,6 +46,7 @@ final class MultiAccountManagerMessageValidator(
     extends MessageValidator {
 
   import OrderStatus._
+  import MarketMetadata.Status._
 
   val selfConfig = config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = selfConfig.getInt("num-of-shards")
@@ -53,16 +54,16 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
   val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()
 
-  def normalize(token: String): String = {
-    if (metadataManager.hasSymbol(token)) {
-      metadataManager.getTokenBySymbol(token).get.meta.address
-    } else if (Address.isValid(token)) {
-      Address.normalize(token)
-    } else {
-      throw ErrorException(
-        code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-        message = s"unexpected token $token"
-      )
+  def normalize(addrOrSymbol: String): String = {
+    metadataManager.getTokenWithSymbol(addrOrSymbol) match {
+      case Some(t) => t.meta.address
+      case None if Address.isValid(addrOrSymbol) =>
+        Address.normalize(addrOrSymbol)
+      case _ =>
+        throw ErrorException(
+          code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          message = s"invalid address or symbol $addrOrSymbol"
+        )
     }
   }
 
@@ -75,7 +76,7 @@ final class MultiAccountManagerMessageValidator(
         newReq = req.copy(
           owner = Address.normalize(req.owner),
           status = STATUS_SOFT_CANCELLED_BY_USER,
-          marketPair = Some(marketPair.toLowerCase())
+          marketPair = Some(marketPair.normalize)
         )
         _ <- cancelOrderValidator.validate(newReq)
       } yield newReq
@@ -98,7 +99,7 @@ final class MultiAccountManagerMessageValidator(
             )
           case Right(rawOrder) =>
             val marketPair = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
-            metadataManager.assertMarketPairIsActive(marketPair)
+            metadataManager.assertMarketStatus(marketPair, ACTIVE)
 
             val marketId = MarketHash(marketPair).longId
 

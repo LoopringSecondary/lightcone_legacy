@@ -16,31 +16,31 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.testing._
+// import io.lightcone.core.testing._
 
-class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
+class MarketManagerImplSpec_Cancellation extends MarketManagerImplSpec {
 
-  import OrderStatus._
+  // import OrderStatus._
 
-  "MarketManager" should "not throw error if cancel unexist orders" in {
-    marketManager.cancelOrder("1234") should be(None)
-  }
+  // "MarketManager" should "not throw error if cancel unexist orders" in {
+  //   marketManager.cancelOrder("1234") should be(None)
+  // }
 
-  "MarketManager" should "be able to cancel existing order" +
-    "and should put order inside the orderbook" in {
-    var order = actualNotDust(sellGTO(100000, 101))
-    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+  // "MarketManager" should "be able to cancel existing order" +
+  //   "and should put order inside the orderbook" in {
+  //   var order = actualNotDust(sellGTO(100000, 101))
+  //   (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+  //   (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-    val result = marketManager.submitOrder(order, 0)
-    result should be(emptyMatchingResult(order, STATUS_PENDING))
-    marketManager.getNumOfSellOrders() should be(1)
+  //   val result = marketManager.submitOrder(order, 0)
+  //   result should be(emptyMatchingResult(order, STATUS_PENDING))
+  //   marketManager.getNumOfSellOrders() should be(1)
 
-    marketManager.cancelOrder(order.id) should be(Some(Orderbook.Update()))
+  //   marketManager.cancelOrder(order.id) should be(Some(Orderbook.Update()))
 
-    marketManager.getNumOfSellOrders() should be(0)
-    marketManager.getNumOfBuyOrders() should be(0)
-    marketManager.getNumOfOrders() should be(0)
-    marketManager.getSellOrders(3) should be(Nil)
-  }
+  //   marketManager.getNumOfSellOrders() should be(0)
+  //   marketManager.getNumOfBuyOrders() should be(0)
+  //   marketManager.getNumOfOrders() should be(0)
+  //   marketManager.getSellOrders(3) should be(Nil)
+  // }
 }

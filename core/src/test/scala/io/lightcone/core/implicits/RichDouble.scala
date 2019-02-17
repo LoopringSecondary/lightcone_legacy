@@ -19,14 +19,12 @@ package io.lightcone.core
 private[core] class RichDouble(v: Double) {
 
   def toWei(tokenAddr: String)(implicit tm: MetadataManager) = {
-    tm.getToken(tokenAddr)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"token no found for address $tokenAddr"
-        )
+    tm.getTokenWithAddress(tokenAddr).map(_.toWei(v)).getOrElse {
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"token no found for address $tokenAddr"
       )
-      .toWei(v)
+    }
   }
 
   def ! = BigInt(v.toLong)

@@ -14,9 +14,25 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
-trait OrderAwareOrderbookAggregator extends OrderbookAggregator {
-  def addOrder(order: Matchable): Unit
-  def deleteOrder(order: Matchable): Unit
+import org.web3j.utils.Numeric
+import com.google.protobuf.ByteString
+
+object NumericConversion {
+
+  def toBigInt(str: String): BigInt =
+    try {
+      BigInt(Numeric.toBigInt(str))
+    } catch {
+      case e: Throwable => BigInt(0)
+    }
+
+  def toBigInt(bs: ByteString): BigInt =
+    try {
+      BigInt(bs.toByteArray)
+    } catch {
+      case e: Throwable => BigInt(0)
+    }
+
 }

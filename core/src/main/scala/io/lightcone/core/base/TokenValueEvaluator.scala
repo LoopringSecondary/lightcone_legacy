@@ -27,19 +27,14 @@ class TokenValueEvaluator @Inject()()(implicit mm: MetadataManager) {
       amount: BigInt
     ): Double = {
     if (amount.signum <= 0) 0
-    else if (!mm.hasToken(tokenAddr)) 0
-    else {
-      val token = mm
-        .getToken(tokenAddr)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found token:$tokenAddr"
-          )
-        )
-      (Rational(token.fromWei(amount)) *
-        Rational(token.meta.usdPrice)).doubleValue
-    }
+    else
+      mm.getTokenWithAddress(tokenAddr)
+        .map { token =>
+          (Rational(token.fromWei(amount)) *
+            Rational(token.meta.usdPrice)).doubleValue
+        }
+        .getOrElse(0)
+
   }
 
 }

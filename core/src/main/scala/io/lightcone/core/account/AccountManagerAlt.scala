@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.OrderStatus._
+
 import scala.concurrent._
 
 object AccountManagerAlt {
@@ -33,6 +35,8 @@ object AccountManagerAlt {
 
 trait AccountManagerAlt {
   val owner: String
+
+  def getNumOfOrders(): Int
 
   def getAccountInfo(token: String): Future[AccountInfo]
 
@@ -57,7 +61,10 @@ trait AccountManagerAlt {
   def resubmitOrder(order: Matchable): Future[(Boolean, Map[String, Matchable])]
 
   // soft cancel an order
-  def cancelOrder(orderId: String): Future[(Boolean, Map[String, Matchable])]
+  def cancelOrder(
+      orderId: String,
+      status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
+    ): Future[(Boolean, Map[String, Matchable])]
   def cancelOrders(orderIds: Seq[String]): Future[Map[String, Matchable]]
   def cancelOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
   def cancelAllOrders(): Future[Map[String, Matchable]]

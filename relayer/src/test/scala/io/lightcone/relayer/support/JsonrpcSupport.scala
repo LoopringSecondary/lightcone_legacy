@@ -60,7 +60,7 @@ trait JsonrpcSupport extends JsonSupport {
         )
       )
       val res = Await.result(f, timeout.duration)
-      res.status.intValue() <= 500
+      res.status.intValue <= 500
     }
   )
   catch {

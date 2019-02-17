@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.relayer.base
 
-import io.lightcone.relayer.actors._
+import kamon.Kamon
 
-trait OrderCutoffSupport extends DatabaseModuleSupport {
-  me: CommonSpec =>
+object KamonSupport {
 
-  actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
+  def counter(metricName: String) = Kamon.counter(s"c_$metricName")
+
+  def gauge(metricName: String) = Kamon.gauge(s"g_$metricName")
+
+  def histogram(metricName: String) = Kamon.histogram(s"h_$metricName")
+
+  def timer(metricName: String) = Kamon.timer(s"t_$metricName")
 }

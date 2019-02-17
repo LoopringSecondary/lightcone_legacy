@@ -17,10 +17,10 @@
 package io.lightcone.relayer.actors
 
 import akka.actor.ActorRef
+import io.lightcone.lib._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import io.lightcone.persistence._
 import akka.pattern._
 import akka.util.Timeout
@@ -108,7 +108,7 @@ trait EventExtraction {
         block =>
           RawBlockData(
             hash = block.hash,
-            height = Numeric.toBigInt(formatHex(block.number)).longValue(),
+            height = NumericConversion.toBigInt(block.number).longValue,
             timestamp = block.timestamp,
             miner = block.miner,
             uncles = uncles,
@@ -132,8 +132,7 @@ trait EventExtraction {
         BlockData(
           hash = blockData.hash,
           height = blockData.height,
-          timestamp =
-            Numeric.toBigInt(formatHex(blockData.timestamp)).longValue()
+          timestamp = NumericConversion.toBigInt(blockData.timestamp).longValue
         )
       )
       _ <- postProcessEvents()

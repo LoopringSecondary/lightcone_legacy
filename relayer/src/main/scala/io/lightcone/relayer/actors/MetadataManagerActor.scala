@@ -103,8 +103,8 @@ class MetadataManagerActor(
     } yield {
       assert(tokensUpdated nonEmpty)
       assert(markets_ nonEmpty)
-      tokens = tokensUpdated.map(MetadataManager.normalizeToken)
-      markets = markets_.map(MetadataManager.normalizeMarket)
+      tokens = tokensUpdated.map(MetadataManager.normalize)
+      markets = markets_.map(MetadataManager.normalize)
       metadataManager.reset(tokens, markets)
     }
     f onComplete {

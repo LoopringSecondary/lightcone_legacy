@@ -33,10 +33,13 @@ final class AccountManagerAltImpl(
     with Logging {
 
   import OrderStatus._
+  import ErrorCode._
 
   type ReserveManagerMethod = ReserveManagerAlt => Set[String]
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   private implicit var tokens = Map.empty[String, ReserveManagerAlt]
+
+  def getNumOfOrders() = orderPool.size
 
   def getAccountInfo(token: String): Future[AccountInfo] =
     getReserveManagerOption(token, true).map(_.get.getAccountInfo)
@@ -89,11 +92,12 @@ final class AccountManagerAltImpl(
     } yield (successful, updatedOrders)
   }
 
-  def cancelOrder(orderId: String) =
+  def cancelOrder(
+      orderId: String,
+      status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
+    ) =
     for {
-      orders <- cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
-        orderPool.getOrder(orderId).toSeq
-      )
+      orders <- cancelOrderInternal(status)(orderPool.getOrder(orderId).toSeq)
     } yield (orders.size > 0, orders)
 
   def cancelOrders(orderIds: Seq[String]) =
@@ -175,18 +179,41 @@ final class AccountManagerAltImpl(
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
-    for {
-      _ <- serializeFutures(orders) { order =>
-        onToken(order.tokenS, _.release(order.id)).andThen {
-          case _ => orderPool += order.copy(status = status)
+    val statusIsInvalid = status match {
+      case STATUS_EXPIRED | //
+          STATUS_DUST_ORDER | //
+          STATUS_COMPLETELY_FILLED | //
+          STATUS_SOFT_CANCELLED_BY_USER | //
+          STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR | //
+          STATUS_ONCHAIN_CANCELLED_BY_USER | //
+          STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
+          STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
+          STATUS_SOFT_CANCELLED_LOW_BALANCE | //
+          STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
+          STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET | //
+          STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS | //
+          STATUS_SOFT_CANCELLED_DUPLICIATE =>
+        false
+
+      case _ => true
+    }
+
+    if (statusIsInvalid) {
+      Future.failed(ErrorException(ERR_INTERNAL_UNKNOWN, status.toString))
+    } else {
+      for {
+        _ <- serializeFutures(orders) { order =>
+          onToken(order.tokenS, _.release(order.id)).andThen {
+            case _ => orderPool += order.copy(status = status)
+          }
         }
-      }
-      updatedOrders = orderPool.takeUpdatedOrders
-      _ <- {
-        if (skipProcessingUpdatedOrders) Future.unit
-        else processor.processOrders(updatedOrders)
-      }
-    } yield updatedOrders
+        updatedOrders = orderPool.takeUpdatedOrders
+        _ <- {
+          if (skipProcessingUpdatedOrders) Future.unit
+          else processor.processOrders(updatedOrders)
+        }
+      } yield updatedOrders
+    }
   }
 
   private def reserveForOrder(order: Matchable): Future[Set[String]] = {
