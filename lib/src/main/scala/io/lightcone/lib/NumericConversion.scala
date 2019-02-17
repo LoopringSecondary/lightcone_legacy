@@ -20,9 +20,18 @@ import org.web3j.utils.Numeric
 
 object NumericConversion {
 
-  def toBigInt(str: String): BigInt = {
-    if (str == null || str.isEmpty) BigInt(0)
-    else BigInt(Numeric.toBigInt(str))
-  }
+  def toBigInt(str: String): BigInt =
+    try {
+      BigInt(Numeric.toBigInt(str))
+    } catch {
+      case e: Throwable => BigInt(0)
+    }
+
+  def toBigInt(bs: ByteString): BigInt =
+    try {
+      BigInt(bs.toByteArray)
+    } catch {
+      case e: Throwable => BigInt(0)
+    }
 
 }
