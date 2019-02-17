@@ -18,7 +18,7 @@ package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
 import io.lightcone.relayer.actors.TransactionRecordActor
-
+import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._

@@ -86,10 +86,10 @@ class EthereumQueryActor(
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
 
         allowances = allowanceResps.map { res =>
-          BigInt(Numeric.toBigInt(formatHex(res.result)))
+          NumericConversion.toBigInt(res.result)
         }
         balances = balanceResps.map { res =>
-          BigInt(Numeric.toBigInt(formatHex(res.result)))
+          NumericConversion.toBigInt(res.result)
         }
         balanceAndAllowance = (balances zip allowances).map { ba =>
           BalanceAndAllowance(ba._1, ba._2)
@@ -110,7 +110,7 @@ class EthereumQueryActor(
           result.copy(
             balanceAndAllowanceMap = result.balanceAndAllowanceMap +
               (ethToken.head -> BalanceAndAllowance(
-                BigInt(Numeric.toBigInt(formatHex(ethRes.get.result))),
+                NumericConversion.toBigInt(ethRes.get.result),
                 BigInt(0)
               ))
           )
@@ -127,7 +127,7 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
 
         balances = batchRes.resps.map { res =>
-          bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res.result))))
+          bigInt2ByteString(BigInt(Numeric.toBigInt(res.result)))
         }
 
         result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
@@ -144,9 +144,8 @@ class EthereumQueryActor(
         finalResult = if (ethRes.isDefined) {
           result.copy(
             balanceMap = result.balanceMap +
-              (Address.ZERO.toString -> BigInt(
-                Numeric.toBigInt(formatHex(ethRes.get.result))
-              ))
+              (Address.ZERO.toString ->
+                NumericConversion.toBigInt(ethRes.get.result))
           )
         } else {
           result
@@ -157,7 +156,7 @@ class EthereumQueryActor(
       batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
         result =>
           val allowances = result.map { res =>
-            bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res))))
+            bigInt2ByteString(NumericConversion.toBigInt(res))
           }
           GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
@@ -169,9 +168,8 @@ class EthereumQueryActor(
           .buildRequest(tradeHistoryAddress, req)
       ) { result =>
         GetFilledAmount.Res(
-          (orderIds zip result.map(
-            res => bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res))))
-          )).toMap
+          (orderIds zip result
+            .map(res => bigInt2ByteString(NumericConversion.toBigInt(res)))).toMap
         )
       }
 
@@ -179,7 +177,7 @@ class EthereumQueryActor(
       callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
           GetOrderCancellation.Res(
-            Numeric.toBigInt(formatHex(result)).intValue() == 1
+            NumericConversion.toBigInt(result).intValue == 1
           )
       }
 
@@ -190,7 +188,7 @@ class EthereumQueryActor(
             req.broker,
             req.owner,
             req.marketHash,
-            BigInt(Numeric.toBigInt(formatHex(result)))
+            NumericConversion.toBigInt(result)
           )
       }
     case req: BatchGetCutoffs.Req =>
@@ -202,7 +200,7 @@ class EthereumQueryActor(
                 cutoffReq.broker,
                 cutoffReq.owner,
                 cutoffReq.marketHash,
-                BigInt(Numeric.toBigInt(res))
+                NumericConversion.toBigInt(res)
               )
           })
       }
@@ -213,11 +211,11 @@ class EthereumQueryActor(
           {
             val formatResult = Numeric.cleanHexPrefix(result)
             if (formatResult.length == 64) {
-              val p2pRate = Numeric
-                .toBigInt(formatHex(formatResult.substring(56, 60)))
+              val p2pRate = NumericConversion
+                .toBigInt(formatResult.substring(56, 60))
                 .doubleValue() / base
-              val marketRate = Numeric
-                .toBigInt(formatHex(formatResult.substring(60)))
+              val marketRate = NumericConversion
+                .toBigInt(formatResult.substring(60))
                 .doubleValue() / base
               GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
             } else {

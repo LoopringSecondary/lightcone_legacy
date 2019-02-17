@@ -17,6 +17,7 @@
 package io.lightcone.relayer.validator
 
 import io.lightcone.core._
+import io.lightcone.lib._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
 import org.web3j.utils._

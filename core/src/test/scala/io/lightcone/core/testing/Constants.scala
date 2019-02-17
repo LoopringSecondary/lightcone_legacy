@@ -16,14 +16,16 @@
 
 package io.lightcone.core.testing
 
+import io.lightcone.lib._
+
 trait Constants {
 
   private val rand = new scala.util.Random(31)
 
-  val LRC = "0x0000012341111111111111"
-  val GTO = "0x000002222442222222222"
-  val DAI = "0x0000033333242333333333"
-  val WETH = "0x003424444444444444444"
+  val LRC = Address("0x0000012341111111111111").toString
+  val GTO = Address("0x000002222442222222222").toString
+  val DAI = Address("0x0000033333242333333333").toString
+  val WETH = Address("0x003424444444444444444").toString
 
   val TOKENS = Seq(LRC, GTO, DAI, WETH)
 

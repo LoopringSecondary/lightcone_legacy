@@ -20,6 +20,7 @@ import org.web3j.crypto.Hash
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
 import io.lightcone.core._
+import io.lightcone.lib._
 
 trait RawOrderValidator {
   def calculateOrderHash(order: RawOrder): String

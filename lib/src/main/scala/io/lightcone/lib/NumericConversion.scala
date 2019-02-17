@@ -14,13 +14,25 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
+import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
 
-private[core] class RichBigInt(bigint: BigInt) {
-  def min(that: BigInt): BigInt = if (bigint < that) bigint else that
-  def max(that: BigInt): BigInt = if (bigint > that) bigint else that
+object NumericConversion {
 
-  def toByteString() = ByteString.copyFrom(bigint.toByteArray)
+  def toBigInt(str: String): BigInt =
+    try {
+      BigInt(Numeric.toBigInt(str))
+    } catch {
+      case e: Throwable => BigInt(0)
+    }
+
+  def toBigInt(bs: ByteString): BigInt =
+    try {
+      BigInt(bs.toByteArray)
+    } catch {
+      case e: Throwable => BigInt(0)
+    }
+
 }

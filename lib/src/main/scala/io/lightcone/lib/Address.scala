@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
 import com.google.protobuf.ByteString
 import org.web3j.utils.Numeric
@@ -70,7 +70,7 @@ object Address {
   }
 
   def apply(addr: String): Address = {
-    apply(Numeric.toBigInt(formatHex(addr)))
+    apply(NumericConversion.toBigInt(addr))
   }
 
   def isValid(obj: Any): Boolean = {
@@ -93,10 +93,6 @@ object Address {
       Address(address).toString
     } catch {
       case _: Throwable =>
-        throw ErrorException(
-          ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid ethereum address:$address"
-        )
+        throw new Exception(s"invalid ethereum address: $address")
     }
-
 }

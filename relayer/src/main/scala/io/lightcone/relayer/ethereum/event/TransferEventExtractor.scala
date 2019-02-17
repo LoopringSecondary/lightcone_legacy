@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data.{TransferEvent => PTransferEvent, _}
 import io.lightcone.core._
-import org.web3j.utils.Numeric
+import io.lightcone.lib._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -40,7 +40,7 @@ class TransferEventExtractor @Inject()(
     (block.txs zip block.receipts).foreach {
       case (tx, receipt) =>
         val header = getEventHeader(tx, receipt, block.timestamp)
-        val txValue = BigInt(Numeric.toBigInt(formatHex(tx.value)))
+        val txValue = NumericConversion.toBigInt(tx.value)
         if (isSucceed(receipt.status)) {
           receipt.logs.zipWithIndex.foreach {
             case (log, index) =>

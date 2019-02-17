@@ -61,7 +61,7 @@ final class RingIncomeEvaluatorImpl @Inject()(
       case None =>
         tve.getValue(
           order.tokenB,
-          Rational(amountMargin * order.amountS, order.amountB)
+          Rational(amountMargin * order.amountS, order.amountB).toBigInt
         )
     }
 

@@ -73,10 +73,10 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
 
       val makerVolume =
         if (tms > mmb) MatchableState(mms, mmb)
-        else MatchableState(tmb, R(tmb) * R(mb, ms))
+        else MatchableState(tmb, (R(tmb) * R(mb, ms)).toBigInt)
 
       val takerVolume =
-        if (tms > mmb) MatchableState(mmb, R(mmb) * R(tb, ts))
+        if (tms > mmb) MatchableState(mmb, (R(mmb) * R(tb, ts)).toBigInt)
         else MatchableState(tms, tmb)
 
       //fee 按照卖出的比例计算
