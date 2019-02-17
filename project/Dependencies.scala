@@ -34,11 +34,8 @@ object Dependencies {
     "org.json4s" %% "json4s-native" % json4sVersion,
     "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.1")
 
-  lazy val libDependency = Seq(
-    "org.web3j" % "core" % "4.1.0")
-
   lazy val ethereumDependency = Seq(
-
+    "org.web3j" % "core" % "4.1.0",
     "org.ethereum" % "ethereumj-core" % "1.9.1-RELEASE")
 
   lazy val akkaDependency = Seq(
@@ -77,7 +74,6 @@ object Dependencies {
     "io.kamon" %% "kamon-scala-future" % "1.0.0")
 
   lazy val dependency4Lib = commonDependency ++
-    libDependency ++
     json4sDependency ++
     testDependency
 
