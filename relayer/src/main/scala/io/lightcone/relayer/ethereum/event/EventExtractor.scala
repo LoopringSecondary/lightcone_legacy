@@ -18,6 +18,7 @@ package io.lightcone.relayer.ethereum.event
 
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.lib._
 import org.web3j.utils.Numeric
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,15 +38,15 @@ trait EventExtractor[R] {
       txHash = tx.hash,
       txFrom = Address.normalize(tx.from),
       txTo = Address.normalize(tx.to),
-      txValue = BigInt(Numeric.toBigInt(e)),
-      txIndex = Numeric.toBigInt(x).intValue(),
+      txValue = BigInt(Numeric.toBigInt(tx.value)),
+      txIndex = Numeric.toBigInt(tx.transactionIndex).intValue(),
       txStatus = getStatus(receipt.status),
       blockHash = tx.blockHash,
-      blockTimestamp = Numeric.toBigInt(e).longValue(),
-      blockNumber = Numeric.toBigInt(r).longValue(),
-      gasPrice = Numeric.toBigInt(e).longValue(),
-      gasLimit = Numeric.toBigInt(s).intValue(),
-      gasUsed = Numeric.toBigInt(d).intValue()
+      blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
+      blockNumber = Numeric.toBigInt(tx.blockNumber).longValue(),
+      gasPrice = Numeric.toBigInt(tx.gasPrice).longValue(),
+      gasLimit = Numeric.toBigInt(tx.gas).intValue(),
+      gasUsed = Numeric.toBigInt(receipt.gasUsed).intValue()
     )
 
   def getStatus(status: String): TxStatus = {
@@ -56,13 +57,13 @@ trait EventExtractor[R] {
 
   def isSucceed(status: String): Boolean = {
     try {
-      Numeric.toBigInt(s).intValue() == 1
+      Numeric.toBigInt(status).intValue() == 1
     } catch {
       case e: Throwable => false
     }
   }
 
-  def hex2ArrayBytes(str: String): Array[Byte] = {
-    Numeric.toBigInt(r).toByteArray
-  }
+  // def hex2ArrayBytes(str: String): Array[Byte] = {
+  //   Numeric.toBigInt(str).toByteArray
+  // }
 }

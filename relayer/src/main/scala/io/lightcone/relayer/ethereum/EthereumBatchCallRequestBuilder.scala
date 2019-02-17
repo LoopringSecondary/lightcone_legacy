@@ -18,7 +18,7 @@ package io.lightcone.relayer.ethereum
 
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
+import io.lightcone.lib._
 import org.web3j.utils.Numeric
 
 // Owner: Yadong

@@ -21,9 +21,9 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
-
 import scala.concurrent._
 import io.lightcone.core._
+import io.lightcone.lib._
 import io.lightcone.ethereum._
 
 class RingMinedEventExtractor @Inject()(

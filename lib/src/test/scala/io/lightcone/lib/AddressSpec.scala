@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
 import org.scalatest._
 import org.web3j.utils.Numeric

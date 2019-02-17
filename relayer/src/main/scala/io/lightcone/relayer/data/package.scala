@@ -17,6 +17,7 @@
 package io.lightcone.relayer
 
 import io.lightcone.core._
+import io.lightcone.lib._
 import io.lightcone.core.ErrorCode._
 
 package object data {

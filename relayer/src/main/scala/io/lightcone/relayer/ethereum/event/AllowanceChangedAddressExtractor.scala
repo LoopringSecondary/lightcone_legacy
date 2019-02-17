@@ -26,6 +26,7 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.core._
+import io.lightcone.lib._
 import io.lightcone.relayer.data.{TransferEvent => _, _}
 import org.web3j.utils.Numeric
 
@@ -86,7 +87,7 @@ class AllowanceChangedAddressExtractor @Inject()(
           .mapAs[BatchCallContracts.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(t)))
+              .map(res => BigInt(Numeric.toBigInt(res.result)))
           )
       } else {
         Future.successful(Seq.empty)

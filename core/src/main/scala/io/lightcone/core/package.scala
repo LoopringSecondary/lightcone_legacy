@@ -22,11 +22,6 @@ import com.google.protobuf.ByteString
 
 package object core {
 
-  // // TODO(dongw): we need to remove this method.
-  // def formatHex(str: String): String = {
-  //   if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
-  // }
-
   def createRingIdByOrderHash(
       orderhash1: String,
       orderhash2: String

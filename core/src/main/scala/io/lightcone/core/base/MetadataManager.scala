@@ -15,6 +15,8 @@
  */
 
 package io.lightcone.core
+
+import io.lightcone.lib._
 import io.lightcone.relayer.data.TokenBurnRateChangedEvent._
 
 object MetadataManager {

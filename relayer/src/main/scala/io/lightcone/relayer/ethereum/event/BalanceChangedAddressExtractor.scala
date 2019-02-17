@@ -23,9 +23,9 @@ import io.lightcone.ethereum.abi._
 import org.web3j.utils.Numeric
 import akka.pattern._
 import akka.util.Timeout
-import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.base._
 import io.lightcone.core._
+import io.lightcone.lib._
 import io.lightcone.relayer.data.{TransferEvent => _, _}
 
 import scala.collection.mutable.ListBuffer
@@ -49,7 +49,7 @@ class BalanceChangedAddressExtractor @Inject()(
           AddressBalanceUpdated(tx.from, Address.ZERO.toString())
         )
         if (isSucceed(receipt.status) &&
-            BigInt(Numeric.toBigInt(e)) > 0) {
+            BigInt(Numeric.toBigInt(tx.value)) > 0) {
           balanceAddresses.append(
             AddressBalanceUpdated(tx.to, Address.ZERO.toString())
           )
@@ -89,7 +89,7 @@ class BalanceChangedAddressExtractor @Inject()(
           .mapAs[BatchCallContracts.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(t)))
+              .map(res => BigInt(Numeric.toBigInt(res.result)))
           )
       } else {
         Future.successful(Seq.empty)
@@ -102,7 +102,7 @@ class BalanceChangedAddressExtractor @Inject()(
           .mapAs[BatchGetEthBalance.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(t)))
+              .map(res => BigInt(Numeric.toBigInt(res.result)))
           )
       } else {
         Future.successful(Seq.empty)

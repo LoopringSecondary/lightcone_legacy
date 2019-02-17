@@ -20,7 +20,6 @@ import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import scalapb.json4s.JsonFormat
 import org.web3j.utils.Numeric
 
@@ -52,21 +51,23 @@ trait EventExtractorSupport {
   })
 
   val blockData = RawBlockData(
-    height = Numeric.toBigInt(r).longValue(),
+    height = Numeric.toBigInt(block.number).longValue(),
     hash = block.hash,
     txs = block.transactions,
     uncles = block.uncles,
     miner = block.miner,
     timestamp = block.timestamp,
-    receipts = receiptResps.map(_.result.get))
+    receipts = receiptResps.map(_.result.get)
+  )
 
   private class EmptyValueSerializer
-    extends CustomSerializer[String](
-      _ =>
-        ({
-          case JNull => ""
-        }, {
-          case "" => JNothing
-        }))
+      extends CustomSerializer[String](
+        _ =>
+          ({
+            case JNull => ""
+          }, {
+            case "" => JNothing
+          })
+      )
 
 }

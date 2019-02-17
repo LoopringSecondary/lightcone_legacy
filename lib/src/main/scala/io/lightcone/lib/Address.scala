@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
 import com.google.protobuf.ByteString
 import org.web3j.utils.Numeric
@@ -93,7 +93,7 @@ object Address {
       Address(address).toString
     } catch {
       case _: Throwable =>
-        throw new Exception(s"invalid ethereum address:$address")
+        throw new Exception(s"invalid ethereum address: $address")
     }
 
   def formatHex(str: String): String = {
