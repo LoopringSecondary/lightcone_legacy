@@ -29,8 +29,8 @@ class MarketManagerImplSpec_Cancellation extends MarketManagerImplSpec {
   // "MarketManager" should "be able to cancel existing order" +
   //   "and should put order inside the orderbook" in {
   //   var order = actualNotDust(sellGTO(100000, 101))
-  //   (mockPendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-  //   (mockAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+  //   (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+  //   (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
   //   val result = marketManager.submitOrder(order, 0)
   //   result should be(emptyMatchingResult(order, STATUS_PENDING))

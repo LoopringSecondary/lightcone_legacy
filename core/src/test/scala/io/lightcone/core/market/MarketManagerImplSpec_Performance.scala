@@ -27,7 +27,7 @@
 
 //   implicit val marketPair = MarketPair(GTO, WETH)
 
-//   implicit var mockDustOrderEvaluator: DustOrderEvaluator = _
+//   implicit var fakeDustOrderEvaluator: DustOrderEvaluator = _
 //   implicit var fackRingIncomeEvaluator: RingIncomeEvaluator = _
 //   var marketManager: MarketManager = _
 
@@ -35,14 +35,14 @@
 //     super.beforeEach()
 //     nextId = 1
 //     fackRingIncomeEvaluator = stub[RingIncomeEvaluator]
-//     mockDustOrderEvaluator = stub[DustOrderEvaluator]
+//     fakeDustOrderEvaluator = stub[DustOrderEvaluator]
 
 //     marketManager = new MarketManagerImpl(
 //       marketPair,
 //       tm,
 //       new RingMatcherImpl,
 //       new PendingRingPoolImpl,
-//       mockDustOrderEvaluator,
+//       fakeDustOrderEvaluator,
 //       new OrderbookAggregatorImpl(
 //         priceDecimals = 5,
 //         precisionForAmount = 4,
@@ -51,10 +51,10 @@
 //       100 // max matching attempts
 //     )
 
-//     (mockDustOrderEvaluator.isOriginalDust _).when(*).returns(false)
-//     (mockDustOrderEvaluator.isOutstandingDust _).when(*).returns(false)
-//     (mockDustOrderEvaluator.isActualDust _).when(*).returns(false)
-//     (mockDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
+//     (fakeDustOrderEvaluator.isOriginalDust _).when(*).returns(false)
+//     (fakeDustOrderEvaluator.isOutstandingDust _).when(*).returns(false)
+//     (fakeDustOrderEvaluator.isActualDust _).when(*).returns(false)
+//     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
 
 //     (fackRingIncomeEvaluator.getRingIncome _).when(*).returns(1)
 //     (fackRingIncomeEvaluator

@@ -25,9 +25,9 @@
 //     val buy2 = actualNotDust(buyGTO(BigInt(100), BigInt(100040), 0))
 //     val buy3 = actualNotDust(buyGTO(BigInt(100), BigInt(100030), 0)) // best price
 
-//     (mockDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
-//     (mockPendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-//     (mockAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
+//     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
 //     marketManager.submitOrder(buy1, 0)
 //     marketManager.submitOrder(buy2, 0)
@@ -48,19 +48,19 @@
 //       ExpectedMatchableFill(sell1, null),
 //       ExpectedMatchableFill(buy3, null))
 
-//     (mockRingMatcher
+//     (fakeRingMatcher
 //       .matchOrders(_: Matchable, _: Matchable, _: Double))
 //       .when(*, *, *)
 //       .returns(Right(ring3))
 //       .noMoreThanOnce()
 
-//     (mockRingMatcher
+//     (fakeRingMatcher
 //       .matchOrders(_: Matchable, _: Matchable, _: Double))
 //       .when(*, *, *)
 //       .returns(Right(ring2))
 //       .noMoreThanOnce()
 
-//     (mockRingMatcher
+//     (fakeRingMatcher
 //       .matchOrders(_: Matchable, _: Matchable, _: Double))
 //       .when(*, *, *)
 //       .returns(Right(ring1))
@@ -77,7 +77,7 @@
 //       MarketManager
 //         .MatchResult(sell1.asPending, Seq(ring3, ring2, ring1)))
 
-//     (mockRingMatcher
+//     (fakeRingMatcher
 //       .matchOrders(_: Matchable, _: Matchable, _: Double))
 //       .verify(*, *, *)
 //       .repeated(3)

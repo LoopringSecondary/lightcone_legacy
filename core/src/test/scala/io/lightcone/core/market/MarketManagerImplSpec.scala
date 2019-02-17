@@ -27,34 +27,34 @@ trait MarketManagerImplSpec extends testing.CommonSpec {
   var marketPair = MarketPair(GTO, WETH)
   var metadataManager: MetadataManager = null
 
-  var mockRingMatcher: RingMatcher = _
-  var mockDustOrderEvaluator: DustOrderEvaluator = _
-  var mockPendingRingPool: PendingRingPool = _
-  var mockAggregator: OrderbookAggregator = _
+  var fakeRingMatcher: RingMatcher = _
+  var fakeDustOrderEvaluator: DustOrderEvaluator = _
+  var fakePendingRingPool: PendingRingPool = _
+  var fakeAggregator: OrderbookAggregator = _
   var marketManager: MarketManager = _
 
   override def beforeEach(): Unit = {
     // nextId = 1
-    mockRingMatcher = stub[RingMatcher]
-    mockDustOrderEvaluator = stub[DustOrderEvaluator]
-    mockPendingRingPool = stub[PendingRingPool]
-    mockAggregator = stub[OrderbookAggregator]
+    fakeRingMatcher = stub[RingMatcher]
+    fakeDustOrderEvaluator = stub[DustOrderEvaluator]
+    fakePendingRingPool = stub[PendingRingPool]
+    fakeAggregator = stub[OrderbookAggregator]
 
     marketManager = new MarketManagerImpl(
       marketPair,
       metadataManager,
-      mockRingMatcher,
-      mockPendingRingPool,
-      mockDustOrderEvaluator,
-      mockAggregator,
+      fakeRingMatcher,
+      fakePendingRingPool,
+      fakeDustOrderEvaluator,
+      fakeAggregator,
       100 // max matching attempts
     )
   }
 
   def actualNotDust(order: Matchable): Matchable = {
     val o = order.copy(_actual = Some(order.original))
-    (mockDustOrderEvaluator.isOriginalDust _).when(o).returns(false)
-    (mockDustOrderEvaluator.isActualDust _).when(o).returns(false)
+    (fakeDustOrderEvaluator.isOriginalDust _).when(o).returns(false)
+    (fakeDustOrderEvaluator.isActualDust _).when(o).returns(false)
     o
   }
 
@@ -67,7 +67,7 @@ trait MarketManagerImplSpec extends testing.CommonSpec {
     )
 
   def noMatchingActivity() = {
-    (mockRingMatcher
+    (fakeRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(*, *, *)
       .never
