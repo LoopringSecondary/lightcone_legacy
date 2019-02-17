@@ -52,23 +52,21 @@ trait EventExtractorSupport {
   })
 
   val blockData = RawBlockData(
-    height = Numeric.toBigInt(formatHex(block.number)).longValue(),
+    height = Numeric.toBigInt(r).longValue(),
     hash = block.hash,
     txs = block.transactions,
     uncles = block.uncles,
     miner = block.miner,
     timestamp = block.timestamp,
-    receipts = receiptResps.map(_.result.get)
-  )
+    receipts = receiptResps.map(_.result.get))
 
   private class EmptyValueSerializer
-      extends CustomSerializer[String](
-        _ =>
-          ({
-            case JNull => ""
-          }, {
-            case "" => JNothing
-          })
-      )
+    extends CustomSerializer[String](
+      _ =>
+        ({
+          case JNull => ""
+        }, {
+          case "" => JNothing
+        }))
 
 }

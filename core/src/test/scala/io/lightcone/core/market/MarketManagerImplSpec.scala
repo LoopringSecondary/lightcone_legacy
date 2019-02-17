@@ -15,60 +15,62 @@
  */
 
 package io.lightcone.core
+import io.lightcone.lib._
 
 trait MarketManagerImplSpec extends testing.CommonSpec {
   type MR = MarketManager.MatchResult
 
-  // implicit var timeProvider = new TimeProvider {
-  //   def getTimeMillis = -1
-  // }
+  implicit var timeProvider = new TimeProvider {
+    def getTimeMillis = -1
+  }
 
-  // var marketPair = MarketPair(GTO, WETH)
+  var marketPair = MarketPair(GTO, WETH)
+  var metadataManager: MetadataManager = null
 
-  // var fakeRingMatcher: RingMatcher = _
-  // var fakeDustOrderEvaluator: DustOrderEvaluator = _
-  // var fakePendingRingPool: PendingRingPool = _
-  // var fakeAggregator: OrderAwareOrderbookAggregator = _
-  // var marketManager: MarketManager = _
+  var mockRingMatcher: RingMatcher = _
+  var mockDustOrderEvaluator: DustOrderEvaluator = _
+  var mockPendingRingPool: PendingRingPool = _
+  var mockAggregator: OrderbookAggregator = _
+  var marketManager: MarketManager = _
 
-  // override def beforeEach(): Unit = {
-  //   nextId = 1
-  //   fakeRingMatcher = stub[RingMatcher]
-  //   fakeDustOrderEvaluator = stub[DustOrderEvaluator]
-  //   fakePendingRingPool = stub[PendingRingPool]
-  //   fakeAggregator = stub[OrderAwareOrderbookAggregator]
+  override def beforeEach(): Unit = {
+    // nextId = 1
+    mockRingMatcher = stub[RingMatcher]
+    mockDustOrderEvaluator = stub[DustOrderEvaluator]
+    mockPendingRingPool = stub[PendingRingPool]
+    mockAggregator = stub[OrderbookAggregator]
 
-  //   marketManager = new MarketManagerImpl(
-  //     marketPair,
-  //     tm,
-  //     fakeRingMatcher,
-  //     fakePendingRingPool,
-  //     fakeDustOrderEvaluator,
-  //     fakeAggregator,
-  //     100 // max matching attempts
-  //   )
-  // }
+    marketManager = new MarketManagerImpl(
+      marketPair,
+      metadataManager,
+      mockRingMatcher,
+      mockPendingRingPool,
+      mockDustOrderEvaluator,
+      mockAggregator,
+      100 // max matching attempts
+    )
+  }
 
-  // def actualNotDust(order: Matchable): Matchable = {
-  //   val o = order.copy(_actual = Some(order.original))
-  //   (fakeDustOrderEvaluator.isOriginalDust _).when(o).returns(false)
-  //   (fakeDustOrderEvaluator.isActualDust _).when(o).returns(false)
-  //   o
-  // }
+  def actualNotDust(order: Matchable): Matchable = {
+    val o = order.copy(_actual = Some(order.original))
+    (mockDustOrderEvaluator.isOriginalDust _).when(o).returns(false)
+    (mockDustOrderEvaluator.isActualDust _).when(o).returns(false)
+    o
+  }
 
-  // def emptyMatchingResult(
-  //     order: Matchable,
-  //     newStatus: OrderStatus
-  //   ) =
-  //   MarketManager.MatchResult(
-  //     order.copy(_matchable = order._actual, status = newStatus)
-  //   )
+  def emptyMatchingResult(
+      order: Matchable,
+      newStatus: OrderStatus
+    ) =
+    MarketManager.MatchResult(
+      order.copy(_matchable = order._actual, status = newStatus)
+    )
 
-  // def noMatchingActivity() = {
-  //   (fakeRingMatcher
-  //     .matchOrders(_: Matchable, _: Matchable, _: Double))
-  //     .verify(*, *, *)
-  //     .never
-  // }
+  def noMatchingActivity() = {
+    (mockRingMatcher
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
+      .verify(*, *, *)
+      .never
+  }
 
 }

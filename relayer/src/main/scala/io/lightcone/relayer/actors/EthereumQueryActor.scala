@@ -86,10 +86,10 @@ class EthereumQueryActor(
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
 
         allowances = allowanceResps.map { res =>
-          BigInt(Numeric.toBigInt(formatHex(res.result)))
+          BigInt(Numeric.toBigInt(t))
         }
         balances = balanceResps.map { res =>
-          BigInt(Numeric.toBigInt(formatHex(res.result)))
+          BigInt(Numeric.toBigInt(t))
         }
         balanceAndAllowance = (balances zip allowances).map { ba =>
           BalanceAndAllowance(ba._1, ba._2)
@@ -110,7 +110,7 @@ class EthereumQueryActor(
           result.copy(
             balanceAndAllowanceMap = result.balanceAndAllowanceMap +
               (ethToken.head -> BalanceAndAllowance(
-                BigInt(Numeric.toBigInt(formatHex(ethRes.get.result))),
+                BigInt(Numeric.toBigInt(t)),
                 BigInt(0)
               ))
           )
@@ -127,7 +127,7 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
 
         balances = batchRes.resps.map { res =>
-          bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res.result))))
+          bigInt2ByteString(BigInt(Numeric.toBigInt(t)))
         }
 
         result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
@@ -144,9 +144,7 @@ class EthereumQueryActor(
         finalResult = if (ethRes.isDefined) {
           result.copy(
             balanceMap = result.balanceMap +
-              (Address.ZERO.toString -> BigInt(
-                Numeric.toBigInt(formatHex(ethRes.get.result))
-              ))
+              (Address.ZERO.toString -> BigInt(Numeric.toBigInt(t)))
           )
         } else {
           result
@@ -157,7 +155,7 @@ class EthereumQueryActor(
       batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
         result =>
           val allowances = result.map { res =>
-            bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res))))
+            bigInt2ByteString(BigInt(Numeric.toBigInt(s)))
           }
           GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
@@ -169,18 +167,15 @@ class EthereumQueryActor(
           .buildRequest(tradeHistoryAddress, req)
       ) { result =>
         GetFilledAmount.Res(
-          (orderIds zip result.map(
-            res => bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res))))
-          )).toMap
+          (orderIds zip result
+            .map(res => bigInt2ByteString(BigInt(Numeric.toBigInt(s))))).toMap
         )
       }
 
     case req: GetOrderCancellation.Req =>
       callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
-          GetOrderCancellation.Res(
-            Numeric.toBigInt(formatHex(result)).intValue() == 1
-          )
+          GetOrderCancellation.Res(Numeric.toBigInt(t).intValue() == 1)
       }
 
     case req: GetCutoff.Req =>
@@ -190,7 +185,7 @@ class EthereumQueryActor(
             req.broker,
             req.owner,
             req.marketHash,
-            BigInt(Numeric.toBigInt(formatHex(result)))
+            BigInt(Numeric.toBigInt(t))
           )
       }
     case req: BatchGetCutoffs.Req =>

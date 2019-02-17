@@ -108,7 +108,7 @@ trait EventExtraction {
         block =>
           RawBlockData(
             hash = block.hash,
-            height = Numeric.toBigInt(formatHex(block.number)).longValue(),
+            height = Numeric.toBigInt(r).longValue(),
             timestamp = block.timestamp,
             miner = block.miner,
             uncles = uncles,
@@ -132,8 +132,7 @@ trait EventExtraction {
         BlockData(
           hash = blockData.hash,
           height = blockData.height,
-          timestamp =
-            Numeric.toBigInt(formatHex(blockData.timestamp)).longValue()
+          timestamp = Numeric.toBigInt(p).longValue()
         )
       )
       _ <- postProcessEvents()

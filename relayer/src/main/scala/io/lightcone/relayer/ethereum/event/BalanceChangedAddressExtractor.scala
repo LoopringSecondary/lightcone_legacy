@@ -49,7 +49,7 @@ class BalanceChangedAddressExtractor @Inject()(
           AddressBalanceUpdated(tx.from, Address.ZERO.toString())
         )
         if (isSucceed(receipt.status) &&
-            BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0) {
+            BigInt(Numeric.toBigInt(e)) > 0) {
           balanceAddresses.append(
             AddressBalanceUpdated(tx.to, Address.ZERO.toString())
           )
@@ -89,7 +89,7 @@ class BalanceChangedAddressExtractor @Inject()(
           .mapAs[BatchCallContracts.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result))))
+              .map(res => BigInt(Numeric.toBigInt(t)))
           )
       } else {
         Future.successful(Seq.empty)
@@ -102,7 +102,7 @@ class BalanceChangedAddressExtractor @Inject()(
           .mapAs[BatchGetEthBalance.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result))))
+              .map(res => BigInt(Numeric.toBigInt(t)))
           )
       } else {
         Future.successful(Seq.empty)

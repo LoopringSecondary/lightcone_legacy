@@ -23,7 +23,7 @@
 
 //   "MarketManager" should "reject orders whose original size is dust" in {
 //     var order = sellGTO(1000, 1)
-//     (fakeDustOrderEvaluator.isOriginalDust _).when(order).returns(true)
+//     (mockDustOrderEvaluator.isOriginalDust _).when(order).returns(true)
 
 //     val result = marketManager.submitOrder(order, 0)
 //     result should be(emptyMatchingResult(order, STATUS_DUST_ORDER))
@@ -33,8 +33,8 @@
 
 //   "MarketManager" should "reject orders whose actual size is dust" in {
 //     var order = sellGTO(1000, 1)
-//     (fakeDustOrderEvaluator.isOriginalDust _).when(order).returns(false)
-//     (fakeDustOrderEvaluator.isActualDust _).when(order).returns(true)
+//     (mockDustOrderEvaluator.isOriginalDust _).when(order).returns(false)
+//     (mockDustOrderEvaluator.isActualDust _).when(order).returns(true)
 
 //     val result = marketManager.submitOrder(order, 0)
 //     result should be(emptyMatchingResult(order, STATUS_COMPLETELY_FILLED))
@@ -46,8 +46,8 @@
 //     var order1 = actualNotDust(sellGTO(100000, 100))
 //     var order2 = actualNotDust(sellGTO(100000, 101))
 
-//     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (mockPendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+//     (mockAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
 //     var result = marketManager.submitOrder(order1, 0)
 //     result should be(emptyMatchingResult(order1, STATUS_PENDING))
@@ -74,8 +74,8 @@
 //     var order1 = actualNotDust(buyGTO(100, 100000))
 //     var order2 = actualNotDust(buyGTO(101, 100000))
 
-//     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (mockPendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+//     (mockAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
 //     var result = marketManager.submitOrder(order1, 0)
 //     result should be(emptyMatchingResult(order1, STATUS_PENDING))

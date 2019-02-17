@@ -37,15 +37,15 @@ trait EventExtractor[R] {
       txHash = tx.hash,
       txFrom = Address.normalize(tx.from),
       txTo = Address.normalize(tx.to),
-      txValue = BigInt(Numeric.toBigInt(formatHex(tx.value))),
-      txIndex = Numeric.toBigInt(formatHex(tx.transactionIndex)).intValue(),
+      txValue = BigInt(Numeric.toBigInt(e)),
+      txIndex = Numeric.toBigInt(x).intValue(),
       txStatus = getStatus(receipt.status),
       blockHash = tx.blockHash,
-      blockTimestamp = Numeric.toBigInt(formatHex(blockTime)).longValue(),
-      blockNumber = Numeric.toBigInt(formatHex(tx.blockNumber)).longValue(),
-      gasPrice = Numeric.toBigInt(formatHex(tx.gasPrice)).longValue(),
-      gasLimit = Numeric.toBigInt(formatHex(tx.gas)).intValue(),
-      gasUsed = Numeric.toBigInt(formatHex(receipt.gasUsed)).intValue()
+      blockTimestamp = Numeric.toBigInt(e).longValue(),
+      blockNumber = Numeric.toBigInt(r).longValue(),
+      gasPrice = Numeric.toBigInt(e).longValue(),
+      gasLimit = Numeric.toBigInt(s).intValue(),
+      gasUsed = Numeric.toBigInt(d).intValue()
     )
 
   def getStatus(status: String): TxStatus = {
@@ -56,13 +56,13 @@ trait EventExtractor[R] {
 
   def isSucceed(status: String): Boolean = {
     try {
-      Numeric.toBigInt(formatHex(status)).intValue() == 1
+      Numeric.toBigInt(s).intValue() == 1
     } catch {
       case e: Throwable => false
     }
   }
 
   def hex2ArrayBytes(str: String): Array[Byte] = {
-    Numeric.toBigInt(formatHex(str)).toByteArray
+    Numeric.toBigInt(r).toByteArray
   }
 }

@@ -159,7 +159,7 @@ class EthereumClientMonitor(
   }
 
   def anyHexToLong: PartialFunction[Any, Long] = {
-    case s: String => Numeric.toBigInt(formatHex(s)).longValue()
+    case s: String => Numeric.toBigInt(s).longValue()
     case _         => -1L
   }
 }

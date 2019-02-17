@@ -70,7 +70,7 @@ object Address {
   }
 
   def apply(addr: String): Address = {
-    apply(Numeric.toBigInt(formatHex(addr)))
+    apply(Numeric.toBigInt(addr))
   }
 
   def isValid(obj: Any): Boolean = {
@@ -93,10 +93,11 @@ object Address {
       Address(address).toString
     } catch {
       case _: Throwable =>
-        throw ErrorException(
-          ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid ethereum address:$address"
-        )
+        throw new Exception(s"invalid ethereum address:$address")
     }
+
+  def formatHex(str: String): String = {
+    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
+  }
 
 }

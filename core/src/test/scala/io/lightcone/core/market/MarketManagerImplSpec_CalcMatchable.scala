@@ -24,16 +24,16 @@
 //     var buyOrder = actualNotDust(buyGTO(BigInt(100000), BigInt(100), 0)) // price =  100000/100.0 = 1000.00
 //     var sellOrder = actualNotDust(sellGTO(BigInt(100000), BigInt(101), 0)) // price =  100000/101.0 = 989.12
 
-//     (fakePendingRingPool.getOrderPendingAmountS _)
+//     (mockPendingRingPool.getOrderPendingAmountS _)
 //       .when(sellOrder.id)
 //       .returns(555)
-//     (fakePendingRingPool.getOrderPendingAmountS _)
+//     (mockPendingRingPool.getOrderPendingAmountS _)
 //       .when(buyOrder.id)
 //       .returns(66)
-//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (mockAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
 //     val ring = MatchableRing(null, null)
-//     (fakeRingMatcher
+//     (mockRingMatcher
 //       .matchOrders(_: Matchable, _: Matchable, _: Double))
 //       .when(*, *, *)
 //       .returns(Right(ring))
@@ -41,7 +41,7 @@
 //     marketManager.submitOrder(sellOrder, 1)
 //     marketManager.submitOrder(buyOrder, 2)
 
-//     (fakeRingMatcher
+//     (mockRingMatcher
 //       .matchOrders(_: Matchable, _: Matchable, _: Double))
 //       .verify(
 //         buyOrder.asPending.withActualAsOriginal

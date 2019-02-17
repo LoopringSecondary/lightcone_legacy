@@ -40,7 +40,7 @@ class TransferEventExtractor @Inject()(
     (block.txs zip block.receipts).foreach {
       case (tx, receipt) =>
         val header = getEventHeader(tx, receipt, block.timestamp)
-        val txValue = BigInt(Numeric.toBigInt(formatHex(tx.value)))
+        val txValue = BigInt(Numeric.toBigInt(e))
         if (isSucceed(receipt.status)) {
           receipt.logs.zipWithIndex.foreach {
             case (log, index) =>
