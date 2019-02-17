@@ -21,7 +21,7 @@ import akka.util.Timeout
 import com.google.inject.Inject
 import io.lightcone.relayer.base.{DeployedAsSingleton, Lookup}
 import io.lightcone.relayer.data.{GetBalanceAndAllowances, TransactionRecord}
-import io.lightcone.relayer.socket.Listeners._
+import io.lightcone.relayer.socketio._
 
 import scala.concurrent.ExecutionContext
 

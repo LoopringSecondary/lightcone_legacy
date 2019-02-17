@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.socket.Listeners
+package io.lightcone.relayer.socketio
 
 import akka.actor.ActorSystem
 import com.corundumstudio.socketio.{AckRequest, SocketIOClient}
@@ -22,7 +22,6 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core.{Address, _}
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.socket._
 
 import scala.concurrent.ExecutionContext
 
@@ -35,11 +34,11 @@ class BalanceListener @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val config: Config)
-    extends WrappedDataListener[SubcribeBalanceAndAllowance.Req] {
+    extends WrappedDataListener[SubcribeBalanceAndAllowance] {
 
   def onData(
       client: SocketIOClient,
-      data: SubcribeBalanceAndAllowance.Req,
+      data: SubcribeBalanceAndAllowance,
       ackSender: AckRequest
     ): Unit = {
     if (ackSender.isAckRequested) {
@@ -58,7 +57,7 @@ class BalanceListener @Inject()(
       clients.dropWhile(wrappedSocketClient.equals).+:(wrappedSocketClient)
   }
 
-  def dealDataChanged(msg: Any): Unit = {
+  def onDataChanged(msg: Any): Unit = {
     msg match {
       case res: GetBalanceAndAllowances.Res =>
         clients.foreach { client =>

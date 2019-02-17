@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.socket
+package io.lightcone.relayer.socketio
 
 import io.lightcone.relayer.actors.SocketListenerActor
 import io.lightcone.relayer.data.GetBalanceAndAllowances
@@ -29,30 +29,30 @@ class SocketSpec
   "socket server  test" must {
     "socket server starts normally and can subscriber and received correct data" in {
 
-//      def socketListener = actors.get(SocketListenerActor.name)
-//      Thread.sleep(10 * 1000)
-//      val account0 = accounts.head
-//      val account1 = getUniqueAccountWithoutEth
-//      val getBaMethod = "get_balance_and_allowance"
-//      singleRequest(
-//        GetBalanceAndAllowances.Req(
-//          account0.getAddress,
-//          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
-//        ),
-//        getBaMethod
-//      ).mapAs[GetBalanceAndAllowances.Res].foreach(res => socketListener ! res)
-//      Thread.sleep(2000)
-//      transferWETH(account1.getAddress, "100")(account0)
-//      Thread.sleep(3000)
-//      singleRequest(
-//        GetBalanceAndAllowances.Req(
-//          account0.getAddress,
-//          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
-//        ),
-//        getBaMethod
-//      ).mapAs[GetBalanceAndAllowances.Res].foreach(res => socketListener ! res)
-//
-//      Thread.sleep(Int.MaxValue)
+      //      def socketListener = actors.get(SocketListenerActor.name)
+      //      Thread.sleep(10 * 1000)
+      //      val account0 = accounts.head
+      //      val account1 = getUniqueAccountWithoutEth
+      //      val getBaMethod = "get_balance_and_allowance"
+      //      singleRequest(
+      //        GetBalanceAndAllowances.Req(
+      //          account0.getAddress,
+      //          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+      //        ),
+      //        getBaMethod
+      //      ).mapAs[GetBalanceAndAllowances.Res].foreach(res => socketListener ! res)
+      //      Thread.sleep(2000)
+      //      transferWETH(account1.getAddress, "100")(account0)
+      //      Thread.sleep(3000)
+      //      singleRequest(
+      //        GetBalanceAndAllowances.Req(
+      //          account0.getAddress,
+      //          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+      //        ),
+      //        getBaMethod
+      //      ).mapAs[GetBalanceAndAllowances.Res].foreach(res => socketListener ! res)
+      //
+      //      Thread.sleep(Int.MaxValue)
     }
   }
 }

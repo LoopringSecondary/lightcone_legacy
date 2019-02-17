@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.socket.Listeners
+package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio.listener.DataListener
-import io.lightcone.relayer.socket.WrappedSocketClient
 
 trait WrappedDataListener[R] extends DataListener[R] {
 
   var clients = Seq.empty[WrappedSocketClient[R]]
 
   def dataChanged(msg: Any): Unit = {
-    clearDisConnectedClients()
-    dealDataChanged(msg)
-  }
-
-  def clearDisConnectedClients(): Unit = {
     clients = clients.dropWhile(!_.client.isChannelOpen)
+    onDataChanged(msg)
   }
 
-  def dealDataChanged(msg: Any): Unit
+  def onDataChanged(msg: Any): Unit
 
 }

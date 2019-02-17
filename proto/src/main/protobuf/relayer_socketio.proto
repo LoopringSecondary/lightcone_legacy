@@ -17,20 +17,16 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.relayer.data;
+package io.lightcone.relayer.socketio;
 
 message SubcribeBalanceAndAllowance{
-    message Req{
-        repeated string addresses =1;
-        repeated string tokens =2;
-    }
+    repeated string addresses =1;
+    repeated string tokens =2;
 }
 
 message SubcribeTransaction{
-    message Req{
-       string address =1;
-       string status = 2;
-       string type = 3;
-    }
+   string address =1;
+   string status = 2;
+   string type = 3;
 }
 

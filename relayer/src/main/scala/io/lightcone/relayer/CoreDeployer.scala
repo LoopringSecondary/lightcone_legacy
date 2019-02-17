@@ -34,8 +34,8 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
-import io.lightcone.relayer.socket.Listeners.WrappedDataListener
-import io.lightcone.relayer.socket._
+import com.corundumstudio.socketio.listener.DataListener
+import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -63,7 +63,8 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
-    listeners: Lookup[WrappedDataListener[_]],
+    balanceListener: DataListener[SubcribeBalanceAndAllowance],
+    txListener: DataListener[SubcribeTransaction],
     system: ActorSystem)
     extends Object
     with Logging {
@@ -215,7 +216,7 @@ class CoreDeployer @Inject()(
       //-----------deploy SOCKETIO service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("socket")) {
-        val server = new SocketServer with SocketRegister
+        val server = new SocketServer
         server.start
       }
     }

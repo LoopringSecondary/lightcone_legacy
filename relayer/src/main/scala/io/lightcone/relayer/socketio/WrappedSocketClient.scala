@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.socket
+package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio.SocketIOClient
 

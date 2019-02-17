@@ -14,24 +14,40 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.socket
+package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio.protocol.JacksonJsonSupport
-import com.corundumstudio.socketio.{Configuration, SocketIOServer}
+import com.corundumstudio.socketio._
+import com.corundumstudio.socketio.listener.DataListener
 import com.typesafe.config.Config
-import io.lightcone.relayer.base.Lookup
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import io.lightcone.relayer.socket.Listeners.WrappedDataListener
-abstract class SocketServer(
+
+class SocketServer(
+  )(
     implicit
     val config: Config,
-    val listeners: Lookup[WrappedDataListener[_]]) {
+    val balanceListener: DataListener[SubcribeBalanceAndAllowance],
+    val txListener: DataListener[SubcribeTransaction]) {
+
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
   socketConfig.setHostname(selfConfig.getString("host"))
   socketConfig.setPort(selfConfig.getInt("port"))
   socketConfig.setJsonSupport(new JacksonJsonSupport(DefaultScalaModule))
+
   val server = new SocketIOServer(socketConfig)
+
+  server.addEventListener(
+    BalanceListener.eventName,
+    classOf[SubcribeBalanceAndAllowance],
+    balanceListener
+  )
+
+  server.addEventListener(
+    TransactionListener.eventName,
+    classOf[SubcribeTransaction],
+    txListener
+  )
 
   def start(): Unit = server.start()
 }

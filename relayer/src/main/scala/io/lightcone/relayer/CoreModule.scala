@@ -34,7 +34,7 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.socket.Listeners._
+import io.lightcone.relayer.socketio._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -163,9 +163,9 @@ class CoreModule(
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     //bind socket listener
-    bind[WrappedDataListener[SubcribeBalanceAndAllowance.Req]]
+    bind[WrappedDataListener[SubcribeBalanceAndAllowance]]
       .to[BalanceListener]
-    bind[WrappedDataListener[SubcribeTransaction.Req]].to[TransactionListener]
+    bind[WrappedDataListener[SubcribeTransaction]].to[TransactionListener]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -206,17 +206,6 @@ class CoreModule(
       blockGasPricesDispatcher,
       tokenBurnRateChangedEventDispatcher
     )
-
-  @Provides
-  def getListeners(
-      balanceListener: WrappedDataListener[SubcribeBalanceAndAllowance.Req],
-      transactionListener: WrappedDataListener[SubcribeTransaction.Req]
-    ): Lookup[WrappedDataListener[_]] = {
-    val listeners = new MapBasedLookup[WrappedDataListener[_]]()
-    listeners.add(BalanceListener.eventName, balanceListener)
-    listeners.add(TransactionListener.eventName, transactionListener)
-    listeners
-  }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

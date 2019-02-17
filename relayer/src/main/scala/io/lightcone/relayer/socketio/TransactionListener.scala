@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.socket.Listeners
+package io.lightcone.relayer.socketio
 
 import java.math.BigInteger
 
 import com.corundumstudio.socketio.{AckRequest, SocketIOClient}
 import com.google.inject.Inject
-import io.lightcone.core.Address
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.socket._
 import org.web3j.utils.Numeric
 import io.lightcone.core._
-import io.lightcone.relayer.socket
+import io.lightcone.relayer.socketio
 
 object TransactionListener {
   val eventName = "transactions"
 }
 
 class TransactionListener @Inject()
-    extends WrappedDataListener[SubcribeTransaction.Req] {
+    extends WrappedDataListener[SubcribeTransaction] {
 
   def onData(
       client: SocketIOClient,
-      data: SubcribeTransaction.Req,
+      data: SubcribeTransaction,
       ackSender: AckRequest
     ): Unit = {
     if (ackSender.isAckRequested) {
@@ -52,7 +50,7 @@ class TransactionListener @Inject()
       clients.dropWhile(wrappedSocketClient.equals).+:(wrappedSocketClient)
   }
 
-  def dealDataChanged(msg: Any): Unit = {
+  def onDataChanged(msg: Any): Unit = {
     msg match {
       case record: TransactionRecord =>
         clients.foreach { client =>
@@ -67,19 +65,16 @@ class TransactionListener @Inject()
               owner = record.owner,
               //TODO(yadong) Transaction Record 中data 和 nonce 未保留
               transactions = Seq(
-                socket.Transaction(
+                Transaction(
                   from = header.txFrom,
                   to = header.txTo,
                   value = header.txValue,
-                  gasPrice = Numeric.toHexStringWithPrefix(
-                    BigInteger.valueOf(header.gasPrice)
-                  ),
-                  gasLimit = Numeric.toHexStringWithPrefix(
-                    BigInteger.valueOf(header.gasLimit)
-                  ),
-                  gasUsed = Numeric.toHexStringWithPrefix(
-                    BigInteger.valueOf(header.gasUsed)
-                  ),
+                  gasPrice = Numeric
+                    .toHexStringWithPrefix(BigInteger.valueOf(header.gasPrice)),
+                  gasLimit = Numeric
+                    .toHexStringWithPrefix(BigInteger.valueOf(header.gasLimit)),
+                  gasUsed = Numeric
+                    .toHexStringWithPrefix(BigInteger.valueOf(header.gasUsed)),
                   data = "0x0",
                   nonce = "0x0",
                   hash = header.txHash,

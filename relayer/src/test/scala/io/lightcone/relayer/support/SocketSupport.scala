@@ -16,22 +16,15 @@
 
 package io.lightcone.relayer.support
 
-import io.lightcone.relayer.actors.SocketListenerActor
-import io.lightcone.relayer.base.MapBasedLookup
-import io.lightcone.relayer.socket.Listeners.{
-  BalanceListener,
-  WrappedDataListener
-}
-import io.lightcone.relayer.socket._
+import io.lightcone.relayer.socketio._
 
 trait SocketSupport {
   com: CommonSpec =>
-  implicit val listeners = new MapBasedLookup[WrappedDataListener[_]]
-  listeners.add(BalanceListener.eventName, new BalanceListener())
+  implicit val balancelistener = new BalanceListener()
+  implicit val txListener = new TransactionListener()
 
-  actors.add(SocketListenerActor.name, SocketListenerActor.start)
-
-  val socketServer = new SocketServer with SocketRegister
+  val socketServer = new SocketServer()
   socketServer.start()
+
   println(s"${"." * 10}start socket server${"." * 10}")
 }
