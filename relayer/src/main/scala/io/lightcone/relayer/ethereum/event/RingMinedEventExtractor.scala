@@ -19,25 +19,27 @@ package io.lightcone.relayer.ethereum.event
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
-import io.lightcone.relayer.data.{ RingMinedEvent => PRingMinedEvent, _ }
+import io.lightcone.relayer.data.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 import scala.concurrent._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.ethereum._
 
-class RingMinedEventExtractor @Inject() (
-  implicit val ec: ExecutionContext,
-  config: Config,
-  metadataManager: MetadataManager,
-  rawOrderValidator: RawOrderValidator)
-  extends EventExtractor[PRingMinedEvent] {
+class RingMinedEventExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    config: Config,
+    metadataManager: MetadataManager,
+    rawOrderValidator: RawOrderValidator)
+    extends EventExtractor[PRingMinedEvent] {
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
   implicit val ringBatchContext = RingBatchContext(
-    lrcAddress = metadataManager.getTokenWithSymbol("lrc").get.meta.address)
+    lrcAddress = metadataManager.getTokenWithSymbol("lrc").get.meta.address
+  )
   val fillLength: Int = 8 * 64
 
   def extract(block: RawBlockData): Future[Seq[PRingMinedEvent]] = Future {
@@ -48,37 +50,42 @@ class RingMinedEventExtractor @Inject() (
           case (log, index) =>
             loopringProtocolAbi
               .unpackEvent(log.data, log.topics.toArray) match {
-                case Some(event: RingMinedEvent.Result) =>
-                  val fillContent = Numeric.cleanHexPrefix(event._fills)
-                  val fillStrs = (0 until (fillContent.length / fillLength)).map {
-                    index =>
-                      fillContent.substring(
-                        index * fillLength,
-                        fillLength * (index + 1))
-                  }
-                  val orderFilledEvents = fillStrs.zipWithIndex.map {
-                    case (fill, eventIndex) =>
-                      val _fill =
-                        if (eventIndex + 1 >= fillStrs.size) fillStrs.head
-                        else fillStrs(eventIndex + 1)
-                      fillToOrderFilledEvent(
-                        fill,
-                        _fill,
-                        event,
-                        receipt,
-                        Some(
-                          header
-                            .copy(logIndex = index, eventIndex = eventIndex)))
-                  }
-                  Some(
-                    PRingMinedEvent(
-                      header = Some(header.withLogIndex(index)),
-                      ringIndex = event._ringIndex.longValue,
-                      ringHash = event._ringHash,
-                      fills = orderFilledEvents))
-                case _ =>
-                  None
-              }
+              case Some(event: RingMinedEvent.Result) =>
+                val fillContent = Numeric.cleanHexPrefix(event._fills)
+                val fillStrs = (0 until (fillContent.length / fillLength)).map {
+                  index =>
+                    fillContent.substring(
+                      index * fillLength,
+                      fillLength * (index + 1)
+                    )
+                }
+                val orderFilledEvents = fillStrs.zipWithIndex.map {
+                  case (fill, eventIndex) =>
+                    val _fill =
+                      if (eventIndex + 1 >= fillStrs.size) fillStrs.head
+                      else fillStrs(eventIndex + 1)
+                    fillToOrderFilledEvent(
+                      fill,
+                      _fill,
+                      event,
+                      receipt,
+                      Some(
+                        header
+                          .copy(logIndex = index, eventIndex = eventIndex)
+                      )
+                    )
+                }
+                Some(
+                  PRingMinedEvent(
+                    header = Some(header.withLogIndex(index)),
+                    ringIndex = event._ringIndex.longValue,
+                    ringHash = event._ringHash,
+                    fills = orderFilledEvents
+                  )
+                )
+              case _ =>
+                None
+            }
         }.filter(_.nonEmpty).map(_.get)
       case _ => Seq.empty
     }
@@ -103,8 +110,10 @@ class RingMinedEventExtractor @Inject() (
                           OrderFilledEvent(
                             header = Some(header),
                             orderHash = order.hash,
-                            tokenS = Address.normalize(order.tokenS))
-                        }))
+                            tokenS = Address.normalize(order.tokenS)
+                          )
+                        })
+                      )
                     })
                   }
                   Some(tx.hash -> ringBatch)
@@ -125,12 +134,14 @@ class RingMinedEventExtractor @Inject() (
             waiveFeePercentage = order.getFeeParams.waiveFeePercentage,
             walletSplitPercentage = order.getFeeParams.walletSplitPercentage,
             tokenFee = Address.normalize(order.feeParams.get.tokenFee),
-            wallet = Address.normalize(order.getParams.wallet))
+            wallet = Address.normalize(order.getParams.wallet)
+          )
         }
         ring.copy(
           fills = fills,
           miner = Address.normalize(ringBatch.miner),
-          feeRecipient = Address.normalize(ringBatch.feeRecipient))
+          feeRecipient = Address.normalize(ringBatch.feeRecipient)
+        )
       } else {
         ring
       }
@@ -138,11 +149,12 @@ class RingMinedEventExtractor @Inject() (
   }
 
   private def fillToOrderFilledEvent(
-    fill: String,
-    _fill: String,
-    event: RingMinedEvent.Result,
-    receipt: TransactionReceipt,
-    header: Option[EventHeader]): OrderFilledEvent = {
+      fill: String,
+      _fill: String,
+      event: RingMinedEvent.Result,
+      receipt: TransactionReceipt,
+      header: Option[EventHeader]
+    ): OrderFilledEvent = {
     val data = Numeric.cleanHexPrefix(fill)
     val _data = Numeric.cleanHexPrefix(_fill)
     OrderFilledEvent(
@@ -163,7 +175,8 @@ class RingMinedEventExtractor @Inject() (
       feeAmountS = NumericConversion
         .toBigInt(data.substring(64 * 6, 64 * 7)),
       feeAmountB = NumericConversion
-        .toBigInt(data.substring(64 * 7, 64 * 8)))
+        .toBigInt(data.substring(64 * 7, 64 * 8))
+    )
   }
 
 }

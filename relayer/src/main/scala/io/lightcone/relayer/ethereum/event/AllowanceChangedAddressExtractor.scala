@@ -28,7 +28,6 @@ import io.lightcone.ethereum.abi._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.relayer.data.{TransferEvent => _, _}
-import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._

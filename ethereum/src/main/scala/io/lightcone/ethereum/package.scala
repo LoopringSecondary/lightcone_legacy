@@ -27,31 +27,34 @@ package object ethereum {
 
   // TODO(dongw): move these methods to a class.
   def verifyEthereumSignature(
-    hash: Array[Byte],
-    r: Array[Byte],
-    s: Array[Byte],
-    v: Byte,
-    addr: Address): Boolean = {
+      hash: Array[Byte],
+      r: Array[Byte],
+      s: Array[Byte],
+      v: Byte,
+      addr: Address
+    ): Boolean = {
     val signatureDataV = new Sign.SignatureData(v, r, s)
     val key = Sign.signedPrefixedMessageToKey(hash, signatureDataV)
     addr.equals(Address(Keys.getAddress(key)))
   }
 
   def verifySignature(
-    hash: Array[Byte],
-    r: Array[Byte],
-    s: Array[Byte],
-    v: Byte,
-    addr: Address): Boolean = {
+      hash: Array[Byte],
+      r: Array[Byte],
+      s: Array[Byte],
+      v: Byte,
+      addr: Address
+    ): Boolean = {
     val signatureDataV = new Sign.SignatureData(v, r, s)
     val key = Sign.signedMessageToKey(hash, signatureDataV)
     addr.equals(Address(Keys.getAddress(key)))
   }
 
   def verifySignature(
-    hash: Array[Byte],
-    sig: Array[Byte],
-    addr: Address): Boolean = {
+      hash: Array[Byte],
+      sig: Array[Byte],
+      addr: Address
+    ): Boolean = {
     if (sig.length == 65) {
       val r = sig.toSeq.slice(0, 32).toArray
       val s = sig.toSeq.slice(32, 64).toArray
@@ -70,10 +73,12 @@ package object ethereum {
         tx.gasLimit.bigInteger,
         tx.to,
         tx.value.bigInteger,
-        tx.inputData)
+        tx.inputData
+      )
     Numeric.toHexString(
       TransactionEncoder
-        .signMessage(rawTransaction, tx.chainId.toByte, credentials))
+        .signMessage(rawTransaction, tx.chainId.toByte, credentials)
+    )
   }
 
   def isAddressValidAndNonZero(addr: String) = addr match {

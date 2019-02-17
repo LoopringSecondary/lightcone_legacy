@@ -20,7 +20,6 @@ import akka.actor.ActorRef
 import com.google.inject.Inject
 import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum.abi._
-import org.web3j.utils.Numeric
 import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.relayer.base._
