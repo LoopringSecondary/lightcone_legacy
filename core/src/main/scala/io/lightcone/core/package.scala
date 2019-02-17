@@ -24,9 +24,8 @@ import com.google.protobuf.ByteString
 package object core {
 
   def createRingIdByOrderHash(
-      orderhash1: String,
-      orderhash2: String
-    ) = {
+    orderhash1: String,
+    orderhash2: String) = {
     val hash = NumericConversion.toBigInt(orderhash1) ^
       NumericConversion.toBigInt(orderhash2)
     Numeric.toHexString(hash.toByteArray).toLowerCase()
@@ -37,22 +36,22 @@ package object core {
     NumericConversion.toBigInt(bs)
 
   implicit def bigInt2ByteString(b: BigInt): ByteString =
-    ByteString.copyFrom(b.toByteArray)
+    new RichBigInt(b).toByteArray
 
   implicit def byteArray2ByteString(bytes: Array[Byte]) =
     ByteString.copyFrom(bytes)
 
   /// -----implicit classes -----
   implicit class Rich_OrderbookSlot(raw: Orderbook.Slot)
-      extends RichOrderbookSlot(raw)
+    extends RichOrderbookSlot(raw)
 
   implicit class Rich_BigInt(raw: BigInt) extends RichBigInt(raw)
 
   implicit class Rich_ExpectedFill(raw: ExpectedMatchableFill)
-      extends RichExpectedFill(raw)
+    extends RichExpectedFill(raw)
 
   implicit class Rich_Matchable(raw: Matchable) extends RichMatchable(raw)
 
   implicit class Rich_MatchableRing(raw: MatchableRing)
-      extends RichMatchableRing(raw)
+    extends RichMatchableRing(raw)
 }
