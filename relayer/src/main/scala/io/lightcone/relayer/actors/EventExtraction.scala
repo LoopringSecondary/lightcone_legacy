@@ -132,7 +132,7 @@ trait EventExtraction {
         BlockData(
           hash = blockData.hash,
           height = blockData.height,
-          timestamp = Numeric.toBigInt(blockData.timestamp).longValue
+          timestamp = NumericConversion.toBigInt(blockData.timestamp).longValue
         )
       )
       _ <- postProcessEvents()

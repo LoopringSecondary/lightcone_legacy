@@ -70,7 +70,7 @@ object Address {
   }
 
   def apply(addr: String): Address = {
-    apply(Numeric.toBigInt(addr))
+    apply(NumericConversion.toBigInt(addr))
   }
 
   def isValid(obj: Any): Boolean = {

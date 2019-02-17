@@ -78,7 +78,7 @@ class RingMinedEventExtractor @Inject()(
                 Some(
                   PRingMinedEvent(
                     header = Some(header.withLogIndex(index)),
-                    ringIndex = event._ringIndex.longValue(),
+                    ringIndex = event._ringIndex.longValue,
                     ringHash = event._ringHash,
                     fills = orderFilledEvents
                   )
@@ -162,7 +162,7 @@ class RingMinedEventExtractor @Inject()(
       tokenS = Address.normalize(data.substring(64 * 2, 64 * 3)),
       tokenB = Address.normalize(_data.substring(64 * 2, 64 * 3)),
       ringHash = event._ringHash,
-      ringIndex = event._ringIndex.longValue(),
+      ringIndex = event._ringIndex.longValue,
       fillIndex = header.get.eventIndex,
       filledAmountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
       filledAmountB = BigInt(Numeric.toBigInt(_data.substring(64 * 3, 64 * 4))),

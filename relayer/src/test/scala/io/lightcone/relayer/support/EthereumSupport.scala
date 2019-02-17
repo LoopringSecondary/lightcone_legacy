@@ -246,7 +246,7 @@ trait EthereumSupport {
     val getNonceRes =
       Await.result(getNonceF.mapTo[GetNonce.Res], timeout.duration)
     val tx = txWithoutNonce.copy(
-      nonce = NumericConversion.toBigInt(getNonceRes.result).intValue()
+      nonce = NumericConversion.toBigInt(getNonceRes.result).intValue
     )
     actors.get(EthereumAccessActor.name) ? SendRawTransaction.Req(
       getSignedTxData(tx)

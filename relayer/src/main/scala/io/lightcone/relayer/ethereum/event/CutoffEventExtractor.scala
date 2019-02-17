@@ -47,7 +47,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._broker)
                   )
@@ -56,7 +56,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._owner)
                   )
@@ -67,7 +67,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._owner),
                     marketHash = MarketHash(
@@ -79,7 +79,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._broker),
                     marketHash = MarketHash(

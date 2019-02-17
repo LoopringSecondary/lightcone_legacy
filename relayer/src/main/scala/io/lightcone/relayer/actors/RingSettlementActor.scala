@@ -110,7 +110,7 @@ class RingSettlementActor(
     )).mapAs[GetNonce.Res]
       .map(_.result)
       .map { validNonce =>
-        nonce.set(NumericConversion.toBigInt(validNonce).intValue())
+        nonce.set(NumericConversion.toBigInt(validNonce).intValue)
       }
     f onComplete {
       case Success(value) =>

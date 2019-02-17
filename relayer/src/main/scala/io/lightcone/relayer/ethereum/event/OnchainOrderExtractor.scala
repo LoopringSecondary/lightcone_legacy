@@ -63,7 +63,7 @@ class OnchainOrderExtractor @Inject()(
       amountS = NumericConversion.toBigInt(data.substring(64 * 3, 64 * 4)),
       amountB = NumericConversion.toBigInt(data.substring(64 * 4, 64 * 5)),
       validSince =
-        NumericConversion.toBigInt(data.substring(64 * 5, 64 * 6)).intValue(),
+        NumericConversion.toBigInt(data.substring(64 * 5, 64 * 6)).intValue,
       params = Some(
         RawOrder.Params(
           broker = Address.normalize(data.substring(64 * 6, 64 * 7)),
@@ -71,10 +71,10 @@ class OnchainOrderExtractor @Inject()(
           wallet = Address.normalize(data.substring(64 * 8, 64 * 9)),
           validUntil = NumericConversion
             .toBigInt(data.substring(64 * 9, 64 * 10))
-            .intValue(),
+            .intValue,
           allOrNone = NumericConversion
             .toBigInt(data.substring(64 * 10, 64 * 11))
-            .intValue() == 1
+            .intValue == 1
         )
       ),
       hash = event.orderHash,
@@ -85,14 +85,14 @@ class OnchainOrderExtractor @Inject()(
             NumericConversion.toBigInt(data.substring(64 * 12, 64 * 13)),
           tokenBFeePercentage = NumericConversion
             .toBigInt(data.substring(64 * 13, 64 * 14))
-            .intValue(),
+            .intValue,
           tokenSFeePercentage = NumericConversion
             .toBigInt(data.substring(64 * 14, 64 * 15))
-            .intValue(),
+            .intValue,
           tokenRecipient = Address.normalize(data.substring(64 * 15, 64 * 16)),
           walletSplitPercentage = NumericConversion
             .toBigInt(data.substring(64 * 16, 64 * 17))
-            .intValue()
+            .intValue
         )
       ),
       erc1400Params = Some(
@@ -100,17 +100,17 @@ class OnchainOrderExtractor @Inject()(
           tokenStandardS = TokenStandard.fromValue(
             NumericConversion
               .toBigInt(data.substring(64 * 17, 64 * 18))
-              .intValue()
+              .intValue
           ),
           tokenStandardB = TokenStandard.fromValue(
             NumericConversion
               .toBigInt(data.substring(64 * 18, 64 * 19))
-              .intValue()
+              .intValue
           ),
           tokenStandardFee = TokenStandard.fromValue(
             NumericConversion
               .toBigInt(data.substring(64 * 19, 64 * 20))
-              .intValue()
+              .intValue
           ),
           trancheS = Numeric
             .prependHexPrefix(data.substring(64 * 20, 64 * 21)),

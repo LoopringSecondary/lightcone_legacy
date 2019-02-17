@@ -52,7 +52,7 @@ class TokenBurnRateEventExtractor @Inject()(
             case (log, index) =>
               loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(event: TokenTierUpgradedEvent.Result) =>
-                  val rates = rateMap(event.tier.intValue())
+                  val rates = rateMap(event.tier.intValue)
                   Some(
                     TokenBurnRateChangedEvent(
                       header = Some(header.withLogIndex(index)),

@@ -144,9 +144,8 @@ class EthereumQueryActor(
         finalResult = if (ethRes.isDefined) {
           result.copy(
             balanceMap = result.balanceMap +
-              (Address.ZERO.toString -> BigInt(
-                Numeric.toBigInt(ethRes.get.result)
-              ))
+              (Address.ZERO.toString ->
+                NumericConversion.toBigInt(ethRes.get.result))
           )
         } else {
           result
@@ -178,7 +177,7 @@ class EthereumQueryActor(
       callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
           GetOrderCancellation.Res(
-            NumericConversion.toBigInt(result).intValue() == 1
+            NumericConversion.toBigInt(result).intValue == 1
           )
       }
 
