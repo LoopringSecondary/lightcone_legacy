@@ -23,7 +23,7 @@ import com.google.inject.Inject
 import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
 import io.lightcone.core._
-import io.lightcone.relayer.socketio
+import io.lightcone.lib._
 
 object TransactionListener {
   val eventName = "transactions"

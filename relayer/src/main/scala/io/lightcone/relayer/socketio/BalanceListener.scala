@@ -20,8 +20,9 @@ import akka.actor.ActorSystem
 import com.corundumstudio.socketio.{AckRequest, SocketIOClient}
 import com.google.inject.Inject
 import com.typesafe.config.Config
-import io.lightcone.core.{Address, _}
+import io.lightcone.lib.Address
 import io.lightcone.relayer.data._
+import io.lightcone.core._
 
 import scala.concurrent.ExecutionContext
 
