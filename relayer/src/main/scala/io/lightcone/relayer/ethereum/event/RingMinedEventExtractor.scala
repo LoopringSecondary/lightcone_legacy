@@ -164,21 +164,16 @@ class RingMinedEventExtractor @Inject()(
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue,
       fillIndex = header.get.eventIndex,
-      filledAmountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
-      filledAmountB = BigInt(Numeric.toBigInt(_data.substring(64 * 3, 64 * 4))),
+      filledAmountS = NumericConversion.toBigInt(data.substring(64 * 3, 64 * 4)),
+      filledAmountB =
+        NumericConversion.toBigInt(_data.substring(64 * 3, 64 * 4)),
       split = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
-      filledAmountFee = BigInt(
-        Numeric
-          .toBigInt(data.substring(64 * 5, 64 * 6))
-      ),
-      feeAmountS = BigInt(
-        Numeric
-          .toBigInt(data.substring(64 * 6, 64 * 7))
-      ),
-      feeAmountB = BigInt(
-        Numeric
-          .toBigInt(data.substring(64 * 7, 64 * 8))
-      )
+      filledAmountFee = NumericConversion
+        .toBigInt(data.substring(64 * 5, 64 * 6)),
+      feeAmountS = NumericConversion
+        .toBigInt(data.substring(64 * 6, 64 * 7)),
+      feeAmountB = NumericConversion
+        .toBigInt(data.substring(64 * 7, 64 * 8))
     )
   }
 

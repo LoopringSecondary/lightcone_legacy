@@ -188,7 +188,7 @@ class EthereumQueryActor(
             req.broker,
             req.owner,
             req.marketHash,
-            BigInt(Numeric.toBigInt(result))
+            NumericConversion.toBigInt(result)
           )
       }
     case req: BatchGetCutoffs.Req =>

@@ -17,6 +17,7 @@
 package io.lightcone.lib
 
 import org.web3j.utils.Numeric
+import com.google.protobuf.ByteString
 
 object NumericConversion {
 

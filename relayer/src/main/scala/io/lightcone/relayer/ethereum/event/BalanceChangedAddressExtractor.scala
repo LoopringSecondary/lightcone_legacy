@@ -49,7 +49,7 @@ class BalanceChangedAddressExtractor @Inject()(
           AddressBalanceUpdated(tx.from, Address.ZERO.toString())
         )
         if (isSucceed(receipt.status) &&
-            BigInt(Numeric.toBigInt(tx.value)) > 0) {
+            NumericConversion.toBigInt(tx.value) > 0) {
           balanceAddresses.append(
             AddressBalanceUpdated(tx.to, Address.ZERO.toString())
           )
