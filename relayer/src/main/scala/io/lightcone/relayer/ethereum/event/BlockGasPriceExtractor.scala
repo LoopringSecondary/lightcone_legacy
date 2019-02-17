@@ -18,8 +18,8 @@ package io.lightcone.relayer.ethereum.event
 
 import akka.util.Timeout
 import com.google.inject.Inject
+import io.lightcone.lib._
 import io.lightcone.relayer.data._
-import org.web3j.utils.Numeric
 import scala.concurrent.{ExecutionContext, Future}
 
 class BlockGasPriceExtractor @Inject()(
@@ -32,7 +32,7 @@ class BlockGasPriceExtractor @Inject()(
     Future {
       Seq(BlockGasPrices(height = block.height, gasPrices = block.txs.map {
         tx =>
-          Numeric.toBigInt(tx.gasPrice).longValue()
+          NumericConversion.toBigInt(tx.gasPrice).longValue
       }))
     }
 }

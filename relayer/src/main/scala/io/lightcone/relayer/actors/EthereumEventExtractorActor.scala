@@ -70,7 +70,7 @@ class EthereumEventExtractorActor(
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
-        .map(res => Numeric.toBigInt(res.result).longValue())
+        .map(res => NumericConversion.toBigInt(res.result).longValue())
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = currentBlock > blockStart + 1
       _ = if (missing) {

@@ -16,6 +16,7 @@
 
 package io.lightcone
 
+import io.lightcone.lib._
 import org.web3j.utils.Numeric
 import spire.math.Rational
 import com.google.protobuf.ByteString
@@ -26,8 +27,8 @@ package object core {
       orderhash1: String,
       orderhash2: String
     ) = {
-    val hash = Numeric.toBigInt(orderhash1) xor
-      Numeric.toBigInt(orderhash2)
+    val hash = NumericConversion.toBigInt(orderhash1) ^
+      NumericConversion.toBigInt(orderhash2)
     Numeric.toHexString(hash.toByteArray).toLowerCase()
   }
 

@@ -95,9 +95,4 @@ object Address {
       case _: Throwable =>
         throw new Exception(s"invalid ethereum address: $address")
     }
-
-  def formatHex(str: String): String = {
-    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
-  }
-
 }

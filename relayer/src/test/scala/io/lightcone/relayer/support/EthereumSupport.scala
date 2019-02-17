@@ -28,6 +28,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum._
 import io.lightcone.core._
+import io.lightcone.lib._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
@@ -245,7 +246,7 @@ trait EthereumSupport {
     val getNonceRes =
       Await.result(getNonceF.mapTo[GetNonce.Res], timeout.duration)
     val tx = txWithoutNonce.copy(
-      nonce = Numeric.toBigInt(getNonceRes.result).intValue()
+      nonce = NumericConversion.toBigInt(getNonceRes.result).intValue()
     )
     actors.get(EthereumAccessActor.name) ? SendRawTransaction.Req(
       getSignedTxData(tx)

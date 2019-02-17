@@ -19,10 +19,9 @@ package io.lightcone.relayer.support
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
+import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import scalapb.json4s.JsonFormat
-import org.web3j.utils.Numeric
-
 import scala.io.Source
 
 trait EventExtractorSupport {
@@ -51,7 +50,7 @@ trait EventExtractorSupport {
   })
 
   val blockData = RawBlockData(
-    height = Numeric.toBigInt(block.number).longValue(),
+    height = NumericConversion.toBigInt(block.number).longValue,
     hash = block.hash,
     txs = block.transactions,
     uncles = block.uncles,

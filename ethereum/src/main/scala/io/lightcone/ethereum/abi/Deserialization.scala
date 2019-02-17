@@ -17,6 +17,7 @@
 package io.lightcone.ethereum.abi
 
 import java.math.BigInteger
+import io.lightcone.lib._
 import org.web3j.utils.Numeric
 import scala.reflect.Manifest
 import scala.reflect.runtime.universe._
@@ -45,7 +46,7 @@ object Deserialization {
         case bs: Array[Byte] => BigInt(bs) == 1
         case b: BigInt       => b == 1
         case b: BigInteger   => BigInt(b) == 1
-        case b: String       => Numeric.toBigInt(b) == 1
+        case b: String       => NumericConversion.toBigInt(b) == 1
       }
     } else if (r =:= typeOf[Array[String]]) {
       p match {
