@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.socketio
 
-import io.lightcone.relayer.data._
 import com.corundumstudio.socketio.protocol.JacksonJsonSupport
 import com.corundumstudio.socketio._
 import com.typesafe.config.Config
@@ -26,11 +25,8 @@ class SocketServer(
   )(
     implicit
     val config: Config,
-    val balanceListener: SocketIONotifier[
-      SubcribeBalanceAndAllowance,
-      GetBalanceAndAllowances.Res
-    ],
-    val txListener: SocketIONotifier[SubcribeTransaction, TransactionRecord]) {
+    val balanceListener: SocketIONotifier[SubcribeBalanceAndAllowance],
+    val txListener: SocketIONotifier[SubcribeTransaction]) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()

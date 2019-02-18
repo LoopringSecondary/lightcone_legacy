@@ -22,7 +22,6 @@ import io.lightcone.relayer.socketio._
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.lib.Address
-import io.lightcone.relayer.data._
 
 import scala.concurrent.ExecutionContext
 
@@ -31,10 +30,7 @@ class BalanceNotifier @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val config: Config)
-    extends SocketIONotifier[
-      SubcribeBalanceAndAllowance,
-      GetBalanceAndAllowances.Res
-    ] {
+    extends SocketIONotifier[SubcribeBalanceAndAllowance] {
 
   val eventName = "balances"
 
@@ -53,7 +49,7 @@ class BalanceNotifier @Inject()(
   // TODO(yadong):implement this
   def shouldNotifyClient(
       request: SubcribeBalanceAndAllowance,
-      event: GetBalanceAndAllowances.Res
+      event: AnyRef
     ): Boolean = ???
 
   // override def onEvent(msg: GetBalanceAndAllowances.Res): Unit = {

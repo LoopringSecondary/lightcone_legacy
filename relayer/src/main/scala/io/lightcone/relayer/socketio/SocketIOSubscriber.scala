@@ -18,16 +18,16 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio.SocketIOClient
 
-class SocketIOSubscriber[R, E <: AnyRef](
+class SocketIOSubscriber[R](
     val client: SocketIOClient,
     val subscription: R) {
 
   def sendEvent(
       eventName: String,
-      event: E
+      event: AnyRef
     ): Unit = {
     if (client.isChannelOpen) {
-      client.sendEvent(eventName, event)
+      client.sendEvent("", event)
     }
   }
 
@@ -35,7 +35,7 @@ class SocketIOSubscriber[R, E <: AnyRef](
     if (obj == null) false
     else
       obj match {
-        case c: SocketIOSubscriber[_, _] =>
+        case c: SocketIOSubscriber[_] =>
           c.client.getSessionId.equals(client.getSessionId)
         case _ => false
       }

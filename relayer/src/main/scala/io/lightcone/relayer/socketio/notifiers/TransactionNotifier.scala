@@ -19,11 +19,10 @@ package io.lightcone.relayer.socketio.notifiers
 import com.corundumstudio.socketio._
 import io.lightcone.relayer.socketio._
 import com.google.inject.Inject
-import io.lightcone.relayer.data._
 import io.lightcone.lib._
 
 class TransactionNotifier @Inject()
-    extends SocketIONotifier[SubcribeTransaction, TransactionRecord] {
+    extends SocketIONotifier[SubcribeTransaction] {
 
   val eventName = "transactions"
 
@@ -33,13 +32,13 @@ class TransactionNotifier @Inject()
     ) =
     new SocketIOSubscriber(
       client,
-      req.copy(address = Address.normalize(req.address))
+      req.copy(addresses = req.addresses.map(Address.normalize))
     )
 
   // TODO(yadong):implement this
   def shouldNotifyClient(
       request: SubcribeTransaction,
-      event: TransactionRecord
+      event: AnyRef
     ): Boolean = ???
 
   // def onEvent(msg: TransactionRecord): Unit = {

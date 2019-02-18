@@ -163,11 +163,9 @@ class CoreModule(
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     //bind socket listener
-    bind[
-      SocketIONotifier[SubcribeBalanceAndAllowance, GetBalanceAndAllowances.Res]
-    ].to[BalanceNotifier]
+    bind[SocketIONotifier[SubcribeBalanceAndAllowance]].to[BalanceNotifier]
 
-    bind[SocketIONotifier[SubcribeTransaction, TransactionRecord]]
+    bind[SocketIONotifier[SubcribeTransaction]]
       .to[TransactionNotifier]
 
     // --- bind primative types ---------------------

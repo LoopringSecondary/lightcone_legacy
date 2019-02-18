@@ -33,11 +33,8 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       system: ActorSystem,
       ec: ExecutionContext,
       timeout: Timeout,
-      balanceListener: SocketIONotifier[
-        SubcribeBalanceAndAllowance,
-        GetBalanceAndAllowances.Res
-      ],
-      txListener: SocketIONotifier[SubcribeTransaction, TransactionRecord],
+      balanceListener: SocketIONotifier[SubcribeBalanceAndAllowance],
+      txListener: SocketIONotifier[SubcribeTransaction],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -49,19 +46,16 @@ class SocketIONotificationActor @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
-    val balanceListener: SocketIONotifier[
-      SubcribeBalanceAndAllowance,
-      GetBalanceAndAllowances.Res
-    ],
-    val txListener: SocketIONotifier[SubcribeTransaction, TransactionRecord])
+    val balanceListener: SocketIONotifier[SubcribeBalanceAndAllowance],
+    val txListener: SocketIONotifier[SubcribeTransaction])
     extends Actor {
 
   def receive: Receive = {
     // events to deliver to socket.io clients must be generated here, not inside the listerners.
     case req: GetBalanceAndAllowances.Res =>
-      balanceListener.notifyEvent(req)
+      balanceListener.notifyEvent("somename1", req)
 
     case req: TransactionRecord =>
-      txListener.notifyEvent(req)
+      txListener.notifyEvent("somename2", req)
   }
 }

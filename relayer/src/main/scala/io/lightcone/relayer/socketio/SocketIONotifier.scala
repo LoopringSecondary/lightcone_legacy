@@ -16,41 +16,38 @@
 
 package io.lightcone.relayer.socketio
 
-import scala.reflect.ClassTag
 import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.listener.DataListener
 import org.slf4s.Logging
 
-abstract class SocketIONotifier[R, E <: AnyRef: ClassTag](
-    implicit
-    m: Manifest[E])
-    extends DataListener[R]
-    with Logging {
+abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
 
   val eventName: String
 
   def shouldNotifyClient(
       subscription: R,
-      event: E
+      event: AnyRef
     ): Boolean
 
   def wrapClient(
       client: SocketIOClient,
       subscription: R
-    ): SocketIOSubscriber[R, E]
+    ): SocketIOSubscriber[R]
 
-  private val clazz = implicitly[ClassTag[E]].runtimeClass
-  private var clients = Seq.empty[SocketIOSubscriber[R, E]]
+  private var clients = Seq.empty[SocketIOSubscriber[R]]
 
-  def notifyEvent(evt: Any): Unit = {
+  def notifyEvent(
+      eventName: String,
+      event: AnyRef
+    ): Unit = {
     clients = clients.filterNot(_.client.isChannelOpen)
-    if (clazz.isInstance(evt)) {
-      val event = evt.asInstanceOf[E]
-      onEvent(event)
-      log.debug(s"socketio notifhy: $event")
-    } else {
-      log.error(s"unexpeceted event: $evt")
-    }
+
+    val e = transformEvent(event)
+    clients
+      .filter(client => shouldNotifyClient(client.subscription, e))
+      .foreach(_.sendEvent(eventName, e))
+
+    log.debug(s"socketio notifhy: $e")
   }
 
   def onData(
@@ -66,13 +63,6 @@ abstract class SocketIONotifier[R, E <: AnyRef: ClassTag](
     clients = wrapped +: clients.filterNot(_ == wrapped)
   }
 
-  def onEvent(event: E) = {
-    val e = transformEvent(event)
-    clients
-      .filter(client => shouldNotifyClient(client.subscription, e))
-      .foreach(_.sendEvent(eventName, e))
-  }
-
   // Override this method to change the event. Normally we should not do this.
-  def transformEvent(event: E): E = event
+  def transformEvent(event: AnyRef): AnyRef = event
 }
