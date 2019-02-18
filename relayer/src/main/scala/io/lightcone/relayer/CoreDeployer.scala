@@ -165,6 +165,7 @@ class CoreDeployer @Inject()(
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
+      actors.add(RollbackHandlingActor.name, RollbackHandlingActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
