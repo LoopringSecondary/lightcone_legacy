@@ -23,10 +23,10 @@ import scala.collection.SortedMap
 
 // This class is not thread-safe
 class ChainReorganizationManagerImpl(
-  val maxDepth: Int = 100,
-  val strictMode: Boolean = false)
-  extends ChainReorganizationManager
-  with Logging {
+    val maxDepth: Int = 100,
+    val strictMode: Boolean = false)
+    extends ChainReorganizationManager
+    with Logging {
 
   assert(maxDepth >= 10 && maxDepth <= 1000)
 
@@ -35,16 +35,18 @@ class ChainReorganizationManagerImpl(
     var accounts = Map.empty[String, Seq[String]]
 
     def recordOrderUpdate(
-      orderId: String,
-      orderStatus: OrderStatus) = {
+        orderId: String,
+        orderStatus: OrderStatus
+      ) = {
       orders += orderId -> orderStatus
     }
 
     def recordAccountUpdate(
-      address: String,
-      token: String) = accounts.get(address) match {
+        address: String,
+        token: String
+      ) = accounts.get(address) match {
       case Some(tokens) => accounts += address -> (token +: tokens)
-      case None => accounts += address -> Seq(token)
+      case None         => accounts += address -> Seq(token)
     }
   }
 
@@ -56,18 +58,37 @@ class ChainReorganizationManagerImpl(
       case (idx, _) if blockIdx < idx =>
         log.error(
           s"block reorgnaized at a block index ($blockIdx) smaller than the" +
-            s"minimal knonw block ($idx)")
+            s"minimal knonw block ($idx)"
+        )
     }
-    val (remains, delete) = blocks.partition(_._1 < blockIdx)
-    blocks = remains
+    val (remainingBlocks, expiredBlocks) = blocks.partition(_._1 < blockIdx)
+    blocks = remainingBlocks
 
-    // TODO(dongw): build the impact object
-    val impact = ChainReorganizationImpact()
+    var impact = ChainReorganizationImpact()
+    expiredBlocks.foreach {
+      case (_, block) =>
+        val orderInfos = block.orders.map {
+          case (orderId, status) =>
+            ChainReorganizationImpact.OrderInfo(orderId, status)
+        }.toSeq
+
+        val accountInfos = block.accounts.map {
+          case (address, tokens) =>
+            ChainReorganizationImpact.AccountInfo(address, tokens)
+        }.toSeq
+
+        impact = impact.addOrders(orderInfos: _*).addAccounts(accountInfos: _*)
+
+        block.accounts.foreach {
+          case (address, tokens) =>
+        }
+    }
 
     log.info(
-      s"reorged at $blockIdx: ${impact.orderIds.size} orders and " +
-        s"${impact.tokensList.size} accounts impacted, " +
-        s"new history size: ${blocks.size}")
+      s"reorged at $blockIdx: ${impact.orders.size} orders and " +
+        s"${impact.accounts.size} accounts impacted, " +
+        s"new history size: ${blocks.size}"
+    )
 
     impact
   }
@@ -77,17 +98,19 @@ class ChainReorganizationManagerImpl(
   }
 
   def recordOrderUpdate(
-    blockIdx: Long,
-    orderId: String,
-    orderStatus: OrderStatus) = checkBlockIdxTo(blockIdx) {
+      blockIdx: Long,
+      orderId: String,
+      orderStatus: OrderStatus
+    ) = checkBlockIdxTo(blockIdx) {
     getBlockTrackingData(blockIdx)
       .recordOrderUpdate(orderId, orderStatus)
   }
 
   def recordAccountUpdate(
-    blockIdx: Long,
-    address: String,
-    token: String) = checkBlockIdxTo(blockIdx) {
+      blockIdx: Long,
+      address: String,
+      token: String
+    ) = checkBlockIdxTo(blockIdx) {
     getBlockTrackingData(blockIdx)
       .recordAccountUpdate(address, token)
   }
@@ -97,10 +120,12 @@ class ChainReorganizationManagerImpl(
     if (blockIdx >= lastKnownBlock) call
     else if (strictMode) {
       log.error(
-        s"failed to record for a previous block $blockIdx vs $lastKnownBlock (last known block)")
+        s"failed to record for a previous block $blockIdx vs $lastKnownBlock (last known block)"
+      )
     } else {
       log.warn(
-        s"record for a previous block $blockIdx vs $lastKnownBlock (last known block)")
+        s"record for a previous block $blockIdx vs $lastKnownBlock (last known block)"
+      )
       call
     }
   }
@@ -118,7 +143,8 @@ class ChainReorganizationManagerImpl(
 
         log.debug(
           s"history size: ${blocks.size} with latest block index: " +
-            blocks.lastOption.map(_._1).getOrElse(0L))
+            blocks.lastOption.map(_._1).getOrElse(0L)
+        )
         block
     }
 
