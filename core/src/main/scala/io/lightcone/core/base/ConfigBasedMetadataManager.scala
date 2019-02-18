@@ -19,15 +19,11 @@ package io.lightcone.core
 import com.google.inject.Inject
 import com.typesafe.config.Config
 
-final class ConfigBasedMetadataManager @Inject()(implicit val config: Config)
-    extends AbstractMetadataManager {
+final class ConfigBasedMetadataManager @Inject() (implicit val config: Config)
+  extends AbstractMetadataManager {
 
   val rateConfig = config.getConfig("loopring_protocol.default-burn-rates")
 
-  // tokens[address, token]
-  val defaultBurnRateForMarket =
-    rateConfig.getDouble("default-burn-rates.market-orders")
-
-  val defaultBurnRateForP2P =
-    rateConfig.getDouble("default-burn-rates.p2p-orders")
+  val defaultBurnRateForMarket = rateConfig.getDouble("market-orders")
+  val defaultBurnRateForP2P = rateConfig.getDouble("p2p-orders")
 }
