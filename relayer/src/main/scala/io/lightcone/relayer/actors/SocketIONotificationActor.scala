@@ -20,8 +20,8 @@ import akka.actor._
 import akka.util.Timeout
 import com.google.inject.Inject
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.socketio._
+import io.lightcone.core._
 
 import scala.concurrent.ExecutionContext
 
@@ -33,8 +33,8 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       system: ActorSystem,
       ec: ExecutionContext,
       timeout: Timeout,
-      balanceNotifier: SocketIONotifier[SubcribeBalanceAndAllowance],
-      transactionNotifier: SocketIONotifier[SubcribeTransaction],
+      balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
+      transactionNotifier: SocketIONotifier[SubscribeTransaction],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -46,16 +46,45 @@ class SocketIONotificationActor @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
-    val balanceNotifier: SocketIONotifier[SubcribeBalanceAndAllowance],
-    val transactionNotifier: SocketIONotifier[SubcribeTransaction])
+    val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
+    val transactionNotifier: SocketIONotifier[SubscribeTransaction])
     extends Actor {
 
   def receive: Receive = {
-    // events to deliver to socket.io clients must be generated here, not inside the listerners.
-    case req: GetBalanceAndAllowances.Res =>
-      balanceNotifier.notifyEvent(req)
+    // events to deliver to socket.io clients must be generated here, not inside the listeners.
+    case event: AddressBalanceAndAllowanceEvent =>
+      val data = BalanceAndAllowanceResponse(
+        owner = event.address,
+        balanceAndAllowance = TokenBalanceAndAllowance(
+          address = event.token,
+          balance = event.balance,
+          allowance = event.allowance,
+          availableBalance = event.availableBalance,
+          availableAllowance = event.allowance
+        )
+      )
+      balanceNotifier.notifyEvent(data)
 
-    case req: TransactionRecord =>
-      transactionNotifier.notifyEvent(req)
+    case event: TransactionEvent =>
+      val transaction = TransactionResponse(
+        owner = event.owner,
+        transaction = Transaction(
+          from = event.from,
+          to = event.to,
+          value = event.value,
+          gasPrice = event.gasPrice,
+          gasLimit = event.gas,
+          gasUsed = event.gasUsed,
+          data = event.input,
+          nonce = event.nonce,
+          hash = event.hash,
+          blockNum = event.blockNumber,
+          time = event.time,
+          status = event.status.name.substring(10),
+          `type` = "0x" + event.`type`.toHexString
+        )
+      )
+
+      transactionNotifier.notifyEvent(transaction)
   }
 }

@@ -18,14 +18,14 @@ package io.lightcone.relayer
 
 package object socketio {
 
-  case class SubcribeBalanceAndAllowance(
-      val addresses: Seq[String],
-      val tokens: Seq[String])
+  case class SubscribeBalanceAndAllowance(
+      addresses: Seq[String],
+      tokens: Seq[String])
 
-  case class SubcribeTransaction(
-      val addresses: Seq[String],
-      val status: Seq[String],
-      val types: Seq[String])
+  case class SubscribeTransaction(
+      addresses: Seq[String],
+      statuses: Seq[String],
+      types: Seq[String])
 
   case class TokenBalanceAndAllowance(
       address: String,
@@ -36,7 +36,7 @@ package object socketio {
 
   case class BalanceAndAllowanceResponse(
       owner: String,
-      balanceAndAllowances: Seq[TokenBalanceAndAllowance])
+      balanceAndAllowance: TokenBalanceAndAllowance)
 
   case class Transaction(
       from: String,
@@ -50,10 +50,11 @@ package object socketio {
       hash: String,
       blockNum: String,
       time: String,
-      status: String)
+      status: String,
+      `type`: String)
 
   case class TransactionResponse(
       owner: String,
-      transactions: Seq[Transaction])
+      transaction: Transaction)
 
 }

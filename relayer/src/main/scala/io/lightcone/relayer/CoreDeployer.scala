@@ -63,8 +63,8 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
-    balanceNotifier: SocketIONotifier[SubcribeBalanceAndAllowance],
-    transactionNotifier: SocketIONotifier[SubcribeTransaction],
+    balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
+    transactionNotifier: SocketIONotifier[SubscribeTransaction],
     system: ActorSystem)
     extends Object
     with Logging {

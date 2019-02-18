@@ -22,67 +22,32 @@ import com.google.inject.Inject
 import io.lightcone.lib._
 
 class TransactionNotifier @Inject()
-    extends SocketIONotifier[SubcribeTransaction] {
+    extends SocketIONotifier[SubscribeTransaction] {
 
   val eventName = "transactions"
 
   def wrapClient(
       client: SocketIOClient,
-      req: SubcribeTransaction
+      req: SubscribeTransaction
     ) =
     new SocketIOSubscriber(
       client,
       req.copy(addresses = req.addresses.map(Address.normalize))
     )
 
-  // TODO(yadong):implement this
   def shouldNotifyClient(
-      request: SubcribeTransaction,
+      request: SubscribeTransaction,
       event: AnyRef
-    ): Boolean = ???
-
-  // def onEvent(msg: TransactionRecord): Unit = {
-  //   msg match {
-  //     case record: TransactionRecord =>
-  //       clients.foreach { client =>
-  //         if (client.req.address.equals(record.owner) &&
-  //             (client.req.`type`.isEmpty || record.recordType.value == Numeric
-  //               .toBigInt(client.req.`type`)
-  //               .intValue()) &&
-  //             (client.req.status.isEmpty || record.getHeader.txStatus.name.toLowerCase
-  //               .contains(client.req.status.toLowerCase()))) {
-  //           val header = record.getHeader
-  //           val _data = TransactionResponse(
-  //             owner = record.owner,
-  //             //TODO(yadong) Transaction Record 中data 和 nonce 未保留
-  //             transactions = Seq(
-  //               Transaction(
-  //                 from = header.txFrom,
-  //                 to = header.txTo,
-  //                 value = header.txValue,
-  //                 gasPrice = Numeric
-  //                   .toHexStringWithPrefix(BigInteger.valueOf(header.gasPrice)),
-  //                 gasLimit = Numeric
-  //                   .toHexStringWithPrefix(BigInteger.valueOf(header.gasLimit)),
-  //                 gasUsed = Numeric
-  //                   .toHexStringWithPrefix(BigInteger.valueOf(header.gasUsed)),
-  //                 data = "0x0",
-  //                 nonce = "0x0",
-  //                 hash = header.txHash,
-  //                 blockNum = Numeric.toHexStringWithPrefix(
-  //                   BigInteger.valueOf(header.blockNumber)
-  //                 ),
-  //                 time = Numeric.toHexStringWithPrefix(
-  //                   BigInteger.valueOf(header.blockTimestamp)
-  //                 ),
-  //                 status = header.txStatus.name.substring(10)
-  //               )
-  //             )
-  //           )
-  //           client.sendEvent(_data)
-  //         }
-  //       }
-  //     case _ =>
-  //   }
-
+    ): Boolean =
+    event match {
+      case e: TransactionResponse =>
+        request.addresses.contains(e.owner) &&
+          (request.types.isEmpty || request.types.contains(
+            e.transaction.`type`
+          )) &&
+          (request.statuses.isEmpty || request.statuses.contains(
+            e.transaction.status
+          ))
+      case _ => false
+    }
 }

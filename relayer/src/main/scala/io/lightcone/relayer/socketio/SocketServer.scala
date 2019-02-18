@@ -16,17 +16,17 @@
 
 package io.lightcone.relayer.socketio
 
-import com.corundumstudio.socketio.protocol.JacksonJsonSupport
 import com.corundumstudio.socketio._
-import com.typesafe.config.Config
+import com.corundumstudio.socketio.protocol.JacksonJsonSupport
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.typesafe.config.Config
 
 class SocketServer(
   )(
     implicit
     val config: Config,
-    val balanceNotifier: SocketIONotifier[SubcribeBalanceAndAllowance],
-    val transactionNotifier: SocketIONotifier[SubcribeTransaction]) {
+    val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
+    val transactionNotifier: SocketIONotifier[SubscribeTransaction]) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
@@ -38,13 +38,13 @@ class SocketServer(
 
   server.addEventListener(
     balanceNotifier.eventName,
-    classOf[SubcribeBalanceAndAllowance],
+    classOf[SubscribeBalanceAndAllowance],
     balanceNotifier
   )
 
   server.addEventListener(
     transactionNotifier.eventName,
-    classOf[SubcribeTransaction],
+    classOf[SubscribeTransaction],
     transactionNotifier
   )
 

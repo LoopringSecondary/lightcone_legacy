@@ -30,13 +30,13 @@ class BalanceNotifier @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val config: Config)
-    extends SocketIONotifier[SubcribeBalanceAndAllowance] {
+    extends SocketIONotifier[SubscribeBalanceAndAllowance] {
 
   val eventName = "balances"
 
   def wrapClient(
       client: SocketIOClient,
-      req: SubcribeBalanceAndAllowance
+      req: SubscribeBalanceAndAllowance
     ) =
     new SocketIOSubscriber(
       client,
@@ -46,42 +46,14 @@ class BalanceNotifier @Inject()(
       )
     )
 
-  // TODO(yadong):implement this
   def shouldNotifyClient(
-      request: SubcribeBalanceAndAllowance,
+      request: SubscribeBalanceAndAllowance,
       event: AnyRef
-    ): Boolean = ???
-
-  // override def onEvent(msg: GetBalanceAndAllowances.Res): Unit = {
-  //   msg match {
-  //     // TODO(yadong): we need to use event struct, not RPC resp
-
-  //     case res: GetBalanceAndAllowances.Res =>
-  //       clients.foreach { client =>
-  //         if (client.req.addresses.exists(res.address.equals)
-  //             && (client.req.tokens
-  //               .intersect(res.balanceAndAllowanceMap.keys.toSeq)
-  //               .nonEmpty || client.req.tokens.isEmpty)) {
-  //           val data = BalanceAndAllowanceResponse(
-  //             owner = res.address,
-  //             balanceAndAllowances = res.balanceAndAllowanceMap.filter { ba =>
-  //               client.req.tokens.isEmpty || client.req.tokens.exists(
-  //                 ba._1.equals
-  //               )
-  //             }.map { ba =>
-  //               TokenBalanceAndAllowance(
-  //                 address = ba._1,
-  //                 balance = ba._2.balance,
-  //                 allowance = ba._2.allowance,
-  //                 availableBalance = ba._2.balance,
-  //                 availableAllowance = ba._2.allowance
-  //               )
-  //             }.toSeq
-  //           )
-  //           client.sendEvent(data)
-  //         }
-  //       }
-  //     case _ =>
-  //   }
-  // }
+    ): Boolean =
+    event match {
+      case e: BalanceAndAllowanceResponse =>
+        request.addresses.contains(e.owner) && (request.tokens.isEmpty || request.tokens
+          .contains(e.balanceAndAllowance.address))
+      case _ => false
+    }
 }

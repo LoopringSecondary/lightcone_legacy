@@ -37,7 +37,7 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
   private var clients = Seq.empty[SocketIOSubscriber[R]]
 
   def notifyEvent(event: AnyRef): Unit = {
-    clients = clients.filterNot(_.client.isChannelOpen)
+    clients = clients.filter(_.client.isChannelOpen)
 
     val e = transformEvent(event)
     val targets = clients
