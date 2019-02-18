@@ -48,5 +48,7 @@ class SocketServer(
     transactionNotifier
   )
 
+  // def addNotifier()
+
   def start(): Unit = server.start()
 }

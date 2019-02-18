@@ -53,9 +53,9 @@ class SocketIONotificationActor @Inject()(
   def receive: Receive = {
     // events to deliver to socket.io clients must be generated here, not inside the listerners.
     case req: GetBalanceAndAllowances.Res =>
-      balanceNotifier.notifyEvent("somename1", req)
+      balanceNotifier.notifyEvent(req)
 
     case req: TransactionRecord =>
-      transactionNotifier.notifyEvent("somename2", req)
+      transactionNotifier.notifyEvent(req)
   }
 }
