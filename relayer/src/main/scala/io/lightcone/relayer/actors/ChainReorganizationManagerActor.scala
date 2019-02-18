@@ -32,36 +32,33 @@ import akka.event.LoggingReceive
 
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
-object ChainReorganisationHandlingActor extends DeployedAsSingleton {
-  val name = "chain_reorg_handler"
+object ChainReorganizationManagerActor extends DeployedAsSingleton {
+  val name = "chain_reorg_manager"
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      chainReorgHandler: ChainReorganisationHandler,
-      // dbModule: DatabaseModule,
-      deployActorsIgnoringRoles: Boolean
-    ): ActorRef = {
-    startSingleton(Props(new ChainReorganisationHandlingActor()))
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    chainReorgHandler: ChainReorganizationManager,
+    // dbModule: DatabaseModule,
+    deployActorsIgnoringRoles: Boolean): ActorRef = {
+    startSingleton(Props(new ChainReorganizationManagerActor()))
   }
 }
 
-class ChainReorganisationHandlingActor @Inject()(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val chainReorgHandler: ChainReorganisationHandler,
-    val actors: Lookup[ActorRef])
-    extends InitializationRetryActor
-    with Stash
-    with ActorLogging {
+class ChainReorganizationManagerActor @Inject() (
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val chainReorgHandler: ChainReorganizationManager,
+  val actors: Lookup[ActorRef])
+  extends InitializationRetryActor
+  with Stash
+  with ActorLogging {
 
   import MarketMetadata.Status._
 

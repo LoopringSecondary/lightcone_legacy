@@ -19,11 +19,11 @@ package io.lightcone.core
 import org.slf4s.Logging
 import scala.collection.SortedMap
 
-class ChainReorganisationHandlerImpl(
-    val maxDepth: Int = 100,
-    val strictMode: Boolean = false)
-    extends ChainReorganisationHandler
-    with Logging {
+class ChainReorganizationManagerImpl(
+  val maxDepth: Int = 100,
+  val strictMode: Boolean = false)
+  extends ChainReorganizationManager
+  with Logging {
 
   assert(maxDepth >= 10 && maxDepth <= 1000)
 
@@ -32,38 +32,34 @@ class ChainReorganisationHandlerImpl(
     var accounts = Map.empty[String, String]
 
     def recordOrderUpdate(
-        orderId: String,
-        orderStatus: OrderStatus
-      ) = ???
+      orderId: String,
+      orderStatus: OrderStatus) = ???
 
     def recordAccountUpdate(
-        address: String,
-        token: String
-      ) = ???
+      address: String,
+      token: String) = ???
   }
 
   private var blocks = SortedMap.empty[Long, BlockTrackingData]
 
-  def reorganizedAt(blockIdx: Long): ChainReorganisationImpact = {
+  def reorganizedAt(blockIdx: Long): ChainReorganizationImpact = {
 
     blocks.headOption foreach {
       case (idx, _) if blockIdx < idx =>
         log.error(
           s"block reorgnaized at a block index ($blockIdx) smaller than the" +
-            s"minimal knonw block ($idx)"
-        )
+            s"minimal knonw block ($idx)")
     }
     val (remains, delete) = blocks.partition(_._1 < blockIdx)
     blocks = remains
 
     // TODO(dongw) ->
-    val impact = ChainReorganisationImpact()
+    val impact = ChainReorganizationImpact()
 
     log.info(
       s"reorged at $blockIdx: ${impact.orderIds.size} orders and " +
         s"${impact.tokensList.size} accounts impacted, " +
-        s"new history size: ${blocks.size}"
-    )
+        s"new history size: ${blocks.size}")
 
     impact
   }
@@ -73,19 +69,17 @@ class ChainReorganisationHandlerImpl(
   }
 
   def recordOrderUpdate(
-      blockIdx: Long,
-      orderId: String,
-      orderStatus: OrderStatus
-    ) = checkBlockIdxTo(blockIdx) {
+    blockIdx: Long,
+    orderId: String,
+    orderStatus: OrderStatus) = checkBlockIdxTo(blockIdx) {
     getBlockTrackingData(blockIdx)
       .recordOrderUpdate(orderId, orderStatus)
   }
 
   def recordAccountUpdate(
-      blockIdx: Long,
-      address: String,
-      token: String
-    ) = checkBlockIdxTo(blockIdx) {
+    blockIdx: Long,
+    address: String,
+    token: String) = checkBlockIdxTo(blockIdx) {
     getBlockTrackingData(blockIdx)
       .recordAccountUpdate(address, token)
   }
@@ -95,12 +89,10 @@ class ChainReorganisationHandlerImpl(
     if (blockIdx >= lastKnownBlock) call
     else if (strictMode) {
       log.error(
-        s"failed to record for a previous block $blockIdx vs $lastKnownBlock (last known block)"
-      )
+        s"failed to record for a previous block $blockIdx vs $lastKnownBlock (last known block)")
     } else {
       log.warn(
-        s"record for a previous block $blockIdx vs $lastKnownBlock (last known block)"
-      )
+        s"record for a previous block $blockIdx vs $lastKnownBlock (last known block)")
       call
     }
 
@@ -119,8 +111,7 @@ class ChainReorganisationHandlerImpl(
 
         log.debug(
           s"history size: ${blocks.size} with latest block index: " +
-            blocks.lastOption.map(_._1).getOrElse(0L)
-        )
+            blocks.lastOption.map(_._1).getOrElse(0L))
         block
     }
 

@@ -16,21 +16,19 @@
 
 package io.lightcone.core
 
-trait ChainReorganisationHandler {
+trait ChainReorganizationManager {
 
   def reset(): Unit
 
   def recordOrderUpdate(
-      blockIdx: Long,
-      orderId: String,
-      orderStatus: OrderStatus
-    ): Unit
+    blockIdx: Long,
+    orderId: String,
+    orderStatus: OrderStatus): Unit
 
   def recordAccountUpdate(
-      blockIdx: Long,
-      address: String,
-      token: String
-    ): Unit
+    blockIdx: Long,
+    address: String,
+    token: String): Unit
 
-  def reorganizedAt(blockIdx: Long): ChainReorganisationImpact
+  def reorganizedAt(blockIdx: Long): ChainReorganizationImpact
 }

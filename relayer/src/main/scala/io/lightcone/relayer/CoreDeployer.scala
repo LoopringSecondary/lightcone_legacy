@@ -46,7 +46,7 @@ class CoreDeployer @Inject() (
   actors: Lookup[ActorRef],
   actorMaterializer: ActorMaterializer,
   brb: EthereumBatchCallRequestBuilder,
-  chainReorgHandler: ChainReorganisationHandler,
+  chainReorgHandler: ChainReorganizationManager,
   cluster: Cluster,
   config: Config,
   dispatchers: Seq[EventDispatcher[_]],
@@ -154,8 +154,8 @@ class CoreDeployer @Inject() (
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
       actors.add(
-        ChainReorganisationHandlingActor.name,
-        ChainReorganisationHandlingActor.start)
+        ChainReorganizationManagerActor.name,
+        ChainReorganizationManagerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,

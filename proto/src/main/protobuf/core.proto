@@ -295,7 +295,7 @@ message MarketStats {
 }
 
 
-message ChainReorganisationImpact {
+message ChainReorganizationImpact {
 
     message Tokens {
         string address          = 1;
