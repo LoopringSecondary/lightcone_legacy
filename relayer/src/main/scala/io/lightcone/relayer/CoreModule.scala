@@ -104,8 +104,7 @@ class CoreModule(
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
-    bind[MetadataManager].to[ConfigBasedMetadataManager].asEagerSingleton
-
+    bind[MetadataManager].toInstance(new MetadataManagerImpl(0.6, 0.06))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
     // --- bind other classes ---------------------
