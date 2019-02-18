@@ -61,7 +61,7 @@ class ChainReorganizationManagerImpl(
     val (remains, delete) = blocks.partition(_._1 < blockIdx)
     blocks = remains
 
-    // TODO(dongw) ->
+    // TODO(dongw): build the impact object
     val impact = ChainReorganizationImpact()
 
     log.info(
