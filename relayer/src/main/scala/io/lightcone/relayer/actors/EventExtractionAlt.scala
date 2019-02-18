@@ -31,7 +31,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait EventExtraction {
+trait EventExtractionAlt {
   me: InitializationRetryActor =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
