@@ -64,19 +64,19 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   def extractTx(
       tx: Transaction,
       receipt: TransactionReceipt,
-      blockHeader: BlockHeader
+      eventHeader: EventHeader
     ): Future[Seq[Any]] =
     for {
-      balanceEvents <- extractBalance(tx, receipt, blockHeader)
-      allowanceEvents <- extractAllowance(tx, receipt, blockHeader)
+      balanceEvents <- extractBalance(tx, receipt, eventHeader)
+      allowanceEvents <- extractAllowance(tx, receipt, eventHeader)
     } yield balanceEvents ++ allowanceEvents
 
   def extractBalance(
       tx: Transaction,
       receipt: TransactionReceipt,
-      blockHeader: BlockHeader
+      eventHeader: EventHeader
     ): Future[Seq[Any]] = Future {
-    val header = getEventHeader(tx, receipt, blockHeader)
+    val header = getEventHeader(tx, receipt, eventHeader)
     val txValue = NumericConversion.toBigInt(tx.value)
     val transfers = ListBuffer.empty[PTransferEvent]
     if (isSucceed(receipt.status)) {
@@ -243,10 +243,11 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
     )
   }
 
+  //TODO:待实现
   def extractAllowance(
       tx: Transaction,
       receipt: TransactionReceipt,
-      blockHeader: BlockHeader
+      eventHeader: EventHeader
     ): Future[Seq[Any]] = ???
 
   def extractEventOfMiner(blockHeader: BlockHeader): Future[Seq[Any]] = {
