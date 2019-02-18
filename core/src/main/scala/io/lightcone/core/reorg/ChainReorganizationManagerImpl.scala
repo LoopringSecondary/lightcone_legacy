@@ -22,44 +22,44 @@ import scala.collection.SortedMap
 // Owner: dongw
 
 // This class is not thread-safe
+
 class ChainReorganizationManagerImpl(
     val maxDepth: Int = 100,
     val strictMode: Boolean = false)
     extends ChainReorganizationManager
     with Logging {
 
-  assert(maxDepth >= 10 && maxDepth <= 1000)
+  case class BlockData(
+      val orderIds: Set[String] = Set.empty,
+      val accounts: Map[String, Set[String]] = Map.empty) {
 
-  class BlockTrackingData() {
-    var orderIds = Set.empty[String]
-    var accounts = Map.empty[String, Set[String]]
-
-    def recordOrderUpdate(orderId: String) = {
-      orderIds += orderId
-    }
+    def recordOrderUpdate(orderId: String): BlockData =
+      copy(orderIds = orderIds + orderId)
 
     def recordAccountUpdate(
         address: String,
         token: String
-      ) = accounts.get(address) match {
-      case Some(tokens) => accounts += address -> (tokens + token)
-      case None         => accounts += address -> Set(token)
+      ): BlockData = {
+      accounts.get(address) match {
+        case Some(tokens) =>
+          copy(accounts = accounts + (address -> (tokens + token)))
+        case None =>
+          copy(accounts = accounts + (address -> Set(token)))
+      }
     }
 
-    def mergeWith(another: BlockTrackingData): BlockTrackingData = {
-      orderIds ++= another.orderIds
-      another.accounts.foreach {
-        case (address, tokens) =>
-          accounts.get(address) match {
-            case Some(tokens_) => accounts += (address -> (tokens_ ++ tokens))
-            case None          => accounts += (address -> tokens)
-          }
+    def +(that: BlockData): BlockData = {
+      val orderIds = this.orderIds ++ that.orderIds
+      val accounts = this.accounts ++ that.accounts.map {
+        case (k, v) => k -> (v ++ this.accounts.getOrElse(k, Set.empty))
       }
-      this
+      BlockData(orderIds, accounts)
     }
   }
 
-  private var blocks = SortedMap.empty[Long, BlockTrackingData]
+  assert(maxDepth >= 10 && maxDepth <= 1000)
+
+  private var blocks = SortedMap.empty[Long, BlockData]
 
   def reorganizedAt(blockIdx: Long): ChainReorganizationImpact = {
 
@@ -73,17 +73,15 @@ class ChainReorganizationManagerImpl(
     val (remainingBlocks, expiredBlocks) = blocks.partition(_._1 < blockIdx)
     blocks = remainingBlocks
 
-    val aggregated = new BlockTrackingData()
-    expiredBlocks.values.foreach(aggregated.mergeWith)
+    val aggregated = expiredBlocks.values.reduce(_ + _)
 
-    var impact =
-      ChainReorganizationImpact(
-        aggregated.orderIds.toSeq,
-        aggregated.accounts.map {
-          case (address, tokens) =>
-            ChainReorganizationImpact.AccountInfo(address, tokens.toSeq)
-        }.toSeq
-      )
+    val orderIds = aggregated.orderIds.toSeq
+    val accounts = aggregated.accounts.map {
+      case (address, tokens) =>
+        ChainReorganizationImpact.AccountInfo(address, tokens.toSeq)
+    }.toSeq
+
+    val impact = ChainReorganizationImpact(orderIds, accounts)
 
     log.info(
       s"reorged at $blockIdx: ${impact.orderIds.size} orders and " +
@@ -101,18 +99,17 @@ class ChainReorganizationManagerImpl(
   def recordOrderUpdate(
       blockIdx: Long,
       orderId: String
-    ) = checkBlockIdxTo(blockIdx) {
-    getBlockTrackingData(blockIdx)
-      .recordOrderUpdate(orderId)
-  }
+    ) =
+    checkBlockIdxTo(blockIdx) {
+      updateBlockData(blockIdx, _.recordOrderUpdate(orderId))
+    }
 
   def recordAccountUpdate(
       blockIdx: Long,
       address: String,
       token: String
     ) = checkBlockIdxTo(blockIdx) {
-    getBlockTrackingData(blockIdx)
-      .recordAccountUpdate(address, token)
+    updateBlockData(blockIdx, _.recordAccountUpdate(address, token))
   }
 
   private def checkBlockIdxTo(blockIdx: Long)(call: => Unit): Unit = {
@@ -130,22 +127,23 @@ class ChainReorganizationManagerImpl(
     }
   }
 
-  private def getBlockTrackingData(blockIdx: Long) =
+  private def updateBlockData(
+      blockIdx: Long,
+      update: BlockData => BlockData
+    ) =
     blocks.get(blockIdx) match {
-      case Some(block) => block
+      case Some(block) =>
+        blocks += blockIdx -> update(block)
       case None =>
-        val block = new BlockTrackingData()
-
         if (blocks.size == maxDepth) {
           blocks = blocks.tail
         }
+        val block = update(new BlockData())
         blocks += blockIdx -> block
 
         log.debug(
           s"history size: ${blocks.size} with latest block index: " +
             blocks.lastOption.map(_._1).getOrElse(0L)
         )
-        block
     }
-
 }
