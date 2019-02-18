@@ -16,17 +16,28 @@
 
 package io.lightcone.relayer.socketio
 
-import com.corundumstudio.socketio.listener.DataListener
+import com.corundumstudio.socketio.SocketIOClient
 
-trait WrappedDataListener[R] extends DataListener[R] {
+class SocketIOSubscriber[R, E <: AnyRef](
+    val client: SocketIOClient,
+    val subscription: R) {
 
-  var clients = Seq.empty[WrappedSocketClient[R]]
-
-  def dataChanged(msg: Any): Unit = {
-    clients = clients.dropWhile(!_.client.isChannelOpen)
-    onDataChanged(msg)
+  def sendEvent(
+      eventName: String,
+      event: E
+    ): Unit = {
+    if (client.isChannelOpen) {
+      client.sendEvent(eventName, event)
+    }
   }
 
-  def onDataChanged(msg: Any): Unit
-
+  override def equals(obj: Any): Boolean = {
+    if (obj == null) false
+    else
+      obj match {
+        case c: SocketIOSubscriber[_, _] =>
+          c.client.getSessionId.equals(client.getSessionId)
+        case _ => false
+      }
+  }
 }

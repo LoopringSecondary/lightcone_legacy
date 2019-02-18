@@ -35,7 +35,7 @@ import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.socketio._
-
+import io.lightcone.relayer.socketio.notifiers._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -163,9 +163,12 @@ class CoreModule(
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     //bind socket listener
-    bind[WrappedDataListener[SubcribeBalanceAndAllowance]]
-      .to[BalanceListener]
-    bind[WrappedDataListener[SubcribeTransaction]].to[TransactionListener]
+    bind[
+      SocketIONotifier[SubcribeBalanceAndAllowance, GetBalanceAndAllowances.Res]
+    ].to[BalanceNotifier]
+
+    bind[SocketIONotifier[SubcribeTransaction, TransactionRecord]]
+      .to[TransactionNotifier]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))

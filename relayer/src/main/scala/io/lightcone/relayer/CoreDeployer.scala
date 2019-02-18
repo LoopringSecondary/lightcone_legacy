@@ -30,11 +30,11 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.jsonrpc.JsonRpcServer
 import io.lightcone.relayer.validator._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
-import com.corundumstudio.socketio.listener.DataListener
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
 
@@ -63,8 +63,11 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
-    balanceListener: DataListener[SubcribeBalanceAndAllowance],
-    txListener: DataListener[SubcribeTransaction],
+    balanceListener: SocketIONotifier[
+      SubcribeBalanceAndAllowance,
+      GetBalanceAndAllowances.Res
+    ],
+    txListener: SocketIONotifier[SubcribeTransaction, TransactionRecord],
     system: ActorSystem)
     extends Object
     with Logging {

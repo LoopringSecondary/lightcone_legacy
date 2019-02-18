@@ -16,10 +16,7 @@
 
 package io.lightcone.relayer.socketio
 
-import io.lightcone.relayer.actors.SocketListenerActor
-import io.lightcone.relayer.data.GetBalanceAndAllowances
 import io.lightcone.relayer.support._
-import io.lightcone.relayer.base._
 
 class SocketSpec
     extends CommonSpec
@@ -29,7 +26,7 @@ class SocketSpec
   "socket server  test" must {
     "socket server starts normally and can subscriber and received correct data" in {
 
-      //      def socketListener = actors.get(SocketListenerActor.name)
+      //      def socketListener = actors.get(SocketIONotificationActor.name)
       //      Thread.sleep(10 * 1000)
       //      val account0 = accounts.head
       //      val account1 = getUniqueAccountWithoutEth

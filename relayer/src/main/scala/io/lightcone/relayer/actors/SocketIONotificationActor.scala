@@ -16,42 +16,52 @@
 
 package io.lightcone.relayer.actors
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor._
 import akka.util.Timeout
 import com.google.inject.Inject
-import io.lightcone.relayer.base.{DeployedAsSingleton, Lookup}
-import io.lightcone.relayer.data.{GetBalanceAndAllowances, TransactionRecord}
+import io.lightcone.relayer.base._
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.socketio._
 
 import scala.concurrent.ExecutionContext
 
-object SocketListenerActor extends DeployedAsSingleton {
-  val name = "socket_listener"
+object SocketIONotificationActor extends DeployedAsSingleton {
+  val name = "socketio_notifier"
 
   def start(
       implicit
       system: ActorSystem,
       ec: ExecutionContext,
       timeout: Timeout,
-      listeners: Lookup[WrappedDataListener[_]],
+      balanceListener: SocketIONotifier[
+        SubcribeBalanceAndAllowance,
+        GetBalanceAndAllowances.Res
+      ],
+      txListener: SocketIONotifier[SubcribeTransaction, TransactionRecord],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    startSingleton(Props(new SocketListenerActor()))
+    startSingleton(Props(new SocketIONotificationActor()))
   }
 }
 
-class SocketListenerActor @Inject()(
+class SocketIONotificationActor @Inject()(
     implicit
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
-    val listeners: Lookup[WrappedDataListener[_]])
+    val balanceListener: SocketIONotifier[
+      SubcribeBalanceAndAllowance,
+      GetBalanceAndAllowances.Res
+    ],
+    val txListener: SocketIONotifier[SubcribeTransaction, TransactionRecord])
     extends Actor {
 
   def receive: Receive = {
+    // events to deliver to socket.io clients must be generated here, not inside the listerners.
     case req: GetBalanceAndAllowances.Res =>
-      listeners.get(BalanceListener.eventName).dataChanged(req)
+      balanceListener.notifyEvent(req)
+
     case req: TransactionRecord =>
-      listeners.get(TransactionListener.eventName).dataChanged(req)
+      txListener.notifyEvent(req)
   }
 }

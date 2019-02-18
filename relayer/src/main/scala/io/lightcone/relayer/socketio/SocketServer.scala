@@ -16,9 +16,9 @@
 
 package io.lightcone.relayer.socketio
 
+import io.lightcone.relayer.data._
 import com.corundumstudio.socketio.protocol.JacksonJsonSupport
 import com.corundumstudio.socketio._
-import com.corundumstudio.socketio.listener.DataListener
 import com.typesafe.config.Config
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
@@ -26,8 +26,11 @@ class SocketServer(
   )(
     implicit
     val config: Config,
-    val balanceListener: DataListener[SubcribeBalanceAndAllowance],
-    val txListener: DataListener[SubcribeTransaction]) {
+    val balanceListener: SocketIONotifier[
+      SubcribeBalanceAndAllowance,
+      GetBalanceAndAllowances.Res
+    ],
+    val txListener: SocketIONotifier[SubcribeTransaction, TransactionRecord]) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
@@ -38,13 +41,13 @@ class SocketServer(
   val server = new SocketIOServer(socketConfig)
 
   server.addEventListener(
-    BalanceListener.eventName,
+    balanceListener.eventName,
     classOf[SubcribeBalanceAndAllowance],
     balanceListener
   )
 
   server.addEventListener(
-    TransactionListener.eventName,
+    txListener.eventName,
     classOf[SubcribeTransaction],
     txListener
   )
