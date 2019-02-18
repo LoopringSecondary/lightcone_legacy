@@ -80,9 +80,10 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2013;
     ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2014;
     ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2015;
-
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
+    // EIP712 typed json data format error
+    ERR_EIP712_INVALID_JSON_DATA                            = 2201;
 
     //3001 -- 4000 relayer error
     ERR_ORDER_ALREADY_EXIST             = 3001;
