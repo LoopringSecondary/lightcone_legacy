@@ -108,7 +108,7 @@ class BasicEventExtractorSpec
         )
       onChainOrders.isEmpty should be(true)
 
-      val orderCanceledExtractor = new OrdersCancelledEventExtractor()
+      val orderCanceledExtractor = new OrdersCancelledOnChainEventExtractor()
 
       val orderCancelledEvents =
         Await.result(

@@ -27,13 +27,19 @@ class BlockGasPriceExtractor @Inject()(
     implicit
     val timeout: Timeout,
     val ec: ExecutionContext)
-    extends EventExtractor[BlockGasPrices] {
+    extends EventExtractor[BlockGasPricesExtractedEvent] {
 
-  override def extract(block: RawBlockData): Future[Seq[BlockGasPrices]] =
+  override def extract(
+      block: RawBlockData
+    ): Future[Seq[BlockGasPricesExtractedEvent]] =
     Future {
-      Seq(BlockGasPrices(height = block.height, gasPrices = block.txs.map {
-        tx =>
-          NumericConversion.toBigInt(tx.gasPrice).longValue
-      }))
+      Seq(
+        BlockGasPricesExtractedEvent(
+          height = block.height,
+          gasPrices = block.txs.map { tx =>
+            NumericConversion.toBigInt(tx.gasPrice).longValue
+          }
+        )
+      )
     }
 }

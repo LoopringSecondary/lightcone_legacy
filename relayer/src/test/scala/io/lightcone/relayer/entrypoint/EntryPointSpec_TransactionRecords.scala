@@ -107,7 +107,7 @@ class EntryPointSpec_TransactionRecords
         txHash =
           "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       )
-      actor ! OrdersCancelledEvent(
+      actor ! OrdersCancelledOnChainEvent(
         header = Some(header3),
         owner = txFrom,
         orderHashes = Seq("0x1", "0x2")

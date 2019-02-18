@@ -21,23 +21,23 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.lib._
 import io.lightcone.ethereum.event.{
-  OrdersCancelledEvent => POrdersCancelledEvent
+  OrdersCancelledOnChainEvent => POrdersCancelledOnChainEvent
 }
 import io.lightcone.relayer.data._
 
 import scala.concurrent._
 
-class OrdersCancelledEventExtractor @Inject()(
+class OrdersCancelledOnChainEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     config: Config)
-    extends EventExtractor[POrdersCancelledEvent] {
+    extends EventExtractor[POrdersCancelledOnChainEvent] {
 
   val orderCancelAddress = Address(
     config.getString("loopring_protocol.order-cancel-address")
   ).toString()
 
-  def extract(block: RawBlockData): Future[Seq[POrdersCancelledEvent]] =
+  def extract(block: RawBlockData): Future[Seq[POrdersCancelledOnChainEvent]] =
     Future {
       (block.txs zip block.receipts).flatMap {
         case (tx, receipt) if tx.to.equalsIgnoreCase(orderCancelAddress) =>
@@ -46,9 +46,9 @@ class OrdersCancelledEventExtractor @Inject()(
             case (log, index) =>
               loopringProtocolAbi
                 .unpackEvent(log.data, log.topics.toArray) match {
-                case Some(event: OrdersCancelledEvent.Result) =>
+                case Some(event: OrdersCancelledOnChainEvent.Result) =>
                   Some(
-                    POrdersCancelledEvent(
+                    POrdersCancelledOnChainEvent(
                       header = Some(header.withLogIndex(index)),
                       broker = Address.normalize(event.address),
                       orderHashes = event._orderHashes,

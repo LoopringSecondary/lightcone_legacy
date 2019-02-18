@@ -55,7 +55,7 @@ final class TransactionRecordMessageValidator(
         req
       }
 
-    case req: OrdersCancelledEvent =>
+    case req: OrdersCancelledOnChainEvent =>
       Future {
         validate(req.header, req.owner)
         req

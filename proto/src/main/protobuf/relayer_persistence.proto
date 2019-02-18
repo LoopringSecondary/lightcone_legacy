@@ -211,7 +211,7 @@ message TransactionRecord {
     message EventData {
         oneof event {
             io.lightcone.ethereum.event.TransferEvent        transfer       = 101;
-            io.lightcone.ethereum.event.OrdersCancelledEvent orderCancelled = 102;
+            io.lightcone.ethereum.event.OrdersCancelledOnChainEvent orderCancelled = 102;
             io.lightcone.ethereum.event.CutoffEvent          cutoff         = 103;
             io.lightcone.ethereum.event.OrderFilledEvent     filled         = 104;
         }

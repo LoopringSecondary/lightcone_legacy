@@ -44,7 +44,7 @@ class CutoffEventExtractor @Inject()(
           case (log, index) =>
             loopringProtocolAbi
               .unpackEvent(log.data, log.topics.toArray) match {
-              case Some(event: AllOrdersCancelledEvent.Result) =>
+              case Some(event: AllOrdersCancelledOnChainEvent.Result) =>
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),

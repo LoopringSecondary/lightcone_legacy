@@ -48,8 +48,8 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findFunction(searchByName(CancelAllOrdersFunction.name))
   )
 
-  val ordersCancelledEvent = OrdersCancelledEvent(
-    abi.findEvent(searchByName(OrdersCancelledEvent.name))
+  val ordersCancelledEvent = OrdersCancelledOnChainEvent(
+    abi.findEvent(searchByName(OrdersCancelledOnChainEvent.name))
   )
 
   val allOrdersCancelledForTradingPairEvent =
@@ -57,8 +57,8 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
       abi.findEvent(searchByName(AllOrdersCancelledForTradingPairEvent.name))
     )
 
-  val allOrdersCancelledEvent = AllOrdersCancelledEvent(
-    abi.findEvent(searchByName(AllOrdersCancelledEvent.name))
+  val allOrdersCancelledOnChainEvent = AllOrdersCancelledOnChainEvent(
+    abi.findEvent(searchByName(AllOrdersCancelledOnChainEvent.name))
   )
 
   val allOrdersCancelledForTradingPairByBrokerEvent =
@@ -87,12 +87,12 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
       event match {
         case _: Abi.Event =>
           event.name match {
-            case OrdersCancelledEvent.name =>
+            case OrdersCancelledOnChainEvent.name =>
               ordersCancelledEvent.unpack(data, topics)
             case AllOrdersCancelledForTradingPairEvent.name =>
               allOrdersCancelledForTradingPairEvent.unpack(data, topics)
-            case AllOrdersCancelledEvent.name =>
-              allOrdersCancelledEvent.unpack(data, topics)
+            case AllOrdersCancelledOnChainEvent.name =>
+              allOrdersCancelledOnChainEvent.unpack(data, topics)
             case AllOrdersCancelledForTradingPairByBrokerEvent.name =>
               allOrdersCancelledForTradingPairByBrokerEvent.unpack(data, topics)
             case AllOrdersCancelledByBrokerEvent.name =>
@@ -241,18 +241,18 @@ object CancelAllOrdersFunction {
     new CancelAllOrdersFunction(entry)
 }
 
-class OrdersCancelledEvent(val entry: Abi.Event)
-    extends AbiEvent[OrdersCancelledEvent.Result]
+class OrdersCancelledOnChainEvent(val entry: Abi.Event)
+    extends AbiEvent[OrdersCancelledOnChainEvent.Result]
 
-object OrdersCancelledEvent {
+object OrdersCancelledOnChainEvent {
   val name = "OrdersCancelled"
   case class Result(
       @(ContractAnnotation @field)("address", 0) address: String,
       @(ContractAnnotation @field)("_orderHashes",
           1) _orderHashes: Array[String])
 
-  def apply(entry: Abi.Event): OrdersCancelledEvent =
-    new OrdersCancelledEvent(entry)
+  def apply(entry: Abi.Event): OrdersCancelledOnChainEvent =
+    new OrdersCancelledOnChainEvent(entry)
 }
 
 class AllOrdersCancelledForTradingPairEvent(val entry: Abi.Event)
@@ -272,18 +272,18 @@ object AllOrdersCancelledForTradingPairEvent {
     new AllOrdersCancelledForTradingPairEvent(entry)
 }
 
-class AllOrdersCancelledEvent(val entry: Abi.Event)
-    extends AbiEvent[AllOrdersCancelledEvent.Result]
+class AllOrdersCancelledOnChainEvent(val entry: Abi.Event)
+    extends AbiEvent[AllOrdersCancelledOnChainEvent.Result]
 
-object AllOrdersCancelledEvent {
+object AllOrdersCancelledOnChainEvent {
   val name = "AllOrdersCancelled"
 
   case class Result(
       @(ContractAnnotation @field)("_broker", 0) _broker: String,
       @(ContractAnnotation @field)("_cutoff", 1) _cutoff: BigInt)
 
-  def apply(entry: Abi.Event): AllOrdersCancelledEvent =
-    new AllOrdersCancelledEvent(entry)
+  def apply(entry: Abi.Event): AllOrdersCancelledOnChainEvent =
+    new AllOrdersCancelledOnChainEvent(entry)
 }
 
 class AllOrdersCancelledForTradingPairByBrokerEvent(val entry: Abi.Event)
