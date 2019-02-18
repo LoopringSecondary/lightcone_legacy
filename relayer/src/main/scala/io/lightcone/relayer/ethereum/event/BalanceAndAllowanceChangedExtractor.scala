@@ -76,7 +76,7 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
       receipt: TransactionReceipt,
       eventHeader: EventHeader
     ): Future[Seq[Any]] = Future {
-    val header = getEventHeader(tx, receipt, eventHeader)
+    val header = getEventHeader(tx, receipt, eventHeader.getBlockHeader)
     val txValue = NumericConversion.toBigInt(tx.value)
     val transfers = ListBuffer.empty[PTransferEvent]
     if (isSucceed(receipt.status)) {
