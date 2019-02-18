@@ -22,7 +22,6 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
@@ -40,7 +39,6 @@ object MetadataManagerActor extends DeployedAsSingleton {
       system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
-      timeProvider: TimeProvider,
       timeout: Timeout,
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
@@ -56,7 +54,6 @@ class MetadataManagerActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager,

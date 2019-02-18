@@ -16,9 +16,9 @@
 
 package io.lightcone.relayer.support
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.stream.ActorMaterializer
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.testkit.{ ImplicitSender, TestKit }
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.base.MapBasedLookup
@@ -30,20 +30,18 @@ import scala.concurrent.duration._
 
 //启动system、以及必须的元素，包括system，TokenMetaData，等
 abstract class CommonSpec(configStr: String = "")
-    extends TestKit(
-      ActorSystem(
-        "Lightcone",
-        ConfigFactory
-          .parseString(configStr)
-          .withFallback(ConfigFactory.load())
-      )
-    )
-    with ImplicitSender
-    with Matchers
-    with WordSpecLike
-    with BeforeAndAfterEach
-    with BeforeAndAfterAll
-    with Logging {
+  extends TestKit(
+    ActorSystem(
+      "Lightcone",
+      ConfigFactory
+        .parseString(configStr)
+        .withFallback(ConfigFactory.load())))
+  with ImplicitSender
+  with Matchers
+  with WordSpecLike
+  with BeforeAndAfterEach
+  with BeforeAndAfterAll
+  with Logging {
 
   info(s"sbt relayer/'testOnly *${this.getClass.getSimpleName}'")
 
@@ -64,7 +62,7 @@ abstract class CommonSpec(configStr: String = "")
 
   //  log.info(s"init config: ${config}")
 
-  implicit val metadataManager = new MetadataManagerImpl()
+  implicit val metadataManager = new ConfigBasedMetadataManager()
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
