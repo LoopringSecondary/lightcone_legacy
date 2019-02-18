@@ -25,6 +25,7 @@ trait MarketManagerImplSpec extends testing.CommonSpec {
   }
 
   var marketPair = MarketPair(GTO, WETH)
+  var metadataManager: MetadataManager = null
 
   var fakeRingMatcher: RingMatcher = _
   var fakeDustOrderEvaluator: DustOrderEvaluator = _

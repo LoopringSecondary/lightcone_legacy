@@ -16,24 +16,46 @@
 
 package io.lightcone.core
 
+import com.google.inject.Inject
+import com.typesafe.config.Config
 import io.lightcone.relayer.data.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
+import scala.collection.JavaConverters._
 
-abstract class AbstractMetadataManager extends MetadataManager with Logging {
+final class MetadataManagerImpl @Inject()(implicit val config: Config)
+  extends MetadataManager
+    with Logging {
 
   import ErrorCode._
 
-  val defaultBurnRateForMarket: Double
-  val defaultBurnRateForP2P: Double
+  val loopringConfig = config.getConfig("loopring_protocol")
 
-  var tokenAddressMap = Map.empty[String, Token]
-  var tokenSymbolMap = Map.empty[String, Token]
-  var marketMap = Map.empty[String, MarketMetadata]
+  val rates = loopringConfig
+    .getConfigList("burn-rate-table.tiers")
+    .asScala
+    .map(conf => {
+      val key = conf.getInt("tier")
+      val ratesConfig = conf.getConfig("rates")
+      val rates = ratesConfig.getInt("market") -> ratesConfig.getInt("p2p")
+      key -> rates
+    })
+    .sortWith(_._1 < _._1)
+    .head
+    ._2
+  val base = loopringConfig.getInt("burn-rate-table.base")
+
+  // tokens[address, token]
+  val defaultBurnRateForMarket: Double = rates._1.doubleValue() / base
+  val defaultBurnRateForP2P: Double = rates._2.doubleValue() / base
+
+  private var tokenAddressMap = Map.empty[String, Token]
+  private var tokenSymbolMap = Map.empty[String, Token]
+  private var marketMap = Map.empty[String, MarketMetadata]
 
   def reset(
-      tokens: Seq[TokenMetadata],
-      markets: Seq[MarketMetadata]
-    ) = {
+             tokens: Seq[TokenMetadata],
+             markets: Seq[MarketMetadata]
+           ) = {
     tokenAddressMap = Map.empty
     tokenSymbolMap = Map.empty
 
@@ -53,9 +75,9 @@ abstract class AbstractMetadataManager extends MetadataManager with Logging {
   }
 
   def isMarketStatus(
-      marketHash: String,
-      statuses: MarketMetadata.Status*
-    ): Boolean =
+                      marketHash: String,
+                      statuses: MarketMetadata.Status*
+                    ): Boolean =
     marketMap
       .get(marketHash)
       .map(m => statuses.contains(m.status))
