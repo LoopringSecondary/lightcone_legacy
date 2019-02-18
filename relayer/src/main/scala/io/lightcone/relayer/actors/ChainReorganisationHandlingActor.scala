@@ -32,8 +32,8 @@ import akka.event.LoggingReceive
 
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
-object RollbackHandlingActor extends DeployedAsSingleton {
-  val name = "rollback_handling"
+object ChainReorganisationHandlingActor extends DeployedAsSingleton {
+  val name = "chain_reorg_handler"
 
   def start(
       implicit
@@ -43,20 +43,21 @@ object RollbackHandlingActor extends DeployedAsSingleton {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      // metadataManager: MetadataManager,
+      chainReorgHandler: ChainReorganisationHandler,
       // dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    startSingleton(Props(new RollbackHandlingActor()))
+    startSingleton(Props(new ChainReorganisationHandlingActor()))
   }
 }
 
-class RollbackHandlingActor @Inject()(
+class ChainReorganisationHandlingActor @Inject()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
+    val chainReorgHandler: ChainReorganisationHandler,
     val actors: Lookup[ActorRef])
     extends InitializationRetryActor
     with Stash

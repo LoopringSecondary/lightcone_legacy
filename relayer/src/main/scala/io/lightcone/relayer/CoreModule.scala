@@ -104,6 +104,9 @@ class CoreModule(
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
+    bind[ChainReorganisationHandler]
+      .to[ChainReorganisationHandlerImpl]
+      .asEagerSingleton
     bind[MetadataManager].toInstance(new MetadataManagerImpl(0.6, 0.06))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
