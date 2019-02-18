@@ -45,14 +45,6 @@ trait Constants {
     )
   }
 
-  val metadataManager: MetadataManager = new AbstractMetadataManager {
-    val defaultBurnRateForMarket: Double = 0.2
-    val defaultBurnRateForP2P: Double = 0.2
-
-    // Initalize this
-    tokenAddressMap = Map.empty[String, Token]
-    tokenSymbolMap = Map.empty[String, Token]
-    marketMap = Map.empty[String, MarketMetadata]
-  }
+  val metadataManager: MetadataManager = new MetadataManagerImpl(0.6, 0.06)
 
 }

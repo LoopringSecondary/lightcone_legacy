@@ -19,16 +19,17 @@ package io.lightcone.core
 import io.lightcone.relayer.data.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 
-abstract class AbstractMetadataManager extends MetadataManager with Logging {
+final class MetadataManagerImpl(
+    val defaultBurnRateForMarket: Double,
+    val defaultBurnRateForP2P: Double)
+    extends MetadataManager
+    with Logging {
 
   import ErrorCode._
 
-  val defaultBurnRateForMarket: Double
-  val defaultBurnRateForP2P: Double
-
-  var tokenAddressMap = Map.empty[String, Token]
-  var tokenSymbolMap = Map.empty[String, Token]
-  var marketMap = Map.empty[String, MarketMetadata]
+  private var tokenAddressMap = Map.empty[String, Token]
+  private var tokenSymbolMap = Map.empty[String, Token]
+  private var marketMap = Map.empty[String, MarketMetadata]
 
   def reset(
       tokens: Seq[TokenMetadata],
