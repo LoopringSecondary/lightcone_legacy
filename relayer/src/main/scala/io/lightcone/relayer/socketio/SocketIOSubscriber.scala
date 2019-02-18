@@ -27,7 +27,7 @@ class SocketIOSubscriber[R](
       event: AnyRef
     ): Unit = {
     if (client.isChannelOpen) {
-      client.sendEvent("", event)
+      client.sendEvent(eventName, event)
     }
   }
 
