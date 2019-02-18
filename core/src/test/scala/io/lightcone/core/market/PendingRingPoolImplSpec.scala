@@ -17,11 +17,10 @@
 package io.lightcone.core
 
 import io.lightcone.lib._
-import io.lightcone.core.testing._
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 
-class PendingRingPoolImplSpec extends OrderAwareSpec {
+class PendingRingPoolImplSpec extends testing.CommonSpec {
   implicit val timeProvider = new SystemTimeProvider()
 
   val pendingRingPool = new PendingRingPoolImpl()

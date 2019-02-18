@@ -19,24 +19,27 @@ package io.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import io.lightcone.core._
+import io.lightcone.persistence.RequestJob.JobType
 import io.lightcone.persistence._
+import io.lightcone.persistence.base.enumColumnType
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
 
-class CMCRequestJobDalImpl @Inject()(
+class RequestJobDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-cmc-request-job") val dbConfig: DatabaseConfig[
+    @Named("dbconfig-request-job") val dbConfig: DatabaseConfig[
       JdbcProfile
     ])
-    extends CMCRequestJobDal {
+    extends RequestJobDal {
   import ErrorCode._
+  implicit val JobTypeColumnType = enumColumnType(JobType)
 
-  val query = TableQuery[CMCRequestJobTable]
+  val query = TableQuery[RequestJobTable]
 
-  def saveJob(job: CMCRequestJob): Future[CMCRequestJob] =
+  def saveJob(job: RequestJob): Future[RequestJob] =
     db.run(
       (query returning query
         .map(_.batchId) into ((job, id) => job.copy(batchId = id))) += job.copy(
@@ -79,9 +82,10 @@ class CMCRequestJobDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def findLatest(): Future[Option[CMCRequestJob]] =
+  def findLatest(jobType: JobType): Future[Option[RequestJob]] =
     db.run(
       query
+        .filter(_.jobType === jobType)
         .filter(_.persistResult === true)
         .sortBy(_.batchId.desc)
         .take(1)

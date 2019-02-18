@@ -86,6 +86,7 @@ message SubmitOrder {
 
     message Res {
         Order order = 1;
+        bool success = 2;
     }
 }
 
@@ -341,5 +342,13 @@ message GetTickers {
 
     message Res {
         repeated io.lightcone.persistence.CMCTickersInUsd tickers = 1;
+    }
+}
+
+message GetCurrencyRate {
+    message Req {}
+
+    message Res {
+        io.lightcone.persistence.CurrencyRate rate = 1;
     }
 }

@@ -14,9 +14,24 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.persistence.dals
 
-trait OrderAwareOrderbookAggregator extends OrderbookAggregator {
-  def addOrder(order: Matchable): Unit
-  def deleteOrder(order: Matchable): Unit
+import io.lightcone.persistence._
+import io.lightcone.persistence.base._
+import slick.jdbc.MySQLProfile.api._
+
+class CurrencyRateTable(tag: Tag)
+    extends BaseTable[CurrencyRate](tag, "T_CURRENCY_RATE") {
+
+  def id = batchId.toString()
+  def rate = column[Double]("rate")
+  def time = column[Long]("time")
+  def batchId = column[Int]("batch_id", O.PrimaryKey)
+
+  def * =
+    (
+      rate,
+      time,
+      batchId
+    ) <> ((CurrencyRate.apply _).tupled, CurrencyRate.unapply)
 }

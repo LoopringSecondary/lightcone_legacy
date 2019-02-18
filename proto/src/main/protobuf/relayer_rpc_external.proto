@@ -23,11 +23,18 @@ message ExternalTickerInfo {
 }
 
 message GetExternalTickers {
+    enum Currency {
+        USD = 0;
+        CNY = 1;
+    }
     message Req {
-        string market = 1;
+        string   market = 1;
+        Currency currency = 2;
     }
 
     message Res {
-        repeated ExternalTickerInfo tickers = 1;
+        Currency currency = 1;
+        double usd_to_cny = 2;
+        repeated ExternalTickerInfo tickers = 3;
     }
 }

@@ -16,15 +16,18 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.persistence.RequestJob.JobType
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 
-class CMCRequestJobTable(tag: Tag)
-    extends BaseTable[CMCRequestJob](tag, "T_CMC_REQUEST_JOB") {
+class RequestJobTable(tag: Tag)
+    extends BaseTable[RequestJob](tag, "T_REQUEST_JOB") {
+  implicit val JobTypeColumnType = enumColumnType(JobType)
 
   def id = batchId.toString()
   def batchId = column[Int]("batch_id", O.PrimaryKey, O.AutoInc)
+  def jobType = column[JobType]("job_type")
   def requestTime = column[Long]("request_time")
   def responseTime = column[Long]("response_time")
   def statusCode = column[Int]("status_code")
@@ -33,9 +36,10 @@ class CMCRequestJobTable(tag: Tag)
   def * =
     (
       batchId,
+      jobType,
       requestTime,
       responseTime,
       statusCode,
       persistResult
-    ) <> ((CMCRequestJob.apply _).tupled, CMCRequestJob.unapply)
+    ) <> ((RequestJob.apply _).tupled, RequestJob.unapply)
 }

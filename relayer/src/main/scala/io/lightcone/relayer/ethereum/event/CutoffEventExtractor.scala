@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.core._
+import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
@@ -46,7 +47,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._broker)
                   )
@@ -55,7 +56,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._owner)
                   )
@@ -66,7 +67,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._owner),
                     marketHash = MarketHash(
@@ -78,7 +79,7 @@ class CutoffEventExtractor @Inject()(
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
+                    cutoff = event._cutoff.longValue,
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._broker),
                     marketHash = MarketHash(

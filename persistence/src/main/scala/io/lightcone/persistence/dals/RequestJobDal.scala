@@ -14,17 +14,25 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.persistence.dals
 
-import io.lightcone.cmc._
-import scala.concurrent.{ExecutionContext, Future}
+import io.lightcone.core._
+import io.lightcone.persistence.RequestJob.JobType
+import io.lightcone.persistence._
+import io.lightcone.persistence.base._
+import scala.concurrent._
 
-trait TickerRequest {
+trait RequestJobDal extends BaseDalImpl[RequestJobTable, RequestJob] {
 
-  def requestCMCTickers(): Future[TickerDataInfo]
+  def saveJob(job: RequestJob): Future[RequestJob]
 
-  def normalizeTicker(ticker: CMCTickerData): CMCTickerData =
-    ticker.copy(
-      symbol = ticker.symbol.toUpperCase()
-    )
+  def updateStatusCode(
+      jobId: Int,
+      code: Int,
+      time: Long
+    ): Future[ErrorCode]
+
+  def updateSuccessfullyPersisted(jobId: Int): Future[ErrorCode]
+
+  def findLatest(jobType: JobType): Future[Option[RequestJob]]
 }

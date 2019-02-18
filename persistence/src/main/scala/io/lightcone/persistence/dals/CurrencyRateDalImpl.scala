@@ -16,20 +16,30 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.core._
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import io.lightcone.persistence._
-import io.lightcone.persistence.base._
+import slick.basic._
+import slick.jdbc.JdbcProfile
+import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
 
-trait CMCRequestJobDal extends BaseDalImpl[CMCRequestJobTable, CMCRequestJob] {
+class CurrencyRateDalImpl @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    @Named("dbconfig-currency_rate") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ])
+    extends CurrencyRateDal {
 
-  def saveJob(job: CMCRequestJob): Future[CMCRequestJob]
+  val query = TableQuery[CurrencyRateTable]
 
-  def updateStatusCode(
-      jobId: Int,
-      code: Int,
-      time: Long
-    ): Future[ErrorCode]
-  def updateSuccessfullyPersisted(jobId: Int): Future[ErrorCode]
-  def findLatest(): Future[Option[CMCRequestJob]]
+  def save(rate: CurrencyRate): Future[Unit] =
+    for {
+      _ <- db.run(query += rate)
+    } yield Unit
+
+  def getCurrencyByJob(jobId: Int): Future[Option[CurrencyRate]] =
+    db.run(query.filter(_.batchId === jobId).result.headOption)
+
 }

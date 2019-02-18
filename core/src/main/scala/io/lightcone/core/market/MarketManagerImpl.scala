@@ -44,7 +44,7 @@ class MarketManagerImpl(
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val aggregator: OrderAwareOrderbookAggregator,
+    val aggregator: OrderbookAggregator,
     val maxSettementFailuresPerOrder: Int)
     extends MarketManager
     with Logging {
@@ -133,7 +133,6 @@ class MarketManagerImpl(
       minRequiredIncome: Double
     ): MatchResult = {
     if (order.numAttempts > maxSettementFailuresPerOrder) {
-      // TODO(dongw): 是否发消息给AccountManager了？
       MatchResult(
         order.copy(status = STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES)
       )

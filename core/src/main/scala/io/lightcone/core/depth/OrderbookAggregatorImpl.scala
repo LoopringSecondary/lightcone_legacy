@@ -19,7 +19,11 @@ package io.lightcone.core
 class OrderbookAggregatorImpl(
     priceDecimals: Int,
     precisionForAmount: Int,
-    precisionForTotal: Int)
+    precisionForTotal: Int
+  )(
+    implicit
+    marketPair: MarketPair,
+    metadataManager: MetadataManager)
     extends OrderbookAggregator {
 
   private val sells = new OrderbookSide.Sells(
@@ -44,13 +48,31 @@ class OrderbookAggregatorImpl(
   def getOrderbookSlots(num: Int) =
     Orderbook.Update(sells.getSlots(num, None), buys.getSlots(num, None))
 
+  def addOrder(order: Matchable) =
+    adjustAmount(
+      order.isSell,
+      true,
+      order.price,
+      order.matchableBaseAmount,
+      order.matchableQuoteAmount
+    )
+
+  def deleteOrder(order: Matchable) =
+    adjustAmount(
+      order.isSell,
+      false,
+      order.price,
+      order.matchableBaseAmount,
+      order.matchableQuoteAmount
+    )
+
   def adjustAmount(
       isSell: Boolean,
       increase: Boolean,
       price: Double,
       amount: Double,
       total: Double
-    ) = this.synchronized {
+    ) = {
     if (price > 0 && amount > 0 && total > 0) {
       val side = if (isSell) sells else buys
       if (increase) side.increase(price, amount, total)

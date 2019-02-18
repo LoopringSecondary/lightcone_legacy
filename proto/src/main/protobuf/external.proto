@@ -48,3 +48,8 @@ message TickerDataInfo {
     TickerStatus status = 1;
     repeated CMCTickerData data = 2;
 }
+
+message CurrencyData {
+    double currency = 1; //当前汇率
+    int64 time_in_mill_second = 2; //当前时间
+}

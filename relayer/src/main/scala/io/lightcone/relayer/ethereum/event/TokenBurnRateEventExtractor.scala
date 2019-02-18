@@ -18,9 +18,9 @@ package io.lightcone.relayer.ethereum.event
 
 import com.google.inject.Inject
 import com.typesafe.config.Config
+import io.lightcone.lib._
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import io.lightcone.relayer.data.TokenBurnRateChangedEvent._
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -52,7 +52,7 @@ class TokenBurnRateEventExtractor @Inject()(
             case (log, index) =>
               loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(event: TokenTierUpgradedEvent.Result) =>
-                  val rates = rateMap(event.tier.intValue())
+                  val rates = rateMap(event.tier.intValue)
                   Some(
                     TokenBurnRateChangedEvent(
                       header = Some(header.withLogIndex(index)),

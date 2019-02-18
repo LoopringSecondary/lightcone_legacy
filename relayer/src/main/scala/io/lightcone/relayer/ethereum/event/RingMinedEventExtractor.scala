@@ -21,9 +21,9 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
-
 import scala.concurrent._
 import io.lightcone.core._
+import io.lightcone.lib._
 import io.lightcone.ethereum._
 
 class RingMinedEventExtractor @Inject()(
@@ -38,7 +38,7 @@ class RingMinedEventExtractor @Inject()(
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
   implicit val ringBatchContext = RingBatchContext(
-    lrcAddress = metadataManager.getTokenBySymbol("lrc").get.meta.address
+    lrcAddress = metadataManager.getTokenWithSymbol("lrc").get.meta.address
   )
   val fillLength: Int = 8 * 64
 
@@ -78,7 +78,7 @@ class RingMinedEventExtractor @Inject()(
                 Some(
                   PRingMinedEvent(
                     header = Some(header.withLogIndex(index)),
-                    ringIndex = event._ringIndex.longValue(),
+                    ringIndex = event._ringIndex.longValue,
                     ringHash = event._ringHash,
                     fills = orderFilledEvents
                   )
@@ -89,6 +89,7 @@ class RingMinedEventExtractor @Inject()(
         }.filter(_.nonEmpty).map(_.get)
       case _ => Seq.empty
     }
+
     val ringBatches: Map[String, RingBatch] =
       (block.txs zip block.receipts).map {
         case (tx, receipt) =>
@@ -146,6 +147,7 @@ class RingMinedEventExtractor @Inject()(
       }
     }
   }
+
   private def fillToOrderFilledEvent(
       fill: String,
       _fill: String,
@@ -162,23 +164,18 @@ class RingMinedEventExtractor @Inject()(
       tokenS = Address.normalize(data.substring(64 * 2, 64 * 3)),
       tokenB = Address.normalize(_data.substring(64 * 2, 64 * 3)),
       ringHash = event._ringHash,
-      ringIndex = event._ringIndex.longValue(),
+      ringIndex = event._ringIndex.longValue,
       fillIndex = header.get.eventIndex,
-      filledAmountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
-      filledAmountB = BigInt(Numeric.toBigInt(_data.substring(64 * 3, 64 * 4))),
+      filledAmountS = NumericConversion.toBigInt(data.substring(64 * 3, 64 * 4)),
+      filledAmountB =
+        NumericConversion.toBigInt(_data.substring(64 * 3, 64 * 4)),
       split = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
-      filledAmountFee = BigInt(
-        Numeric
-          .toBigInt(data.substring(64 * 5, 64 * 6))
-      ),
-      feeAmountS = BigInt(
-        Numeric
-          .toBigInt(data.substring(64 * 6, 64 * 7))
-      ),
-      feeAmountB = BigInt(
-        Numeric
-          .toBigInt(data.substring(64 * 7, 64 * 8))
-      )
+      filledAmountFee = NumericConversion
+        .toBigInt(data.substring(64 * 5, 64 * 6)),
+      feeAmountS = NumericConversion
+        .toBigInt(data.substring(64 * 6, 64 * 7)),
+      feeAmountB = NumericConversion
+        .toBigInt(data.substring(64 * 7, 64 * 8))
     )
   }
 

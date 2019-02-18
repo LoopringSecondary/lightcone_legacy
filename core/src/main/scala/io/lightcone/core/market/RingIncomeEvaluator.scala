@@ -56,15 +56,15 @@ final class RingIncomeEvaluatorImpl @Inject()(
 
     // when we do not know the price of tokenS, try to use tokenB's price to calculate
     // the price.
-    val fiatMargin =
-      if (mm.hasToken(order.tokenS)) {
-        tve.getValue(order.tokenS, amountMargin)
-      } else {
+    val fiatMargin = mm.getTokenWithAddress(order.tokenS) match {
+      case Some(token) => tve.getValue(order.tokenS, amountMargin)
+      case None =>
         tve.getValue(
           order.tokenB,
-          Rational(amountMargin * order.amountS, order.amountB)
+          Rational(amountMargin * order.amountS, order.amountB).toBigInt
         )
-      }
+    }
+
     fiatFee + fiatMargin
   }
 }

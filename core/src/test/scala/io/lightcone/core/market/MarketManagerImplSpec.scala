@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package io.lightcone.core.testing
+package io.lightcone.core
 import io.lightcone.lib._
-import io.lightcone.core._
 
-trait MarketAwareSpec extends OrderAwareSpec {
+trait MarketManagerImplSpec extends testing.CommonSpec {
   type MR = MarketManager.MatchResult
 
   implicit var timeProvider = new TimeProvider {
@@ -26,24 +25,25 @@ trait MarketAwareSpec extends OrderAwareSpec {
   }
 
   var marketPair = MarketPair(GTO, WETH)
+  var metadataManager: MetadataManager = null
 
-  var fackRingMatcher: RingMatcher = _
+  var fakeRingMatcher: RingMatcher = _
   var fakeDustOrderEvaluator: DustOrderEvaluator = _
   var fakePendingRingPool: PendingRingPool = _
-  var fakeAggregator: OrderAwareOrderbookAggregator = _
+  var fakeAggregator: OrderbookAggregator = _
   var marketManager: MarketManager = _
 
   override def beforeEach(): Unit = {
-    nextId = 1
-    fackRingMatcher = stub[RingMatcher]
+    // nextId = 1
+    fakeRingMatcher = stub[RingMatcher]
     fakeDustOrderEvaluator = stub[DustOrderEvaluator]
     fakePendingRingPool = stub[PendingRingPool]
-    fakeAggregator = stub[OrderAwareOrderbookAggregator]
+    fakeAggregator = stub[OrderbookAggregator]
 
     marketManager = new MarketManagerImpl(
       marketPair,
-      tm,
-      fackRingMatcher,
+      metadataManager,
+      fakeRingMatcher,
       fakePendingRingPool,
       fakeDustOrderEvaluator,
       fakeAggregator,
@@ -67,7 +67,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
     )
 
   def noMatchingActivity() = {
-    (fackRingMatcher
+    (fakeRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(*, *, *)
       .never

@@ -34,7 +34,7 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.external.{CMCTickerRequestImpl, TickerRequest}
+import io.lightcone.relayer.external.{CMCTickerManagerImpl, TickerManager}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -80,6 +80,9 @@ class CoreModule(
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-dal-token-ticker-info",
+      "dbconfig-request-job",
+      "dbconfig-cmc-tickers-in-usd",
+      "dbconfig-currency",
       "dbconfig-dal-ohlc-data"
     )
 
@@ -92,7 +95,9 @@ class CoreModule(
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
-    bind[TokenTickerInfoDal].to[TokenTickerInfoDalImpl].asEagerSingleton
+    bind[RequestJobDal].to[RequestJobDalImpl].asEagerSingleton
+    bind[CMCTickersInUsdDal].to[CMCTickersInUsdDalImpl].asEagerSingleton
+    bind[CurrencyRateDal].to[CurrencyRateDalImpl].asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
@@ -105,7 +110,7 @@ class CoreModule(
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
-    bind[MetadataManager].asEagerSingleton
+    bind[MetadataManager].to[MetadataManagerImpl].asEagerSingleton
 
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
@@ -119,8 +124,6 @@ class CoreModule(
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
-
-    bind[TickerRequest].to[CMCTickerRequestImpl]
 
     // --- bind event extractors ---------------------
     bind[EventExtractor[AddressAllowanceUpdated]]

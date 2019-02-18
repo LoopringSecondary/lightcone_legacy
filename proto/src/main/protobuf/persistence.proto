@@ -58,12 +58,18 @@ message BlockData {
     bytes  extra_data           = 17;
 }
 
-message CMCRequestJob {
-    int32 batch_id = 1;
-    int64 request_time = 2;
-    int64 response_time = 3;
-    int32 status_code = 4; // http response status : 200
-    bool  persist_result = 5; // successfully persist all tickers
+message RequestJob {
+    enum JobType {
+        NOT_USE = 0;
+        TICKERS_FROM_CMC = 1;
+        CURRENCY_FROM_SINA = 2;
+    }
+    int32   batch_id = 1;
+    JobType job_type = 2;
+    int64   request_time = 3;
+    int64   response_time = 4;
+    int32   status_code = 5; // http response status : 200
+    bool    persist_result = 6; // successfully persist all tickers
 }
 
 message CMCTickersInUsd {
@@ -89,4 +95,10 @@ message CMCTickersInUsd {
     string rank_last_updated = 11;
     Quote usd_quote = 12;
     int32 batch_id = 13;
+}
+
+message CurrencyRate {
+    double rate = 1;
+    int64 time = 2;
+    int32 batch_id = 3;
 }

@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-import io.lightcone.lib.MurmurHash64
+import io.lightcone.lib._
 import org.slf4s.Logging
 
 object MarketHash {

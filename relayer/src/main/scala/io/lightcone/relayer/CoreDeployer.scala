@@ -34,7 +34,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
-import io.lightcone.relayer.external.TickerRequest
+import io.lightcone.relayer.external.TickerManager
 import org.slf4s.Logging
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent._
@@ -62,7 +62,7 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
     system: ActorSystem,
-    tickerRequest: TickerRequest)
+    tickerRequest: TickerManager)
     extends Object
     with Logging {
 
@@ -159,7 +159,6 @@ class CoreDeployer @Inject()(
       //-----------deploy singleton actors-----------
       actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
-      actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
@@ -204,7 +203,7 @@ class CoreDeployer @Inject()(
 
       actors.add(KeepAliveActor.name, KeepAliveActor.start)
 
-      actors.add(TokenTickerRefresher.name, TokenTickerRefresher.start)
+      actors.add(ExternalDataRefresher.name, ExternalDataRefresher.start)
 
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||

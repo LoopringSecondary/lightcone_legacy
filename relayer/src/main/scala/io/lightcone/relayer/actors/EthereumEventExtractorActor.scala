@@ -25,8 +25,6 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
-import org.web3j.utils.Numeric
 import scala.concurrent._
 import scala.util._
 
@@ -71,7 +69,7 @@ class EthereumEventExtractorActor(
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
-        .map(res => Numeric.toBigInt(formatHex(res.result)).longValue())
+        .map(res => NumericConversion.toBigInt(res.result).longValue)
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = currentBlock > blockStart + 1
       _ = if (missing) {

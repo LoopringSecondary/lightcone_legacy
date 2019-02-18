@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.lib
 
 import org.scalatest._
 import org.web3j.utils.Numeric
@@ -61,9 +61,9 @@ class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     Address.isValid(add3) should be(false)
 
     //BigInt
-    Address.isValid(BigInt(Numeric.toBigInt(add1))) should be(true)
-    Address.isValid(BigInt(Numeric.toBigInt(add2))) should be(true)
-    Address.isValid(BigInt(Numeric.toBigInt(add3))) should be(true)
+    Address.isValid(NumericConversion.toBigInt(add1)) should be(true)
+    Address.isValid(NumericConversion.toBigInt(add2)) should be(true)
+    Address.isValid(NumericConversion.toBigInt(add3)) should be(true)
 
     //Array[Byte]
     Address.isValid(Numeric.hexStringToByteArray(add1)) should be(true)

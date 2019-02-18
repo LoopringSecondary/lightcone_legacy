@@ -17,7 +17,6 @@
 package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
-import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
@@ -35,8 +34,8 @@ trait CMCSupport extends DatabaseModuleSupport {
     10,
     TimeUnit.SECONDS,
     () => {
-      val f = (actors.get(CMCCrawlerActor.name) ? GetTokenTickers.Req())
-        .mapTo[GetTokenTickers.Res]
+      val f = (actors.get(CMCCrawlerActor.name) ? GetTickers.Req())
+        .mapTo[GetTickers.Res]
       val res = Await.result(f, timeout.duration)
       res.tickers.nonEmpty && res.tickers.nonEmpty
     }
@@ -48,5 +47,5 @@ trait CMCSupport extends DatabaseModuleSupport {
       )
   }
 
-  actors.add(TokenTickerRefresher.name, TokenTickerRefresher.start)
+  actors.add(ExternalDataRefresher.name, ExternalDataRefresher.start)
 }

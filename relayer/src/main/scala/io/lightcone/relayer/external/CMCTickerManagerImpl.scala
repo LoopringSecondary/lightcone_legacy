@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer.external
 
+import java.text.SimpleDateFormat
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -26,26 +27,24 @@ import io.lightcone.cmc.{CMCTickerData, TickerDataInfo}
 import org.slf4s.Logging
 import scalapb.json4s.Parser
 import io.lightcone.core._
-
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import com.google.inject._
 import io.lightcone.core.ErrorException
 import io.lightcone.persistence.CMCTickersInUsd
 import io.lightcone.persistence.CMCTickersInUsd.Quote
 import io.lightcone.relayer.actors.CMCCrawlerActor
+import io.lightcone.relayer.rpc.ExternalTickerInfo
 
-class CMCTickerRequestImpl @Inject()(
+class CMCTickerManagerImpl @Inject()(
     implicit
     val config: Config,
     val system: ActorSystem,
     val ec: ExecutionContext,
     val materializer: ActorMaterializer)
-    extends TickerRequest
+    extends TickerManager
     with Logging {
 
   val cmcConfig = config.getConfig(CMCCrawlerActor.name)
-  val mock = cmcConfig.getBoolean("request.mock")
   val requestHeader = cmcConfig.getString("request.header")
   val apiKey = cmcConfig.getString("request.api-key")
   val prefixUrl = cmcConfig.getString("request.prefix-url")
@@ -100,11 +99,61 @@ class CMCTickerRequestImpl @Inject()(
     } yield res
   }
 
-  def getTickersWithAllSupportMarkets(
+  def convertCMCResponseToPersistence(
+      batchId: Int,
+      tickers_ : Seq[CMCTickerData]
+    ): Seq[CMCTickersInUsd] = {
+    tickers_.map { t =>
+      val usdQuote = if (t.quote.get("USD").isEmpty) {
+        log.error(s"CMC not return ${t.symbol} quote for USD")
+        CMCTickersInUsd.Quote()
+      } else {
+        val q = t.quote("USD")
+        CMCTickersInUsd.Quote(
+          q.price,
+          q.volume24H,
+          q.percentChange1H,
+          q.percentChange24H,
+          q.percentChange7D,
+          q.marketCap,
+          q.lastUpdated
+        )
+      }
+      CMCTickersInUsd(
+        t.id,
+        t.name,
+        t.symbol,
+        t.slug,
+        t.circulatingSupply,
+        t.totalSupply,
+        t.maxSupply,
+        t.dateAdded,
+        t.numMarketPairs,
+        t.cmcRank,
+        t.lastUpdated,
+        Some(usdQuote),
+        batchId
+      )
+    }
+  }
+
+  def convertPersistenceToAllSupportMarkets(
       usdTickers: Seq[CMCTickersInUsd],
       supportMarketSymbols: Set[String]
-    ) = { // CMCTickerData
-    val markets = getAllMarketQuoteInUSD(usdTickers, supportMarketSymbols)
+    ): Seq[ExternalTickerInfo] = {
+    val tickersInUsdWithSupportMarkets =
+      getTickersWithAllSupportMarkets(usdTickers, supportMarketSymbols)
+    val tickersWithMultiMarkets = convertToExternalMultiMarketsInUsd(
+      tickersInUsdWithSupportMarkets
+    )
+    tickersWithMultiMarkets.filter(c => c.symbol != c.market)
+  }
+
+  private def getTickersWithAllSupportMarkets(
+      usdTickers: Seq[CMCTickersInUsd],
+      supportMarketSymbols: Set[String]
+    ) = {
+    val marketsQuote = getAllMarketQuoteInUSD(usdTickers, supportMarketSymbols)
     usdTickers.map { usdTicker =>
       val usdQuote = usdTicker.usdQuote
       if (usdQuote.isEmpty) {
@@ -114,19 +163,18 @@ class CMCTickerRequestImpl @Inject()(
           s"can not found ${usdTicker.symbol} quote for USD"
         )
       }
-      val ticker = convertPersistToResponse(usdTicker)
+      val ticker = convertPersistenceWithUsdQuote(usdTicker)
       val priceQuote = usdQuote.get
-      val quoteMap = markets.foldLeft(ticker.quote) {
-        (map, marketQuote) =>
-          //添加市场代币的Quote ("LRC", "WETH", "TUSD", "USDT")
-          map + (marketQuote._1 -> convertQuote(priceQuote, marketQuote._2))
+      val quoteMap = marketsQuote.foldLeft(ticker.quote) { (map, marketQuote) =>
+        //添加市场代币的Quote ("LRC", "WETH", "TUSD", "USDT")
+        map + (marketQuote._1 -> convertQuote(priceQuote, marketQuote._2))
       }
       //更新token的quote属性
       ticker.copy(quote = quoteMap)
     }
   }
 
-  private def convertPersistToResponse(t: CMCTickersInUsd) = {
+  private def convertPersistenceWithUsdQuote(t: CMCTickersInUsd) = {
     val q = t.usdQuote.get
     CMCTickerData(
       t.coinId,
@@ -152,6 +200,51 @@ class CMCTickerRequestImpl @Inject()(
         )
       )
     )
+  }
+
+  private def convertToExternalMultiMarketsInUsd(
+      tickersInUsd: Seq[CMCTickerData]
+    ): Seq[ExternalTickerInfo] = {
+    tickersInUsd.flatMap { ticker =>
+      val id = ticker.id
+      val name = ticker.name
+      val symbol = ticker.symbol
+      val websiteSlug = ticker.slug
+      val rank = ticker.cmcRank
+      val circulatingSupply = ticker.circulatingSupply
+      val totalSupply = ticker.totalSupply
+      val maxSupply = ticker.maxSupply
+
+      ticker.quote.map { priceQuote =>
+        val market = priceQuote._1
+        val quote = priceQuote._2
+        val price = quote.price
+        val volume24h = quote.volume24H
+        val marketCap = quote.marketCap
+        val percentChange1h = quote.percentChange1H
+        val percentChange24h = quote.percentChange24H
+        val percentChange7d = quote.percentChange7D
+        val utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS Z")
+        val lastUpdated = utcFormat
+          .parse(quote.lastUpdated.replace("Z", " UTC"))
+          .getTime / 1000
+        val pair = symbol + "-" + market
+
+        ExternalTickerInfo(
+          name,
+          symbol,
+          market,
+          pair,
+          rank,
+          price,
+          volume24h,
+          percentChange1h,
+          percentChange24h,
+          percentChange7d,
+          lastUpdated
+        )
+      }
+    }
   }
 
   // 找到市场代币对USD的priceQuote
@@ -206,14 +299,6 @@ class CMCTickerRequestImpl @Inject()(
       toDouble(market_cap),
       last_updated
     )
-  }
-
-  private def toDouble: PartialFunction[BigDecimal, Double] = {
-    case s: BigDecimal =>
-      scala.util
-        .Try(s.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
-        .toOption
-        .getOrElse(0)
   }
 
 }

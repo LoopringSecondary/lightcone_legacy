@@ -24,8 +24,10 @@ import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.base.MapBasedLookup
 import io.lightcone.relayer.actors._
 import io.lightcone.core._
+import io.lightcone.relayer.external.{CMCTickerManagerImpl, TickerManager}
 import org.scalatest._
 import org.slf4s.Logging
+
 import scala.concurrent.duration._
 
 //启动system、以及必须的元素，包括system，TokenMetaData，等
@@ -64,7 +66,8 @@ abstract class CommonSpec(configStr: String = "")
 
   //  log.info(s"init config: ${config}")
 
-  implicit val metadataManager = new MetadataManager()
+  implicit val metadataManager = new MetadataManagerImpl()
+  implicit val tickerManager = new CMCTickerManagerImpl()
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
