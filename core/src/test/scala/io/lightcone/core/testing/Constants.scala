@@ -16,6 +16,7 @@
 
 package io.lightcone.core.testing
 
+import io.lightcone.core._
 import io.lightcone.lib._
 
 trait Constants {
@@ -36,19 +37,22 @@ trait Constants {
   object Addr {
     def apply() = rand.alphanumeric.take(22).mkString("")
     def apply(idx: Int) = addresses(idx)
+
     val addresses = Seq(
       "0x76f30f4bb5D71377cAc22f6ddc39C7b3AfE6E377",
       "0xf74d556cbB95b7BCCDad8284bc68110C74c91E7B",
-      "0x0f8aA39A58ADcc3Df98d826Ac798aB837CC0833C")
+      "0x0f8aA39A58ADcc3Df98d826Ac798aB837CC0833C"
+    )
   }
 
-  val metadataManager = new AbstractMetadataManager {
+  val metadataManager: MetadataManager = new AbstractMetadataManager {
     val defaultBurnRateForMarket: Double = 0.2
     val defaultBurnRateForP2P: Double = 0.2
 
-    var tokenAddressMap = Map.empty[String, Token]
-    var tokenSymbolMap = Map.empty[String, Token]
-    var marketMap = Map.empty[String, MarketMetadata]
+    // Initalize this
+    tokenAddressMap = Map.empty[String, Token]
+    tokenSymbolMap = Map.empty[String, Token]
+    marketMap = Map.empty[String, MarketMetadata]
   }
 
 }
