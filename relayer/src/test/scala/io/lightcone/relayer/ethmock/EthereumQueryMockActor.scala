@@ -29,31 +29,13 @@ import akka.actor.{Actor, ActorRef}
 问题一：
 目前以太坊完成的功能有，以太坊节点的维护和路由，请求数据，事件解析、事件的分发，
 需要mock哪些内容
+
+//dispatcher抽取extractor，只发送events，而不是使用RawBlockData作为参数
+MockEthQueryActor
+
  */
-object EthereumMock {
 
-  val expectResults = Map.empty[String, Any]
-
-  var mockActor: ActorRef = _
-
-  def setResults(expects: Seq[()]) = {
-
-  }
-
-  def triggerEvent() = {
-
-  }
-
-  //start jsonrpc server
-  def startEthService() = {
-    //启动actor
-    mockActor = null
-    //启动service
-  }
-
-}
-
-class MockActor
+class EthereumQueryMockActor
  extends Actor {
 
   //需要确切的知道有哪些请求，如提交一个订单会引起的可能请求：余额和授权：下单者的卖出和交易费和矿工的；订单CutOff情况；
