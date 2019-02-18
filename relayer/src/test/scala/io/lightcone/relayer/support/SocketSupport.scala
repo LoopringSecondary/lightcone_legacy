@@ -22,7 +22,7 @@ import io.lightcone.relayer.socketio.notifiers._
 trait SocketSupport {
   com: CommonSpec =>
   implicit val balancelistener = new BalanceNotifier()
-  implicit val txListener = new TransactionNotifier()
+  implicit val transactionNotifier = new TransactionNotifier()
 
   val socketServer = new SocketServer()
   socketServer.start()

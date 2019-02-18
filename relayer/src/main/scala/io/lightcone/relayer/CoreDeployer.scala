@@ -63,8 +63,8 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
-    balanceListener: SocketIONotifier[SubcribeBalanceAndAllowance],
-    txListener: SocketIONotifier[SubcribeTransaction],
+    balanceNotifier: SocketIONotifier[SubcribeBalanceAndAllowance],
+    transactionNotifier: SocketIONotifier[SubcribeTransaction],
     system: ActorSystem)
     extends Object
     with Logging {
@@ -214,7 +214,7 @@ class CoreDeployer @Inject()(
       }
       //-----------deploy SOCKETIO service-----------
       if (deployActorsIgnoringRoles ||
-          cluster.selfRoles.contains("socket")) {
+          cluster.selfRoles.contains("socketio")) {
         val server = new SocketServer
         server.start
       }
