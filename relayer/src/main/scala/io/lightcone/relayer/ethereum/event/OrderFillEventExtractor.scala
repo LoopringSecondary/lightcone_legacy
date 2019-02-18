@@ -17,6 +17,7 @@
 package io.lightcone.relayer.ethereum.event
 
 import com.google.inject.Inject
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 

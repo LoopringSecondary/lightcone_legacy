@@ -23,6 +23,7 @@ import akka.util.Timeout
 import com.google.inject._
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum.Dispatchers._
 import io.lightcone.relayer.ethereum.{EventDispatcher, _}
@@ -33,7 +34,6 @@ import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
-import io.lightcone.relayer.data._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -118,10 +118,10 @@ class CoreModule(
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
     // --- bind event extractors ---------------------
-    bind[EventExtractor[AddressAllowanceUpdated]]
+    bind[EventExtractor[AddressAllowanceUpdatedEvent]]
       .to[AllowanceChangedAddressExtractor]
 
-    bind[EventExtractor[AddressBalanceUpdated]]
+    bind[EventExtractor[AddressBalanceUpdatedEvent]]
       .to[BalanceChangedAddressExtractor]
 
     bind[EventExtractor[OrdersCancelledEvent]]
@@ -131,18 +131,18 @@ class CoreModule(
       .to[TokenBurnRateEventExtractor]
 
     bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
-    bind[EventExtractor[RawOrder]].to[OnchainOrderExtractor]
+    bind[EventExtractor[RawOrderEvent]].to[OnchainOrderExtractor]
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
-    bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
+    bind[EventExtractor[OHLCRawDataEvent]].to[OHLCRawDataExtractor]
     bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
 
     // --- bind event dispatchers ---------------------
-    bind[EventDispatcher[AddressAllowanceUpdated]]
+    bind[EventDispatcher[AddressAllowanceUpdatedEvent]]
       .to[AllowanceEventDispatcher]
 
-    bind[EventDispatcher[AddressBalanceUpdated]]
+    bind[EventDispatcher[AddressBalanceUpdatedEvent]]
       .to[BalanceEventDispatcher]
 
     bind[EventDispatcher[OrdersCancelledEvent]]
@@ -157,7 +157,7 @@ class CoreModule(
     bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
-    bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
+    bind[EventDispatcher[OHLCRawDataEvent]].to[OHLCRawDataEventDispatcher]
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     // --- bind primative types ---------------------
@@ -174,14 +174,14 @@ class CoreModule(
 
   @Provides
   def getEventDispathcers(
-      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdated],
+      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdatedEvent],
       ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
       orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
       cutoffEventDispatcher: EventDispatcher[CutoffEvent],
       transferEventDispatcher: EventDispatcher[TransferEvent],
-      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
+      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdatedEvent],
       ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
-      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
+      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawDataEvent],
       blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent

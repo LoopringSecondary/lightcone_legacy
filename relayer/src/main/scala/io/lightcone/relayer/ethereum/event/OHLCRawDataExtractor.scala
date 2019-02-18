@@ -18,6 +18,7 @@ package io.lightcone.relayer.ethereum.event
 
 import com.google.inject.Inject
 import io.lightcone.core._
+import io.lightcone.ethereum.event._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
@@ -29,11 +30,11 @@ class OHLCRawDataExtractor @Inject()(
     extractor: RingMinedEventExtractor,
     val ec: ExecutionContext,
     val metadataManager: MetadataManager)
-    extends EventExtractor[OHLCRawData] {
+    extends EventExtractor[OHLCRawDataEvent] {
 
   import MarketMetadata.Status._
 
-  def extract(block: RawBlockData): Future[Seq[OHLCRawData]] = {
+  def extract(block: RawBlockData): Future[Seq[OHLCRawDataEvent]] = {
     extractor
       .extract(block)
       .map { rings =>
@@ -61,7 +62,7 @@ class OHLCRawDataExtractor @Inject()(
               val (baseAmount, quoteAmount) =
                 getAmounts(fill, baseToken, quoteToken, marketMetadata)
               Some(
-                OHLCRawData(
+                OHLCRawDataEvent(
                   ringIndex = ring.ringIndex,
                   txHash = ring.header.get.txHash,
                   marketHash = marketHash,

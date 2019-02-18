@@ -23,6 +23,7 @@ import "core.proto";
 import "persistence.proto";
 import "relayer_common.proto";
 import "relayer_ethereum.proto";
+import "ethereum_event.proto";
 
 /////////////////////////////////////////////////////////////////////
 // TWO WAY DATABASE-RELATED REQUEST-RESPONSES
@@ -209,13 +210,13 @@ message TransactionRecord {
     }
     message EventData {
         oneof event {
-            TransferEvent        transfer       = 101;
-            OrdersCancelledEvent orderCancelled = 102;
-            CutoffEvent          cutoff         = 103;
-            OrderFilledEvent     filled         = 104;
+            io.lightcone.ethereum.event.TransferEvent        transfer       = 101;
+            io.lightcone.ethereum.event.OrdersCancelledEvent orderCancelled = 102;
+            io.lightcone.ethereum.event.CutoffEvent          cutoff         = 103;
+            io.lightcone.ethereum.event.OrderFilledEvent     filled         = 104;
         }
     }
-    EventHeader header       = 1;
+    io.lightcone.ethereum.event.EventHeader header       = 1;
     string      owner        = 2;
     RecordType  record_type  = 3;
     int64       market_id    = 4;
@@ -263,10 +264,10 @@ message GetTransactionRecordCount {
 
 message PersistOHLCData {
     message Req {
-        OHLCRawData data    = 1;
+        io.lightcone.ethereum.event.OHLCRawDataEvent data    = 1;
     }
     message Res {
-        OHLCRawData record  = 1;
+        io.lightcone.ethereum.event.OHLCRawDataEvent record  = 1;
         io.lightcone.core.ErrorCode error     = 2;
     }
 }

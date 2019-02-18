@@ -19,6 +19,7 @@ package io.lightcone.relayer.ethereum.event
 import akka.util.Timeout
 import com.google.inject.Inject
 import io.lightcone.lib._
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 

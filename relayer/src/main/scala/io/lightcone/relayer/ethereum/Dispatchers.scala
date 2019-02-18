@@ -18,10 +18,10 @@ package io.lightcone.relayer.ethereum
 
 import akka.actor.ActorRef
 import com.google.inject.Inject
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event.EventExtractor
-import io.lightcone.relayer.data._
 import scala.concurrent.ExecutionContext
 
 object Dispatchers {
@@ -41,9 +41,9 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[AddressAllowanceUpdated],
+      extractor: EventExtractor[AddressAllowanceUpdatedEvent],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[AddressAllowanceUpdated](
+      extends NameBasedEventDispatcher[AddressAllowanceUpdatedEvent](
         names = Seq(MultiAccountManagerActor.name),
         actors
       )
@@ -52,9 +52,9 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[AddressBalanceUpdated],
+      extractor: EventExtractor[AddressBalanceUpdatedEvent],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[AddressBalanceUpdated](
+      extends NameBasedEventDispatcher[AddressBalanceUpdatedEvent](
         names =
           Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name),
         actors
@@ -122,9 +122,9 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[OHLCRawData],
+      extractor: EventExtractor[OHLCRawDataEvent],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[OHLCRawData](
+      extends NameBasedEventDispatcher[OHLCRawDataEvent](
         names = Seq(OHLCDataHandlerActor.name),
         actors
       )
