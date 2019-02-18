@@ -222,21 +222,3 @@ message TokenBalance {
     bytes  allowance            = 4;
     int64  updated_at_block     = 5;
 }
-
-
-
-
-
-
-//LOOPRING Cutoff
-
-
-
-
-
-//LOOPRING RINGMINED
-
-
-
-
-

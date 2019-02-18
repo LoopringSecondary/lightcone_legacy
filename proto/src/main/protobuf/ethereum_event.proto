@@ -78,20 +78,6 @@ message BlockGasPrices {
     repeated int64 gas_prices = 2;
 }
 
-message CutoffEvent {
-    EventHeader header  = 1;
-    string broker       = 2;
-    string owner        = 3;
-    string market_hash   = 4;
-    int64  cutoff       = 5; // in seconds.
-}
-
-message OrdersCancelledEvent {
-    EventHeader header = 1;
-    string owner  = 2;
-    string broker = 3;
-    repeated string order_hashes = 4;
-}
 
 message OHLCRawDataEvent {
     int64      ring_index     = 1;
@@ -103,11 +89,21 @@ message OHLCRawDataEvent {
     double     price          = 8;
 }
 
-//TODO:RawOrder
 message RawOrderEvent {
     io.lightcone.core.RawOrder raw_order = 1;
 }
 
+message TokenBurnRateChangedEvent {
+    message BurnRate {
+        double for_market = 1;
+        double for_p2p = 2;
+    }
+    EventHeader header = 1;
+    string      token = 2;
+    BurnRate    burn_rate = 3;
+}
+
+//LOOPRING RINGMINED
 message OrderFilledEvent {
     EventHeader header = 1;
     string owner = 2;
@@ -141,13 +137,19 @@ message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     string      miner = 6;
 }
 
-message TokenBurnRateChangedEvent {
-    message BurnRate {
-        double for_market = 1;
-        double for_p2p = 2;
-    }
+//LOOPRING Cutoff
+message CutoffEvent {
+    EventHeader header  = 1;
+    string broker       = 2;
+    string owner        = 3;
+    string market_hash   = 4;
+    int64  cutoff       = 5; // in seconds.
+}
+
+message OrdersCancelledEvent {
     EventHeader header = 1;
-    string      token = 2;
-    BurnRate    burn_rate = 3;
+    string owner  = 2;
+    string broker = 3;
+    repeated string order_hashes = 4;
 }
 
