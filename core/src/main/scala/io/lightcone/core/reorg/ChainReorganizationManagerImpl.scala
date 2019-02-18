@@ -31,22 +31,31 @@ class ChainReorganizationManagerImpl(
   assert(maxDepth >= 10 && maxDepth <= 1000)
 
   class BlockTrackingData() {
-    var orders = Map.empty[String, OrderStatus]
-    var accounts = Map.empty[String, Seq[String]]
+    var orderIds = Set.empty[String]
+    var accounts = Map.empty[String, Set[String]]
 
-    def recordOrderUpdate(
-        orderId: String,
-        orderStatus: OrderStatus
-      ) = {
-      orders += orderId -> orderStatus
+    def recordOrderUpdate(orderId: String) = {
+      orderIds += orderId
     }
 
     def recordAccountUpdate(
         address: String,
         token: String
       ) = accounts.get(address) match {
-      case Some(tokens) => accounts += address -> (token +: tokens)
-      case None         => accounts += address -> Seq(token)
+      case Some(tokens) => accounts += address -> (tokens + token)
+      case None         => accounts += address -> Set(token)
+    }
+
+    def mergeWith(another: BlockTrackingData): BlockTrackingData = {
+      orderIds ++= another.orderIds
+      another.accounts.foreach {
+        case (address, tokens) =>
+          accounts.get(address) match {
+            case Some(tokens_) => accounts += (address -> (tokens_ ++ tokens))
+            case None          => accounts += (address -> tokens)
+          }
+      }
+      this
     }
   }
 
@@ -64,28 +73,20 @@ class ChainReorganizationManagerImpl(
     val (remainingBlocks, expiredBlocks) = blocks.partition(_._1 < blockIdx)
     blocks = remainingBlocks
 
-    var impact = ChainReorganizationImpact()
-    expiredBlocks.foreach {
-      case (_, block) =>
-        val orderInfos = block.orders.map {
-          case (orderId, status) =>
-            ChainReorganizationImpact.OrderInfo(orderId, status)
-        }.toSeq
+    val aggregated = new BlockTrackingData()
+    expiredBlocks.values.foreach(aggregated.mergeWith)
 
-        val accountInfos = block.accounts.map {
+    var impact =
+      ChainReorganizationImpact(
+        aggregated.orderIds.toSeq,
+        aggregated.accounts.map {
           case (address, tokens) =>
-            ChainReorganizationImpact.AccountInfo(address, tokens)
+            ChainReorganizationImpact.AccountInfo(address, tokens.toSeq)
         }.toSeq
-
-        impact = impact.addOrders(orderInfos: _*).addAccounts(accountInfos: _*)
-
-        block.accounts.foreach {
-          case (address, tokens) =>
-        }
-    }
+      )
 
     log.info(
-      s"reorged at $blockIdx: ${impact.orders.size} orders and " +
+      s"reorged at $blockIdx: ${impact.orderIds.size} orders and " +
         s"${impact.accounts.size} accounts impacted, " +
         s"new history size: ${blocks.size}"
     )
@@ -99,11 +100,10 @@ class ChainReorganizationManagerImpl(
 
   def recordOrderUpdate(
       blockIdx: Long,
-      orderId: String,
-      orderStatus: OrderStatus
+      orderId: String
     ) = checkBlockIdxTo(blockIdx) {
     getBlockTrackingData(blockIdx)
-      .recordOrderUpdate(orderId, orderStatus)
+      .recordOrderUpdate(orderId)
   }
 
   def recordAccountUpdate(

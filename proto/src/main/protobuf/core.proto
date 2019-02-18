@@ -297,16 +297,12 @@ message MarketStats {
 
 message ChainReorganizationImpact {
 
-    message OrderInfo {
-        string order_id         = 1;
-        OrderStatus status      = 2;
-    }
     message AccountInfo {
         string address          = 1;
         repeated string tokens  = 2;
     }
 
-   repeated OrderInfo orders    = 1;
+   repeated string order_ids    = 1;
    repeated AccountInfo accounts  = 2;
 }
 

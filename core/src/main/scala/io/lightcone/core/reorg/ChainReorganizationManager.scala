@@ -22,8 +22,7 @@ trait ChainReorganizationManager {
 
   def recordOrderUpdate(
       blockIdx: Long,
-      orderId: String,
-      orderStatus: OrderStatus
+      orderId: String
     ): Unit
 
   def recordAccountUpdate(
