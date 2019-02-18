@@ -18,10 +18,6 @@ package io.lightcone.core
 
 trait ChainReorganisationHandler {
 
-  case class ChainReorganisationImpact(
-      val orderIds: Iterable[Long],
-      val accounts: Map[String, Iterable[String]])
-
   def reset(): Unit
 
   def recordOrderUpdate(

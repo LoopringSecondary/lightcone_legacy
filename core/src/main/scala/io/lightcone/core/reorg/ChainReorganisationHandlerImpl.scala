@@ -19,9 +19,13 @@ package io.lightcone.core
 import org.slf4s.Logging
 import scala.collection.SortedMap
 
-class ChainReorganisationHandlerImpl(strictMode: Boolean = false)
+class ChainReorganisationHandlerImpl(
+    val maxDepth: Int = 100,
+    val strictMode: Boolean = false)
     extends ChainReorganisationHandler
     with Logging {
+
+  assert(maxDepth >= 10 && maxDepth <= 1000)
 
   class BlockTrackingData() {
     var orders = Map.empty[String, OrderStatus]
@@ -38,13 +42,7 @@ class ChainReorganisationHandlerImpl(strictMode: Boolean = false)
       ) = ???
   }
 
-  private var maxDepth = 100
   private var blocks = SortedMap.empty[Long, BlockTrackingData]
-
-  def setMaxReorganizationDepth(maxDepth: Int) = {
-    assert(maxDepth >= 10 && maxDepth <= 1000)
-    this.maxDepth = maxDepth
-  }
 
   def reorganizedAt(blockIdx: Long): ChainReorganisationImpact = {
 
@@ -59,12 +57,11 @@ class ChainReorganisationHandlerImpl(strictMode: Boolean = false)
     blocks = remains
 
     // TODO(dongw) ->
-    val impact =
-      ChainReorganisationImpact(Nil, Map.empty[String, Iterable[String]])
+    val impact = ChainReorganisationImpact()
 
     log.info(
       s"reorged at $blockIdx: ${impact.orderIds.size} orders and " +
-        s"${impact.accounts.size} accounts impacted, " +
+        s"${impact.tokensList.size} accounts impacted, " +
         s"new history size: ${blocks.size}"
     )
 
@@ -95,31 +92,36 @@ class ChainReorganisationHandlerImpl(strictMode: Boolean = false)
 
   private def checkBlockIdxTo(blockIdx: Long)(call: => Unit): Unit = {
     val lastKnownBlock = blocks.lastOption.map(_._1).getOrElse(0L)
-    if (strictMode && blockIdx >= lastKnownBlock) {
+    if (blockIdx >= lastKnownBlock) call
+    else if (strictMode) {
       log.error(
-        s"failed to record for a previous block $blockIdx vs $lastKnownBlock"
+        s"failed to record for a previous block $blockIdx vs $lastKnownBlock (last known block)"
       )
     } else {
+      log.warn(
+        s"record for a previous block $blockIdx vs $lastKnownBlock (last known block)"
+      )
       call
     }
+
   }
 
   private def getBlockTrackingData(blockIdx: Long) =
     blocks.get(blockIdx) match {
-      case Some(data) => data
+      case Some(block) => block
       case None =>
-        val data = new BlockTrackingData()
+        val block = new BlockTrackingData()
 
         if (blocks.size == maxDepth) {
           blocks = blocks.tail
         }
-        blocks += blockIdx -> data
+        blocks += blockIdx -> block
 
         log.debug(
           s"history size: ${blocks.size} with latest block index: " +
             blocks.lastOption.map(_._1).getOrElse(0L)
         )
-        data
+        block
     }
 
 }
