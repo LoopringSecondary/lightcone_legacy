@@ -41,4 +41,15 @@ class CMCTickersInUsdDalImpl @Inject()(
 
   def getTickersByJob(jobId: Int): Future[Seq[CMCTickersInUsd]] =
     db.run(query.filter(_.batchId === jobId).result)
+
+  def getTickers(
+      jobId: Int,
+      tokenSymbols: Seq[String]
+    ): Future[Seq[CMCTickersInUsd]] =
+    db.run(
+      query
+        .filter(_.batchId === jobId)
+        .filter(_.symbol inSet tokenSymbols)
+        .result
+    )
 }

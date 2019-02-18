@@ -21,6 +21,7 @@ import io.lightcone.cmc.{CMCTickerData, TickerDataInfo, TickerStatus}
 import io.lightcone.core._
 import io.lightcone.persistence.RequestJob
 import io.lightcone.persistence.RequestJob.JobType
+import io.lightcone.persistence.dals.CMCTickersInUsdDal
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
@@ -38,12 +39,13 @@ class CMCCrawlerSpec
 
   def crawlerActor = actors.get(CMCCrawlerActor.name)
   def refresherActor = actors.get(ExternalDataRefresher.name)
+  val metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
 
   "cmc crawler" must {
-    "get all tickers and persist" in {
-      for {
+    "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
+      val f = for {
         savedJob <- dbModule.requestJobDal.saveJob(
           RequestJob(
             jobType = JobType.TICKERS_FROM_CMC,
@@ -51,7 +53,7 @@ class CMCCrawlerSpec
           )
         )
         cmcResponse <- getMockedCMCTickers()
-        updated <- if (cmcResponse.data.nonEmpty) {
+        tickersToPersist <- if (cmcResponse.data.nonEmpty) {
           val status = cmcResponse.status.getOrElse(TickerStatus())
           for {
             _ <- dbModule.requestJobDal.updateStatusCode(
@@ -59,30 +61,40 @@ class CMCCrawlerSpec
               status.errorCode,
               timeProvider.getTimeSeconds()
             )
-            _ <- persistTickers(savedJob.batchId, cmcResponse.data)
+            tickers_ <- persistTickers(savedJob.batchId, cmcResponse.data)
             _ <- dbModule.requestJobDal.updateSuccessfullyPersisted(
               savedJob.batchId
             )
             tokens <- dbModule.tokenMetadataDal.getTokens()
             _ <- updateTokenPrice(cmcResponse.data, tokens)
-          } yield true
+          } yield tickers_
         } else {
-          Future.successful(false)
+          Future.successful(Seq.empty)
         }
-      } yield {
-        if (updated) {
-          // TODO tokenMetadata reload
-
-        }
-      }
+        // verify result
+        latestJob <- dbModule.requestJobDal.findLatest(JobType.TICKERS_FROM_CMC)
+        tickers <- dbModule.CMCTickersInUsdDal.getTickersByJob(
+          latestJob.get.batchId
+        )
+      } yield (latestJob, cmcResponse, tickersToPersist, tickers)
       val q1 = Await.result(
-        getMockedCMCTickers()
-          .mapTo[TickerDataInfo],
-        30.second
+        f.mapTo[
+          (
+              Option[RequestJob],
+              TickerDataInfo,
+              Seq[CMCTickersInUsdDal],
+              Seq[CMCTickersInUsdDal]
+          )
+        ],
+        50.second
       )
-      q1
+      log.info(s"-------1 ${q1._4.length}")
+      q1._1.nonEmpty should be(true)
+      q1._2.data.length == 2072 should be(true)
+      q1._3.length == 2072 should be(true)
+      // q1._4.length == 2072 should be(true) // 1968 cmc return duplicate token with symbol EVN, EDR...
     }
-
+    "convert USD tickers to all support markets (ExternalDataRefresher)" in {}
   }
 
   private def getMockedCMCTickers() = {
@@ -147,5 +159,5 @@ class CMCCrawlerSpec
       )
       fixGroup = tickersToPersist.grouped(20).toList
       _ = fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
-    } yield Unit
+    } yield tickersToPersist
 }

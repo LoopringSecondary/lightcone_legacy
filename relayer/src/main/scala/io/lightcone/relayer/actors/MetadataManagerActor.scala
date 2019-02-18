@@ -28,6 +28,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
+import io.lightcone.persistence.RequestJob.JobType
 import scala.util._
 
 // Owner: Yongfeng
@@ -128,9 +129,31 @@ class MetadataManagerActor(
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
 
+    case _: ReloadMetadataFromDb =>
+      syncMetadata()
+
     case req: SaveTokenMetadatas.Req =>
       (for {
-        saved <- dbModule.tokenMetadataDal.saveTokens(req.tokens)
+        latestJob <- dbModule.requestJobDal.findLatest(
+          JobType.TICKERS_FROM_CMC
+        )
+        modifiedTokens <- if (latestJob.nonEmpty) {
+          val tokenSymbols = req.tokens.map(_.symbol)
+          for {
+            tickers_ <- dbModule.CMCTickersInUsdDal
+              .getTickers(latestJob.get.batchId, tokenSymbols)
+          } yield {
+            val tickersMap = tickers_.map { t =>
+              (t.symbol, t.usdQuote.get.price)
+            }.toMap
+            req.tokens.map { t =>
+              t.copy(usdPrice = tickersMap.getOrElse(t.symbol, 0))
+            }
+          }
+        } else {
+          Future.successful(req.tokens)
+        }
+        saved <- dbModule.tokenMetadataDal.saveTokens(modifiedTokens)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
         if (saved.nonEmpty) {
@@ -228,10 +251,10 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case req: LoadTokenMetadata.Req =>
+    case _: LoadTokenMetadata.Req =>
       sender ! LoadTokenMetadata.Res(tokens)
 
-    case req: LoadMarketMetadata.Req =>
+    case _: LoadMarketMetadata.Req =>
       sender ! LoadMarketMetadata.Res(markets)
   }
 

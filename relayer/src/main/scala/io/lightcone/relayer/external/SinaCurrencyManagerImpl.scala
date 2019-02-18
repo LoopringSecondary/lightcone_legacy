@@ -67,6 +67,8 @@ class SinaCurrencyManagerImpl @Inject()(
               val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
               val time = formatter.parse(charArr(17) + " " + charArr(0)).getTime
               val currency = charArr(2).toDouble
+              assert(currency > 0)
+              assert(time > 0)
               CurrencyData(currency, time)
             }
 

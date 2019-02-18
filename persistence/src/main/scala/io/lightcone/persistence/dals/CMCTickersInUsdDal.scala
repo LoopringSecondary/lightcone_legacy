@@ -25,4 +25,9 @@ trait CMCTickersInUsdDal
 
   def saveTickers(tickers: Seq[CMCTickersInUsd]): Future[Unit]
   def getTickersByJob(jobId: Int): Future[Seq[CMCTickersInUsd]]
+
+  def getTickers(
+      jobId: Int,
+      tokenSymbols: Seq[String]
+    ): Future[Seq[CMCTickersInUsd]]
 }

@@ -26,7 +26,7 @@ class CMCTickersInUsdTable(tag: Tag)
   def id = ""
   def coinId = column[Int]("coin_id")
   def name = column[String]("name")
-  def symbol = column[String]("symbol")
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
   def slug = column[String]("slug")
   def circulatingSupply = column[Double]("circulating_supply")
   def totalSupply = column[Double]("total_supply")
@@ -49,7 +49,7 @@ class CMCTickersInUsdTable(tag: Tag)
 
   // indexes
   def idx_batch_id = index("idx_batch_id", (batchId), unique = false)
-  def pk = primaryKey("pk", (batchId, coinId))
+  def pk = primaryKey("pk_batch_symbol", (batchId, symbol))
 
   def quoteProjection =
     (

@@ -17,8 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -71,6 +69,8 @@ class CMCCrawlerActor(
     with ActorLogging {
 
   val tickerManager: TickerManager = new CMCTickerManagerImpl()
+  val metadataManagerActor = actors.get(MetadataManagerActor.name)
+
   val selfConfig = config.getConfig(CMCCrawlerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
@@ -145,8 +145,7 @@ class CMCCrawlerActor(
       }
     } yield {
       if (updated) {
-        // TODO tokenMetadata reload
-
+        metadataManagerActor ! ReloadMetadataFromDb()
       }
     }
   }

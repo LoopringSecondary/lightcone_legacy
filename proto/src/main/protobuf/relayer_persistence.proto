@@ -388,3 +388,5 @@ message LoadMarketMetadata {
         repeated io.lightcone.core.MarketMetadata markets = 1;
     }
 }
+
+message ReloadMetadataFromDb {}
