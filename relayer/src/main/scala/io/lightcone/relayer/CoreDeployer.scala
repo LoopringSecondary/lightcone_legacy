@@ -38,36 +38,37 @@ import io.lightcone.relayer.data.Notify
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
 
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent._
 
-class CoreDeployer @Inject() (
-  implicit @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
-  actors: Lookup[ActorRef],
-  actorMaterializer: ActorMaterializer,
-  brb: EthereumBatchCallRequestBuilder,
-  chainReorgHandler: ChainReorganizationManager,
-  cluster: Cluster,
-  config: Config,
-  dispatchers: Seq[EventDispatcher[_]],
-  dcm: DatabaseConfigManager,
-  dbModule: DatabaseModule,
-  dustOrderEvaluator: DustOrderEvaluator,
-  ec: ExecutionContext,
-  ece: ExecutionContextExecutor,
-  rb: EthereumCallRequestBuilder,
-  rie: RingIncomeEvaluator,
-  orderValidator: RawOrderValidator,
-  ringBatchGenerator: RingBatchGenerator,
-  metadataManager: MetadataManager,
-  timeProvider: TimeProvider,
-  timeout: Timeout,
-  tve: TokenValueEvaluator,
-  balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-  transactionNotifier: SocketIONotifier[SubscribeTransaction],
-  system: ActorSystem)
-  extends Object
-  with Logging {
+class CoreDeployer @Inject()(
+    implicit
+    @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
+    actors: Lookup[ActorRef],
+    actorMaterializer: ActorMaterializer,
+    brb: EthereumBatchCallRequestBuilder,
+    chainReorgHandler: ChainReorganizationManager,
+    cluster: Cluster,
+    config: Config,
+    dispatchers: Seq[EventDispatcher[_]],
+    dcm: DatabaseConfigManager,
+    dbModule: DatabaseModule,
+    dustOrderEvaluator: DustOrderEvaluator,
+    ec: ExecutionContext,
+    ece: ExecutionContextExecutor,
+    rb: EthereumCallRequestBuilder,
+    rie: RingIncomeEvaluator,
+    orderValidator: RawOrderValidator,
+    ringBatchGenerator: RingBatchGenerator,
+    metadataManager: MetadataManager,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    tve: TokenValueEvaluator,
+    balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
+    transactionNotifier: SocketIONotifier[SubscribeTransaction],
+    system: ActorSystem)
+    extends Object
+    with Logging {
 
   def deploy(): Unit = {
 
@@ -79,42 +80,54 @@ class CoreDeployer @Inject() (
       MessageValidationActor(
         new MultiAccountManagerMessageValidator(),
         MultiAccountManagerActor.name,
-        MultiAccountManagerMessageValidator.name))
+        MultiAccountManagerMessageValidator.name
+      )
+    )
 
     actors.add(
       DatabaseQueryMessageValidator.name,
       MessageValidationActor(
         new DatabaseQueryMessageValidator(),
         DatabaseQueryActor.name,
-        DatabaseQueryMessageValidator.name))
+        DatabaseQueryMessageValidator.name
+      )
+    )
 
     actors.add(
       EthereumQueryMessageValidator.name,
       MessageValidationActor(
         new EthereumQueryMessageValidator(),
         EthereumQueryActor.name,
-        EthereumQueryMessageValidator.name))
+        EthereumQueryMessageValidator.name
+      )
+    )
 
     actors.add(
       OrderbookManagerMessageValidator.name,
       MessageValidationActor(
         new OrderbookManagerMessageValidator(),
         OrderbookManagerActor.name,
-        OrderbookManagerMessageValidator.name))
+        OrderbookManagerMessageValidator.name
+      )
+    )
 
     actors.add(
       TransactionRecordMessageValidator.name,
       MessageValidationActor(
         new TransactionRecordMessageValidator(),
         TransactionRecordActor.name,
-        TransactionRecordMessageValidator.name))
+        TransactionRecordMessageValidator.name
+      )
+    )
 
     actors.add(
       MetadataManagerValidator.name,
       MessageValidationActor(
         new MetadataManagerValidator(),
         MetadataManagerActor.name,
-        MetadataManagerValidator.name))
+        MetadataManagerValidator.name
+      )
+    )
 
     //-----------deploy local actors-----------
     // TODO: OnMemberUp执行有时间限制，超时会有TimeoutException
@@ -155,17 +168,21 @@ class CoreDeployer @Inject() (
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
       actors.add(
         ChainReorganizationManagerActor.name,
-        ChainReorganizationManagerActor.start)
+        ChainReorganizationManagerActor.start
+      )
 
       actors.add(
         EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start)
+        EthereumEventExtractorActor.start
+      )
       actors.add(
         MissingBlocksEventExtractorActor.name,
-        MissingBlocksEventExtractorActor.start)
+        MissingBlocksEventExtractorActor.start
+      )
       actors.add(
         RingSettlementManagerActor.name,
-        RingSettlementManagerActor.start)
+        RingSettlementManagerActor.start
+      )
 
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
@@ -173,7 +190,8 @@ class CoreDeployer @Inject() (
 
       actors.add(
         RingAndTradePersistenceActor.name,
-        RingAndTradePersistenceActor.start)
+        RingAndTradePersistenceActor.start
+      )
 
       actors.add(GasPriceActor.name, GasPriceActor.start)
       actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
@@ -194,13 +212,14 @@ class CoreDeployer @Inject() (
 
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
-        cluster.selfRoles.contains("jsonrpc")) {
-        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name)) with RpcBinding
+          cluster.selfRoles.contains("jsonrpc")) {
+        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+        with RpcBinding
         server.start
       }
       //-----------deploy SOCKETIO service-----------
       if (deployActorsIgnoringRoles ||
-        cluster.selfRoles.contains("socketio")) {
+          cluster.selfRoles.contains("socketio")) {
         val server = new SocketServer
         server.start
       }

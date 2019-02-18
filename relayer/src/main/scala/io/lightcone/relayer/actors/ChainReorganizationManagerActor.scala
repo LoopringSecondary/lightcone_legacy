@@ -36,29 +36,32 @@ object ChainReorganizationManagerActor extends DeployedAsSingleton {
   val name = "chain_reorg_manager"
 
   def start(
-    implicit system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    chainReorgHandler: ChainReorganizationManager,
-    // dbModule: DatabaseModule,
-    deployActorsIgnoringRoles: Boolean): ActorRef = {
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      chainReorgHandler: ChainReorganizationManager,
+      // dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
     startSingleton(Props(new ChainReorganizationManagerActor()))
   }
 }
 
-class ChainReorganizationManagerActor @Inject() (
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val chainReorgHandler: ChainReorganizationManager,
-  val actors: Lookup[ActorRef])
-  extends InitializationRetryActor
-  with Stash
-  with ActorLogging {
+class ChainReorganizationManagerActor @Inject()(
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val chainReorgHandler: ChainReorganizationManager,
+    val actors: Lookup[ActorRef])
+    extends InitializationRetryActor
+    with Stash
+    with ActorLogging {
 
   import MarketMetadata.Status._
 

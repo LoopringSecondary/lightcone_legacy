@@ -25,7 +25,7 @@ import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum.Dispatchers._
-import io.lightcone.relayer.ethereum.{ EventDispatcher, _ }
+import io.lightcone.relayer.ethereum.{EventDispatcher, _}
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
@@ -37,18 +37,18 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.socketio.notifiers._
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import org.slf4s.Logging
 
 // Owner: Daniel
 class CoreModule(
-  config: Config,
-  deployActorsIgnoringRoles: Boolean = false)
-  extends AbstractModule
-  with ScalaModule
-  with Logging {
+    config: Config,
+    deployActorsIgnoringRoles: Boolean = false)
+    extends AbstractModule
+    with ScalaModule
+    with Logging {
 
   val dbConfigManager = new DatabaseConfigManager(config)
 
@@ -80,7 +80,8 @@ class CoreModule(
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
-      "dbconfig-dal-ohlc-data")
+      "dbconfig-dal-ohlc-data"
+    )
 
     // --- bind dals ---------------------
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
@@ -185,16 +186,19 @@ class CoreModule(
 
   @Provides
   def getEventDispathcers(
-    balanceEventDispatcher: EventDispatcher[AddressBalanceUpdated],
-    ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
-    orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
-    cutoffEventDispatcher: EventDispatcher[CutoffEvent],
-    transferEventDispatcher: EventDispatcher[TransferEvent],
-    allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
-    ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
-    ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
-    blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
-    tokenBurnRateChangedEventDispatcher: EventDispatcher[TokenBurnRateChangedEvent]): Seq[EventDispatcher[_]] =
+      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdated],
+      ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
+      orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
+      cutoffEventDispatcher: EventDispatcher[CutoffEvent],
+      transferEventDispatcher: EventDispatcher[TransferEvent],
+      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
+      ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
+      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
+      blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
+      tokenBurnRateChangedEventDispatcher: EventDispatcher[
+        TokenBurnRateChangedEvent
+      ]
+    ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
       ringMinedEventDispatcher,
@@ -205,7 +209,8 @@ class CoreModule(
       ordersCancelledEventDispatcher,
       ohlcRawDataEventDispatcher,
       blockGasPricesDispatcher,
-      tokenBurnRateChangedEventDispatcher)
+      tokenBurnRateChangedEventDispatcher
+    )
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

@@ -19,6 +19,9 @@ package io.lightcone.core
 import org.slf4s.Logging
 import scala.collection.SortedMap
 
+// Owner: dongw
+
+// This class is not thread-safe
 class ChainReorganizationManagerImpl(
   val maxDepth: Int = 100,
   val strictMode: Boolean = false)
@@ -29,15 +32,20 @@ class ChainReorganizationManagerImpl(
 
   class BlockTrackingData() {
     var orders = Map.empty[String, OrderStatus]
-    var accounts = Map.empty[String, String]
+    var accounts = Map.empty[String, Seq[String]]
 
     def recordOrderUpdate(
       orderId: String,
-      orderStatus: OrderStatus) = ???
+      orderStatus: OrderStatus) = {
+      orders += orderId -> orderStatus
+    }
 
     def recordAccountUpdate(
       address: String,
-      token: String) = ???
+      token: String) = accounts.get(address) match {
+      case Some(tokens) => accounts += address -> (token +: tokens)
+      case None => accounts += address -> Seq(token)
+    }
   }
 
   private var blocks = SortedMap.empty[Long, BlockTrackingData]
@@ -95,7 +103,6 @@ class ChainReorganizationManagerImpl(
         s"record for a previous block $blockIdx vs $lastKnownBlock (last known block)")
       call
     }
-
   }
 
   private def getBlockTrackingData(blockIdx: Long) =
