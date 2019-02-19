@@ -21,6 +21,7 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum.event.OrderSubmittedOnChainEvent
 import io.lightcone.lib._
 import org.web3j.utils.Numeric
 
@@ -30,27 +31,30 @@ class OnchainOrderExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val config: Config)
-    extends EventExtractor[RawOrder] {
+    extends EventExtractor[OrderSubmittedOnChainEvent] {
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
-  def extract(block: RawBlockData): Future[Seq[RawOrder]] = Future {
-    block.receipts.flatMap { receipt =>
-      if (receipt.contractAddress.equalsIgnoreCase(ringSubmitterAddress)) {
-        receipt.logs.map { log =>
-          loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-            case Some(event: OrderSubmittedEvent.Result) =>
-              Some(extractOrderFromEvent(event))
-            case _ =>
-              None
-          }
-        }.filter(_.nonEmpty).map(_.get)
-      } else {
-        Seq.empty
+  def extract(block: RawBlockData): Future[Seq[OrderSubmittedOnChainEvent]] =
+    Future {
+      block.receipts.flatMap { receipt =>
+        if (receipt.contractAddress.equalsIgnoreCase(ringSubmitterAddress)) {
+          receipt.logs.map { log =>
+            loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+              case Some(event: OrderSubmittedEvent.Result) =>
+                Some(
+                  OrderSubmittedOnChainEvent(Some(extractOrderFromEvent(event)))
+                )
+              case _ =>
+                None
+            }
+          }.filter(_.nonEmpty).map(_.get)
+        } else {
+          Seq.empty
+        }
       }
     }
-  }
 
   private def extractOrderFromEvent(
       event: OrderSubmittedEvent.Result

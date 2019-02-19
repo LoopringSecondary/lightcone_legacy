@@ -19,7 +19,7 @@ package io.lightcone.relayer.event
 import com.typesafe.config.ConfigFactory
 import io.lightcone.lib._
 import io.lightcone.ethereum._
-import io.lightcone.relayer.data._
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.support._
 
@@ -150,13 +150,13 @@ class BasicEventExtractorSpec
         .filter(_.header.get.txStatus.isTxStatusSuccess)
         .flatMap(transfer => {
           Seq(
-            AddressBalanceUpdated(transfer.from, transfer.token),
-            AddressBalanceUpdated(transfer.to, transfer.token)
+            AddressBalanceUpdatedEvent(transfer.from, transfer.token),
+            AddressBalanceUpdatedEvent(transfer.to, transfer.token)
           )
         }) ++ blockData.txs.map(
-        tx => AddressBalanceUpdated(tx.from, Address.ZERO.toString())
+        tx => AddressBalanceUpdatedEvent(tx.from, Address.ZERO.toString())
       ) ++ blockData.uncles.+:(blockData.miner).map { miner =>
-        AddressBalanceUpdated(miner, Address.ZERO.toString())
+        AddressBalanceUpdatedEvent(miner, Address.ZERO.toString())
       }).distinct.filterNot(ba => Address(ba.address).equals(weth))
       (balances.size == transferBalances.size) should be(true)
 

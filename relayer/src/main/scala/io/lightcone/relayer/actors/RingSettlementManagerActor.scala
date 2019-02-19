@@ -19,6 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor.{Address => _, _}
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.persistence._
@@ -106,7 +107,7 @@ class RingSettlementManagerActor(
         )
       }
 
-    case ba: AddressBalanceUpdated =>
+    case ba: AddressBalanceUpdatedEvent =>
       if (Address(ba.token).isZero) {
         val balance = BigInt(ba.balance.toByteArray)
         if (balance > miniMinerBalance && invalidRingSettlementActors.contains(

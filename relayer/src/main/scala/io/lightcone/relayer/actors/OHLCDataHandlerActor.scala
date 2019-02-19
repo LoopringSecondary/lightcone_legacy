@@ -19,6 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
@@ -58,7 +59,7 @@ class OHLCDataHandlerActor(
   val selfConfig = config.getConfig(OHLCDataHandlerActor.name)
 
   def ready: Receive = {
-    case data: OHLCRawData =>
+    case data: OHLCRawDataEvent =>
       (for {
         saveRes <- dbModule.ohlcDataDal.saveData(data)
       } yield {

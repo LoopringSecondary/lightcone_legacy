@@ -18,9 +18,10 @@ package io.lightcone.relayer.ethereum.event
 
 import com.google.inject.Inject
 import io.lightcone.ethereum.abi._
-import io.lightcone.relayer.data.{TransferEvent => PTransferEvent, _}
+import io.lightcone.ethereum.event.{TransferEvent => PTransferEvent}
 import io.lightcone.core._
 import io.lightcone.lib._
+import io.lightcone.relayer.data._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._

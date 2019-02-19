@@ -25,7 +25,8 @@ import akka.util.Timeout
 import io.lightcone.relayer.base._
 import io.lightcone.core._
 import io.lightcone.lib._
-import io.lightcone.relayer.data.{TransferEvent => _, _}
+import io.lightcone.ethereum.event.{TransferEvent => _, _}
+import io.lightcone.relayer.data._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -36,47 +37,50 @@ class BalanceChangedAddressExtractor @Inject()(
     actors: Lookup[ActorRef],
     timeout: Timeout,
     val ec: ExecutionContext)
-    extends EventExtractor[AddressBalanceUpdated] {
+    extends EventExtractor[AddressBalanceUpdatedEvent] {
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  def extract(block: RawBlockData): Future[Seq[AddressBalanceUpdated]] = {
-    val balanceAddresses = ListBuffer.empty[AddressBalanceUpdated]
+  def extract(block: RawBlockData): Future[Seq[AddressBalanceUpdatedEvent]] = {
+    val balanceAddresses = ListBuffer.empty[AddressBalanceUpdatedEvent]
     (block.txs zip block.receipts).foreach {
       case (tx, receipt) =>
         balanceAddresses.append(
-          AddressBalanceUpdated(tx.from, Address.ZERO.toString())
+          AddressBalanceUpdatedEvent(tx.from, Address.ZERO.toString())
         )
         if (isSucceed(receipt.status) &&
             NumericConversion.toBigInt(tx.value) > 0) {
           balanceAddresses.append(
-            AddressBalanceUpdated(tx.to, Address.ZERO.toString())
+            AddressBalanceUpdatedEvent(tx.to, Address.ZERO.toString())
           )
         }
         receipt.logs.foreach(log => {
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) =>
               balanceAddresses.append(
-                AddressBalanceUpdated(transfer.from, log.address),
-                AddressBalanceUpdated(transfer.receiver, log.address)
+                AddressBalanceUpdatedEvent(transfer.from, log.address),
+                AddressBalanceUpdatedEvent(transfer.receiver, log.address)
               )
             case Some(deposit: DepositEvent.Result) =>
               balanceAddresses.append(
-                AddressBalanceUpdated(deposit.dst, log.address)
+                AddressBalanceUpdatedEvent(deposit.dst, log.address)
               )
             case Some(withdrawal: WithdrawalEvent.Result) =>
               balanceAddresses.append(
-                AddressBalanceUpdated(withdrawal.src, log.address)
+                AddressBalanceUpdatedEvent(withdrawal.src, log.address)
               )
             case _ =>
           }
         })
     }
-    val miners: Seq[AddressBalanceUpdated] = block.uncles
+    val miners: Seq[AddressBalanceUpdatedEvent] = block.uncles
       .+:(block.miner)
       .map(
         addr =>
-          AddressBalanceUpdated(address = addr, token = Address.ZERO.toString())
+          AddressBalanceUpdatedEvent(
+            address = addr,
+            token = Address.ZERO.toString()
+          )
       )
     val distEvents = (balanceAddresses ++ miners).distinct
     val (ethAddress, tokenAddresses) =
@@ -112,7 +116,7 @@ class BalanceChangedAddressExtractor @Inject()(
       ) ++
         (ethAddress zip ethBalances).map(
           item =>
-            AddressBalanceUpdated(
+            AddressBalanceUpdatedEvent(
               address = Address.normalize(item._1.address),
               token = Address.normalize(item._1.token),
               balance = item._2
