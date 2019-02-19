@@ -39,17 +39,22 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
   }
 
   def dispatch(evt: AnyRef) = {
-    val (found, notFound) = targets
-      .getOrElse(evt.getClass, Set.empty)
-      .partition(actors.contains)
+    targets.get(evt.getClass) match {
+      case None =>
+        log.error(
+          s"unable to dispatch message of type: ${evt.getClass.getName}"
+        )
 
-    if (notFound.size > 0) {
-      log.error(
-        s"unable to dispatch message to actor with the following names: $notFound"
-      )
+      case Some(names) =>
+        val (found, notFound) = names.partition(actors.contains)
+        if (notFound.size > 0) {
+          log.error(
+            s"unable to dispatch message to actor with the following names: $notFound"
+          )
+        }
+
+        found.map(actors.get).foreach(_ ! evt)
     }
-
-    found.map(actors.get).foreach(_ ! evt)
   }
 
 }
