@@ -79,11 +79,11 @@ message AddressAllowanceUpdatedEvent {
     bytes allowance = 3;
 }
 
-message GasPriceUpdated {
+message GasPriceUpdatedEvent {
     int64 gas_price = 1;
 }
 
-message BlockGasPrices {
+message BlockGasPricesExtractedEvent {
     int64 height = 1;
     repeated int64 gas_prices = 2;
 }
@@ -99,7 +99,7 @@ message OHLCRawDataEvent {
     double     price          = 8;
 }
 
-message RawOrderEvent {
+message OrderSubmittedOnChainEvent {
     io.lightcone.core.RawOrder raw_order = 1;
 }
 
@@ -156,7 +156,7 @@ message CutoffEvent {
     int64  cutoff       = 5; // in seconds.
 }
 
-message OrdersCancelledEvent {
+message OrdersCancelledOnChainEvent {
     EventHeader header = 1;
     string owner  = 2;
     string broker = 3;

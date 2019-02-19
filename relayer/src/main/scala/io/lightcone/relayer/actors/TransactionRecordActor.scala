@@ -52,7 +52,7 @@ object TransactionRecordActor extends DeployedAsShardedByAddress {
   val extractShardingObject: PartialFunction[Any, String] = {
     case req: TransferEvent                 => req.owner
     case req: CutoffEvent                   => req.owner
-    case req: OrdersCancelledEvent          => req.owner
+    case req: OrdersCancelledOnChainEvent   => req.owner
     case req: OrderFilledEvent              => req.owner
     case req: GetTransactionRecords.Req     => req.owner
     case req: GetTransactionRecordCount.Req => req.owner
@@ -111,7 +111,7 @@ class TransactionRecordActor(
       )
       txRecordDal.saveRecord(record)
 
-    case req: OrdersCancelledEvent =>
+    case req: OrdersCancelledOnChainEvent =>
       val header = req.header.get
       val record = TransactionRecord(
         header = req.header,

@@ -89,9 +89,9 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[OrdersCancelledEvent],
+      extractor: EventExtractor[OrdersCancelledOnChainEvent],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[OrdersCancelledEvent](
+      extends NameBasedEventDispatcher[OrdersCancelledOnChainEvent](
         names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name),
         actors
       )
@@ -133,9 +133,9 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[BlockGasPrices],
+      extractor: EventExtractor[BlockGasPricesExtractedEvent],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[BlockGasPrices](
+      extends NameBasedEventDispatcher[BlockGasPricesExtractedEvent](
         names = Seq(GasPriceActor.name),
         actors
       )

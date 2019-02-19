@@ -331,7 +331,7 @@ class AccountManagerAltActor(
       count.refine("label" -> "broker_cutoff").increment()
       log.warning(s"not support this event yet: $req")
 
-    case req: OrdersCancelledEvent
+    case req: OrdersCancelledOnChainEvent
         if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
       count.refine("label" -> "order_cancel").increment()
       for {

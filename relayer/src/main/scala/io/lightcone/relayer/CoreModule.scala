@@ -124,19 +124,20 @@ class CoreModule(
     bind[EventExtractor[AddressBalanceUpdatedEvent]]
       .to[BalanceChangedAddressExtractor]
 
-    bind[EventExtractor[OrdersCancelledEvent]]
+    bind[EventExtractor[OrdersCancelledOnChainEvent]]
       .to[OrdersCancelledEventExtractor]
 
     bind[EventExtractor[TokenBurnRateChangedEvent]]
       .to[TokenBurnRateEventExtractor]
 
     bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
-    bind[EventExtractor[RawOrderEvent]].to[OnchainOrderExtractor]
+    bind[EventExtractor[OrderSubmittedOnChainEvent]].to[OnchainOrderExtractor]
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
     bind[EventExtractor[OHLCRawDataEvent]].to[OHLCRawDataExtractor]
-    bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
+    bind[EventExtractor[BlockGasPricesExtractedEvent]]
+      .to[BlockGasPriceExtractor]
 
     // --- bind event dispatchers ---------------------
     bind[EventDispatcher[AddressAllowanceUpdatedEvent]]
@@ -145,7 +146,7 @@ class CoreModule(
     bind[EventDispatcher[AddressBalanceUpdatedEvent]]
       .to[BalanceEventDispatcher]
 
-    bind[EventDispatcher[OrdersCancelledEvent]]
+    bind[EventDispatcher[OrdersCancelledOnChainEvent]]
       .to[OrdersCancelledEventDispatcher]
 
     bind[EventDispatcher[OrderFilledEvent]]
@@ -158,7 +159,8 @@ class CoreModule(
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
     bind[EventDispatcher[OHLCRawDataEvent]].to[OHLCRawDataEventDispatcher]
-    bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
+    bind[EventDispatcher[BlockGasPricesExtractedEvent]]
+      .to[BlockGasPricesDispatcher]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -180,9 +182,11 @@ class CoreModule(
       cutoffEventDispatcher: EventDispatcher[CutoffEvent],
       transferEventDispatcher: EventDispatcher[TransferEvent],
       allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdatedEvent],
-      ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
+      ordersCancelledEventDispatcher: EventDispatcher[
+        OrdersCancelledOnChainEvent
+      ],
       ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawDataEvent],
-      blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
+      blockGasPricesDispatcher: EventDispatcher[BlockGasPricesExtractedEvent],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
       ]
