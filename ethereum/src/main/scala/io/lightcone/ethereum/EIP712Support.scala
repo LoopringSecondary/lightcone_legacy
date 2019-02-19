@@ -21,6 +21,10 @@ import org.json4s.native.JsonMethods._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.Hash
 import io.lightcone.core._
+import org.web3j.abi.TypeEncoder
+import org.web3j.abi.datatypes.{Address => Web3jAddress, Uint, Int}
+import org.web3j.abi.datatypes.generated.Bytes32
+import org.web3j.utils.Numeric
 
 trait EIP712Support {
   def getEIP712Message(typedDataJson: String): Either[ErrorCode, String]
@@ -89,16 +93,17 @@ class DefaultEIP712Support extends EIP712Support {
     // val eipObj = json.extract[EIP712TypedData]
     // println(s"eipObj: $eipObj")
 
-    val domain = json \ "domain"
-    val types = json \ "types"
+    val domain = (json \ "domain").asInstanceOf[JObject]
+    val types = (json \ "types").asInstanceOf[JObject]
 
-    val typesObject = types.extract[TypeDefinitions]
-    println(s"typesObject: $typesObject")
+    // val typesObject = types.extract[TypeDefinitions]
+    // println(s"typesObject: $typesObject")
 
     val eip712DomainType = types \ "EIP712Domain"
 
-    val domainTypeObject = eip712DomainType.extract[SingleTypeDefinition]
-    println(s"domainTypeObject: $domainTypeObject")
+    // val domainTypeObject = eip712DomainType.extract[SingleTypeDefinition]
+    // println(s"domainTypeObject: $domainTypeObject")
+    // println(s"domainTypeObject size: ${domainTypeObject.typeItems.size}")
 
     val primaryTypeObj = (json \ "primaryType")
     val primaryTypeName = primaryTypeObj.asInstanceOf[JString].values
@@ -107,7 +112,7 @@ class DefaultEIP712Support extends EIP712Support {
     if (isJString(primaryTypeObj) && isJArray(eip712DomainType) && isJArray(
           primaryType
         )) {
-      val message = json \ "message"
+      val message = (json \ "message").asInstanceOf[JObject]
       val domainHash =
         hashStruct(eip712DomainType.asInstanceOf[JArray], domain, types)
       val typesHash =
@@ -128,8 +133,8 @@ class DefaultEIP712Support extends EIP712Support {
 
   private def hashStruct(
       dataTypeArray: JArray,
-      data: JValue,
-      types: JValue
+      data: JObject,
+      types: JObject
     ): String = {
     val encodedString = encodeData(dataTypeArray, data, types)
     Numeric.toHexString(Hash.sha3(encodedString.getBytes))
@@ -137,40 +142,77 @@ class DefaultEIP712Support extends EIP712Support {
 
   private def encodeData(
       dataTypeArray: JArray,
-      data: JValue,
-      types: JValue
+      data: JObject,
+      types: JObject
     ): String = {
+    // println(s"types: $types")
+
     var encodedTypes = List[String]("Bytes32")
     val dataTypeHashBytes = hashType(dataTypeArray, types)
-    var encodedValues = List[Array[Byte]](dataTypeHashBytes)
+    var encodedValues = List[String](Numeric.toHexString(dataTypeHashBytes))
 
-    val topTypeDefs = types.values
     val typeItems = dataTypeArray.values
+    val topTypeDefs = types.values
     val valuesMap = data.values
     println(s"topTypeDefs: $topTypeDefs")
     println(s"typeItems: $typeItems")
 
-    // typeItems.foreach(typeItem => {
-    //   val typeItemName = typeItem("name")
-    //   val typeItemType = typeItem("type").asInstanceOf[JString].values
-    //   valuesMap.get(typeItemName) match {
-    //     case Some(value) =>
-    //       typeItemType match {
-    //         case "string" | "bytes" =>
-    //           encodedTypes = "bytes32" :: encodedTypes
-    //           val valueHash = Hash.sha3(value.asInstanceOf[String].getBytes)
-    //           encodedValues = valueHash :: encodedValues
-    //         case structType if (topTypeDefs.contains(typeItemType)) =>
-    //           encodedTypes = "bytes32" :: encodedTypes
-    //           val itemTypeArray = topTypeDefs(typeItemType).asInstanceOf[JArray]
+    typeItems.foreach(typeItem => {
+      val itemMap = typeItem.asInstanceOf[Map[String, String]]
+      println(s"typeItem: $typeItem")
+      println(s"itemMap: $itemMap")
+      val typeItemName = itemMap("name")
+      val typeItemType = itemMap("type")
+      valuesMap.get(typeItemName) match {
+        case Some(value) =>
+          val stringValue = value match {
+            case js: JString => js.values
+            case _           => "0x0"
+          }
 
-    //           val typeValueEncoded = encodeData()
-    //       }
-    //     case None => // doNothing.
-    //   }
-    // })
+          typeItemType match {
+            case "string" | "bytes" =>
+              val valueHash =
+                Numeric.toHexString(Hash.sha3(stringValue.getBytes))
+              encodedValues = valueHash :: encodedValues
+            case bytesn if (bytesn.startsWith("bytes")) =>
+              val bytesData = new Bytes32(stringValue.getBytes)
+              val encodedValue = TypeEncoder.encode(bytesData)
+              encodedValues = encodedValue :: encodedValues
+            case arrayType if (arrayType.endsWith("]")) =>
+              throw new IllegalArgumentException(
+                "array type not supported yet."
+              )
+            case uintType
+                if (uintType.startsWith("uint") || "bool" == uintType) =>
+              val bigIntValue = Numeric.toBigInt(stringValue)
+              val uintData = new Uint(bigIntValue)
+              val encodedValue = TypeEncoder.encode(uintData)
+              encodedValues = encodedValue :: encodedValues
+            case intType if (intType.startsWith("int")) =>
+              val bigIntValue = Numeric.toBigInt(stringValue)
+              val intData = new Int(bigIntValue)
+              val encodedValue = TypeEncoder.encode(intData)
+              encodedValues = encodedValue :: encodedValues
+            case "address" =>
+              val addressData = new Web3jAddress(stringValue)
+              encodedValues = TypeEncoder.encode(addressData) :: encodedValues
+            case structType if (topTypeDefs.contains(structType)) =>
+              encodedTypes = "bytes32" :: encodedTypes
+              val itemTypeArray = topTypeDefs(structType).asInstanceOf[JArray]
+              val jValue = value.asInstanceOf[JObject]
+              val typeValueEncoded = encodeData(itemTypeArray, jValue, types)
+              encodedValues = typeValueEncoded :: encodedValues
+            case _ =>
+              throw new IllegalArgumentException(
+                "unsupport solidity data type: " + typeItemType
+              )
+          }
+        case None => // doNothing.
+      }
+    })
 
-    ""
+    encodedValues.reverse.mkString
   }
 
   private def hashType(
