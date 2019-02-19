@@ -172,6 +172,10 @@ class CoreModule(
       .asEagerSingleton
     bind[SocketIONotifier[SubscribeOrder]].to[OrderNotifier].asEagerSingleton
     bind[SocketIONotifier[SubscribeTrade]].to[TradeNotifier].asEagerSingleton
+    bind[SocketIONotifier[SubscribeTicker]].to[TickerNotifier].asEagerSingleton
+    bind[SocketIONotifier[SubscribeOrderBook]]
+      .to[OrderBookNotifier]
+      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))

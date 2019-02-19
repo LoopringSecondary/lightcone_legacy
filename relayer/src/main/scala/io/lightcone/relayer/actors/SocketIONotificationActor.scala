@@ -39,6 +39,8 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       transactionNotifier: SocketIONotifier[SubscribeTransaction],
       orderNotifier: SocketIONotifier[SubscribeOrder],
       tradeNotifier: SocketIONotifier[SubscribeTrade],
+      tickerNotifier: SocketIONotifier[SubscribeTicker],
+      orderBook: SocketIONotifier[SubscribeOrderBook],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))

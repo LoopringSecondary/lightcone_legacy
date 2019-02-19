@@ -16,36 +16,43 @@
 
 package io.lightcone.relayer.socketio.notifiers
 
-import com.corundumstudio.socketio._
+import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
 import io.lightcone.lib.Address
-import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.socketio.{
+  SocketIONotifier,
+  SocketIOSubscriber,
+  SubscribeTicker,
+  TickerResponse
+}
 
-class BalanceNotifier @Inject()
-    extends SocketIONotifier[SubscribeBalanceAndAllowance] {
-
-  val eventName = "balances"
+class TickerNotifier @Inject() extends SocketIONotifier[SubscribeTicker] {
+  val eventName = "tickers"
 
   def wrapClient(
       client: SocketIOClient,
-      req: SubscribeBalanceAndAllowance
-    ) =
-    new SocketIOSubscriber(
+      subscription: SubscribeTicker
+    ): SocketIOSubscriber[SubscribeTicker] =
+    new SocketIOSubscriber[SubscribeTicker](
       client,
-      req.copy(
-        addresses = req.addresses.map(Address.normalize),
-        tokens = req.tokens.map(Address.normalize)
+      subscription.copy(
+        market = subscription.market.copy(
+          baseToken = Address.normalize(subscription.market.baseToken),
+          quoteToken = Address.normalize(subscription.market.quoteToken)
+        )
       )
     )
 
   def shouldNotifyClient(
-      request: SubscribeBalanceAndAllowance,
+      subscription: SubscribeTicker,
       event: AnyRef
-    ): Boolean =
+    ): Boolean = {
     event match {
-      case e: BalanceAndAllowanceResponse =>
-        request.addresses.contains(e.owner) && (request.tokens.isEmpty || request.tokens
-          .contains(e.balanceAndAllowance.address))
+      case ticker: TickerResponse =>
+        subscription.market == ticker.market
       case _ => false
+
     }
+  }
+
 }

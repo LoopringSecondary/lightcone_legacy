@@ -38,6 +38,12 @@ package object socketio {
       addresses: Seq[String],
       market: Market = null)
 
+  case class SubscribeTicker(market: Market = null)
+
+  case class SubscribeOrderBook(
+      level: Int,
+      market: Market)
+
   case class TokenBalanceAndAllowance(
       address: String,
       balance: String,
@@ -114,5 +120,31 @@ package object socketio {
       blockNum: String,
       txHash: String,
       miner: String)
+  case class Ticker(
+      high: Double,
+      low: Double,
+      last: Double,
+      vol: Double,
+      amount: Double,
+      buy: Double,
+      sell: Double,
+      change: Double)
+  case class TickerResponse(
+      market: Market,
+      ticker: Ticker)
+
+  case class OrderBookItem(
+      amount: Double,
+      price: Double,
+      total: Double)
+  case class OrderBook(
+      lastPrice: Double,
+      buys: Seq[OrderBookItem],
+      sells: Seq[OrderBookItem])
+
+  case class OrderBookResponse(
+      market: Market,
+      level: Int,
+      orderBook: OrderBook)
 
 }

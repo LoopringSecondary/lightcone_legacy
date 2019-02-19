@@ -28,7 +28,9 @@ class SocketServer(
     val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
     val transactionNotifier: SocketIONotifier[SubscribeTransaction],
     val orderNotifier: SocketIONotifier[SubscribeOrder],
-    val tradeNotifier: SocketIONotifier[SubscribeTrade]) {
+    val tradeNotifier: SocketIONotifier[SubscribeTrade],
+    val tickerNotifier: SocketIONotifier[SubscribeTicker],
+    val orderBookNotifier: SocketIONotifier[SubscribeOrderBook]) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
@@ -60,6 +62,18 @@ class SocketServer(
     tradeNotifier.eventName,
     classOf[SubscribeTrade],
     tradeNotifier
+  )
+
+  server.addEventListener(
+    tickerNotifier.eventName,
+    classOf[SubscribeTicker],
+    tickerNotifier
+  )
+
+  server.addEventListener(
+    orderBookNotifier.eventName,
+    classOf[SubscribeOrderBook],
+    orderBookNotifier
   )
   // def addNotifier()
 
