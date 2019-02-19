@@ -41,7 +41,7 @@ trait EthereumEventExtractorSupport
 
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
-  implicit val extractors: Seq[EventExtractor] = Seq(
+  implicit val eventExtractor: EventExtractor = new EventExtractorCompose(
     new BalanceAndAllowanceChangedExtractor(),
     new BlockGasPriceExtractor(),
     new CutoffEventExtractor(),
@@ -50,7 +50,6 @@ trait EthereumEventExtractorSupport
     new RingMinedEventExtractor(),
     new TokenBurnRateEventExtractor()
   )
-  implicit val eventExtractor: EventExtractor = new EventExtractorCompose()
 
   implicit val eventDispatcher: EventDispatcher =
     new EventDispatcherImpl(actors)
