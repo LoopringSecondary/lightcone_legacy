@@ -17,28 +17,26 @@
 package io.lightcone.relayer.ethereum
 
 import akka.actor.ActorRef
+import io.lightcone.relayer.base._
 
-trait EventDispatcher[T] {
-
-  def register(
-      cls: Class[_],
-      t: T*
-    )
-  def dispatch(evt: scalapb.GeneratedMessage)
+trait EventDispatcher {
+  def dispatch(evt: AnyRef)
 }
 
-class EventDispatcherActorImpl extends EventDispatcher[ActorRef] {
-  var targets = Map.empty[Class[_], Seq[ActorRef]]
+class EventDispatcherActorImpl(actors: Lookup[ActorRef])
+    extends EventDispatcher {
+  var targets = Map.empty[Class[_], Set[String]]
 
   def register(
       cls: Class[_],
-      t: ActorRef*
+      actorNames: String*
     ) = {
-    targets = targets + (cls -> (targets.getOrElse(cls, Seq.empty[ActorRef]) ++ t))
+    targets = targets + (cls -> (targets.getOrElse(cls, Set.empty[String]) ++ actorNames.toSet))
+    this
   }
 
-  def dispatch(evt: scalapb.GeneratedMessage) = {
-    targets.getOrElse(evt.getClass, Seq.empty).foreach(_ ! evt)
+  def dispatch(evt: AnyRef) = {
+    targets.getOrElse(evt.getClass, Set.empty).map(actors.get).foreach(_ ! evt)
   }
 
 }

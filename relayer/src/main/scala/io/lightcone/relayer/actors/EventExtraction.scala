@@ -24,7 +24,7 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
-import io.lightcone.relayer.ethereum.event.EventExtractorCompose
+import io.lightcone.relayer.ethereum.event._
 import org.web3j.utils.Numeric
 
 import scala.concurrent.Future
@@ -35,8 +35,8 @@ trait EventExtraction {
   me: InitializationRetryActor =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
-  implicit val eventExtractorCompose: EventExtractorCompose
-  implicit val eventDispatcher: EventDispatcher[ActorRef]
+  implicit val eventExtractor: EventExtractor
+  implicit val eventDispatcher: EventDispatcher
 
   implicit val dbModule: DatabaseModule
   var blockData: RawBlockData = _
@@ -131,7 +131,7 @@ trait EventExtraction {
 
   def processEvents: Future[Unit] = {
     for {
-      events <- eventExtractorCompose.extract(blockData)
+      events <- eventExtractor.extractBlock(blockData)
       _ = events.foreach(eventDispatcher.dispatch)
       _ <- dbModule.blockService.saveBlock(
         BlockData(

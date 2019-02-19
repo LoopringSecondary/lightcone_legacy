@@ -20,7 +20,7 @@ import io.lightcone.ethereum.{RawOrderValidator, RawOrderValidatorImpl}
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum.event._
-import io.lightcone.relayer.ethereum.EventDispatcherActorImpl
+import io.lightcone.relayer.ethereum._
 
 trait EthereumEventExtractorSupport
     extends DatabaseModuleSupport
@@ -50,62 +50,55 @@ trait EthereumEventExtractorSupport
     new RingMinedEventExtractor(),
     new TokenBurnRateEventExtractor()
   )
-  implicit val eventExtractorCompose = new EventExtractorCompose()
+  implicit val eventExtractor: EventExtractor = new EventExtractorCompose()
 
-  implicit val eventDispatcher = new EventDispatcherActorImpl()
-
-  eventDispatcher.register(
-    RingMinedEvent().getClass,
-    actors.get(MarketManagerActor.name),
-    actors.get(RingAndTradePersistenceActor.name)
-  )
-
-  eventDispatcher.register(
-    CutoffEvent().getClass,
-    actors.get(TransactionRecordActor.name),
-    actors.get(MultiAccountManagerActor.name)
-  )
-
-  eventDispatcher.register(
-    OrderFilledEvent().getClass,
-    actors.get(TransactionRecordActor.name),
-    actors.get(MultiAccountManagerActor.name)
-  )
-
-  eventDispatcher.register(
-    OrdersCancelledOnChainEvent().getClass,
-    actors.get(TransactionRecordActor.name),
-    actors.get(MultiAccountManagerActor.name)
-  )
-
-  eventDispatcher.register(
-    TokenBurnRateChangedEvent().getClass,
-    actors.get(MetadataManagerActor.name)
-  )
-
-  eventDispatcher.register(
-    TransferEvent().getClass,
-    actors.get(TransactionRecordActor.name)
-  )
-
-  eventDispatcher.register(
-    OHLCRawDataEvent().getClass,
-    actors.get(OHLCDataHandlerActor.name)
-  )
-
-  eventDispatcher.register(
-    BlockGasPricesExtractedEvent().getClass,
-    actors.get(GasPriceActor.name)
-  )
-  eventDispatcher.register(
-    AddressAllowanceUpdatedEvent().getClass,
-    actors.get(MultiAccountManagerActor.name)
-  )
-  eventDispatcher.register(
-    AddressBalanceUpdatedEvent().getClass,
-    actors.get(MultiAccountManagerActor.name),
-    actors.get(RingSettlementManagerActor.name)
-  )
+  implicit val eventDispatcher: EventDispatcher =
+    new EventDispatcherActorImpl(actors)
+      .register(
+        classOf[RingMinedEvent],
+        MarketManagerActor.name,
+        RingAndTradePersistenceActor.name
+      )
+      .register(
+        classOf[CutoffEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[OrderFilledEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[OrdersCancelledOnChainEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[TokenBurnRateChangedEvent], //
+        MetadataManagerActor.name
+      )
+      .register(
+        classOf[TransferEvent], //
+        TransactionRecordActor.name
+      )
+      .register(
+        classOf[OHLCRawDataEvent], //
+        OHLCDataHandlerActor.name
+      )
+      .register(
+        classOf[BlockGasPricesExtractedEvent], //
+        GasPriceActor.name
+      )
+      .register(
+        classOf[AddressAllowanceUpdatedEvent],
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[AddressBalanceUpdatedEvent],
+        MultiAccountManagerActor.name,
+        RingSettlementManagerActor.name
+      )
 
   actors.add(
     EthereumEventExtractorActor.name,

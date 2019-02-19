@@ -21,7 +21,6 @@ import com.google.inject.Inject
 import io.lightcone.lib._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
-import scalapb.GeneratedMessage
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,13 +28,13 @@ class BlockGasPriceExtractor @Inject()(
     implicit
     val timeout: Timeout,
     val ec: ExecutionContext)
-    extends EventExtractor {
+    extends AbstractEventExtractor {
 
   def extractTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
-    ): Future[Seq[GeneratedMessage]] = Future {
+    ): Future[Seq[AnyRef]] = Future {
     Seq.empty
   }
 

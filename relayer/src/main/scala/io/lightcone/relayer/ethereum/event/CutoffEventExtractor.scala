@@ -23,7 +23,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.event._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
-import scalapb.GeneratedMessage
 
 import scala.concurrent._
 
@@ -31,7 +30,7 @@ class CutoffEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val config: Config)
-    extends EventExtractor {
+    extends AbstractEventExtractor {
 
   val orderCancelAddress = Address(
     config.getString("loopring_protocol.order-cancel-address")
@@ -41,7 +40,7 @@ class CutoffEventExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
-    ): Future[Seq[GeneratedMessage]] = Future {
+    ): Future[Seq[AnyRef]] = Future {
     if (!tx.to.equalsIgnoreCase(orderCancelAddress)) {
       Seq.empty
     } else {

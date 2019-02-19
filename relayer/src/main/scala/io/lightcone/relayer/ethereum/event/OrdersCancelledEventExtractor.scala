@@ -25,15 +25,13 @@ import io.lightcone.ethereum.event.{
   OrdersCancelledOnChainEvent => POrdersCancelledEvent
 }
 import io.lightcone.relayer.data._
-import scalapb.GeneratedMessage
-
 import scala.concurrent._
 
 class OrdersCancelledEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     config: Config)
-    extends EventExtractor {
+    extends AbstractEventExtractor {
 
   val orderCancelAddress = Address(
     config.getString("loopring_protocol.order-cancel-address")
@@ -43,7 +41,7 @@ class OrdersCancelledEventExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
-    ): Future[Seq[GeneratedMessage]] = Future {
+    ): Future[Seq[AnyRef]] = Future {
     if (!tx.to.equalsIgnoreCase(orderCancelAddress)) {
       Seq.empty
     } else {

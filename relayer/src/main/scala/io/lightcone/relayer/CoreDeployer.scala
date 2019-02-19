@@ -34,7 +34,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
-import io.lightcone.relayer.ethereum.event.EventExtractorCompose
+import io.lightcone.relayer.ethereum.event._
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -61,8 +61,8 @@ class CoreDeployer @Inject()(
     timeProvider: TimeProvider,
     timeout: Timeout,
     tve: TokenValueEvaluator,
-    eventDispatcher: EventDispatcher[ActorRef],
-    eventExtractorCompose: EventExtractorCompose,
+    eventDispatcher: EventDispatcher,
+    eventExtractor: EventExtractor,
     system: ActorSystem)
     extends Object
     with Logging {
@@ -70,61 +70,59 @@ class CoreDeployer @Inject()(
   def deploy(): Unit = {
 
     //-----------deploy local actors-----------
-    actors.add(BadMessageListener.name, BadMessageListener.start)
-
-    actors.add(
-      MultiAccountManagerMessageValidator.name,
-      MessageValidationActor(
-        new MultiAccountManagerMessageValidator(),
-        MultiAccountManagerActor.name,
-        MultiAccountManagerMessageValidator.name
+    actors
+      .add(
+        BadMessageListener.name, //
+        BadMessageListener.start
       )
-    )
-
-    actors.add(
-      DatabaseQueryMessageValidator.name,
-      MessageValidationActor(
-        new DatabaseQueryMessageValidator(),
-        DatabaseQueryActor.name,
-        DatabaseQueryMessageValidator.name
+      .add(
+        MultiAccountManagerMessageValidator.name,
+        MessageValidationActor(
+          new MultiAccountManagerMessageValidator(),
+          MultiAccountManagerActor.name,
+          MultiAccountManagerMessageValidator.name
+        )
       )
-    )
-
-    actors.add(
-      EthereumQueryMessageValidator.name,
-      MessageValidationActor(
-        new EthereumQueryMessageValidator(),
-        EthereumQueryActor.name,
-        EthereumQueryMessageValidator.name
+      .add(
+        DatabaseQueryMessageValidator.name,
+        MessageValidationActor(
+          new DatabaseQueryMessageValidator(),
+          DatabaseQueryActor.name,
+          DatabaseQueryMessageValidator.name
+        )
       )
-    )
-
-    actors.add(
-      OrderbookManagerMessageValidator.name,
-      MessageValidationActor(
-        new OrderbookManagerMessageValidator(),
-        OrderbookManagerActor.name,
-        OrderbookManagerMessageValidator.name
+      .add(
+        EthereumQueryMessageValidator.name,
+        MessageValidationActor(
+          new EthereumQueryMessageValidator(),
+          EthereumQueryActor.name,
+          EthereumQueryMessageValidator.name
+        )
       )
-    )
-
-    actors.add(
-      TransactionRecordMessageValidator.name,
-      MessageValidationActor(
-        new TransactionRecordMessageValidator(),
-        TransactionRecordActor.name,
-        TransactionRecordMessageValidator.name
+      .add(
+        OrderbookManagerMessageValidator.name,
+        MessageValidationActor(
+          new OrderbookManagerMessageValidator(),
+          OrderbookManagerActor.name,
+          OrderbookManagerMessageValidator.name
+        )
       )
-    )
-
-    actors.add(
-      MetadataManagerValidator.name,
-      MessageValidationActor(
-        new MetadataManagerValidator(),
-        MetadataManagerActor.name,
-        MetadataManagerValidator.name
+      .add(
+        TransactionRecordMessageValidator.name,
+        MessageValidationActor(
+          new TransactionRecordMessageValidator(),
+          TransactionRecordActor.name,
+          TransactionRecordMessageValidator.name
+        )
       )
-    )
+      .add(
+        MetadataManagerValidator.name,
+        MessageValidationActor(
+          new MetadataManagerValidator(),
+          MetadataManagerActor.name,
+          MetadataManagerValidator.name
+        )
+      )
 
     //-----------deploy local actors-----------
     // TODO: OnMemberUp执行有时间限制，超时会有TimeoutException

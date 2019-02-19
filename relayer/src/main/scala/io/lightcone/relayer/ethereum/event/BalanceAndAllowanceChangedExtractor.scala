@@ -22,11 +22,7 @@ import akka.util.Timeout
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.event.{
-  ApprovalEvent => PApprovalEvent,
-  TransferEvent => PTransferEvent,
-  _
-}
+import io.lightcone.ethereum.event
 import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
@@ -44,7 +40,7 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
     val actors: Lookup[ActorRef],
     val ec: ExecutionContext,
     val metadataManager: MetadataManager)
-    extends EventExtractor
+    extends AbstractEventExtractor
     with TransferEventSupport
     with ApprovalEventSupport
     with BalanceUpdatedSuppot {
@@ -61,19 +57,17 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   def extractTx(
       tx: Transaction,
       receipt: TransactionReceipt,
-      eventHeader: EventHeader
-    ): Future[Seq[scalapb.GeneratedMessage]] =
+      eventHeader: event.EventHeader
+    ): Future[Seq[AnyRef]] =
     for {
       balanceEvents <- extractTransferEvents(tx, receipt, eventHeader)
       allowanceEvents <- extractApprovalEvent(tx, receipt, eventHeader)
     } yield balanceEvents ++ allowanceEvents
 
-  override def extractBlock(
-      block: RawBlockData
-    ): Future[Seq[scalapb.GeneratedMessage]] = {
+  override def extractBlock(block: RawBlockData): Future[Seq[AnyRef]] = {
     for {
       changedEvents1 <- super.extractBlock(block)
-      changedEvents2 <- extractEventOfMiner(BlockHeader())
+      changedEvents2 <- extractEventOfMiner(event.BlockHeader())
       changedEvents = changedEvents1 ++ changedEvents2
       eventsWithState <- Future.sequence(
         changedEvents.map(extractEventWithState)
@@ -89,15 +83,15 @@ trait ApprovalEventSupport {
   def extractApprovalEvent(
       tx: Transaction,
       receipt: TransactionReceipt,
-      eventHeader: EventHeader
-    ): Future[Seq[scalapb.GeneratedMessage]] = Future {
-    val approvalEvents = ListBuffer.empty[PApprovalEvent]
+      eventHeader: event.EventHeader
+    ): Future[Seq[AnyRef]] = Future {
+    val approvalEvents = ListBuffer.empty[event.ApprovalEvent]
     receipt.logs.foreach { log =>
       wethAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(transfer: TransferEvent.Result)
             if Address(receipt.to).equals(protocolAddress) =>
           approvalEvents.append(
-            PApprovalEvent(
+            event.ApprovalEvent(
               header = Some(eventHeader),
               owner = transfer.from,
               spender = delegateAddress.toString(),
@@ -109,7 +103,7 @@ trait ApprovalEventSupport {
         case Some(approval: ApprovalEvent.Result)
             if Address(approval.spender).equals(delegateAddress) =>
           approvalEvents.append(
-            PApprovalEvent(
+            event.ApprovalEvent(
               header = Some(eventHeader),
               owner = approval.owner,
               spender = delegateAddress.toString(),
@@ -125,7 +119,7 @@ trait ApprovalEventSupport {
         case Some(param: ApproveFunction.Parms)
             if Address(param.spender).equals(delegateAddress) =>
           approvalEvents.append(
-            PApprovalEvent(
+            event.ApprovalEvent(
               header = Some(eventHeader),
               owner = tx.from,
               spender = delegateAddress.toString(),
@@ -147,17 +141,17 @@ trait TransferEventSupport {
   def extractTransferEvents(
       tx: Transaction,
       receipt: TransactionReceipt,
-      eventHeader: EventHeader
-    ): Future[Seq[scalapb.GeneratedMessage]] = Future {
+      eventHeader: event.EventHeader
+    ): Future[Seq[AnyRef]] = Future {
     val txValue = NumericConversion.toBigInt(tx.value)
-    val transfers = ListBuffer.empty[PTransferEvent]
+    val transfers = ListBuffer.empty[event.TransferEvent]
     if (isSucceed(receipt.status)) {
       receipt.logs.zipWithIndex.foreach {
         case (log, index) =>
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) =>
               transfers.append(
-                PTransferEvent(
+                event.TransferEvent(
                   Some(eventHeader.withLogIndex(index)),
                   from = transfer.from,
                   to = transfer.receiver,
@@ -167,14 +161,14 @@ trait TransferEventSupport {
               )
             case Some(withdraw: WithdrawalEvent.Result) =>
               transfers.append(
-                PTransferEvent(
+                event.TransferEvent(
                   Some(eventHeader.withLogIndex(index)),
                   from = withdraw.src,
                   to = log.address,
                   token = log.address,
                   amount = withdraw.wad
                 ),
-                PTransferEvent(
+                event.TransferEvent(
                   Some(eventHeader.withLogIndex(index)),
                   from = log.address,
                   to = withdraw.src,
@@ -184,14 +178,14 @@ trait TransferEventSupport {
               )
             case Some(deposit: DepositEvent.Result) =>
               transfers.append(
-                PTransferEvent(
+                event.TransferEvent(
                   Some(eventHeader.withLogIndex(index)),
                   from = log.address,
                   to = deposit.dst,
                   token = log.address,
                   amount = deposit.wad
                 ),
-                PTransferEvent(
+                event.TransferEvent(
                   Some(eventHeader.withLogIndex(index)),
                   from = deposit.dst,
                   to = log.address,
@@ -204,7 +198,7 @@ trait TransferEventSupport {
       }
       if (txValue > 0 && !Address(tx.to).equals(wethAddress)) {
         transfers.append(
-          PTransferEvent(
+          event.TransferEvent(
             header = Some(eventHeader),
             from = tx.from,
             to = tx.to,
@@ -217,7 +211,7 @@ trait TransferEventSupport {
       wethAbi.unpackFunctionInput(tx.input) match {
         case Some(transfer: TransferFunction.Parms) =>
           transfers.append(
-            PTransferEvent(
+            event.TransferEvent(
               header = Some(eventHeader),
               from = tx.from,
               to = transfer.to,
@@ -227,7 +221,7 @@ trait TransferEventSupport {
           )
         case Some(transferFrom: TransferFromFunction.Parms) =>
           transfers.append(
-            PTransferEvent(
+            event.TransferEvent(
               header = Some(eventHeader),
               from = transferFrom.txFrom,
               to = transferFrom.to,
@@ -237,14 +231,14 @@ trait TransferEventSupport {
           )
         case Some(_: DepositFunction.Parms) =>
           transfers.append(
-            PTransferEvent(
+            event.TransferEvent(
               header = Some(eventHeader),
               from = tx.to,
               to = tx.from,
               token = tx.to,
               amount = txValue
             ),
-            PTransferEvent(
+            event.TransferEvent(
               header = Some(eventHeader),
               from = tx.from,
               to = tx.to,
@@ -254,14 +248,14 @@ trait TransferEventSupport {
           )
         case Some(withdraw: WithdrawFunction.Parms) =>
           transfers.append(
-            PTransferEvent(
+            event.TransferEvent(
               header = Some(eventHeader),
               from = tx.from,
               to = tx.to,
               token = tx.to,
               amount = withdraw.wad
             ),
-            PTransferEvent(
+            event.TransferEvent(
               header = Some(eventHeader),
               from = tx.to,
               to = tx.from,
@@ -272,7 +266,7 @@ trait TransferEventSupport {
         case _ =>
           if (txValue > 0) {
             transfers.append(
-              PTransferEvent(
+              event.TransferEvent(
                 header = Some(eventHeader),
                 from = tx.from,
                 to = tx.to,
@@ -282,7 +276,7 @@ trait TransferEventSupport {
             )
             if (Address(tx.to).equals(wethAddress)) {
               transfers.append(
-                PTransferEvent(
+                event.TransferEvent(
                   header = Some(eventHeader),
                   from = tx.to,
                   to = tx.from,
@@ -316,54 +310,51 @@ trait TransferEventSupport {
     )
   }
 
-  def extractEventOfMiner(
-      blockHeader: BlockHeader
-    ): Future[Seq[scalapb.GeneratedMessage]] = Future {
-    //TODO: 需要确定奖励金额以及txhash等值
-    //    blockHeader.uncles
-    //      .+:(blockHeader.miner)
-    //      .map(
-    //        addr =>
-    //          PTransferEvent(
-    //            header = Some(EventHeader(txHash="", txStatus = TxStatus.TX_STATUS_SUCCESS, blockHeader=Some(blockHeader))),
-    //            owner = addr,
-    //            from = Address.ZERO.toString(),
-    //            to = addr,
-    //            token = Address.ZERO.toString()
-    ////            amount =
-    //          )
-    //      )
-    Seq.empty
-  }
+  def extractEventOfMiner(blockHeader: event.BlockHeader): Future[Seq[AnyRef]] =
+    Future {
+      //TODO: 需要确定奖励金额以及txhash等值
+      //    blockHeader.uncles
+      //      .+:(blockHeader.miner)
+      //      .map(
+      //        addr =>
+      //          event.TransferEvent(
+      //            header = Some(EventHeader(txHash="", txStatus = TxStatus.TX_STATUS_SUCCESS, blockHeader=Some(blockHeader))),
+      //            owner = addr,
+      //            from = Address.ZERO.toString(),
+      //            to = addr,
+      //            token = Address.ZERO.toString()
+      ////            amount =
+      //          )
+      //      )
+      Seq.empty
+    }
 
 }
 
 trait BalanceUpdatedSuppot {
   extractor: BalanceAndAllowanceChangedExtractor =>
 
-  def extractEventWithState(
-      evt: scalapb.GeneratedMessage
-    ): Future[Seq[scalapb.GeneratedMessage]] = {
-    var balanceAddresses = Set.empty[AddressBalanceUpdatedEvent]
-    var allowanceAddresses = Set.empty[AddressAllowanceUpdatedEvent]
+  def extractEventWithState(evt: AnyRef): Future[Seq[AnyRef]] = {
+    var balanceAddresses = Set.empty[event.AddressBalanceUpdatedEvent]
+    var allowanceAddresses = Set.empty[event.AddressAllowanceUpdatedEvent]
     evt match {
-      case transfer: PTransferEvent =>
+      case transfer: event.TransferEvent =>
         balanceAddresses = balanceAddresses ++ Set(
-          AddressBalanceUpdatedEvent(
+          event.AddressBalanceUpdatedEvent(
             transfer.getHeader.txFrom,
             Address.ZERO.toString()
           ),
-          AddressBalanceUpdatedEvent(transfer.from, transfer.token),
-          AddressBalanceUpdatedEvent(transfer.to, transfer.token)
+          event.AddressBalanceUpdatedEvent(transfer.from, transfer.token),
+          event.AddressBalanceUpdatedEvent(transfer.to, transfer.token)
         )
         if (Address(transfer.getHeader.txTo).equals(protocolAddress))
           allowanceAddresses = allowanceAddresses ++ Set(
-            AddressAllowanceUpdatedEvent(transfer.from, transfer.token)
+            event.AddressAllowanceUpdatedEvent(transfer.from, transfer.token)
           )
-      case approval: PApprovalEvent
+      case approval: event.ApprovalEvent
           if Address(approval.spender).equals(delegateAddress) =>
         allowanceAddresses = allowanceAddresses ++ Set(
-          AddressAllowanceUpdatedEvent(approval.owner, approval.token)
+          event.AddressAllowanceUpdatedEvent(approval.owner, approval.token)
         )
       case _ =>
     }
@@ -375,7 +366,7 @@ trait BalanceUpdatedSuppot {
   }
 
   def batchGetAllowances(
-      allowanceAddresses: Seq[AddressAllowanceUpdatedEvent]
+      allowanceAddresses: Seq[event.AddressAllowanceUpdatedEvent]
     ) =
     for {
       tokenAllowances <- if (allowanceAddresses.nonEmpty) {
@@ -391,18 +382,18 @@ trait BalanceUpdatedSuppot {
         Future.successful(Seq.empty)
       }
     } yield {
-      (allowanceAddresses zip tokenAllowances).map(
-        item => {
-          AddressAllowanceUpdatedEvent(
-            address = Address.normalize(item._1.address),
-            token = Address.normalize(item._1.token),
-            allowance = item._2
-          )
-        }
-      )
+      (allowanceAddresses zip tokenAllowances).map(item => {
+        event.AddressAllowanceUpdatedEvent(
+          address = Address.normalize(item._1.address),
+          token = Address.normalize(item._1.token),
+          allowance = item._2
+        )
+      })
     }
 
-  def batchGetBalances(balanceAddresses: Seq[AddressBalanceUpdatedEvent]) = {
+  def batchGetBalances(
+      balanceAddresses: Seq[event.AddressBalanceUpdatedEvent]
+    ) = {
     val (ethAddress, tokenAddresses) =
       balanceAddresses.partition(addr => Address(addr.token).isZero)
     val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
@@ -436,7 +427,7 @@ trait BalanceUpdatedSuppot {
       ) ++
         (ethAddress zip ethBalances).map(
           item =>
-            AddressBalanceUpdatedEvent(
+            event.AddressBalanceUpdatedEvent(
               address = Address.normalize(item._1.address),
               token = Address.normalize(item._1.token),
               balance = item._2

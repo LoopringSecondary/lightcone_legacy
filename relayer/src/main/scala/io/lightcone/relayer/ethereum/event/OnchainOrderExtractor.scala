@@ -24,7 +24,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.event._
 import io.lightcone.lib._
 import org.web3j.utils.Numeric
-import scalapb.GeneratedMessage
 
 import scala.concurrent._
 
@@ -32,7 +31,7 @@ class OnchainOrderExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val config: Config)
-    extends EventExtractor {
+    extends AbstractEventExtractor {
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
@@ -41,14 +40,12 @@ class OnchainOrderExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
-    ): Future[Seq[GeneratedMessage]] = Future {
+    ): Future[Seq[AnyRef]] = Future {
     if (receipt.contractAddress.equalsIgnoreCase(ringSubmitterAddress)) {
       receipt.logs.map { log =>
         loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
           case Some(event: OrderSubmittedEvent.Result) =>
-            Some(
-              OrderSubmittedOnChainEvent(Some(extractOrderFromEvent(event)))
-            )
+            Some(OrderSubmittedOnChainEvent(Some(extractOrderFromEvent(event))))
           case _ =>
             None
         }
