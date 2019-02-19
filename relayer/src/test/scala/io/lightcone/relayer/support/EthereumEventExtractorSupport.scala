@@ -20,7 +20,7 @@ import io.lightcone.ethereum.{RawOrderValidator, RawOrderValidatorImpl}
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum.event._
-import io.lightcone.relayer.ethereum.{EventDispatcher, EventDispatcherActorImpl}
+import io.lightcone.relayer.ethereum.EventDispatcherActorImpl
 
 trait EthereumEventExtractorSupport
     extends DatabaseModuleSupport
