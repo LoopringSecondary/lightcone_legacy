@@ -50,9 +50,13 @@ class EntryPointSpec_TransactionRecords
       val header1 = EventHeader(
         txHash = txHash,
         txStatus = TxStatus.TX_STATUS_SUCCESS,
-        blockHash = txHash,
-        blockNumber = blockNumber,
-        blockTimestamp = timeProvider.getTimeSeconds(),
+        blockHeader = Some(
+          BlockHeader(
+            hash = txHash,
+            height = blockNumber,
+            timestamp = timeProvider.getTimeSeconds()
+          )
+        ),
         txFrom = txFrom,
         txTo = txTo,
         txIndex = 1
@@ -171,7 +175,7 @@ class EntryPointSpec_TransactionRecords
 
       info("test some failed condition (invalid sequenceId)")
       val header6 = header1.copy(
-        blockNumber = 100,
+        blockHeader = Some(header1.getBlockHeader.copy(height = 100)),
         txIndex = 10000,
         logIndex = 20000,
         eventIndex = 30000
@@ -185,7 +189,9 @@ class EntryPointSpec_TransactionRecords
       Thread.sleep(5000)
 
       info("get_transactions with txFrom to check saved record num")
-      val fromIndex = EventHeader(blockNumber = blockNumber).sequenceId
+      val fromIndex = EventHeader(
+        blockHeader = Some(BlockHeader(height = blockNumber))
+      ).sequenceId
       val paging: CursorPaging = CursorPaging(cursor = fromIndex, size = 50)
       val resonse2 = singleRequest(
         GetTransactionRecords
@@ -318,7 +324,7 @@ class EntryPointSpec_TransactionRecords
   "test sequenceId" must {
     "get sequenceId correctly" in {
       val correctHeader = EventHeader(
-        blockNumber = 8000000,
+        blockHeader = Some(BlockHeader(height = 8000000)),
         txIndex = 1,
         logIndex = 2,
         eventIndex = 3
@@ -326,7 +332,7 @@ class EntryPointSpec_TransactionRecords
       // 1. correct
       val s1 = correctHeader.sequenceId
       val max = EventHeader(
-        blockNumber = 500000000,
+        blockHeader = Some(BlockHeader(height = 500000000)),
         txIndex = 4095,
         logIndex = 4095,
         eventIndex = 1023
@@ -334,7 +340,12 @@ class EntryPointSpec_TransactionRecords
       assert(s1 == 137438953476196355L && max == 8589934609179869183L)
       // 2. invalid
       try {
-        correctHeader.copy(blockNumber = 500000001).sequenceId
+        correctHeader
+          .copy(
+            blockHeader =
+              Some(correctHeader.getBlockHeader.copy(height = 500000001))
+          )
+          .sequenceId
         assert(false)
       } catch {
         case e: ErrorException

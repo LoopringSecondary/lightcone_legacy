@@ -21,15 +21,24 @@ import com.google.inject.Inject
 import io.lightcone.lib._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 class BlockGasPriceExtractor @Inject()(
     implicit
     val timeout: Timeout,
     val ec: ExecutionContext)
-    extends EventExtractor[BlockGasPricesExtractedEvent] {
+    extends AbstractEventExtractor {
 
-  override def extract(
+  def extractEventsFromTx(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[AnyRef]] = Future {
+    Seq.empty
+  }
+
+  override def extractEvents(
       block: RawBlockData
     ): Future[Seq[BlockGasPricesExtractedEvent]] =
     Future {
