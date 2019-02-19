@@ -17,6 +17,7 @@
 package io.lightcone.persistence
 
 import io.lightcone.persistence.dals._
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data.GetOHLCData.Interval
 import io.lightcone.relayer.data._
 import io.lightcone.core._
@@ -39,7 +40,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
   "saveTrade" must "save a trade with hash" in {
     val record0 = PersistOHLCData.Req(
       data = Option(
-        OHLCRawData(
+        OHLCRawDataEvent(
           ringIndex = 1000,
           txHash =
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
@@ -56,7 +57,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     res0.error should be(ErrorCode.ERR_NONE)
     res0.record.get should be(record0.data.get)
 
-    val record1 = OHLCRawData(
+    val record1 = OHLCRawDataEvent(
       ringIndex = 1001,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
@@ -73,7 +74,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
 
     val record2 = PersistOHLCData.Req(
       data = Option(
-        OHLCRawData(
+        OHLCRawDataEvent(
           ringIndex = 1002,
           txHash =
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf50",

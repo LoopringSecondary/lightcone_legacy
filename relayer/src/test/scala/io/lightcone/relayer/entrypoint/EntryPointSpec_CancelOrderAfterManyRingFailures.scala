@@ -19,10 +19,8 @@ package io.lightcone.relayer.entrypoint
 import akka.pattern._
 import akka.testkit.TestProbe
 import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES
-import io.lightcone.relayer.actors.{
-  MarketManagerActor,
-  RingSettlementManagerActor
-}
+import io.lightcone.ethereum.event._
+import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
 

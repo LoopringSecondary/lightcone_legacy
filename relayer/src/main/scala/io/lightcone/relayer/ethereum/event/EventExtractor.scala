@@ -18,6 +18,7 @@ package io.lightcone.relayer.ethereum.event
 
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum.event._
 import io.lightcone.lib._
 
 import scala.concurrent.{ExecutionContext, Future}

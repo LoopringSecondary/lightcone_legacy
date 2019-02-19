@@ -24,7 +24,7 @@ import akka.util.Timeout
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
+import io.lightcone.ethereum.event._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
@@ -288,7 +288,7 @@ class AccountManagerAltActor(
       }
 
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
-    case req: AddressBalanceUpdated =>
+    case req: AddressBalanceUpdatedEvent =>
       count.refine("label" -> "balance_updated").increment()
 
       blocking {
@@ -296,7 +296,7 @@ class AccountManagerAltActor(
         manager.setBalance(req.token, BigInt(req.balance.toByteArray))
       }
 
-    case req: AddressAllowanceUpdated =>
+    case req: AddressAllowanceUpdatedEvent =>
       count.refine("label" -> "allowance_updated").increment()
 
       blocking {
@@ -331,7 +331,7 @@ class AccountManagerAltActor(
       count.refine("label" -> "broker_cutoff").increment()
       log.warning(s"not support this event yet: $req")
 
-    case req: OrdersCancelledEvent
+    case req: OrdersCancelledOnChainEvent
         if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
       count.refine("label" -> "order_cancel").increment()
       for {

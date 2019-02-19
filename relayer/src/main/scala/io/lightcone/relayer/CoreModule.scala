@@ -23,6 +23,7 @@ import akka.util.Timeout
 import com.google.inject._
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum.Dispatchers._
 import io.lightcone.relayer.ethereum.{EventDispatcher, _}
@@ -119,34 +120,35 @@ class CoreModule(
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
     // --- bind event extractors ---------------------
-    bind[EventExtractor[AddressAllowanceUpdated]]
+    bind[EventExtractor[AddressAllowanceUpdatedEvent]]
       .to[AllowanceChangedAddressExtractor]
 
-    bind[EventExtractor[AddressBalanceUpdated]]
+    bind[EventExtractor[AddressBalanceUpdatedEvent]]
       .to[BalanceChangedAddressExtractor]
 
-    bind[EventExtractor[OrdersCancelledEvent]]
+    bind[EventExtractor[OrdersCancelledOnChainEvent]]
       .to[OrdersCancelledEventExtractor]
 
     bind[EventExtractor[TokenBurnRateChangedEvent]]
       .to[TokenBurnRateEventExtractor]
 
     bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
-    bind[EventExtractor[RawOrder]].to[OnchainOrderExtractor]
+    bind[EventExtractor[OrderSubmittedOnChainEvent]].to[OnchainOrderExtractor]
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
-    bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
-    bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
+    bind[EventExtractor[OHLCRawDataEvent]].to[OHLCRawDataExtractor]
+    bind[EventExtractor[BlockGasPricesExtractedEvent]]
+      .to[BlockGasPriceExtractor]
 
     // --- bind event dispatchers ---------------------
-    bind[EventDispatcher[AddressAllowanceUpdated]]
+    bind[EventDispatcher[AddressAllowanceUpdatedEvent]]
       .to[AllowanceEventDispatcher]
 
-    bind[EventDispatcher[AddressBalanceUpdated]]
+    bind[EventDispatcher[AddressBalanceUpdatedEvent]]
       .to[BalanceEventDispatcher]
 
-    bind[EventDispatcher[OrdersCancelledEvent]]
+    bind[EventDispatcher[OrdersCancelledOnChainEvent]]
       .to[OrdersCancelledEventDispatcher]
 
     bind[EventDispatcher[OrderFilledEvent]]
@@ -158,8 +160,9 @@ class CoreModule(
     bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
-    bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
-    bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
+    bind[EventDispatcher[OHLCRawDataEvent]].to[OHLCRawDataEventDispatcher]
+    bind[EventDispatcher[BlockGasPricesExtractedEvent]]
+      .to[BlockGasPricesDispatcher]
 
     //bind socket listener
     bind[SocketIONotifier[SubscribeBalanceAndAllowance]]
@@ -184,15 +187,17 @@ class CoreModule(
 
   @Provides
   def getEventDispathcers(
-      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdated],
+      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdatedEvent],
       ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
       orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
       cutoffEventDispatcher: EventDispatcher[CutoffEvent],
       transferEventDispatcher: EventDispatcher[TransferEvent],
-      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
-      ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
-      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
-      blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
+      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdatedEvent],
+      ordersCancelledEventDispatcher: EventDispatcher[
+        OrdersCancelledOnChainEvent
+      ],
+      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawDataEvent],
+      blockGasPricesDispatcher: EventDispatcher[BlockGasPricesExtractedEvent],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
       ]

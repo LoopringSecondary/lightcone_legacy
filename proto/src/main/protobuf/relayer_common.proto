@@ -157,15 +157,7 @@ message MissingBlocksRecord {
 }
 
 // Used as statistical data, such as a histogram
-message OHLCRawData {
-    int64      ring_index     = 1;
-    string     tx_hash        = 2;
-    string     market_hash     = 3;
-    int64      time           = 4;
-    double     base_amount    = 6;
-    double     quote_amount   = 7;
-    double     price          = 8;
-}
+
 
 message OHLCData {
     repeated  double  data      = 1;

@@ -27,7 +27,8 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.core._
 import io.lightcone.lib._
-import io.lightcone.relayer.data.{TransferEvent => _, _}
+import io.lightcone.ethereum.event.{TransferEvent => _, _}
+import io.lightcone.relayer.data._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -39,7 +40,7 @@ class AllowanceChangedAddressExtractor @Inject()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val ec: ExecutionContext)
-    extends EventExtractor[AddressAllowanceUpdated] {
+    extends EventExtractor[AddressAllowanceUpdatedEvent] {
 
   val protocolConf = config.getConfig("loopring_protocol")
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
@@ -47,8 +48,10 @@ class AllowanceChangedAddressExtractor @Inject()(
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  def extract(block: RawBlockData): Future[Seq[AddressAllowanceUpdated]] = {
-    val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
+  def extract(
+      block: RawBlockData
+    ): Future[Seq[AddressAllowanceUpdatedEvent]] = {
+    val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdatedEvent]
     (block.txs zip block.receipts).foreach {
       case (tx, receipt) =>
         receipt.logs.foreach { log =>
@@ -56,13 +59,13 @@ class AllowanceChangedAddressExtractor @Inject()(
             case Some(transfer: TransferEvent.Result) =>
               if (Address(receipt.to).equals(protocolAddress))
                 allowanceAddresses.append(
-                  AddressAllowanceUpdated(transfer.from, log.address)
+                  AddressAllowanceUpdatedEvent(transfer.from, log.address)
                 )
 
             case Some(approval: ApprovalEvent.Result) =>
               if (Address(approval.spender).equals(delegateAddress))
                 allowanceAddresses.append(
-                  AddressAllowanceUpdated(approval.owner, log.address)
+                  AddressAllowanceUpdatedEvent(approval.owner, log.address)
                 )
             case _ =>
           }
@@ -72,7 +75,7 @@ class AllowanceChangedAddressExtractor @Inject()(
             case Some(param: ApproveFunction.Parms) =>
               if (Address(param.spender).equals(delegateAddress))
                 allowanceAddresses.append(
-                  AddressAllowanceUpdated(tx.from, tx.to)
+                  AddressAllowanceUpdatedEvent(tx.from, tx.to)
                 )
             case _ =>
           }
@@ -94,7 +97,7 @@ class AllowanceChangedAddressExtractor @Inject()(
     } yield {
       (events zip tokenAllowances).map(
         item =>
-          AddressAllowanceUpdated(
+          AddressAllowanceUpdatedEvent(
             address = Address.normalize(item._1.address),
             token = Address.normalize(item._1.token),
             allowance = item._2

@@ -21,6 +21,7 @@ import akka.pattern.ask
 import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
@@ -278,7 +279,7 @@ class MarketManagerActor(
       histo.refine("label" -> "num_orders").record(numOfOrders)
       count.refine("label" -> "cancel_order").increment()
 
-    case GasPriceUpdated(_gasPrice) =>
+    case GasPriceUpdatedEvent(_gasPrice) =>
       val t = timer.refine("label" -> "rematch").start()
 
       this.gasPrice = _gasPrice

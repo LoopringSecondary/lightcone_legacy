@@ -25,7 +25,7 @@ import io.lightcone.relayer.support._
 
 import scala.concurrent.Await
 
-class OHLCRawDataExtractorSpec
+class OHLCRawDataEventExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport
     with OrderGenerateSupport {
