@@ -33,6 +33,13 @@ class RequestJobTable(tag: Tag)
   def statusCode = column[Int]("status_code")
   def persistResult = column[Boolean]("persist_result")
 
+  def idx_job_result_batch =
+    index(
+      "idx_job_result_batch",
+      (jobType, persistResult, batchId),
+      unique = false
+    )
+
   def * =
     (
       batchId,

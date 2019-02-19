@@ -51,7 +51,7 @@ final class MetadataManagerImpl @Inject()(implicit val config: Config)
   private var tokenAddressMap = Map.empty[String, Token]
   private var tokenSymbolMap = Map.empty[String, Token]
   private var marketMap = Map.empty[String, MarketMetadata]
-  private var supportMarketSymbols = Set.empty[String] // LRC, WETH, USDT, TUSD
+  private var marketQuoteTokens = Set.empty[String] // LRC, WETH, USDT, TUSD
 
   def reset(
       tokens: Seq[TokenMetadata],
@@ -68,12 +68,12 @@ final class MetadataManagerImpl @Inject()(implicit val config: Config)
     }
 
     marketMap = Map.empty
-    supportMarketSymbols = Set.empty
+    marketQuoteTokens = Set.empty
 
     markets.foreach { meta =>
       val m = MetadataManager.normalize(meta)
       marketMap += m.marketHash -> m
-      supportMarketSymbols += m.quoteTokenSymbol
+      marketQuoteTokens += m.quoteTokenSymbol
     }
   }
 
@@ -118,5 +118,5 @@ final class MetadataManagerImpl @Inject()(implicit val config: Config)
     marketMap.values.filter(m => status.contains(m.status)).toSeq
   }
 
-  def getSupportMarketSymbols() = supportMarketSymbols
+  def getMarketQuoteTokens() = marketQuoteTokens
 }

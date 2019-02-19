@@ -107,5 +107,5 @@ trait MetadataManager {
       statuses: MarketMetadata.Status*
     ): Unit = assertMarketStatus(MarketHash(marketPair).toString, statuses: _*)
 
-  def getSupportMarketSymbols(): Set[String]
+  def getMarketQuoteTokens(): Set[String]
 }

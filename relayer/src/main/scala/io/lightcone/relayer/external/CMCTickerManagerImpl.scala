@@ -104,21 +104,23 @@ class CMCTickerManagerImpl @Inject()(
       tickers_ : Seq[CMCTickerData]
     ): Seq[CMCTickersInUsd] = {
     tickers_.map { t =>
-      val usdQuote = if (t.quote.get("USD").isEmpty) {
+      if (t.quote.get("USD").isEmpty) {
         log.error(s"CMC not return ${t.symbol} quote for USD")
-        CMCTickersInUsd.Quote()
-      } else {
-        val q = t.quote("USD")
-        CMCTickersInUsd.Quote(
-          q.price,
-          q.volume24H,
-          q.percentChange1H,
-          q.percentChange24H,
-          q.percentChange7D,
-          q.marketCap,
-          q.lastUpdated
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"CMC not return ${t.symbol} quote for USD"
         )
       }
+      val q = t.quote("USD")
+      val usdQuote = CMCTickersInUsd.Quote(
+        q.price,
+        q.volume24H,
+        q.percentChange1H,
+        q.percentChange24H,
+        q.percentChange7D,
+        q.marketCap,
+        q.lastUpdated
+      )
       CMCTickersInUsd(
         t.id,
         t.name,
@@ -137,21 +139,21 @@ class CMCTickerManagerImpl @Inject()(
     }
   }
 
-  def convertPersistenceToAllSupportMarkets(
+  def convertPersistenceToAllQuoteMarkets(
       usdTickers: Seq[CMCTickersInUsd],
-      supportMarketSymbols: Set[String]
+      marketQuoteTokens: Set[String]
     ): Seq[ExternalTickerInfo] = {
-    val tickersInUsdWithSupportMarkets =
-      getTickersWithAllSupportMarkets(usdTickers, supportMarketSymbols)
-    val tickersWithMultiMarkets = convertToExternalMultiMarketsInUsd(
-      tickersInUsdWithSupportMarkets
+    val tickersInUsdWithQuoteMarkets =
+      getTickersWithAllQuoteMarkets(usdTickers, marketQuoteTokens)
+    val tickersWithAllQuoteMarkets = convertToAllQuoteMarketsInUsd(
+      tickersInUsdWithQuoteMarkets
     )
-    tickersWithMultiMarkets
-      .filter(c => c.symbol != c.market)
-      .filterNot(c => c.symbol == "ETH" && c.market == "WETH")
+    tickersWithAllQuoteMarkets
+      .filter(c => c.symbol != c.market) // LRC-LRC
+      .filterNot(c => c.symbol == "ETH" && c.market == "WETH") // ETH-WETH
   }
 
-  private def getTickersWithAllSupportMarkets(
+  private def getTickersWithAllQuoteMarkets(
       usdTickers: Seq[CMCTickersInUsd],
       supportMarketSymbols: Set[String]
     ) = {
@@ -204,7 +206,7 @@ class CMCTickerManagerImpl @Inject()(
     )
   }
 
-  private def convertToExternalMultiMarketsInUsd(
+  private def convertToAllQuoteMarketsInUsd(
       tickersInUsd: Seq[CMCTickerData]
     ): Seq[ExternalTickerInfo] = {
     tickersInUsd.flatMap { ticker =>

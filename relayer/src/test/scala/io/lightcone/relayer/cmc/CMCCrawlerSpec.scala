@@ -42,7 +42,7 @@ class CMCCrawlerSpec
 
   val USD_CNY = 6.873
   private val tokens = metadataManager.getTokens
-  private val supportMarketSymbols = metadataManager.getSupportMarketSymbols
+  private val marketQuoteTokens = metadataManager.getMarketQuoteTokens()
   private val effectiveMarketSymbols = metadataManager
     .getMarkets()
     .filter(_.status != MarketMetadata.Status.TERMINATED)
@@ -102,19 +102,19 @@ class CMCCrawlerSpec
       q1._3 should be(2072)
       q1._4.exists(_.usdPrice != 1000) should be(true)
     }
-    "convert USD tickers to all support markets (ExternalDataRefresher)" in {
+    "convert USD tickers to all quote markets (ExternalDataRefresher)" in {
       val (tickersInUSD, tickersInCNY) = refreshTickers()
-      val tickerMapInUSD = supportMarketSymbols.map { market =>
+      val tickerMapInUSD = marketQuoteTokens.map { market =>
         (market, tickersInUSD.filter(_.market == market))
       }.toMap
 
-      val tickerMapInCNY = supportMarketSymbols.map { market =>
+      val tickerMapInCNY = marketQuoteTokens.map { market =>
         (market, tickersInCNY.filter(_.market == market))
       }.toMap
 
       // get a random market
-      val randomMarket = supportMarketSymbols.toList(
-        (new util.Random).nextInt(supportMarketSymbols.size)
+      val randomMarket = marketQuoteTokens.toList(
+        (new util.Random).nextInt(marketQuoteTokens.size)
       )
       // get a random position
       val marketTickersInUsd = tickerMapInUSD(randomMarket)
@@ -202,9 +202,9 @@ class CMCCrawlerSpec
   private def refreshTickers() = {
     assert(tickers.nonEmpty)
     val tickersInUSD = tickerManager
-      .convertPersistenceToAllSupportMarkets(
+      .convertPersistenceToAllQuoteMarkets(
         tickers,
-        supportMarketSymbols
+        marketQuoteTokens
       )
       .filter(isEffectiveMarket)
     val tickersInCNY =

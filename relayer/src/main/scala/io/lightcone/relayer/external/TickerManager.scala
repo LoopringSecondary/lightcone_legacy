@@ -30,9 +30,9 @@ trait TickerManager {
       tickers_ : Seq[CMCTickerData]
     ): Seq[CMCTickersInUsd]
 
-  def convertPersistenceToAllSupportMarkets(
+  def convertPersistenceToAllQuoteMarkets(
       usdTickers: Seq[CMCTickersInUsd],
-      supportMarketSymbols: Set[String]
+      marketQuoteTokens: Set[String]
     ): Seq[ExternalTickerInfo]
 
   def normalizeTicker(ticker: CMCTickerData): CMCTickerData =

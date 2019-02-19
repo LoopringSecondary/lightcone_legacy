@@ -79,7 +79,6 @@ class CoreModule(
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
-      "dbconfig-dal-token-ticker-info",
       "dbconfig-request-job",
       "dbconfig-cmc-tickers-in-usd",
       "dbconfig-currency",

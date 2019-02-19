@@ -77,7 +77,7 @@ class ExternalDataRefresher(
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  private val supportMarketSymbols = metadataManager.getSupportMarketSymbols
+  private val marketQuoteTokens = metadataManager.getMarketQuoteTokens
   private val effectiveMarketSymbols = metadataManager
     .getMarkets()
     .filter(_.status != MarketMetadata.Status.TERMINATED)
@@ -85,9 +85,9 @@ class ExternalDataRefresher(
 
   private var allTickersInUSD: Seq[ExternalTickerInfo] =
     Seq.empty[ExternalTickerInfo]
-  private var supportTickersInUSD: Seq[ExternalTickerInfo] =
+  private var effectiveTickersInUSD: Seq[ExternalTickerInfo] =
     Seq.empty[ExternalTickerInfo]
-  private var supportTickersInCNY: Seq[ExternalTickerInfo] =
+  private var effectiveTickersInCNY: Seq[ExternalTickerInfo] =
     Seq.empty[ExternalTickerInfo]
   private var currencyRate: Option[CurrencyRate] = None
 
@@ -103,8 +103,9 @@ class ExternalDataRefresher(
   def receive: Receive = super.receiveRepeatdJobs orElse {
     case req: GetExternalTickers.Req =>
       val tickerSource =
-        if (req.currency == GetExternalTickers.Currency.CNY) supportTickersInCNY
-        else supportTickersInUSD
+        if (req.currency == GetExternalTickers.Currency.CNY)
+          effectiveTickersInCNY
+        else effectiveTickersInUSD
       val tickers_ = if (req.market.isEmpty) {
         tickerSource
       } else {
@@ -132,14 +133,14 @@ class ExternalDataRefresher(
     } yield {
       assert(tickers_.nonEmpty)
       allTickersInUSD = tickerManager
-        .convertPersistenceToAllSupportMarkets(
+        .convertPersistenceToAllQuoteMarkets(
           tickers_,
-          supportMarketSymbols
+          marketQuoteTokens
         )
-      supportTickersInUSD = allTickersInUSD
+      effectiveTickersInUSD = allTickersInUSD
         .filter(isEffectiveMarket)
-      supportTickersInCNY = tickerManager
-        .convertUsdTickersToCny(supportTickersInUSD, currencyRate)
+      effectiveTickersInCNY = tickerManager
+        .convertUsdTickersToCny(effectiveTickersInUSD, currencyRate)
         .filter(isEffectiveMarket)
     }
 
