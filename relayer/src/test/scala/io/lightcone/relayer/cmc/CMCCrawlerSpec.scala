@@ -32,11 +32,8 @@ class CMCCrawlerSpec
     with HttpSupport
     with EthereumSupport
     with DatabaseModuleSupport
-    with MetadataManagerSupport
-    with ExternalSupport {
+    with MetadataManagerSupport {
 
-  def crawlerActor = actors.get(CMCCrawlerActor.name)
-  def refresherActor = actors.get(ExternalDataRefresher.name)
   val metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
@@ -190,8 +187,10 @@ class CMCCrawlerSpec
         batchId,
         tickers_
       )
-      fixGroup = tickersToPersist.grouped(10).toList
-      _ = fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
+      fixGroup = tickersToPersist.grouped(20).toList
+      _ <- Future.sequence(
+        fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
+      )
     } yield tickersToPersist
 
   private def refreshTickers() = {

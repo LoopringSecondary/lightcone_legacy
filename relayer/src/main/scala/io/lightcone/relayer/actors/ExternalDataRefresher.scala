@@ -127,7 +127,6 @@ class ExternalDataRefresher(
       tickers_ <- (tokenTickerCrawlerActor ? GetTickers.Req())
         .mapTo[GetTickers.Res]
         .map(_.tickers)
-
     } yield {
       assert(tickers_.nonEmpty)
       tickersInUSD = tickerManager

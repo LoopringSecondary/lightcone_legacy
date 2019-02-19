@@ -193,7 +193,9 @@ class CMCCrawlerActor(
       )
       _ = tickers = tickersToPersist
       fixGroup = tickersToPersist.grouped(20).toList
-      _ = fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
-    } yield Unit
+      _ <- Future.sequence(
+        fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
+      )
+    } yield {}
 
 }
