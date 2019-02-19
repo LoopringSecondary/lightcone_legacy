@@ -15,23 +15,25 @@
  */
 
 package io.lightcone.relayer.ethereum.event
-import com.google.inject.Inject
+
 import io.lightcone.core.MetadataManager
 import io.lightcone.relayer.data.RawBlockData
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EventExtractorCompose @Inject()(
+class EventExtractorCompose(
+    extractors: EventExtractor*
+  )(
     implicit
-    extractors: Seq[EventExtractor],
     val ec: ExecutionContext,
-    val metadataManager: MetadataManager) {
+    val metadataManager: MetadataManager)
+    extends EventExtractor {
 
-  def extract(block: RawBlockData): Future[Seq[scalapb.GeneratedMessage]] =
+  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] =
     for {
-      events <- Future.sequence(extractors.map { extractor =>
-        extractor.extractBlock(block)
-      })
+      events <- Future.sequence {
+        extractors.map(_.extractEvents(block))
+      }
     } yield events.flatten
 
 }

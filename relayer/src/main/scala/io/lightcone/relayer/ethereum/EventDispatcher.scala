@@ -17,28 +17,44 @@
 package io.lightcone.relayer.ethereum
 
 import akka.actor.ActorRef
+import io.lightcone.relayer.base._
+import org.slf4s.Logging
 
-trait EventDispatcher[T] {
-
-  def register(
-      cls: Class[_],
-      t: T*
-    )
-  def dispatch(evt: scalapb.GeneratedMessage)
+trait EventDispatcher {
+  def dispatch(evt: AnyRef)
 }
 
-class EventDispatcherActorImpl extends EventDispatcher[ActorRef] {
-  var targets = Map.empty[Class[_], Seq[ActorRef]]
+class EventDispatcherImpl(actors: Lookup[ActorRef])
+    extends EventDispatcher
+    with Logging {
+  var targets = Map.empty[Class[_], Set[String]]
 
   def register(
       cls: Class[_],
-      t: ActorRef*
+      actorNames: String*
     ) = {
-    targets = targets + (cls -> (targets.getOrElse(cls, Seq.empty[ActorRef]) ++ t))
+    val t = targets.getOrElse(cls, Set.empty[String]) ++ actorNames.toSet
+    targets = targets + (cls -> t)
+    this
   }
 
-  def dispatch(evt: scalapb.GeneratedMessage) = {
-    targets.getOrElse(evt.getClass, Seq.empty).foreach(_ ! evt)
+  def dispatch(evt: AnyRef) = {
+    targets.get(evt.getClass) match {
+      case None =>
+        log.error(
+          s"unable to dispatch message of type: ${evt.getClass.getName}"
+        )
+
+      case Some(names) =>
+        val (found, notFound) = names.partition(actors.contains)
+        if (notFound.size > 0) {
+          log.error(
+            s"unable to dispatch message to actor with the following names: $notFound"
+          )
+        }
+
+        found.map(actors.get).foreach(_ ! evt)
+    }
   }
 
 }

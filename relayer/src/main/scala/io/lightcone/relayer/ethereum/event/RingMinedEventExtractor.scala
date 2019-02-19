@@ -28,7 +28,6 @@ import scala.concurrent._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.ethereum._
-import scalapb.GeneratedMessage
 
 class RingMinedEventExtractor @Inject()(
     implicit
@@ -36,7 +35,7 @@ class RingMinedEventExtractor @Inject()(
     config: Config,
     metadataManagerArg: MetadataManager,
     rawOrderValidatorArg: RawOrderValidator)
-    extends EventExtractor
+    extends AbstractEventExtractor
     with RingMinedEventSupport
     with FillEventSupport
     with OHLCRawDataSupport {
@@ -52,11 +51,11 @@ class RingMinedEventExtractor @Inject()(
   )
   val fillLength: Int = 8 * 64
 
-  def extractTx(
+  def extractEventsFromTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
-    ): Future[Seq[GeneratedMessage]] =
+    ): Future[Seq[AnyRef]] =
     for {
       ringMinedEvents <- extractRingMinedEvents(tx, receipt, eventHeader)
       fillEvents = extractFilledEvents(ringMinedEvents)

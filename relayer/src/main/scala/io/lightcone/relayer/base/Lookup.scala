@@ -25,10 +25,13 @@ trait Lookup[T] {
   def add(
       name: String,
       ref: T
-    ): Unit
-  def del(name: String): Unit
+    ): Lookup[T]
+
+  def del(name: String): Lookup[T]
+  def clear(): Lookup[T]
+
   def contains(name: String): Boolean
-  def clear(): Unit
+
   def all(): Seq[T]
 }
 
@@ -57,14 +60,17 @@ class MapBasedLookup[T] extends Lookup[T] with Logging {
     ) = {
     assert(!contains(name))
     items += name -> item
+    this
   }
 
   def del(name: String) = {
     items -= name
+    this
   }
 
   def clear() = {
     items = Map.empty
+    this
   }
 
   def all() = {
