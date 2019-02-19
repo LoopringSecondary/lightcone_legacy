@@ -25,18 +25,8 @@ import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event.{TransferEvent => PTransferEvent, _}
 import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.data.{
-  BatchCallContracts,
-  BatchGetEthBalance,
-  EthGetBalance,
-  RawBlockData,
-  Transaction,
-  TransactionReceipt
-}
-import io.lightcone.relayer.ethereum.{
-  EthereumAccessActor,
-  EthereumBatchCallRequestBuilder
-}
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum._
 import io.lightcone.core._
 
 import scala.collection.mutable.ListBuffer

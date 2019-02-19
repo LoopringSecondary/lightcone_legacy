@@ -19,14 +19,8 @@ package io.lightcone.relayer.ethereum
 import akka.actor.ActorRef
 
 trait EventDispatcherAlt[T] {
-
-  def register(
-      cls: Class[_],
-      t: T
-    )
-
+  def register(cls: Class[_], t: T)
   def dispatch(evt: Any)
-
 }
 
 class EventDispatcherAltActorImpl extends EventDispatcherAlt[ActorRef] {

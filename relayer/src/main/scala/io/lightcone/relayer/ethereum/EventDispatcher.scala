@@ -28,13 +28,12 @@ trait EventDispatcher[R <: AnyRef] {
   def targets: Seq[ActorRef]
 
   def dispatch(block: RawBlockData): Future[Int] = {
-//    for {
-//      events <- extractor.extract(block)
-//      _ = events.foreach { e =>
-//        targets.foreach(_ ! e)
-//      }
-//    } yield events.size
-    Future { 0 }
+    for {
+      events <- extractor.extract(block)
+      _ = events.foreach { e =>
+        targets.foreach(_ ! e)
+      }
+    } yield events.size
   }
 }
 
