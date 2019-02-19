@@ -22,7 +22,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.base._
 import scala.concurrent.Await
 
-class OrdersCancelledEventExtractorSpec
+class OrdersCancelledOnChainEventExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport
     with OrderGenerateSupport {

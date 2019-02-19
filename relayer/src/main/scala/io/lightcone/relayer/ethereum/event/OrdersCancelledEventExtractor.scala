@@ -21,7 +21,7 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.lib._
 import io.lightcone.ethereum.event.{
-  OrdersCancelledEvent => POrdersCancelledEvent
+  OrdersCancelledOnChainEvent => POrdersCancelledEvent
 }
 import io.lightcone.relayer.data._
 

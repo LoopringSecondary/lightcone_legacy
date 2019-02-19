@@ -90,7 +90,7 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
     case req: AddressAllowanceUpdatedEvent => req.address
     case req: CutoffEvent                  => req.owner // TODO:暂不支持broker
     case req: OrderFilledEvent             => req.owner
-    case req: OrdersCancelledEvent         => req.owner
+    case req: OrdersCancelledOnChainEvent  => req.owner
 
     case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
