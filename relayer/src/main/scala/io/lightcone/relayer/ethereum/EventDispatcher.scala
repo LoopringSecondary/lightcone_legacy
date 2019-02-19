@@ -17,33 +17,31 @@
 package io.lightcone.relayer.ethereum
 
 import akka.actor.ActorRef
-import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.ethereum.event._
-import io.lightcone.relayer.data._
-import scala.concurrent._
 
-trait EventDispatcher[R <: AnyRef] {
-  implicit val ec: ExecutionContext
-  val extractor: EventExtractor[R]
-  def targets: Seq[ActorRef]
+trait EventDispatcher[T] {
 
-  def dispatch(block: RawBlockData): Future[Int] = {
-    for {
-      events <- extractor.extract(block)
-      _ = events.foreach { e =>
-        targets.foreach(_ ! e)
-      }
-    } yield events.size
-  }
+  def register(
+      cls: Class[_],
+      t: T*
+    )
+  def dispatch(evt: scalapb.GeneratedMessage)
 }
 
-class NameBasedEventDispatcher[R <: AnyRef](
-    names: Seq[String],
-    actors: Lookup[ActorRef]
-  )(
-    implicit
-    val ec: ExecutionContext,
-    val extractor: EventExtractor[R])
-    extends EventDispatcher[R] {
-  def targets: Seq[ActorRef] = names.map(actors.get)
+class EventDispatcherActorImpl extends EventDispatcher[ActorRef] {
+  var targets = Map.empty[Class[_], Seq[ActorRef]]
+
+  def register(
+      cls: Class[_],
+      t: ActorRef*
+    ) = {
+    targets = targets + (cls -> (targets.getOrElse(cls, Seq.empty[ActorRef]) ++ t))
+  }
+
+  def dispatch(evt: scalapb.GeneratedMessage) = {
+    println(
+      s"### dispatch ${targets}, ${targets.getOrElse(evt.getClass, Seq.empty)}, ${evt.getClass}"
+    )
+    targets.getOrElse(evt.getClass, Seq.empty).foreach(_ ! evt)
+  }
+
 }

@@ -16,23 +16,50 @@
 
 package io.lightcone.relayer.ethereum.event
 
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum.event._
 import io.lightcone.lib._
+import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait EventExtractor[R] {
+trait EventExtractor {
 
   implicit val ec: ExecutionContext
 
-  def extract(block: RawBlockData): Future[Seq[R]]
+  def extractTx(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[scalapb.GeneratedMessage]]
+
+  def extractBlock(block: RawBlockData): Future[Seq[scalapb.GeneratedMessage]] =
+    for {
+      events <- Future.sequence {
+        (block.txs zip block.receipts).map {
+          case (tx, receipt) =>
+            val eventHeader = getEventHeader(
+              tx,
+              receipt,
+              BlockHeader(
+                height = block.height,
+                hash = block.hash,
+                miner = block.miner,
+                timestamp =
+                  NumericConversion.toBigInt(block.timestamp).longValue(),
+                uncles = block.uncles
+              )
+            ) //TODO: 确定blockHeader放置在哪里
+            extractTx(tx, receipt, eventHeader)
+          case _ => Future.successful(Seq.empty)
+        }
+      }
+    } yield events.flatten
 
   def getEventHeader(
       tx: Transaction,
       receipt: TransactionReceipt,
-      blockTime: String
+      blockHeader: BlockHeader
     ) =
     EventHeader(
       txHash = tx.hash,
@@ -41,14 +68,16 @@ trait EventExtractor[R] {
       txValue = NumericConversion.toBigInt(tx.value),
       txIndex = NumericConversion.toBigInt(tx.transactionIndex).intValue,
       txStatus = getStatus(receipt.status),
-      blockHash = tx.blockHash,
-      blockTimestamp = NumericConversion.toBigInt(blockTime).longValue,
-      blockNumber = NumericConversion.toBigInt(tx.blockNumber).longValue,
+//      blockHash = tx.blockHash,
+//      blockTimestamp = NumericConversion.toBigInt(blockTime).longValue,
+//      blockNumber = NumericConversion.toBigInt(tx.blockNumber).longValue,
+      blockHeader = Some(blockHeader),
       gasPrice = NumericConversion.toBigInt(tx.gasPrice).longValue,
       gasLimit = NumericConversion.toBigInt(tx.gas).intValue,
       gasUsed = NumericConversion.toBigInt(receipt.gasUsed).intValue
     )
 
+  //TODO: 需要确定pending的status是什么
   def getStatus(status: String): TxStatus = {
     if (isSucceed(status)) TxStatus.TX_STATUS_SUCCESS
     else TxStatus.TX_STATUS_FAILED
@@ -63,7 +92,4 @@ trait EventExtractor[R] {
     }
   }
 
-  // def hex2ArrayBytes(str: String): Array[Byte] = {
-  //   Numeric.toBigInt(str).toByteArray
-  // }
 }

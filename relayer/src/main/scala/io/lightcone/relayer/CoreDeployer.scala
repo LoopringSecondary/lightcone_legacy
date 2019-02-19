@@ -34,10 +34,10 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
+import io.lightcone.relayer.ethereum.event.EventExtractorCompose
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-
 import scala.concurrent._
 
 class CoreDeployer @Inject()(
@@ -61,7 +61,8 @@ class CoreDeployer @Inject()(
     timeProvider: TimeProvider,
     timeout: Timeout,
     tve: TokenValueEvaluator,
-    dispatchers: Seq[EventDispatcher[_]],
+    eventDispatcher: EventDispatcher[ActorRef],
+    eventExtractorCompose: EventExtractorCompose,
     system: ActorSystem)
     extends Object
     with Logging {

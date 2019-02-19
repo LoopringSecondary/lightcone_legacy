@@ -21,9 +21,11 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.lib._
 import io.lightcone.ethereum.event.{
+  EventHeader,
   OrdersCancelledOnChainEvent => POrdersCancelledEvent
 }
 import io.lightcone.relayer.data._
+import scalapb.GeneratedMessage
 
 import scala.concurrent._
 
@@ -31,36 +33,38 @@ class OrdersCancelledEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     config: Config)
-    extends EventExtractor[POrdersCancelledEvent] {
+    extends EventExtractor {
 
   val orderCancelAddress = Address(
     config.getString("loopring_protocol.order-cancel-address")
   ).toString()
 
-  def extract(block: RawBlockData): Future[Seq[POrdersCancelledEvent]] =
-    Future {
-      (block.txs zip block.receipts).flatMap {
-        case (tx, receipt) if tx.to.equalsIgnoreCase(orderCancelAddress) =>
-          val header = getEventHeader(tx, receipt, block.timestamp)
-          receipt.logs.zipWithIndex.map {
-            case (log, index) =>
-              loopringProtocolAbi
-                .unpackEvent(log.data, log.topics.toArray) match {
-                case Some(event: OrdersCancelledEvent.Result) =>
-                  Some(
-                    POrdersCancelledEvent(
-                      header = Some(header.withLogIndex(index)),
-                      broker = Address.normalize(event.address),
-                      orderHashes = event._orderHashes,
-                      owner = Address.normalize(event.address)
-                    )
-                  )
-                case _ =>
-                  None
+  def extractTx(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[GeneratedMessage]] = Future {
+    if (!tx.to.equalsIgnoreCase(orderCancelAddress)) {
+      Seq.empty
+    } else {
+      receipt.logs.zipWithIndex.map {
+        case (log, index) =>
+          loopringProtocolAbi
+            .unpackEvent(log.data, log.topics.toArray) match {
+            case Some(event: OrdersCancelledEvent.Result) =>
+              Some(
+                POrdersCancelledEvent(
+                  header = Some(eventHeader.withLogIndex(index)),
+                  broker = Address.normalize(event.address),
+                  orderHashes = event._orderHashes,
+                  owner = Address.normalize(event.address)
+                )
+              )
+            case _ =>
+              None
 
-              }
-          }.filter(_.nonEmpty).map(_.get)
-        case _ => Seq.empty
-      }
+          }
+      }.filter(_.nonEmpty).map(_.get)
     }
+  }
 }

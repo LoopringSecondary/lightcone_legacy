@@ -36,7 +36,7 @@ message BlockHeader {
     int64 height = 1;
     string hash = 2;
     string  miner = 3;
-    string timestamp = 4;
+    int64 timestamp = 4;
     repeated string uncles = 5;
 }
 
@@ -63,6 +63,14 @@ message TransferEvent {
     string owner = 2;
     string from = 3;
     string to = 4;
+    string token = 5;
+    bytes amount = 6;
+}
+
+message ApprovalEvent {
+    EventHeader header = 1;
+    string owner = 2;
+    string spender = 4;
     string token = 5;
     bytes amount = 6;
 }

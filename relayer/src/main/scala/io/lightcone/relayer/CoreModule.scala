@@ -23,17 +23,16 @@ import akka.util.Timeout
 import com.google.inject._
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
-import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum.Dispatchers._
-import io.lightcone.relayer.ethereum.{EventDispatcher, _}
+import io.lightcone.relayer.ethereum._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
-import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
+import io.lightcone.relayer.ethereum.event._
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -117,50 +116,10 @@ class CoreModule(
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
-    // --- bind event extractors ---------------------
-    bind[EventExtractor[AddressAllowanceUpdatedEvent]]
-      .to[AllowanceChangedAddressExtractor]
-
-    bind[EventExtractor[AddressBalanceUpdatedEvent]]
-      .to[BalanceChangedAddressExtractor]
-
-    bind[EventExtractor[OrdersCancelledOnChainEvent]]
-      .to[OrdersCancelledEventExtractor]
-
-    bind[EventExtractor[TokenBurnRateChangedEvent]]
-      .to[TokenBurnRateEventExtractor]
-
-    bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
-    bind[EventExtractor[OrderSubmittedOnChainEvent]].to[OnchainOrderExtractor]
-    bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
-    bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
-    bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
-    bind[EventExtractor[OHLCRawDataEvent]].to[OHLCRawDataExtractor]
-    bind[EventExtractor[BlockGasPricesExtractedEvent]]
-      .to[BlockGasPriceExtractor]
-
     // --- bind event dispatchers ---------------------
-    bind[EventDispatcher[AddressAllowanceUpdatedEvent]]
-      .to[AllowanceEventDispatcher]
 
-    bind[EventDispatcher[AddressBalanceUpdatedEvent]]
-      .to[BalanceEventDispatcher]
-
-    bind[EventDispatcher[OrdersCancelledOnChainEvent]]
-      .to[OrdersCancelledEventDispatcher]
-
-    bind[EventDispatcher[OrderFilledEvent]]
-      .to[OrderFilledEventDispatcher]
-
-    bind[EventDispatcher[TokenBurnRateChangedEvent]]
-      .to[TokenBurnRateChangedEventDispatcher]
-
-    bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
-    bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
-    bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
-    bind[EventDispatcher[OHLCRawDataEvent]].to[OHLCRawDataEventDispatcher]
-    bind[EventDispatcher[BlockGasPricesExtractedEvent]]
-      .to[BlockGasPricesDispatcher]
+    bind[EventExtractorCompose].to[EventExtractorCompose]
+    bind[EventDispatcher[ActorRef]].to[EventDispatcherActorImpl]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -174,35 +133,35 @@ class CoreModule(
       .toInstance(deployActorsIgnoringRoles)
   }
 
-  @Provides
-  def getEventDispathcers(
-      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdatedEvent],
-      ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
-      orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
-      cutoffEventDispatcher: EventDispatcher[CutoffEvent],
-      transferEventDispatcher: EventDispatcher[TransferEvent],
-      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdatedEvent],
-      ordersCancelledEventDispatcher: EventDispatcher[
-        OrdersCancelledOnChainEvent
-      ],
-      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawDataEvent],
-      blockGasPricesDispatcher: EventDispatcher[BlockGasPricesExtractedEvent],
-      tokenBurnRateChangedEventDispatcher: EventDispatcher[
-        TokenBurnRateChangedEvent
-      ]
-    ): Seq[EventDispatcher[_]] =
-    Seq(
-      balanceEventDispatcher,
-      ringMinedEventDispatcher,
-      orderFilledEventDispatcher,
-      cutoffEventDispatcher,
-      transferEventDispatcher,
-      allowanceEventDispatcher,
-      ordersCancelledEventDispatcher,
-      ohlcRawDataEventDispatcher,
-      blockGasPricesDispatcher,
-      tokenBurnRateChangedEventDispatcher
-    )
+//  @Provides
+//  def getEventDispathcers(
+//      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdatedEvent],
+//      ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
+//      orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
+//      cutoffEventDispatcher: EventDispatcher[CutoffEvent],
+//      transferEventDispatcher: EventDispatcher[TransferEvent],
+//      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdatedEvent],
+//      ordersCancelledEventDispatcher: EventDispatcher[
+//        OrdersCancelledOnChainEvent
+//      ],
+//      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawDataEvent],
+//      blockGasPricesDispatcher: EventDispatcher[BlockGasPricesExtractedEvent],
+//      tokenBurnRateChangedEventDispatcher: EventDispatcher[
+//        TokenBurnRateChangedEvent
+//      ]
+//    ): Seq[EventDispatcher[_]] =
+//    Seq(
+//      balanceEventDispatcher,
+//      ringMinedEventDispatcher,
+//      orderFilledEventDispatcher,
+//      cutoffEventDispatcher,
+//      transferEventDispatcher,
+//      allowanceEventDispatcher,
+//      ordersCancelledEventDispatcher,
+//      ohlcRawDataEventDispatcher,
+//      blockGasPricesDispatcher,
+//      tokenBurnRateChangedEventDispatcher
+//    )
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

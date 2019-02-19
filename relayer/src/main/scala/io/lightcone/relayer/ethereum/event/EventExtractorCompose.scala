@@ -23,11 +23,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class EventExtractorCompose @Inject()(
     implicit
-    extractors: Seq[EventExtractorAlt],
+    extractors: Seq[EventExtractor],
     val ec: ExecutionContext,
     val metadataManager: MetadataManager) {
 
-  def extract(block: RawBlockData): Future[Seq[Any]] =
+  def extract(block: RawBlockData): Future[Seq[scalapb.GeneratedMessage]] =
     for {
       events <- Future.sequence(extractors.map { extractor =>
         extractor.extractBlock(block)

@@ -23,6 +23,8 @@ import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.event.TokenBurnRateChangedEvent._
+import scalapb.GeneratedMessage
+
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
@@ -30,7 +32,7 @@ class TokenBurnRateEventExtractor @Inject()(
     implicit
     val config: Config,
     val ec: ExecutionContext)
-    extends EventExtractor[TokenBurnRateChangedEvent] {
+    extends EventExtractor {
 
   val rateMap = config
     .getConfigList("loopring_protocol.burn-rate-table.tiers")
@@ -44,33 +46,33 @@ class TokenBurnRateEventExtractor @Inject()(
     .toMap
   val base = config.getInt("loopring_protocol.burn-rate-table.base")
 
-  def extract(block: RawBlockData): Future[Seq[TokenBurnRateChangedEvent]] =
-    Future {
-      (block.txs zip block.receipts).flatMap {
-        case (tx, receipt) =>
-          val header = getEventHeader(tx, receipt, block.timestamp)
-          receipt.logs.zipWithIndex.map {
-            case (log, index) =>
-              loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-                case Some(event: TokenTierUpgradedEvent.Result) =>
-                  val rates = rateMap(event.tier.intValue)
-                  Some(
-                    TokenBurnRateChangedEvent(
-                      header = Some(header.withLogIndex(index)),
-                      token = Address.normalize(event.add),
-                      burnRate = Some(
-                        BurnRate(
-                          forMarket = rates._1.doubleValue() / base,
-                          forP2P = rates._2.doubleValue() / base
-                        )
-                      )
-                    )
+  //TODO: 需要验证地址
+  def extractTx(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[GeneratedMessage]] = Future {
+    receipt.logs.zipWithIndex.map {
+      case (log, index) =>
+        loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+          case Some(event: TokenTierUpgradedEvent.Result) =>
+            val rates = rateMap(event.tier.intValue)
+            Some(
+              TokenBurnRateChangedEvent(
+                header = Some(eventHeader.withLogIndex(index)),
+                token = Address.normalize(event.add),
+                burnRate = Some(
+                  BurnRate(
+                    forMarket = rates._1.doubleValue() / base,
+                    forP2P = rates._2.doubleValue() / base
                   )
-                case _ =>
-                  None
-              }
-          }.filter(_.nonEmpty).map(_.get)
+                )
+              )
+            )
+          case _ =>
+            None
+        }
+    }.filter(_.nonEmpty).map(_.get)
+  }
 
-      }
-    }
 }

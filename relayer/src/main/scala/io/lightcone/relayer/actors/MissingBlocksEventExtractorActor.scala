@@ -24,6 +24,8 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum.event.EventExtractorCompose
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,7 +41,8 @@ object MissingBlocksEventExtractorActor extends DeployedAsSingleton {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      dispatchers: Seq[EventDispatcher[_]],
+      eventDispatcher: EventDispatcher[ActorRef],
+      eventExtractorCompose: EventExtractorCompose,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new MissingBlocksEventExtractorActor()))
@@ -53,7 +56,8 @@ class MissingBlocksEventExtractorActor(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val eventDispatchers: Seq[EventDispatcher[_]],
+    val eventDispatcher: EventDispatcher[ActorRef],
+    val eventExtractorCompose: EventExtractorCompose,
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {
