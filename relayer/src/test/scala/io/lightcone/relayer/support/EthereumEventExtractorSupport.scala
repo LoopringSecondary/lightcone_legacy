@@ -37,8 +37,6 @@ trait EthereumEventExtractorSupport
     with EthereumTransactionRecordSupport {
   me: CommonSpec =>
 
-  actors.add(OHLCDataHandlerActor.name, OHLCDataHandlerActor.start)
-
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
   implicit val eventExtractor: EventExtractor = new EventExtractorCompose(
@@ -99,12 +97,17 @@ trait EthereumEventExtractorSupport
         RingSettlementManagerActor.name
       )
 
-  actors.add(
-    EthereumEventExtractorActor.name,
-    EthereumEventExtractorActor.start
-  )
-  actors.add(
-    MissingBlocksEventExtractorActor.name,
-    MissingBlocksEventExtractorActor.start
-  )
+  actors
+    .add(
+      OHLCDataHandlerActor.name, //
+      OHLCDataHandlerActor.start
+    )
+    .add(
+      EthereumEventExtractorActor.name, //
+      EthereumEventExtractorActor.start
+    )
+    .add(
+      MissingBlocksEventExtractorActor.name,
+      MissingBlocksEventExtractorActor.start
+    )
 }
