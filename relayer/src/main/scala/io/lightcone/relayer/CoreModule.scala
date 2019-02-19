@@ -136,7 +136,7 @@ class CoreModule(
       implicit
       actors: Lookup[ActorRef]
     ): EventDispatcher = {
-    new EventDispatcherActorImpl(actors)
+    new EventDispatcherImpl(actors)
       .register(
         classOf[RingMinedEvent],
         MarketManagerActor.name,

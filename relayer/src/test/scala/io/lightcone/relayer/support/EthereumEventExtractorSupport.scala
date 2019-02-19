@@ -53,7 +53,7 @@ trait EthereumEventExtractorSupport
   implicit val eventExtractor: EventExtractor = new EventExtractorCompose()
 
   implicit val eventDispatcher: EventDispatcher =
-    new EventDispatcherActorImpl(actors)
+    new EventDispatcherImpl(actors)
       .register(
         classOf[RingMinedEvent],
         MarketManagerActor.name,

@@ -24,7 +24,7 @@ trait EventDispatcher {
   def dispatch(evt: AnyRef)
 }
 
-class EventDispatcherActorImpl(actors: Lookup[ActorRef])
+class EventDispatcherImpl(actors: Lookup[ActorRef])
     extends EventDispatcher
     with Logging {
   var targets = Map.empty[Class[_], Set[String]]
