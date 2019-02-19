@@ -132,7 +132,6 @@ trait EventExtraction {
   def processEvents: Future[Unit] = {
     for {
       events <- eventExtractorCompose.extract(blockData)
-      _ = println(s"### processEvents ${events}")
       _ = events.foreach(eventDispatcher.dispatch)
       _ <- dbModule.blockService.saveBlock(
         BlockData(

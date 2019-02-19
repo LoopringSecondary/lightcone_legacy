@@ -31,6 +31,8 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.event._
+import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event._
 
 import scala.concurrent.duration._
@@ -116,11 +118,6 @@ class CoreModule(
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
-    // --- bind event dispatchers ---------------------
-
-    bind[EventExtractorCompose].to[EventExtractorCompose]
-    bind[EventDispatcher[ActorRef]].to[EventDispatcherActorImpl]
-
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
 
@@ -133,35 +130,84 @@ class CoreModule(
       .toInstance(deployActorsIgnoringRoles)
   }
 
-//  @Provides
-//  def getEventDispathcers(
-//      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdatedEvent],
-//      ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
-//      orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
-//      cutoffEventDispatcher: EventDispatcher[CutoffEvent],
-//      transferEventDispatcher: EventDispatcher[TransferEvent],
-//      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdatedEvent],
-//      ordersCancelledEventDispatcher: EventDispatcher[
-//        OrdersCancelledOnChainEvent
-//      ],
-//      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawDataEvent],
-//      blockGasPricesDispatcher: EventDispatcher[BlockGasPricesExtractedEvent],
-//      tokenBurnRateChangedEventDispatcher: EventDispatcher[
-//        TokenBurnRateChangedEvent
-//      ]
-//    ): Seq[EventDispatcher[_]] =
-//    Seq(
-//      balanceEventDispatcher,
-//      ringMinedEventDispatcher,
-//      orderFilledEventDispatcher,
-//      cutoffEventDispatcher,
-//      transferEventDispatcher,
-//      allowanceEventDispatcher,
-//      ordersCancelledEventDispatcher,
-//      ohlcRawDataEventDispatcher,
-//      blockGasPricesDispatcher,
-//      tokenBurnRateChangedEventDispatcher
-//    )
+  // --- bind event dispatchers ---------------------
+  @Provides
+  def bindEventDispatcher(
+      implicit
+      actors: Lookup[ActorRef]
+    ): EventDispatcher[ActorRef] = {
+    val eventDispatcher = new EventDispatcherActorImpl()
+    eventDispatcher.register(
+      RingMinedEvent().getClass,
+      actors.get(MarketManagerActor.name),
+      actors.get(RingAndTradePersistenceActor.name)
+    )
+    eventDispatcher.register(
+      CutoffEvent().getClass,
+      actors.get(TransactionRecordActor.name),
+      actors.get(MultiAccountManagerActor.name)
+    )
+    eventDispatcher.register(
+      OrderFilledEvent().getClass,
+      actors.get(TransactionRecordActor.name),
+      actors.get(MultiAccountManagerActor.name)
+    )
+    eventDispatcher.register(
+      OrdersCancelledOnChainEvent().getClass,
+      actors.get(TransactionRecordActor.name),
+      actors.get(MultiAccountManagerActor.name)
+    )
+    eventDispatcher.register(
+      TokenBurnRateChangedEvent().getClass,
+      actors.get(MetadataManagerActor.name)
+    )
+    eventDispatcher.register(
+      TransferEvent().getClass,
+      actors.get(TransactionRecordActor.name)
+    )
+    eventDispatcher.register(
+      OHLCRawDataEvent().getClass,
+      actors.get(OHLCDataHandlerActor.name)
+    )
+    eventDispatcher.register(
+      BlockGasPricesExtractedEvent().getClass,
+      actors.get(GasPriceActor.name)
+    )
+    eventDispatcher.register(
+      AddressAllowanceUpdatedEvent().getClass,
+      actors.get(MultiAccountManagerActor.name)
+    )
+    eventDispatcher.register(
+      AddressBalanceUpdatedEvent().getClass,
+      actors.get(MultiAccountManagerActor.name),
+      actors.get(RingSettlementManagerActor.name)
+    )
+    eventDispatcher
+  }
+
+  // --- bind event extractors ---------------------
+  @Provides
+  def bindEventExtractor(
+      implicit
+      config: Config,
+      brb: EthereumBatchCallRequestBuilder,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      ec: ExecutionContext,
+      metadataManager: MetadataManager,
+      rawOrderValidatorArg: RawOrderValidator
+    ): EventExtractorCompose = {
+    implicit val extractors: Seq[EventExtractor] = Seq(
+      new BalanceAndAllowanceChangedExtractor(),
+      new BlockGasPriceExtractor(),
+      new CutoffEventExtractor(),
+      new OnchainOrderExtractor(),
+      new OrdersCancelledEventExtractor(),
+      new RingMinedEventExtractor(),
+      new TokenBurnRateEventExtractor()
+    )
+    new EventExtractorCompose()
+  }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

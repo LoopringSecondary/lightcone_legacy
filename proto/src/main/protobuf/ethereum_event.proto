@@ -70,9 +70,9 @@ message TransferEvent {
 message ApprovalEvent {
     EventHeader header = 1;
     string owner = 2;
-    string spender = 4;
-    string token = 5;
-    bytes amount = 6;
+    string spender = 3;
+    string token = 4;
+    bytes amount = 5;
 }
 
 message AddressBalanceUpdatedEvent {

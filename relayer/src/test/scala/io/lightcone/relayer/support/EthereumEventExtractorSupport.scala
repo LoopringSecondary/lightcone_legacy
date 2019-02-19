@@ -50,8 +50,8 @@ trait EthereumEventExtractorSupport
     new RingMinedEventExtractor(),
     new TokenBurnRateEventExtractor()
   )
-
   implicit val eventExtractorCompose = new EventExtractorCompose()
+
   implicit val eventDispatcher = new EventDispatcherActorImpl()
 
   eventDispatcher.register(
@@ -111,8 +111,8 @@ trait EthereumEventExtractorSupport
     EthereumEventExtractorActor.name,
     EthereumEventExtractorActor.start
   )
-//  actors.add(
-//    MissingBlocksEventExtractorActor.name,
-//    MissingBlocksEventExtractorActor.start
-//  )
+  actors.add(
+    MissingBlocksEventExtractorActor.name,
+    MissingBlocksEventExtractorActor.start
+  )
 }

@@ -44,7 +44,10 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
     val actors: Lookup[ActorRef],
     val ec: ExecutionContext,
     val metadataManager: MetadataManager)
-    extends EventExtractor {
+    extends EventExtractor
+    with TransferEventSupport
+    with ApprovalEventSupport
+    with BalanceUpdatedSuppot {
 
   val protocolConf = config.getConfig("loopring_protocol")
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
@@ -61,8 +64,8 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
       eventHeader: EventHeader
     ): Future[Seq[scalapb.GeneratedMessage]] =
     for {
-      balanceEvents <- extractBalance(tx, receipt, eventHeader)
-      allowanceEvents <- extractApproval(tx, receipt, eventHeader)
+      balanceEvents <- extractTransferEvents(tx, receipt, eventHeader)
+      allowanceEvents <- extractApprovalEvent(tx, receipt, eventHeader)
     } yield balanceEvents ++ allowanceEvents
 
   override def extractBlock(
@@ -72,21 +75,80 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
       changedEvents1 <- super.extractBlock(block)
       changedEvents2 <- extractEventOfMiner(BlockHeader())
       changedEvents = changedEvents1 ++ changedEvents2
-      _ = println(
-        s"#### extractBlock ${changedEvents1}, ${changedEvents2} ${changedEvents}"
-      )
       eventsWithState <- Future.sequence(
         changedEvents.map(extractEventWithState)
       )
     } yield changedEvents ++ eventsWithState.flatten
   }
 
-  def extractBalance(
+}
+
+trait ApprovalEventSupport {
+  extractor: BalanceAndAllowanceChangedExtractor =>
+
+  def extractApprovalEvent(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
     ): Future[Seq[scalapb.GeneratedMessage]] = Future {
-    println(s"### extractBalance1 ${tx}, ${receipt}")
+    val approvalEvents = ListBuffer.empty[PApprovalEvent]
+    receipt.logs.foreach { log =>
+      wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(transfer: TransferEvent.Result)
+            if Address(receipt.to).equals(protocolAddress) =>
+          approvalEvents.append(
+            PApprovalEvent(
+              header = Some(eventHeader),
+              owner = transfer.from,
+              spender = delegateAddress.toString(),
+              token = log.address,
+              amount = transfer.amount
+            )
+          )
+
+        case Some(approval: ApprovalEvent.Result)
+            if Address(approval.spender).equals(delegateAddress) =>
+          approvalEvents.append(
+            PApprovalEvent(
+              header = Some(eventHeader),
+              owner = approval.owner,
+              spender = delegateAddress.toString(),
+              token = log.address,
+              amount = approval.amount
+            )
+          )
+        case _ =>
+      }
+    }
+    if (isSucceed(receipt.status)) {
+      wethAbi.unpackFunctionInput(tx.input) match {
+        case Some(param: ApproveFunction.Parms)
+            if Address(param.spender).equals(delegateAddress) =>
+          approvalEvents.append(
+            PApprovalEvent(
+              header = Some(eventHeader),
+              owner = tx.from,
+              spender = delegateAddress.toString(),
+              token = tx.to,
+              amount = param.amount
+            )
+          )
+        case _ =>
+      }
+    }
+    approvalEvents
+  }
+
+}
+
+trait TransferEventSupport {
+  extractor: BalanceAndAllowanceChangedExtractor =>
+
+  def extractTransferEvents(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[scalapb.GeneratedMessage]] = Future {
     val txValue = NumericConversion.toBigInt(tx.value)
     val transfers = ListBuffer.empty[PTransferEvent]
     if (isSucceed(receipt.status)) {
@@ -232,7 +294,6 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
           }
       }
     }
-    println(s"### extractBalance2 ${transfers}")
 
     transfers.flatMap(
       event =>
@@ -255,87 +316,36 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
     )
   }
 
-  def extractApproval(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      eventHeader: EventHeader
-    ): Future[Seq[scalapb.GeneratedMessage]] = Future {
-    println(s"### extractApproval1 ${tx}, ${receipt}")
-    val approvalEvents = ListBuffer.empty[PApprovalEvent]
-    receipt.logs.foreach { log =>
-      wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(transfer: TransferEvent.Result)
-            if Address(receipt.to).equals(protocolAddress) =>
-          approvalEvents.append(
-            PApprovalEvent(
-              header = Some(eventHeader),
-              owner = transfer.from,
-              spender = delegateAddress.toString(),
-              token = log.address,
-              amount = transfer.amount
-            )
-          )
-
-        case Some(approval: ApprovalEvent.Result)
-            if Address(approval.spender).equals(delegateAddress) =>
-          approvalEvents.append(
-            PApprovalEvent(
-              header = Some(eventHeader),
-              owner = approval.owner,
-              spender = delegateAddress.toString(),
-              token = log.address,
-              amount = approval.amount
-            )
-          )
-        case _ =>
-      }
-    }
-    if (isSucceed(receipt.status)) {
-      wethAbi.unpackFunctionInput(tx.input) match {
-        case Some(param: ApproveFunction.Parms)
-            if Address(param.spender).equals(delegateAddress) =>
-          approvalEvents.append(
-            PApprovalEvent(
-              header = Some(eventHeader),
-              owner = tx.from,
-              spender = delegateAddress.toString(),
-              token = tx.to,
-              amount = param.amount
-            )
-          )
-        case _ =>
-      }
-    }
-    println(s"### extractApproval2 ${approvalEvents}")
-    approvalEvents
-  }
-
   def extractEventOfMiner(
       blockHeader: BlockHeader
     ): Future[Seq[scalapb.GeneratedMessage]] = Future {
     //TODO: 需要确定奖励金额以及txhash等值
-//    blockHeader.uncles
-//      .+:(blockHeader.miner)
-//      .map(
-//        addr =>
-//          PTransferEvent(
-//            header = Some(EventHeader(txHash="", txStatus = TxStatus.TX_STATUS_SUCCESS, blockHeader=Some(blockHeader))),
-//            owner = addr,
-//            from = Address.ZERO.toString(),
-//            to = addr,
-//            token = Address.ZERO.toString()
-////            amount =
-//          )
-//      )
+    //    blockHeader.uncles
+    //      .+:(blockHeader.miner)
+    //      .map(
+    //        addr =>
+    //          PTransferEvent(
+    //            header = Some(EventHeader(txHash="", txStatus = TxStatus.TX_STATUS_SUCCESS, blockHeader=Some(blockHeader))),
+    //            owner = addr,
+    //            from = Address.ZERO.toString(),
+    //            to = addr,
+    //            token = Address.ZERO.toString()
+    ////            amount =
+    //          )
+    //      )
     Seq.empty
   }
+
+}
+
+trait BalanceUpdatedSuppot {
+  extractor: BalanceAndAllowanceChangedExtractor =>
 
   def extractEventWithState(
       evt: scalapb.GeneratedMessage
     ): Future[Seq[scalapb.GeneratedMessage]] = {
     var balanceAddresses = Set.empty[AddressBalanceUpdatedEvent]
     var allowanceAddresses = Set.empty[AddressAllowanceUpdatedEvent]
-    println(s"### extractEventWithState ${evt}")
     evt match {
       case transfer: PTransferEvent =>
         balanceAddresses = balanceAddresses ++ Set(
@@ -383,7 +393,6 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
     } yield {
       (allowanceAddresses zip tokenAllowances).map(
         item => {
-          println(s"### extractor1 ${item}")
           AddressAllowanceUpdatedEvent(
             address = Address.normalize(item._1.address),
             token = Address.normalize(item._1.token),

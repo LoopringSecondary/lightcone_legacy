@@ -34,9 +34,15 @@ class RingMinedEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     config: Config,
-    metadataManager: MetadataManager,
-    rawOrderValidator: RawOrderValidator)
-    extends EventExtractor {
+    metadataManagerArg: MetadataManager,
+    rawOrderValidatorArg: RawOrderValidator)
+    extends EventExtractor
+    with RingMinedEventSupport
+    with FillEventSupport
+    with OHLCRawDataSupport {
+
+  implicit val metadataManager = metadataManagerArg
+  implicit val rawOrderValidator = rawOrderValidatorArg
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
@@ -54,7 +60,96 @@ class RingMinedEventExtractor @Inject()(
     for {
       ringMinedEvents <- extractRingMinedEvents(tx, receipt, eventHeader)
       fillEvents = extractFilledEvents(ringMinedEvents)
-    } yield ringMinedEvents ++ fillEvents
+      ohlcRawDataEvents = extractOHLCRawData(ringMinedEvents)
+    } yield ringMinedEvents ++ fillEvents ++ ohlcRawDataEvents
+
+}
+
+trait OHLCRawDataSupport {
+  extractor: RingMinedEventExtractor =>
+
+  def extractOHLCRawData(ringMinedEvents: Seq[PRingMinedEvent]) = {
+    ringMinedEvents
+      .filter(
+        ring =>
+          ring.header.isDefined && ring.getHeader.txStatus.isTxStatusSuccess
+      )
+      .flatMap { ring =>
+        ring.fills.map { fill =>
+          val marketHash =
+            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).toString
+
+          if (!metadataManager.isMarketStatus(marketHash, ACTIVE, READONLY))
+            None
+          else {
+            val marketMetadata =
+              metadataManager.getMarket(marketHash)
+            val marketPair = marketMetadata.getMarketPair
+            val baseToken =
+              metadataManager.getTokenWithAddress(marketPair.baseToken).get
+            val quoteToken =
+              metadataManager.getTokenWithAddress(marketPair.quoteToken).get
+            val (baseAmount, quoteAmount) =
+              getAmounts(fill, baseToken, quoteToken, marketMetadata)
+            Some(
+              OHLCRawDataEvent(
+                ringIndex = ring.ringIndex,
+                txHash = ring.header.get.txHash,
+                marketHash = marketHash,
+                time = ring.getHeader.getBlockHeader.timestamp,
+                baseAmount = baseAmount,
+                quoteAmount = quoteAmount,
+                price = BigDecimal(quoteAmount / baseAmount)
+                  .setScale(marketMetadata.priceDecimals)
+                  .doubleValue()
+              )
+            )
+          }
+        }.filter(_.isDefined).map(_.get).distinct
+      }
+  }
+
+  // LRC-WETH market, LRC is the base token, WETH is the quote token.
+  private def getAmounts(
+      fill: OrderFilledEvent,
+      baseToken: Token,
+      quoteToken: Token,
+      marketMetadata: MarketMetadata
+    ): (Double, Double) = {
+    val amountInWei =
+      if (Address(baseToken.meta.address).equals(Address(fill.tokenS)))
+        Numeric.toBigInt(fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
+
+    val amount: Double = quoteToken
+      .fromWei(amountInWei, marketMetadata.precisionForAmount)
+      .doubleValue()
+
+    val totalInWei =
+      if (Address(quoteToken.meta.address).equals(Address(fill.tokenS)))
+        Numeric.toBigInt(fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
+
+    val total: Double = baseToken
+      .fromWei(totalInWei, marketMetadata.precisionForTotal)
+      .doubleValue()
+
+    amount -> total
+  }
+}
+
+trait FillEventSupport {
+  extractor: RingMinedEventExtractor =>
+
+  def extractFilledEvents(ringMinedEvents: Seq[PRingMinedEvent]) = {
+    ringMinedEvents
+      .filter(_.getHeader.txStatus.isTxStatusSuccess)
+      .flatMap(_.fills)
+  }
+}
+
+trait RingMinedEventSupport {
+  extractor: RingMinedEventExtractor =>
 
   def extractRingMinedEvents(
       tx: Transaction,
@@ -161,53 +256,6 @@ class RingMinedEventExtractor @Inject()(
     }
   }
 
-  def extractFilledEvents(ringMinedEvents: Seq[PRingMinedEvent]) = {
-    ringMinedEvents
-      .filter(_.getHeader.txStatus.isTxStatusSuccess)
-      .flatMap(_.fills)
-  }
-
-  def extractOHLCRawData(ringMinedEvents: Seq[PRingMinedEvent]) = {
-    ringMinedEvents
-      .filter(
-        ring =>
-          ring.header.isDefined && ring.getHeader.txStatus.isTxStatusSuccess
-      )
-      .flatMap { ring =>
-        ring.fills.map { fill =>
-          val marketHash =
-            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).toString
-
-          if (!metadataManager.isMarketStatus(marketHash, ACTIVE, READONLY))
-            None
-          else {
-            val marketMetadata =
-              metadataManager.getMarket(marketHash)
-            val marketPair = marketMetadata.getMarketPair
-            val baseToken =
-              metadataManager.getTokenWithAddress(marketPair.baseToken).get
-            val quoteToken =
-              metadataManager.getTokenWithAddress(marketPair.quoteToken).get
-            val (baseAmount, quoteAmount) =
-              getAmounts(fill, baseToken, quoteToken, marketMetadata)
-            Some(
-              OHLCRawDataEvent(
-                ringIndex = ring.ringIndex,
-                txHash = ring.header.get.txHash,
-                marketHash = marketHash,
-                time = ring.getHeader.getBlockHeader.timestamp,
-                baseAmount = baseAmount,
-                quoteAmount = quoteAmount,
-                price = BigDecimal(quoteAmount / baseAmount)
-                  .setScale(marketMetadata.priceDecimals)
-                  .doubleValue()
-              )
-            )
-          }
-        }.filter(_.isDefined).map(_.get).distinct
-      }
-  }
-
   private def fillToOrderFilledEvent(
       fill: String,
       _fill: String,
@@ -238,33 +286,4 @@ class RingMinedEventExtractor @Inject()(
         .toBigInt(data.substring(64 * 7, 64 * 8))
     )
   }
-
-  // LRC-WETH market, LRC is the base token, WETH is the quote token.
-  private def getAmounts(
-      fill: OrderFilledEvent,
-      baseToken: Token,
-      quoteToken: Token,
-      marketMetadata: MarketMetadata
-    ): (Double, Double) = {
-    val amountInWei =
-      if (Address(baseToken.meta.address).equals(Address(fill.tokenS)))
-        Numeric.toBigInt(fill.filledAmountS.toByteArray)
-      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
-
-    val amount: Double = quoteToken
-      .fromWei(amountInWei, marketMetadata.precisionForAmount)
-      .doubleValue()
-
-    val totalInWei =
-      if (Address(quoteToken.meta.address).equals(Address(fill.tokenS)))
-        Numeric.toBigInt(fill.filledAmountS.toByteArray)
-      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
-
-    val total: Double = baseToken
-      .fromWei(totalInWei, marketMetadata.precisionForTotal)
-      .doubleValue()
-
-    amount -> total
-  }
-
 }
