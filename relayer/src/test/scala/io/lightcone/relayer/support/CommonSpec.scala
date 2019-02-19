@@ -24,7 +24,12 @@ import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.base.MapBasedLookup
 import io.lightcone.relayer.actors._
 import io.lightcone.core._
-import io.lightcone.relayer.external.{CMCTickerManagerImpl, TickerManager}
+import io.lightcone.relayer.external.{
+  CMCTickerManagerImpl,
+  CurrencyManager,
+  SinaCurrencyManagerImpl,
+  TickerManager
+}
 import org.scalatest._
 import org.slf4s.Logging
 
@@ -67,7 +72,6 @@ abstract class CommonSpec(configStr: String = "")
   //  log.info(s"init config: ${config}")
 
   implicit val metadataManager = new MetadataManagerImpl()
-  implicit val tickerManager = new CMCTickerManagerImpl()
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
@@ -76,6 +80,9 @@ abstract class CommonSpec(configStr: String = "")
   implicit val actors = new MapBasedLookup[ActorRef]()
   implicit val rie: RingIncomeEvaluator =
     new RingIncomeEvaluatorImpl()
+
+  implicit val tickerManager = new CMCTickerManagerImpl()
+  implicit val currencyManager = new SinaCurrencyManagerImpl()
 
   //actors
   //  val refresher = system.actorOf(

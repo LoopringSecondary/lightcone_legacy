@@ -26,7 +26,8 @@ object MetadataManager {
   def normalize(token: TokenMetadata): TokenMetadata =
     token.copy(
       address = Address(token.address).toString.toLowerCase,
-      symbol = token.symbol.toUpperCase
+      symbol = token.symbol.toUpperCase,
+      slug = token.slug.toLowerCase
     )
 
   def normalize(market: MarketMetadata): MarketMetadata = {

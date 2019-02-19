@@ -95,9 +95,26 @@ package object support {
       MarketHash(MarketPair(GTO_TOKEN.address, WETH_TOKEN.address)).toString
   )
 
+  val GTO_LRC_MARKET = MarketMetadata(
+    status = MarketMetadata.Status.ACTIVE,
+    baseTokenSymbol = GTO_TOKEN.symbol,
+    quoteTokenSymbol = LRC_TOKEN.symbol,
+    maxNumbersOfOrders = 500,
+    priceDecimals = 6,
+    orderbookAggLevels = 5,
+    precisionForAmount = 5,
+    precisionForTotal = 5,
+    browsableInWallet = true,
+    marketPair = Some(
+      MarketPair(baseToken = GTO_TOKEN.address, quoteToken = LRC_TOKEN.address)
+    ),
+    marketHash =
+      MarketHash(MarketPair(GTO_TOKEN.address, LRC_TOKEN.address)).toString
+  )
+
   val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
 
-  val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET)
+  val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET, GTO_LRC_MARKET)
 
   //第一个地址为特殊地址，eth以及erc20金额和授权，都足够大
   val accounts = Seq(

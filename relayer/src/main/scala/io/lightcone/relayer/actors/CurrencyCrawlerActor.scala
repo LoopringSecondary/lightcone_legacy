@@ -45,6 +45,7 @@ object CurrencyCrawlerActor extends DeployedAsSingleton {
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
       materializer: ActorMaterializer,
+      currencyManager: CurrencyManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new CurrencyCrawlerActor()))
@@ -61,12 +62,12 @@ class CurrencyCrawlerActor(
     val actors: Lookup[ActorRef],
     val materializer: ActorMaterializer,
     val dbModule: DatabaseModule,
+    val currencyManager: CurrencyManager,
     val system: ActorSystem)
     extends InitializationRetryActor
     with JsonSupport
     with RepeatedJobActor
     with ActorLogging {
-  val currencyManager: CurrencyManager = new SinaCurrencyManagerImpl()
   val selfConfig = config.getConfig(CurrencyCrawlerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")

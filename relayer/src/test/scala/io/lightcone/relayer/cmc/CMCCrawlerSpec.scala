@@ -16,14 +16,12 @@
 
 package io.lightcone.relayer.cmc
 
-import akka.pattern._
-import io.lightcone.cmc.{CMCTickerData, TickerDataInfo, TickerStatus}
+import io.lightcone.cmc._
 import io.lightcone.core._
-import io.lightcone.persistence.RequestJob
+import io.lightcone.persistence.{CMCTickersInUsd, CurrencyRate, RequestJob}
 import io.lightcone.persistence.RequestJob.JobType
-import io.lightcone.persistence.dals.CMCTickersInUsdDal
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.data._
+import io.lightcone.relayer.rpc.ExternalTickerInfo
 import io.lightcone.relayer.support._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -35,13 +33,22 @@ class CMCCrawlerSpec
     with EthereumSupport
     with DatabaseModuleSupport
     with MetadataManagerSupport
-    with CMCSupport {
+    with ExternalSupport {
 
   def crawlerActor = actors.get(CMCCrawlerActor.name)
   def refresherActor = actors.get(ExternalDataRefresher.name)
   val metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
+
+  var tickers: Seq[CMCTickersInUsd] = Seq.empty[CMCTickersInUsd]
+
+  val USD_CNY = 6.873
+  private val supportMarketSymbols = metadataManager.getSupportMarketSymbols
+  private val effectiveMarketSymbols = metadataManager
+    .getMarkets()
+    .filter(_.status != MarketMetadata.Status.TERMINATED)
+    .map(m => (m.baseTokenSymbol, m.quoteTokenSymbol))
 
   "cmc crawler" must {
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
@@ -72,29 +79,55 @@ class CMCCrawlerSpec
           Future.successful(Seq.empty)
         }
         // verify result
-        latestJob <- dbModule.requestJobDal.findLatest(JobType.TICKERS_FROM_CMC)
-        tickers <- dbModule.CMCTickersInUsdDal.getTickersByJob(
-          latestJob.get.batchId
+        tickers <- dbModule.CMCTickersInUsdDal.countTickersByJob(
+          savedJob.batchId
         )
-      } yield (latestJob, cmcResponse, tickersToPersist, tickers)
+      } yield (cmcResponse, tickersToPersist, tickers)
       val q1 = Await.result(
         f.mapTo[
           (
-              Option[RequestJob],
               TickerDataInfo,
-              Seq[CMCTickersInUsdDal],
-              Seq[CMCTickersInUsdDal]
+              Seq[CMCTickersInUsd],
+              Int
           )
         ],
         50.second
       )
-      log.info(s"-------1 ${q1._4.length}")
-      q1._1.nonEmpty should be(true)
-      q1._2.data.length == 2072 should be(true)
-      q1._3.length == 2072 should be(true)
-      // q1._4.length == 2072 should be(true) // 1968 cmc return duplicate token with symbol EVN, EDR...
+      q1._1.data.length should be(2072)
+      q1._2.length should be(2072)
+      tickers = q1._2
+      q1._3 should be(2072)
     }
-    "convert USD tickers to all support markets (ExternalDataRefresher)" in {}
+    "convert USD tickers to all support markets (ExternalDataRefresher)" in {
+      val (tickersInUSD, tickersInCNY) = refreshTickers()
+      val tickerMapInUSD = supportMarketSymbols.map { market =>
+        (market, tickersInUSD.filter(_.market == market))
+      }.toMap
+
+      val tickerMapInCNY = supportMarketSymbols.map { market =>
+        (market, tickersInCNY.filter(_.market == market))
+      }.toMap
+
+      // get a random market
+      val randomMarket = supportMarketSymbols.toList(
+        (new util.Random).nextInt(supportMarketSymbols.size)
+      )
+      // get a random position
+      val marketTickersInUsd = tickerMapInUSD(randomMarket)
+      val p = (new util.Random).nextInt(marketTickersInUsd.size)
+      val usdTicker = marketTickersInUsd(p)
+      val cnyTicker = tickerMapInCNY(randomMarket)(p)
+      // verify ticker in USD and CNY
+      usdTicker.symbol should equal(cnyTicker.symbol)
+      val cnyTickerVerify =
+        tickerManager.convertUsdTickersToCny(
+          Seq(usdTicker),
+          Some(CurrencyRate(USD_CNY))
+        )
+      usdTicker.price should not equal cnyTicker.price
+      cnyTickerVerify.nonEmpty should be(true)
+      cnyTickerVerify.head should equal(cnyTicker)
+    }
   }
 
   private def getMockedCMCTickers() = {
@@ -157,7 +190,30 @@ class CMCCrawlerSpec
         batchId,
         tickers_
       )
-      fixGroup = tickersToPersist.grouped(20).toList
+      fixGroup = tickersToPersist.grouped(10).toList
       _ = fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
     } yield tickersToPersist
+
+  private def refreshTickers() = {
+    assert(tickers.nonEmpty)
+    val tickersInUSD = tickerManager
+      .convertPersistenceToAllSupportMarkets(
+        tickers,
+        supportMarketSymbols
+      )
+      .filter(isEffectiveMarket)
+    val tickersInCNY =
+      tickerManager
+        .convertUsdTickersToCny(
+          tickersInUSD,
+          Some(CurrencyRate(USD_CNY))
+        )
+        .filter(isEffectiveMarket)
+    (tickersInUSD, tickersInCNY)
+  }
+
+  private def isEffectiveMarket(ticker: ExternalTickerInfo): Boolean = {
+    effectiveMarketSymbols.contains((ticker.symbol, ticker.market))
+  }
+
 }

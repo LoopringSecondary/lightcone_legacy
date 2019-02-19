@@ -11,15 +11,16 @@ message GetOrderbook{
 message ExternalTickerInfo {
     string name = 1;
     string symbol = 2;
-    string market= 3;
-    string pair = 4;
-    int32  rank = 5;
-    double price = 6;
-    double volume_24h = 7;
-    double percent_change_1h = 8;
-    double percent_change_24h = 9;
-    double percent_change_7d = 10;
-    int64  last_updated = 11;
+    string slug = 3;
+    string market= 4;
+    string pair = 5;
+    int32  rank = 6;
+    double price = 7;
+    double volume_24h = 8;
+    double percent_change_1h = 9;
+    double percent_change_24h = 10;
+    double percent_change_7d = 11;
+    int64  last_updated = 12;
 }
 
 message GetExternalTickers {

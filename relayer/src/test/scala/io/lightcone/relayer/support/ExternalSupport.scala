@@ -25,10 +25,11 @@ import scala.concurrent.Await
 import io.lightcone.relayer.actors._
 import akka.pattern._
 
-trait CMCSupport extends DatabaseModuleSupport {
+trait ExternalSupport extends DatabaseModuleSupport {
   me: CommonSpec =>
 
   actors.add(CMCCrawlerActor.name, CMCCrawlerActor.start)
+  actors.add(CurrencyCrawlerActor.name, CurrencyCrawlerActor.start)
 
   try Unreliables.retryUntilTrue(
     10,

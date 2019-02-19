@@ -166,17 +166,18 @@ message TokenMetadata {
 
     Type     type                   = 1;
     Status   status                 = 2;
-    string   symbol                 = 3;
-    string   name                   = 4;
-    string   address                = 5;
-    string   unit                   = 6;
-    int32    decimals               = 7;
-    string   website_url            = 8;
-    int32    precision              = 9;
-    double   burn_rate_for_market   = 10;
-    double   burn_rate_for_p2p      = 11;
-    double   usd_price              = 12;
-    int64    updated_at             = 13;
+    string   symbol                 = 3; // BTC
+    string   slug                   = 4; // bitcoin, use for query, same with cmc slug
+    string   name                   = 5; // Bitcoin
+    string   address                = 6;
+    string   unit                   = 7;
+    int32    decimals               = 8;
+    string   website_url            = 9;
+    int32    precision              = 10;
+    double   burn_rate_for_market   = 11;
+    double   burn_rate_for_p2p      = 12;
+    double   usd_price              = 13;
+    int64    updated_at             = 14;
 }
 
 message MarketMetadata {

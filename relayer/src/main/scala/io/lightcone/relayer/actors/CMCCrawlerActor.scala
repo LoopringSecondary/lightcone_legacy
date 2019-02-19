@@ -27,7 +27,7 @@ import io.lightcone.persistence.RequestJob.JobType
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.external.{CMCTickerManagerImpl, TickerManager}
+import io.lightcone.relayer.external.TickerManager
 import scala.concurrent.{ExecutionContext, Future}
 import io.lightcone.relayer.jsonrpc._
 import scala.util.{Failure, Success}
@@ -46,6 +46,7 @@ object CMCCrawlerActor extends DeployedAsSingleton {
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
       materializer: ActorMaterializer,
+      tickerManager: TickerManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new CMCCrawlerActor()))
@@ -62,13 +63,13 @@ class CMCCrawlerActor(
     val actors: Lookup[ActorRef],
     val materializer: ActorMaterializer,
     val dbModule: DatabaseModule,
+    val tickerManager: TickerManager,
     val system: ActorSystem)
     extends InitializationRetryActor
     with JsonSupport
     with RepeatedJobActor
     with ActorLogging {
 
-  val tickerManager: TickerManager = new CMCTickerManagerImpl()
   val metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val selfConfig = config.getConfig(CMCCrawlerActor.name)
@@ -156,13 +157,12 @@ class CMCCrawlerActor(
     ) = {
     var changedTokens = Seq.empty[TokenMetadata]
     tokens.foreach { token =>
-      val symbol = if (token.symbol == "WETH") "ETH" else token.symbol
       val priceQuote =
-        usdTickers.find(_.symbol == symbol).flatMap(_.quote.get("USD"))
+        usdTickers.find(_.slug == token.slug).flatMap(_.quote.get("USD"))
       val usdPriceQuote = priceQuote.getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"can not found ${symbol} price in USD"
+          s"can not found slug:[${token.slug}] price in USD"
         )
       )
       if (token.usdPrice != usdPriceQuote.price) {

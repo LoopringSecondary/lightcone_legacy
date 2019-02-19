@@ -34,7 +34,7 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.external.{CMCTickerManagerImpl, TickerManager}
+import io.lightcone.relayer.external._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -118,6 +118,8 @@ class CoreModule(
     bind[TimeProvider].to[SystemTimeProvider]
     bind[EthereumCallRequestBuilder]
     bind[EthereumBatchCallRequestBuilder]
+    bind[TickerManager].to[CMCTickerManagerImpl].asEagerSingleton()
+    bind[CurrencyManager].to[SinaCurrencyManagerImpl].asEagerSingleton()
 
     bind[TokenValueEvaluator]
     bind[DustOrderEvaluator]

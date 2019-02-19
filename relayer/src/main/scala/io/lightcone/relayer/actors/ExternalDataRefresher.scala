@@ -18,15 +18,16 @@ package io.lightcone.relayer.actors
 
 import akka.actor._
 import akka.pattern._
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.core.MetadataManager
+import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.relayer.base._
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.external.TickerManager
-import io.lightcone.relayer.rpc.{ExternalTickerInfo, GetExternalTickers}
+import io.lightcone.relayer.rpc._
 import scala.concurrent._
 
 // Owner: YongFeng
@@ -43,7 +44,8 @@ object ExternalDataRefresher {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       metadataManager: MetadataManager,
-      tickerManager: TickerManager
+      tickerManager: TickerManager,
+      materializer: ActorMaterializer
     ) = {
     system.actorOf(
       Props(new ExternalDataRefresher()),
@@ -61,8 +63,10 @@ class ExternalDataRefresher(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager,
+    val materializer: ActorMaterializer,
+    val dbModule: DatabaseModule,
     val tickerManager: TickerManager,
-    val dbModule: DatabaseModule)
+    val system: ActorSystem)
     extends Actor
     with RepeatedJobActor
     with ActorLogging {
@@ -74,6 +78,10 @@ class ExternalDataRefresher(
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   private val supportMarketSymbols = metadataManager.getSupportMarketSymbols
+  private val effectiveMarketSymbols = metadataManager
+    .getMarkets()
+    .filter(_.status != MarketMetadata.Status.TERMINATED)
+    .map(m => (m.baseTokenSymbol, m.quoteTokenSymbol))
 
   private var tickersInUSD: Seq[ExternalTickerInfo] =
     Seq.empty[ExternalTickerInfo]
@@ -119,15 +127,23 @@ class ExternalDataRefresher(
       tickers_ <- (tokenTickerCrawlerActor ? GetTickers.Req())
         .mapTo[GetTickers.Res]
         .map(_.tickers)
+
     } yield {
       assert(tickers_.nonEmpty)
-      tickersInUSD = tickerManager.convertPersistenceToAllSupportMarkets(
-        tickers_,
-        supportMarketSymbols
-      )
-      tickersInCNY =
-        tickerManager.convertUsdTickersToCny(tickersInUSD, currencyRate)
+      tickersInUSD = tickerManager
+        .convertPersistenceToAllSupportMarkets(
+          tickers_,
+          supportMarketSymbols
+        )
+        .filter(isEffectiveMarket)
+      tickersInCNY = tickerManager
+        .convertUsdTickersToCny(tickersInUSD, currencyRate)
+        .filter(isEffectiveMarket)
     }
+
+  private def isEffectiveMarket(ticker: ExternalTickerInfo): Boolean = {
+    effectiveMarketSymbols.contains((ticker.symbol, ticker.market))
+  }
 
   private def refreshCurrencyRate() = {
     for {

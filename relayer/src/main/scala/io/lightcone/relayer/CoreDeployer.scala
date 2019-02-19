@@ -34,7 +34,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
-import io.lightcone.relayer.external.TickerManager
+import io.lightcone.relayer.external._
 import org.slf4s.Logging
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent._
@@ -62,7 +62,8 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
     system: ActorSystem,
-    tickerRequest: TickerManager)
+    tickerManager: TickerManager,
+    currencyManager: CurrencyManager)
     extends Object
     with Logging {
 
@@ -163,6 +164,7 @@ class CoreDeployer @Inject()(
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
       actors.add(CMCCrawlerActor.name, CMCCrawlerActor.start)
+      actors.add(CurrencyCrawlerActor.name, CurrencyCrawlerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,

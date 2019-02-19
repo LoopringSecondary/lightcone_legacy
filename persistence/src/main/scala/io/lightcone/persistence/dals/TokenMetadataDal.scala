@@ -33,7 +33,7 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
       usdPrice: Double
     ): Future[ErrorCode]
 
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]]
+  def getTokens(addresses: Seq[String]): Future[Seq[TokenMetadata]]
 
   def getTokens(): Future[Seq[TokenMetadata]]
 

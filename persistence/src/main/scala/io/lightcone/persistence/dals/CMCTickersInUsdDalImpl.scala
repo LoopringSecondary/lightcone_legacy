@@ -18,11 +18,13 @@ package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import io.lightcone.core.ErrorCode._
 import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 class CMCTickersInUsdDalImpl @Inject()(
     implicit
@@ -34,22 +36,30 @@ class CMCTickersInUsdDalImpl @Inject()(
 
   val query = TableQuery[CMCTickersInUsdTable]
 
-  def saveTickers(tickers: Seq[CMCTickersInUsd]): Future[Unit] =
-    for {
-      _ <- db.run(query ++= tickers)
-    } yield Unit
+  def saveTickers(tickers: Seq[CMCTickersInUsd]) =
+    db.run((query ++= tickers).asTry).map {
+      case Failure(ex) => {
+        logger.error(s"save tickers error : ${ex.getMessage}")
+        ERR_PERSISTENCE_INTERNAL
+      }
+      case Success(x) =>
+        ERR_NONE
+    }
 
   def getTickersByJob(jobId: Int): Future[Seq[CMCTickersInUsd]] =
     db.run(query.filter(_.batchId === jobId).result)
 
+  def countTickersByJob(jobId: Int) =
+    db.run(query.filter(_.batchId === jobId).size.result)
+
   def getTickers(
       jobId: Int,
-      tokenSymbols: Seq[String]
+      tokenSlugs: Seq[String]
     ): Future[Seq[CMCTickersInUsd]] =
     db.run(
       query
         .filter(_.batchId === jobId)
-        .filter(_.symbol inSet tokenSymbols)
+        .filter(_.slug inSet tokenSlugs)
         .result
     )
 }

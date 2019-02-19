@@ -37,7 +37,8 @@ trait TickerManager {
 
   def normalizeTicker(ticker: CMCTickerData): CMCTickerData =
     ticker.copy(
-      symbol = ticker.symbol.toUpperCase()
+      symbol = ticker.symbol.toUpperCase(),
+      slug = ticker.slug.toLowerCase()
     )
 
   def toDouble: PartialFunction[BigDecimal, Double] = {

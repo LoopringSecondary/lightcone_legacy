@@ -146,7 +146,9 @@ class CMCTickerManagerImpl @Inject()(
     val tickersWithMultiMarkets = convertToExternalMultiMarketsInUsd(
       tickersInUsdWithSupportMarkets
     )
-    tickersWithMultiMarkets.filter(c => c.symbol != c.market)
+    tickersWithMultiMarkets
+      .filter(c => c.symbol != c.market)
+      .filterNot(c => c.symbol == "ETH" && c.market == "WETH")
   }
 
   private def getTickersWithAllSupportMarkets(
@@ -233,6 +235,7 @@ class CMCTickerManagerImpl @Inject()(
         ExternalTickerInfo(
           name,
           symbol,
+          ticker.slug,
           market,
           pair,
           rank,

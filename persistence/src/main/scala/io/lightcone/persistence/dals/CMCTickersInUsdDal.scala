@@ -16,6 +16,7 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.core.ErrorCode
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import scala.concurrent._
@@ -23,11 +24,14 @@ import scala.concurrent._
 trait CMCTickersInUsdDal
     extends BaseDalImpl[CMCTickersInUsdTable, CMCTickersInUsd] {
 
-  def saveTickers(tickers: Seq[CMCTickersInUsd]): Future[Unit]
+  def saveTickers(tickers: Seq[CMCTickersInUsd]): Future[ErrorCode]
+
   def getTickersByJob(jobId: Int): Future[Seq[CMCTickersInUsd]]
+
+  def countTickersByJob(jobId: Int): Future[Int]
 
   def getTickers(
       jobId: Int,
-      tokenSymbols: Seq[String]
+      tokenSlugs: Seq[String]
     ): Future[Seq[CMCTickersInUsd]]
 }

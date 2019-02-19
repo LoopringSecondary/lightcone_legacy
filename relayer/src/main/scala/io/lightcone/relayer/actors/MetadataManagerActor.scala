@@ -138,10 +138,10 @@ class MetadataManagerActor(
           JobType.TICKERS_FROM_CMC
         )
         modifiedTokens <- if (latestJob.nonEmpty) {
-          val tokenSymbols = req.tokens.map(_.symbol)
+          val tokenSlugs = req.tokens.map(_.slug)
           for {
             tickers_ <- dbModule.CMCTickersInUsdDal
-              .getTickers(latestJob.get.batchId, tokenSymbols)
+              .getTickers(latestJob.get.batchId, tokenSlugs)
           } yield {
             val tickersMap = tickers_.map { t =>
               (t.symbol, t.usdQuote.get.price)
