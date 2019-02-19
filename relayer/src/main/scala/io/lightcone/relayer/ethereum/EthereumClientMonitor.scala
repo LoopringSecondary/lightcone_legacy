@@ -22,11 +22,11 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import io.lightcone.ethereum._
+import io.lightcone.relayer.actors.EthereumQueryActor
 
 import scala.concurrent._
 import scala.util._
@@ -81,6 +81,7 @@ class EthereumClientMonitor(
 
   val selfConfig = config.getConfig(EthereumClientMonitor.name)
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
+  def ethereumQuery = actors.get(EthereumQueryActor.name)
 
   var nodes: Map[String, NodeBlockHeight] =
     HttpConnector.connectorNames(config).map {
@@ -101,6 +102,11 @@ class EthereumClientMonitor(
             nodes.values.foreach { node =>
               ethereumAccessor ! node
             }
+          }
+          if (actors.contains(EthereumQueryActor.name)) {
+            ethereumQuery ! nodes.values.toSeq
+              .sortWith(_.height > _.height)
+              .head
           }
         },
       initialDalayInSeconds = checkIntervalSeconds
