@@ -44,6 +44,11 @@ package object socketio {
       level: Int,
       market: Market)
 
+  case class SubscribeTransfer(
+      address: String,
+      `type`: String,
+      tokens: Seq[String])
+
   case class TokenBalanceAndAllowance(
       address: String,
       balance: String,
@@ -147,4 +152,13 @@ package object socketio {
       level: Int,
       orderBook: OrderBook)
 
+  case class Transfer(
+      owner: String,
+      from: String,
+      to: String,
+      token: String,
+      amount: String,
+      txHash: String,
+      blockNum: String,
+      time: String)
 }

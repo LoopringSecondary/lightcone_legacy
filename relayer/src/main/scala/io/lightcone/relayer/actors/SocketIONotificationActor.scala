@@ -41,6 +41,7 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       tradeNotifier: SocketIONotifier[SubscribeTrade],
       tickerNotifier: SocketIONotifier[SubscribeTicker],
       orderBook: SocketIONotifier[SubscribeOrderBook],
+      transferNotifier: SocketIONotifier[SubscribeTransfer],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -55,7 +56,10 @@ class SocketIONotificationActor @Inject()(
     val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
     val transactionNotifier: SocketIONotifier[SubscribeTransaction],
     val orderNotifier: SocketIONotifier[SubscribeOrder],
-    val tradeNotifier: SocketIONotifier[SubscribeTrade])
+    val tradeNotifier: SocketIONotifier[SubscribeTrade],
+    val tickerNotifier: SocketIONotifier[SubscribeTicker],
+    val orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
+    val transferNotifier: SocketIONotifier[SubscribeTransfer])
     extends Actor {
 
   def receive: Receive = {
@@ -150,5 +154,20 @@ class SocketIONotificationActor @Inject()(
         miner = event.miner
       )
       tradeNotifier.notifyEvent(data)
+
+    case event: TransferEvent =>
+      val data = Transfer(
+        owner = event.owner,
+        from = event.from,
+        to = event.to,
+        token = event.token,
+        amount = event.amount,
+        txHash = event.getHeader.txHash,
+        blockNum =
+          NumericConversion.toHexString(BigInt(event.getHeader.blockNumber)),
+        time =
+          NumericConversion.toHexString(BigInt(event.getHeader.blockTimestamp))
+      )
+      transferNotifier.notifyEvent(data)
   }
 }

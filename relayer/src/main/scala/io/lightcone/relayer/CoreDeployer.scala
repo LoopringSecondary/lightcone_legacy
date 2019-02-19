@@ -69,6 +69,7 @@ class CoreDeployer @Inject()(
     tradeNotifier: SocketIONotifier[SubscribeTrade],
     tickerNotifier: SocketIONotifier[SubscribeTicker],
     orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
+    transferNotifier: SocketIONotifier[SubscribeTransfer],
     system: ActorSystem)
     extends Object
     with Logging {

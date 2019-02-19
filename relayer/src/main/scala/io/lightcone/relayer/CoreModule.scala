@@ -176,6 +176,9 @@ class CoreModule(
     bind[SocketIONotifier[SubscribeOrderBook]]
       .to[OrderBookNotifier]
       .asEagerSingleton
+    bind[SocketIONotifier[SubscribeTransfer]]
+      .to[TransferNotifier]
+      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
