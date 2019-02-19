@@ -21,7 +21,7 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-import io.lightcone.ethereum.event.{EventHeader, OrderSubmittedOnChainEvent}
+import io.lightcone.ethereum.event._
 import io.lightcone.lib._
 import org.web3j.utils.Numeric
 import scalapb.GeneratedMessage

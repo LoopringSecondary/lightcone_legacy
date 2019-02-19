@@ -353,7 +353,7 @@ trait BalanceUpdatedSuppot {
             transfer.getHeader.txFrom,
             Address.ZERO.toString()
           ),
-          AddressBalanceUpdatedEvent(transfer.from),
+          AddressBalanceUpdatedEvent(transfer.from, transfer.token),
           AddressBalanceUpdatedEvent(transfer.to, transfer.token)
         )
         if (Address(transfer.getHeader.txTo).equals(protocolAddress))

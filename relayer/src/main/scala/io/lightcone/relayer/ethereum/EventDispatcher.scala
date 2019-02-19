@@ -38,9 +38,6 @@ class EventDispatcherActorImpl extends EventDispatcher[ActorRef] {
   }
 
   def dispatch(evt: scalapb.GeneratedMessage) = {
-    println(
-      s"### dispatch ${targets}, ${targets.getOrElse(evt.getClass, Seq.empty)}, ${evt.getClass}"
-    )
     targets.getOrElse(evt.getClass, Seq.empty).foreach(_ ! evt)
   }
 
