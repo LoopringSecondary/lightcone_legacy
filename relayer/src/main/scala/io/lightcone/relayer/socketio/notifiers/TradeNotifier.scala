@@ -18,44 +18,38 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
-import io.lightcone.core.{MarketHash, MarketPair}
 import io.lightcone.lib.Address
-import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.socketio.{
+  SocketIONotifier,
+  SocketIOSubscriber,
+  SubscribeTrade
+}
 
-class OrderNotifier @Inject() extends SocketIONotifier[SubscribeOrder] {
+class TradeNotifier @Inject() extends SocketIONotifier[SubscribeTrade] {
 
-  val eventName = "orders"
+  val eventName: String = "trades"
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SubscribeOrder
-    ): SocketIOSubscriber[SubscribeOrder] =
-    new SocketIOSubscriber[SubscribeOrder](
+      subscription: SubscribeTrade
+    ): SocketIOSubscriber[SubscribeTrade] =
+    new SocketIOSubscriber(
       client,
-      subscription.copy(
+      subscription = subscription.copy(
         addresses = subscription.addresses.map(Address.normalize),
         market = subscription.market.copy(
-          baseToken = Address.normalize(subscription.market.baseToken),
+          bastToken = Address.normalize(subscription.market.baseToken),
           quoteToken = Address.normalize(subscription.market.quoteToken)
         )
       )
     )
 
   def shouldNotifyClient(
-      subscription: SubscribeOrder,
+      subscription: SubscribeTrade,
       event: AnyRef
     ): Boolean = {
-    event match {
-      case order: Order =>
-        subscription.addresses.contains(order.owner) &&
-          (MarketHash(
-            MarketPair(
-              subscription.market.baseToken,
-              subscription.market.quoteToken
-            )
-          ) == MarketHash(MarketPair(order.tokenB, order.tokenS)))
-      case _ => false
-    }
+
+
   }
 
 }

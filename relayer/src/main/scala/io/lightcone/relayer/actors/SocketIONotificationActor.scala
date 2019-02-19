@@ -92,6 +92,7 @@ class SocketIONotificationActor @Inject()(
 
     case event: RawOrder =>
       val data = Order(
+        hash = event.hash,
         owner = event.owner,
         version = event.version,
         tokenB = event.tokenB,

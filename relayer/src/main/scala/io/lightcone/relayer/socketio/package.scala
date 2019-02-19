@@ -34,6 +34,10 @@ package object socketio {
       addresses: Seq[String],
       market: Market = null)
 
+  case class SubscribeTrade(
+      addresses: Seq[String],
+      market: Market = null)
+
   case class TokenBalanceAndAllowance(
       address: String,
       balance: String,
@@ -65,6 +69,7 @@ package object socketio {
       transaction: Transaction)
 
   case class Order(
+                    hash:String,
       owner: String,
       version: Int,
       tokenS: String,
@@ -90,5 +95,10 @@ package object socketio {
       outstandingAmountS: String,
       outstandingAmountB: String,
       outstandingAmountFee: String)
+
+
+  case class Trade(
+
+                  )
 
 }
