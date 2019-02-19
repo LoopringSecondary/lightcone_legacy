@@ -156,50 +156,101 @@ class CoreDeployer @Inject()(
       // TODO：按照模块分布，因为启动有依赖顺序
 
       //-----------deploy singleton actors-----------
-      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
-      actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
-      actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
-      actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
-
-      actors.add(
-        EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start
-      )
-      actors.add(
-        MissingBlocksEventExtractorActor.name,
-        MissingBlocksEventExtractorActor.start
-      )
-      actors.add(
-        RingSettlementManagerActor.name,
-        RingSettlementManagerActor.start
-      )
+      actors
+        .add(
+          EthereumClientMonitor.name, //
+          EthereumClientMonitor.start
+        )
+        .add(
+          EthereumAccessActor.name, //
+          EthereumAccessActor.start
+        )
+        .add(
+          OrderRecoverCoordinator.name, //
+          OrderRecoverCoordinator.start
+        )
+        .add(
+          OrderStatusMonitorActor.name, //
+          OrderStatusMonitorActor.start
+        )
+        .add(
+          MetadataManagerActor.name, //
+          MetadataManagerActor.start
+        )
+        .add(
+          EthereumEventExtractorActor.name,
+          EthereumEventExtractorActor.start
+        )
+        .add(
+          MissingBlocksEventExtractorActor.name,
+          MissingBlocksEventExtractorActor.start
+        )
+        .add(
+          RingSettlementManagerActor.name, //
+          RingSettlementManagerActor.start
+        )
 
       //-----------deploy sharded actors-----------
-      actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
-      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
-
-      actors.add(
-        RingAndTradePersistenceActor.name,
-        RingAndTradePersistenceActor.start
-      )
-
-      actors.add(GasPriceActor.name, GasPriceActor.start)
-      actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
-      actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
-      actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
-      actors.add(MarketManagerActor.name, MarketManagerActor.start)
-      actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
-      actors.add(OHLCDataHandlerActor.name, OHLCDataHandlerActor.start)
-
-      actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
+      actors
+        .add(
+          EthereumQueryActor.name, //
+          EthereumQueryActor.start
+        )
+        .add(
+          DatabaseQueryActor.name, //
+          DatabaseQueryActor.start
+        )
+        .add(
+          RingAndTradePersistenceActor.name,
+          RingAndTradePersistenceActor.start
+        )
+        .add(
+          GasPriceActor.name, //
+          GasPriceActor.start
+        )
+        .add(
+          OrderPersistenceActor.name, //
+          OrderPersistenceActor.start
+        )
+        .add(
+          OrderRecoverActor.name, //
+          OrderRecoverActor.start
+        )
+        .add(
+          MultiAccountManagerActor.name, //
+          MultiAccountManagerActor.start
+        )
+        .add(
+          MarketManagerActor.name, //
+          MarketManagerActor.start
+        )
+        .add(
+          OrderbookManagerActor.name, //
+          OrderbookManagerActor.start
+        )
+        .add(
+          OHLCDataHandlerActor.name, //
+          OHLCDataHandlerActor.start
+        )
+        .add(
+          TransactionRecordActor.name, //
+          TransactionRecordActor.start
+        )
 
       //-----------deploy local actors that depend on cluster aware actors-----------
-      actors.add(EntryPointActor.name, EntryPointActor.start)
-
-      actors.add(MetadataRefresher.name, MetadataRefresher.start)
-
-      actors.add(KeepAliveActor.name, KeepAliveActor.start)
+      actors
+        .add(
+          EntryPointActor.name, //
+          EntryPointActor.start
+        )
+        .add(
+          MetadataRefresher.name, //
+          MetadataRefresher.start
+        )
+        .add(
+          KeepAliveActor.name, //
+          KeepAliveActor.start
+        )
 
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||

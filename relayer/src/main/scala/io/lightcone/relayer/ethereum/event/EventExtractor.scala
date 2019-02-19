@@ -20,5 +20,5 @@ import io.lightcone.relayer.data._
 import scala.concurrent.Future
 
 trait EventExtractor {
-  def extractBlock(block: RawBlockData): Future[Seq[AnyRef]]
+  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]]
 }

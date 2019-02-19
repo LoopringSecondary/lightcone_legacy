@@ -18,25 +18,38 @@ package io.lightcone.relayer.ethereum
 
 import akka.actor.ActorRef
 import io.lightcone.relayer.base._
+import org.slf4s.Logging
 
 trait EventDispatcher {
   def dispatch(evt: AnyRef)
 }
 
 class EventDispatcherActorImpl(actors: Lookup[ActorRef])
-    extends EventDispatcher {
+    extends EventDispatcher
+    with Logging {
   var targets = Map.empty[Class[_], Set[String]]
 
   def register(
       cls: Class[_],
       actorNames: String*
     ) = {
-    targets = targets + (cls -> (targets.getOrElse(cls, Set.empty[String]) ++ actorNames.toSet))
+    val t = targets.getOrElse(cls, Set.empty[String]) ++ actorNames.toSet
+    targets = targets + (cls -> t)
     this
   }
 
   def dispatch(evt: AnyRef) = {
-    targets.getOrElse(evt.getClass, Set.empty).map(actors.get).foreach(_ ! evt)
+    val (found, notFound) = targets
+      .getOrElse(evt.getClass, Set.empty)
+      .partition(actors.contains)
+
+    if (notFound.size > 0) {
+      log.error(
+        s"unable to dispatch message to actor with the following names: $notFound"
+      )
+    }
+
+    found.map(actors.get).foreach(_ ! evt)
   }
 
 }

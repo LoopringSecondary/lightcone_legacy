@@ -29,10 +29,10 @@ class EventExtractorCompose(
     val metadataManager: MetadataManager)
     extends EventExtractor {
 
-  def extractBlock(block: RawBlockData): Future[Seq[AnyRef]] =
+  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] =
     for {
       events <- Future.sequence {
-        extractors.map(_.extractBlock(block))
+        extractors.map(_.extractEvents(block))
       }
     } yield events.flatten
 

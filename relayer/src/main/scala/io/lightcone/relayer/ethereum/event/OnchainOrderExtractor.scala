@@ -36,7 +36,7 @@ class OnchainOrderExtractor @Inject()(
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
-  def extractTx(
+  def extractEventsFromTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader

@@ -54,7 +54,7 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   )
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  def extractTx(
+  def extractEventsFromTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: event.EventHeader
@@ -64,9 +64,9 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
       allowanceEvents <- extractApprovalEvent(tx, receipt, eventHeader)
     } yield balanceEvents ++ allowanceEvents
 
-  override def extractBlock(block: RawBlockData): Future[Seq[AnyRef]] = {
+  override def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] = {
     for {
-      changedEvents1 <- super.extractBlock(block)
+      changedEvents1 <- super.extractEvents(block)
       changedEvents2 <- extractEventOfMiner(event.BlockHeader())
       changedEvents = changedEvents1 ++ changedEvents2
       eventsWithState <- Future.sequence(

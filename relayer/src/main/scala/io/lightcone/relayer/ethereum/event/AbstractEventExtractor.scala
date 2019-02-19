@@ -26,13 +26,13 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class AbstractEventExtractor extends EventExtractor {
   implicit val ec: ExecutionContext
 
-  def extractTx(
+  def extractEventsFromTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
     ): Future[Seq[AnyRef]]
 
-  def extractBlock(block: RawBlockData): Future[Seq[AnyRef]] =
+  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] =
     for {
       events <- Future.sequence {
         (block.txs zip block.receipts).map {
@@ -49,7 +49,7 @@ abstract class AbstractEventExtractor extends EventExtractor {
                 uncles = block.uncles
               )
             ) //TODO: 确定blockHeader放置在哪里
-            extractTx(tx, receipt, eventHeader)
+            extractEventsFromTx(tx, receipt, eventHeader)
           case _ => Future.successful(Seq.empty)
         }
       }

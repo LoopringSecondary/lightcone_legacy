@@ -157,13 +157,22 @@ class CoreModule(
         TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
-      .register(classOf[TokenBurnRateChangedEvent], MetadataManagerActor.name)
+      .register(
+        classOf[TokenBurnRateChangedEvent], //
+        MetadataManagerActor.name
+      )
       .register(
         classOf[TransferEvent], //
         TransactionRecordActor.name
       )
-      .register(classOf[OHLCRawDataEvent], OHLCDataHandlerActor.name)
-      .register(classOf[BlockGasPricesExtractedEvent], GasPriceActor.name)
+      .register(
+        classOf[OHLCRawDataEvent], //
+        OHLCDataHandlerActor.name
+      )
+      .register(
+        classOf[BlockGasPricesExtractedEvent], //
+        GasPriceActor.name
+      )
       .register(
         classOf[AddressAllowanceUpdatedEvent],
         MultiAccountManagerActor.name

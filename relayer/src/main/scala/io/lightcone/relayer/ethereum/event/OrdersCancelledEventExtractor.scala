@@ -37,7 +37,7 @@ class OrdersCancelledEventExtractor @Inject()(
     config.getString("loopring_protocol.order-cancel-address")
   ).toString()
 
-  def extractTx(
+  def extractEventsFromTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader

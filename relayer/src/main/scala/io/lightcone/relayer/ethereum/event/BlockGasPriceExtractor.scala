@@ -30,7 +30,7 @@ class BlockGasPriceExtractor @Inject()(
     val ec: ExecutionContext)
     extends AbstractEventExtractor {
 
-  def extractTx(
+  def extractEventsFromTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
@@ -38,7 +38,7 @@ class BlockGasPriceExtractor @Inject()(
     Seq.empty
   }
 
-  override def extractBlock(
+  override def extractEvents(
       block: RawBlockData
     ): Future[Seq[BlockGasPricesExtractedEvent]] =
     Future {
