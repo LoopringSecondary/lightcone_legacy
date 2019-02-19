@@ -50,8 +50,8 @@ class CMCCrawlerSpec
 
   "cmc crawler" must {
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
-      tokens.foreach{t=>
-        t.meta.usdPrice should be (1000)
+      tokens.foreach { t =>
+        t.meta.usdPrice should be(1000)
       }
       val f = for {
         savedJob <- dbModule.requestJobDal.saveJob(
@@ -100,7 +100,7 @@ class CMCCrawlerSpec
       q1._2.length should be(2072)
       tickers = q1._2
       q1._3 should be(2072)
-      q1._4.exists(_.usdPrice != 1000) should be (true)
+      q1._4.exists(_.usdPrice != 1000) should be(true)
     }
     "convert USD tickers to all support markets (ExternalDataRefresher)" in {
       val (tickersInUSD, tickersInCNY) = refreshTickers()

@@ -49,7 +49,7 @@ class CMCTickersInUsdTable(tag: Tag)
 
   // indexes
   def idx_batch_id = index("idx_batch_id", (batchId), unique = false)
-  def idx_batch_slug = index("idx_batch_slug", (batchId, slug), unique = true)
+  def pk_batch_slug = primaryKey("idx_batch_slug", (batchId, slug))
 
   def quoteProjection =
     (
