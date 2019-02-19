@@ -18,7 +18,7 @@ package io.lightcone.relayer.cmc
 
 import io.lightcone.cmc._
 import io.lightcone.core._
-import io.lightcone.persistence.{CMCTickersInUsd, CurrencyRate, RequestJob}
+import io.lightcone.persistence._
 import io.lightcone.persistence.RequestJob.JobType
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.rpc.ExternalTickerInfo
@@ -41,6 +41,7 @@ class CMCCrawlerSpec
   var tickers: Seq[CMCTickersInUsd] = Seq.empty[CMCTickersInUsd]
 
   val USD_CNY = 6.873
+  private val tokens = metadataManager.getTokens
   private val supportMarketSymbols = metadataManager.getSupportMarketSymbols
   private val effectiveMarketSymbols = metadataManager
     .getMarkets()
@@ -49,6 +50,9 @@ class CMCCrawlerSpec
 
   "cmc crawler" must {
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
+      tokens.foreach{t=>
+        t.meta.usdPrice should be (1000)
+      }
       val f = for {
         savedJob <- dbModule.requestJobDal.saveJob(
           RequestJob(
@@ -76,16 +80,18 @@ class CMCCrawlerSpec
           Future.successful(Seq.empty)
         }
         // verify result
-        tickers <- dbModule.CMCTickersInUsdDal.countTickersByJob(
+        tickers_ <- dbModule.CMCTickersInUsdDal.countTickersByJob(
           savedJob.batchId
         )
-      } yield (cmcResponse, tickersToPersist, tickers)
+        tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      } yield (cmcResponse, tickersToPersist, tickers_, tokens_)
       val q1 = Await.result(
         f.mapTo[
           (
               TickerDataInfo,
               Seq[CMCTickersInUsd],
-              Int
+              Int,
+              Seq[TokenMetadata]
           )
         ],
         50.second
@@ -94,6 +100,7 @@ class CMCCrawlerSpec
       q1._2.length should be(2072)
       tickers = q1._2
       q1._3 should be(2072)
+      q1._4.exists(_.usdPrice != 1000) should be (true)
     }
     "convert USD tickers to all support markets (ExternalDataRefresher)" in {
       val (tickersInUSD, tickersInCNY) = refreshTickers()
@@ -152,13 +159,12 @@ class CMCCrawlerSpec
     ) = {
     var changedTokens = Seq.empty[TokenMetadata]
     tokens.foreach { token =>
-      val symbol = if (token.symbol == "WETH") "ETH" else token.symbol
       val priceQuote =
-        usdTickers.find(_.symbol == symbol).flatMap(_.quote.get("USD"))
+        usdTickers.find(_.slug == token.slug).flatMap(_.quote.get("USD"))
       val usdPriceQuote = priceQuote.getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"can not found ${symbol} price in USD"
+          s"can not found slug:[${token.slug}] price in USD"
         )
       )
       if (token.usdPrice != usdPriceQuote.price) {

@@ -36,6 +36,7 @@ package object support {
     burnRateForMarket = 0.4,
     burnRateForP2P = 0.5,
     symbol = "WETH",
+    slug = "weth",
     name = "WETH",
     usdPrice = 1000,
     status = TokenMetadata.Status.VALID
@@ -47,6 +48,7 @@ package object support {
     burnRateForMarket = 0.4,
     burnRateForP2P = 0.5,
     symbol = "LRC",
+    slug = "loopring",
     name = "LRC",
     usdPrice = 1000,
     status = TokenMetadata.Status.VALID
@@ -58,6 +60,7 @@ package object support {
     burnRateForMarket = 0.4,
     burnRateForP2P = 0.5,
     symbol = "GTO",
+    slug = "gifto",
     name = "GTO",
     usdPrice = 1000,
     status = TokenMetadata.Status.VALID

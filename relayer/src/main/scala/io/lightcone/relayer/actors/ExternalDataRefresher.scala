@@ -83,9 +83,11 @@ class ExternalDataRefresher(
     .filter(_.status != MarketMetadata.Status.TERMINATED)
     .map(m => (m.baseTokenSymbol, m.quoteTokenSymbol))
 
-  private var tickersInUSD: Seq[ExternalTickerInfo] =
+  private var allTickersInUSD: Seq[ExternalTickerInfo] =
     Seq.empty[ExternalTickerInfo]
-  private var tickersInCNY: Seq[ExternalTickerInfo] =
+  private var supportTickersInUSD: Seq[ExternalTickerInfo] =
+    Seq.empty[ExternalTickerInfo]
+  private var supportTickersInCNY: Seq[ExternalTickerInfo] =
     Seq.empty[ExternalTickerInfo]
   private var currencyRate: Option[CurrencyRate] = None
 
@@ -101,8 +103,8 @@ class ExternalDataRefresher(
   def receive: Receive = super.receiveRepeatdJobs orElse {
     case req: GetExternalTickers.Req =>
       val tickerSource =
-        if (req.currency == GetExternalTickers.Currency.CNY) tickersInCNY
-        else tickersInUSD
+        if (req.currency == GetExternalTickers.Currency.CNY) supportTickersInCNY
+        else supportTickersInUSD
       val tickers_ = if (req.market.isEmpty) {
         tickerSource
       } else {
@@ -129,14 +131,15 @@ class ExternalDataRefresher(
         .map(_.tickers)
     } yield {
       assert(tickers_.nonEmpty)
-      tickersInUSD = tickerManager
+      allTickersInUSD = tickerManager
         .convertPersistenceToAllSupportMarkets(
           tickers_,
           supportMarketSymbols
         )
+      supportTickersInUSD = allTickersInUSD
         .filter(isEffectiveMarket)
-      tickersInCNY = tickerManager
-        .convertUsdTickersToCny(tickersInUSD, currencyRate)
+      supportTickersInCNY = tickerManager
+        .convertUsdTickersToCny(supportTickersInUSD, currencyRate)
         .filter(isEffectiveMarket)
     }
 
