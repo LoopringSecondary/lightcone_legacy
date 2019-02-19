@@ -44,9 +44,6 @@ class TransactionNotifier @Inject()
         request.addresses.contains(e.owner) &&
           (request.types.isEmpty || request.types.contains(
             e.transaction.`type`
-          )) &&
-          (request.statuses.isEmpty || request.statuses.contains(
-            e.transaction.status
           ))
       case _ => false
     }

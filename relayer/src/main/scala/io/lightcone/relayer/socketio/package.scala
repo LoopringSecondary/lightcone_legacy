@@ -24,8 +24,15 @@ package object socketio {
 
   case class SubscribeTransaction(
       addresses: Seq[String],
-      statuses: Seq[String],
       types: Seq[String])
+
+  case class Market(
+      baseToken: String,
+      quoteToken: String)
+
+  case class SubscribeOrder(
+      addresses: Seq[String],
+      market: Market = null)
 
   case class TokenBalanceAndAllowance(
       address: String,
@@ -56,5 +63,32 @@ package object socketio {
   case class TransactionResponse(
       owner: String,
       transaction: Transaction)
+
+  case class Order(
+      owner: String,
+      version: Int,
+      tokenS: String,
+      tokenB: String,
+      amountS: String,
+      amountB: String,
+      validSince: String,
+      dualAuthAddr: String,
+      broker: String,
+      orderInterceptor: String,
+      wallet: String,
+      validUntil: String,
+      allOrNone: Boolean,
+      tokenFee: String,
+      amountFee: String,
+      waiveFeePercentage: Int,
+      tokenSFeePercentage: Int,
+      tokenBFeePercentage: Int,
+      tokenRecipient: String,
+      walletSplitPercentage: Int,
+      status: String,
+      createdAt: String,
+      outstandingAmountS: String,
+      outstandingAmountB: String,
+      outstandingAmountFee: String)
 
 }

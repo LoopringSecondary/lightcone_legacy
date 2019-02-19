@@ -19,8 +19,8 @@ package io.lightcone.core
 import com.google.inject.Inject
 import com.typesafe.config.Config
 
-final class ConfigBasedMetadataManager @Inject() (implicit val config: Config)
-  extends AbstractMetadataManager {
+final class ConfigBasedMetadataManager @Inject()(implicit val config: Config)
+    extends AbstractMetadataManager {
 
   val rateConfig = config.getConfig("loopring_protocol.default-burn-rates")
 

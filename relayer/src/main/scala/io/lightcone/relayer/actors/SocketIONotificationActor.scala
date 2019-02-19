@@ -22,6 +22,7 @@ import com.google.inject.Inject
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.socketio._
 import io.lightcone.core._
+import io.lightcone.lib.NumericConversion
 
 import scala.concurrent.ExecutionContext
 
@@ -35,6 +36,7 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       timeout: Timeout,
       balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
       transactionNotifier: SocketIONotifier[SubscribeTransaction],
+      orderNotifier: SocketIONotifier[SubscribeOrder],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -47,7 +49,8 @@ class SocketIONotificationActor @Inject()(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-    val transactionNotifier: SocketIONotifier[SubscribeTransaction])
+    val transactionNotifier: SocketIONotifier[SubscribeTransaction],
+    val orderNotifier: SocketIONotifier[SubscribeOrder])
     extends Actor {
 
   def receive: Receive = {
@@ -86,5 +89,38 @@ class SocketIONotificationActor @Inject()(
       )
 
       transactionNotifier.notifyEvent(transaction)
+
+    case event: RawOrder =>
+      val data = Order(
+        owner = event.owner,
+        version = event.version,
+        tokenB = event.tokenB,
+        tokenS = event.tokenS,
+        amountB = event.amountB,
+        amountS = event.amountS,
+        validSince = NumericConversion.toHexString(BigInt(event.validSince)),
+        dualAuthAddr = event.params.get.dualAuthAddr,
+        broker = event.getParams.broker,
+        orderInterceptor = event.getParams.orderInterceptor,
+        wallet = event.getParams.wallet,
+        validUntil =
+          NumericConversion.toHexString(BigInt(event.getParams.validUntil)),
+        allOrNone = event.getParams.allOrNone,
+        tokenFee = event.getFeeParams.tokenFee,
+        amountFee = event.getFeeParams.amountFee,
+        waiveFeePercentage = event.getFeeParams.waiveFeePercentage,
+        tokenSFeePercentage = event.getFeeParams.tokenSFeePercentage,
+        tokenBFeePercentage = event.getFeeParams.tokenBFeePercentage,
+        tokenRecipient = event.getFeeParams.tokenRecipient,
+        walletSplitPercentage = event.getFeeParams.walletSplitPercentage,
+        status = event.getState.status.name,
+        createdAt =
+          NumericConversion.toHexString(BigInt(event.getState.createdAt)),
+        outstandingAmountS = event.getState.outstandingAmountS,
+        outstandingAmountB = event.getState.outstandingAmountB,
+        outstandingAmountFee = event.getState.outstandingAmountFee
+      )
+
+      orderNotifier.notifyEvent(data)
   }
 }

@@ -26,7 +26,8 @@ class SocketServer(
     implicit
     val config: Config,
     val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-    val transactionNotifier: SocketIONotifier[SubscribeTransaction]) {
+    val transactionNotifier: SocketIONotifier[SubscribeTransaction],
+    val orderNotifier: SocketIONotifier[SubscribeOrder]) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
@@ -46,6 +47,12 @@ class SocketServer(
     transactionNotifier.eventName,
     classOf[SubscribeTransaction],
     transactionNotifier
+  )
+
+  server.addEventListener(
+    orderNotifier.eventName,
+    classOf[SubscribeOrder],
+    orderNotifier
   )
 
   // def addNotifier()
