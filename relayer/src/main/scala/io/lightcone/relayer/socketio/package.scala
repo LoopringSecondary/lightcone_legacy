@@ -69,7 +69,7 @@ package object socketio {
       transaction: Transaction)
 
   case class Order(
-                    hash:String,
+      hash: String,
       owner: String,
       version: Int,
       tokenS: String,
@@ -85,20 +85,34 @@ package object socketio {
       allOrNone: Boolean,
       tokenFee: String,
       amountFee: String,
-      waiveFeePercentage: Int,
-      tokenSFeePercentage: Int,
-      tokenBFeePercentage: Int,
       tokenRecipient: String,
-      walletSplitPercentage: Int,
       status: String,
       createdAt: String,
       outstandingAmountS: String,
       outstandingAmountB: String,
       outstandingAmountFee: String)
 
-
   case class Trade(
-
-                  )
+      owner: String,
+      orderHash: String,
+      ringHash: String,
+      ringIndex: String,
+      fillIndex: String,
+      tokenS: String,
+      tokenB: String,
+      tokenFee: String,
+      amountS: String,
+      amountB: String,
+      amountFee: String,
+      feeAmountS: String,
+      feeAmountB: String,
+      feeRecipient: String,
+      waiveFeePercentage: Int,
+      walletSplitPercentage: Int,
+      wallet: String,
+      time: String,
+      blockNum: String,
+      txHash: String,
+      miner: String)
 
 }

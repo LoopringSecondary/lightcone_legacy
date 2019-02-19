@@ -32,7 +32,7 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
   def wrapClient(
       client: SocketIOClient,
       subscription: R
-    ): SocketIOSubscriber[R] = new SocketIOSubscriber[R](client, subscription)
+    ): SocketIOSubscriber[R]
 
   private var clients = Seq.empty[SocketIOSubscriber[R]]
 

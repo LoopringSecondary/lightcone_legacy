@@ -34,7 +34,6 @@ import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.socketio.notifiers._
 import scala.concurrent.duration._
@@ -172,6 +171,7 @@ class CoreModule(
       .to[TransactionNotifier]
       .asEagerSingleton
     bind[SocketIONotifier[SubscribeOrder]].to[OrderNotifier].asEagerSingleton
+    bind[SocketIONotifier[SubscribeTrade]].to[TradeNotifier].asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))

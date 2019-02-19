@@ -22,6 +22,7 @@ import com.google.inject.Inject
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.socketio._
 import io.lightcone.core._
+import io.lightcone.ethereum.event._
 import io.lightcone.lib.NumericConversion
 
 import scala.concurrent.ExecutionContext
@@ -37,6 +38,7 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
       transactionNotifier: SocketIONotifier[SubscribeTransaction],
       orderNotifier: SocketIONotifier[SubscribeOrder],
+      tradeNotifier: SocketIONotifier[SubscribeTrade],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -50,7 +52,8 @@ class SocketIONotificationActor @Inject()(
     val timeout: Timeout,
     val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
     val transactionNotifier: SocketIONotifier[SubscribeTransaction],
-    val orderNotifier: SocketIONotifier[SubscribeOrder])
+    val orderNotifier: SocketIONotifier[SubscribeOrder],
+    val tradeNotifier: SocketIONotifier[SubscribeTrade])
     extends Actor {
 
   def receive: Receive = {
@@ -109,11 +112,7 @@ class SocketIONotificationActor @Inject()(
         allOrNone = event.getParams.allOrNone,
         tokenFee = event.getFeeParams.tokenFee,
         amountFee = event.getFeeParams.amountFee,
-        waiveFeePercentage = event.getFeeParams.waiveFeePercentage,
-        tokenSFeePercentage = event.getFeeParams.tokenSFeePercentage,
-        tokenBFeePercentage = event.getFeeParams.tokenBFeePercentage,
         tokenRecipient = event.getFeeParams.tokenRecipient,
-        walletSplitPercentage = event.getFeeParams.walletSplitPercentage,
         status = event.getState.status.name,
         createdAt =
           NumericConversion.toHexString(BigInt(event.getState.createdAt)),
@@ -123,5 +122,31 @@ class SocketIONotificationActor @Inject()(
       )
 
       orderNotifier.notifyEvent(data)
+
+    case event: TradeEvent =>
+      val data = Trade(
+        owner = event.owner,
+        orderHash = event.orderHash,
+        ringHash = event.ringHash,
+        ringIndex = NumericConversion.toHexString(BigInt(event.ringIndex)),
+        fillIndex = NumericConversion.toHexString(BigInt(event.fillIndex)),
+        tokenS = event.tokenS,
+        tokenB = event.tokenB,
+        tokenFee = event.tokenFee,
+        amountS = event.amountS,
+        amountB = event.amountB,
+        amountFee = event.amountFee,
+        feeAmountS = event.feeAmountS,
+        feeAmountB = event.feeAmountB,
+        feeRecipient = event.feeRecipient,
+        waiveFeePercentage = event.waiveFeePercentage,
+        walletSplitPercentage = event.walletSplitPercentage,
+        wallet = event.wallet,
+        time = NumericConversion.toHexString(BigInt(event.blockTimestamp)),
+        blockNum = NumericConversion.toHexString(BigInt(event.blockHeight)),
+        txHash = event.txHash,
+        miner = event.miner
+      )
+      tradeNotifier.notifyEvent(data)
   }
 }

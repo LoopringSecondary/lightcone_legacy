@@ -18,12 +18,9 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
+import io.lightcone.core.{MarketHash, MarketPair}
 import io.lightcone.lib.Address
-import io.lightcone.relayer.socketio.{
-  SocketIONotifier,
-  SocketIOSubscriber,
-  SubscribeTrade
-}
+import io.lightcone.relayer.socketio._
 
 class TradeNotifier @Inject() extends SocketIONotifier[SubscribeTrade] {
 
@@ -33,12 +30,12 @@ class TradeNotifier @Inject() extends SocketIONotifier[SubscribeTrade] {
       client: SocketIOClient,
       subscription: SubscribeTrade
     ): SocketIOSubscriber[SubscribeTrade] =
-    new SocketIOSubscriber(
+    new SocketIOSubscriber[SubscribeTrade](
       client,
       subscription = subscription.copy(
         addresses = subscription.addresses.map(Address.normalize),
         market = subscription.market.copy(
-          bastToken = Address.normalize(subscription.market.baseToken),
+          baseToken = Address.normalize(subscription.market.baseToken),
           quoteToken = Address.normalize(subscription.market.quoteToken)
         )
       )
@@ -49,6 +46,17 @@ class TradeNotifier @Inject() extends SocketIONotifier[SubscribeTrade] {
       event: AnyRef
     ): Boolean = {
 
+    event match {
+      case trade: Trade =>
+        subscription.addresses.contains(trade.owner) && (MarketHash(
+          MarketPair(
+            subscription.market.baseToken,
+            subscription.market.quoteToken
+          )
+        ) == MarketHash(MarketPair(trade.tokenB, trade.tokenS)))
+
+      case _ => false
+    }
 
   }
 
