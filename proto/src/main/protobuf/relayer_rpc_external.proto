@@ -30,6 +30,7 @@ message GetBalances{
 }
 
 message SubmitOrder{
+    //params 应该是relayer.rpc.external中RawOrder结构
     message Result {
         string order_hash = 1;
     }
@@ -108,6 +109,8 @@ message GetTransactions{
 }
 
 message GetTokens{
+    message Params{
+    }
 
     message  Result {
         repeated io.lightcone.core.TokenMetadata tokens  =1;
@@ -115,6 +118,8 @@ message GetTokens{
 }
 
 message GetMarkets{
+    message Params{
+    }
 
     message  Result {
         repeated io.lightcone.core.MarketMetadata markets  =1;
