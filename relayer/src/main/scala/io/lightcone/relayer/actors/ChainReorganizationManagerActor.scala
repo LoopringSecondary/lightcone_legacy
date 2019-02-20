@@ -64,10 +64,6 @@ class ChainReorganizationManagerActor @Inject()(
   val strictMode = selfConfig.getBoolean("strict-mode")
   val manager = new ChainReorganizationManagerImpl(maxDepth, strictMode)
 
-  // def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  // def marketManagerActor = actors.get(MarketManagerActor.name)
-  // def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
-
   def ready: Receive = LoggingReceive {
     case reorg.RecordOrderUpdateReq(block, orderIds) =>
       orderIds.foreach(manager.recordOrderUpdate(block, _))

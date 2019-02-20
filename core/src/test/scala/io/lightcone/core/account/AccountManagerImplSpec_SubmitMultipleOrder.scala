@@ -16,8 +16,8 @@
 
 package io.lightcone.core
 
-class AccountManagerAltImplSpec_SubmitMultipleOrders
-    extends AccountManagerAltImplSpec {
+class AccountManagerImplSpec_SubmitMultipleOrders
+    extends AccountManagerImplSpec {
   import OrderStatus._
 
   // "cancelling a older order" should "scale up younger orders" in {

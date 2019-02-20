@@ -63,7 +63,6 @@ class RecoverAccountsActor(
                 block = block
               )
           }
-
       }
 
       context.stop(self)

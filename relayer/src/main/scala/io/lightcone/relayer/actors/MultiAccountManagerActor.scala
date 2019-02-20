@@ -266,7 +266,7 @@ class MultiAccountManagerActor(
         log.info(s"created new account manager for address $address")
         accountManagerActors.add(
           address,
-          context.actorOf(Props(new AccountManagerAltActor(address)), address)
+          context.actorOf(Props(new AccountManagerActor(address)), address)
         )
       }
       accountManagerActors.get(address)

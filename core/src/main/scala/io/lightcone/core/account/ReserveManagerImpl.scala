@@ -23,13 +23,13 @@ import java.util.concurrent.atomic.AtomicInteger
 // This class is not thread safe.
 // orderOrdersHavePriority = true
 // allowPartialReserve = true
-private[core] final class ReserveManagerAltImpl(
+private[core] final class ReserveManagerImpl(
     val token: String,
     enableTracing: Boolean = false
   )(
     implicit
     eventHandler: ReserveEventHandler)
-    extends ReserveManagerAlt
+    extends ReserveManager
     with Logging {
   implicit private val t = token
 

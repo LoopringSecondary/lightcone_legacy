@@ -16,8 +16,7 @@
 
 package io.lightcone.core
 
-class AccountManagerAltImplSpec_SubmitSingleOrder
-    extends AccountManagerAltImplSpec {
+class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
   import OrderStatus._
 
   "If fee is 0, submitOrder" should "fail when tokenS balance/allowance is 0" in {

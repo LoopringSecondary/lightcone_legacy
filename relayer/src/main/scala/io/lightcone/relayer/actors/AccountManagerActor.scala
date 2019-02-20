@@ -36,7 +36,7 @@ import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
-class AccountManagerAltActor(
+class AccountManagerActor(
     val owner: String
   )(
     implicit
@@ -66,7 +66,7 @@ class AccountManagerAltActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   implicit val uoProcessor: UpdatedOrdersProcessor = this
 
-  val manager = AccountManagerAlt.default(owner)
+  val manager = AccountManager.default(owner)
   val accountCutoffState = new AccountCutoffStateImpl()
 
   def ethereumQueryActor = actors.get(EthereumQueryActor.name)

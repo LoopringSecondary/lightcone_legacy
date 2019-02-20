@@ -38,7 +38,7 @@ trait ReserveEventHandler {
     ): Unit
 }
 
-object ReserveManagerAlt {
+object ReserveManager {
 
   def default(
       token: String,
@@ -46,11 +46,11 @@ object ReserveManagerAlt {
     )(
       implicit
       eventHandler: ReserveEventHandler
-    ): ReserveManagerAlt =
-    new ReserveManagerAltImpl(token, enableTracing)
+    ): ReserveManager =
+    new ReserveManagerImpl(token, enableTracing)
 }
 
-private[core] trait ReserveManagerAlt {
+private[core] trait ReserveManager {
   val token: String
 
   def getAccountInfo(): AccountInfo
