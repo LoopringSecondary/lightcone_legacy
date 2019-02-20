@@ -17,5 +17,6 @@
 package io.lightcone.core
 
 package object testing {
+
   implicit class Rich_Double(v: Double) extends RichDouble(v)
 }
