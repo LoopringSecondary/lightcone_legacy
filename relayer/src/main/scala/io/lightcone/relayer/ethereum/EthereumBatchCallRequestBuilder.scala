@@ -25,6 +25,8 @@ import org.web3j.utils.Numeric
 // Owner: Yadong
 class EthereumBatchCallRequestBuilder {
 
+  val LATEST = "latest"
+
   def buildRequest(
       delegateAddress: Address,
       req: GetBalanceAndAllowances.Req
@@ -35,14 +37,20 @@ class EthereumBatchCallRequestBuilder {
       buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, req.tag)
     val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, req.tag)
 
-    BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
+    BatchCallContracts.Req(
+      allowanceCallReqs ++ balanceCallReqs,
+      withBlockNum = req.tag.isEmpty || req.tag.toLowerCase == LATEST
+    )
   }
 
   def buildRequest(req: GetBalance.Req): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, req.tag)
-    BatchCallContracts.Req(balanceCallReqs)
+    BatchCallContracts.Req(
+      balanceCallReqs,
+      withBlockNum = req.tag.isEmpty || req.tag.toLowerCase == LATEST
+    )
   }
 
   def buildRequest(
@@ -53,7 +61,10 @@ class EthereumBatchCallRequestBuilder {
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
       buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, req.tag)
-    BatchCallContracts.Req(allowanceCallReqs)
+    BatchCallContracts.Req(
+      allowanceCallReqs,
+      withBlockNum = req.tag.isEmpty || req.tag.toLowerCase == LATEST
+    )
   }
 
   def buildRequest(
@@ -62,7 +73,10 @@ class EthereumBatchCallRequestBuilder {
     ): BatchCallContracts.Req = {
     val batchFilledAmountReqs =
       buildBatchFilledAmountReq(tradeHistoryAddress, req.orderIds, req.tag)
-    BatchCallContracts.Req(batchFilledAmountReqs)
+    BatchCallContracts.Req(
+      batchFilledAmountReqs,
+      withBlockNum = req.tag.isEmpty || req.tag.toLowerCase == LATEST
+    )
   }
 
   def buildRequest(

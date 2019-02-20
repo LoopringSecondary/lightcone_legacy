@@ -64,6 +64,19 @@ message BalanceAndAllowance {
     bytes allowance                 = 2;
     bytes available_balance         = 3;
     bytes available_allowance       = 4;
+    int64 block_num = 5;
+}
+
+message Balance {
+    bytes balance                   = 1;
+    bytes available_balance         = 2;
+    int64 block_num = 3;
+}
+
+message Allowance {
+    bytes allowance                 = 1;
+    bytes available_allowance       = 2;
+    int64 block_num = 3;
 }
 
 message EthereumProxySettings {

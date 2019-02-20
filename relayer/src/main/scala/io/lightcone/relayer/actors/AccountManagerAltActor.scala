@@ -415,9 +415,12 @@ class AccountManagerAltActor(
       )).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap
-        .getOrElse(orderId, ByteString.copyFrom("0".getBytes))
+        .getOrElse(
+          orderId,
+          GetFilledAmount.FilledAmount(ByteString.copyFrom("0".getBytes))
+        )
 
-      adjusted = matchable.withFilledAmountS(filledAmountS)
+      adjusted = matchable.withFilledAmountS(filledAmountS.amount)
       (successful, updatedOrders) <- manager.resubmitOrder(adjusted)
       updatedOrder = updatedOrders.getOrElse(orderId, adjusted)
       status = updatedOrder.status

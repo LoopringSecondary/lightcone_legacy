@@ -49,8 +49,6 @@ message SettleRings {
     bytes gas_price = 3;
 }
 
-
-
 message OrderStatusMonitor {
     string monitoring_type = 1;
     int64 process_time = 2;
@@ -143,7 +141,7 @@ message GetBalance {
     }
     message Res {
         string address = 1;
-        map<string, bytes> balance_map = 2;
+        map<string, Balance> balance_map = 2;
         io.lightcone.core.Error error = 3;
     }
 }
@@ -156,7 +154,7 @@ message GetAllowance {
     }
     message Res {
         string address = 1;
-        map<string, bytes> allowance_map = 2;
+        map<string, Allowance> allowance_map = 2;
         io.lightcone.core.Error error = 3;
     }
 }
@@ -173,13 +171,17 @@ message UpdateFilledAmount {
 }
 
 message GetFilledAmount {
+    message FilledAmount {
+        bytes amount = 1;
+        int64 block_num = 2;
+    }
     message Req {
         repeated string order_ids = 1;
         string tag = 2;
     }
 
     message Res {
-        map<string, bytes> filled_amount_s_map = 1;
+        map<string, FilledAmount> filled_amount_s_map = 1;
     }
 }
 
@@ -207,6 +209,7 @@ message GetCutoff {
         string owner = 2;
         string market_hash = 3;
         bytes cutoff = 4;
+        int64 block_num = 5;
     }
 }
 
