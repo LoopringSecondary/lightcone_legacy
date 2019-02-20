@@ -17,14 +17,11 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import javax.inject.Inject
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
-import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent._
@@ -61,7 +58,6 @@ class ChainReorganizationManagerActor @Inject()(
     with Stash
     with ActorLogging {
 
-  import MarketMetadata.Status._
   val selfConfig = config.getConfig(ChainReorganizationManagerActor.name)
 
   val maxDepth = selfConfig.getInt("max-depth")
@@ -73,6 +69,32 @@ class ChainReorganizationManagerActor @Inject()(
   // def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
 
   def ready: Receive = LoggingReceive {
-    case _ =>
+    case reorg.RecordOrderUpdateReq(block, orderIds) =>
+      orderIds.foreach(manager.recordOrderUpdate(block, _))
+
+    case reorg.RecordAccountUpdateReq(block, address, tokenAddress) =>
+      manager.recordAccountUpdate(block, address, tokenAddress)
+
+    case reorg.NotifyChainReorganization(block) =>
+      val impact = manager.reorganizedAt(block)
+
+      log.info(s"chain reorganized at $block with impact: $impact")
+
+      if (impact.orderIds.nonEmpty) {
+        context
+          .actorOf(
+            Props(new RecoverOrdersActor()),
+            s"reorg_restore_orders_$block"
+          ) ! impact
+      }
+
+      if (impact.accounts.nonEmpty) {
+        context
+          .actorOf(
+            Props(new RecoverAccountsActor()),
+            s"reorg_restore_accounts_$block"
+          ) ! impact
+      }
   }
+
 }
