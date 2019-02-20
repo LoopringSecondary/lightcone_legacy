@@ -58,7 +58,7 @@ message BlockData {
     bytes  extra_data           = 17;
 }
 
-message c {
+message TxRecord {
 
     enum TxType {
         ETHER_TRANSFER           = 0;
@@ -114,7 +114,7 @@ message c {
                                      // those records to display.
     TxType tx_type              = 5;
     int64  timestamp            = 6; // may not be unique, used in sorting
-    double fiat_value           = 7;
+    double fiat_value           = 78
 
     oneof detail {
         EtherTransfer   ether_transfer          = 11;
