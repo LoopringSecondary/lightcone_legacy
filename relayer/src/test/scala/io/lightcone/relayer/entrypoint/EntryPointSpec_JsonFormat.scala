@@ -26,8 +26,8 @@ import scalapb.json4s._
 
 class EntryPointSpec_JsonFormat extends WordSpec {
 
-  "send an orderbook request" must {
-    "receive a response without value" in {
+  "using the Amount type in protobuf" must {
+    "it can be serialization and deserialization" in {
       val formatRegistry =
         JsonFormat.DefaultRegistry
           .registerWriter[io.lightcone.core.Amount](
