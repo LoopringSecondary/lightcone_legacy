@@ -17,17 +17,14 @@
 package io.lightcone.core
 
 import scala.concurrent._
+import io.lightcone.lib.FutureUtil._
 
-trait BalanceAndAllowanceProvider {
+trait UpdatedOrdersProcessor {
+  implicit val ec: ExecutionContext
 
-  def getBalanceAndALlowance(
-      address: String,
-      token: String
-    ): Future[
-    ( //
-        Long, // blockNuber
-        BigInt, // Balance
-        BigInt // Allowance
-    )
-  ]
+  def processOrder(order: Matchable): Future[Any]
+
+  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
+    serializeFutures(orders.values)(processOrder)
+  }
 }

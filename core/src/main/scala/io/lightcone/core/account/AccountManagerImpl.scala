@@ -26,7 +26,8 @@ final class AccountManagerImpl(
     enableTracing: Boolean = false
   )(
     implicit
-    processor: UpdatedOrdersProcessor,
+    updatedOrdersProcessor: UpdatedOrdersProcessor,
+    updatedAccountsProcessor: UpdatedAccountsProcessor,
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
     extends AccountManager
@@ -90,7 +91,7 @@ final class AccountManagerImpl(
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processOrders(updatedOrders)
+      _ <- updatedOrdersProcessor.processOrders(updatedOrders)
     } yield (successful, updatedOrders)
   }
 
@@ -179,6 +180,7 @@ final class AccountManagerImpl(
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
+      lastBlockNumber = manager.getLastBlockNumber
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ <- cancelOrderInternal(
@@ -186,7 +188,11 @@ final class AccountManagerImpl(
         Some(blockNumber)
       )(ordersToDelete)
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processOrders(updatedOrders)
+      _ <- updatedOrdersProcessor.processOrders(updatedOrders)
+      _ <- {
+        if (lastBlockNumber == blockNumber) Future.unit
+        else updatedAccountsProcessor.processAccount(blockNumber, owner, token)
+      }
     } yield updatedOrders
   }
 
@@ -227,7 +233,7 @@ final class AccountManagerImpl(
         updatedOrders = orderPool.takeUpdatedOrders
         _ <- {
           if (skipProcessingUpdatedOrders) Future.unit
-          else processor.processOrders(updatedOrders)
+          else updatedOrdersProcessor.processOrders(updatedOrders)
         }
       } yield updatedOrders
     }

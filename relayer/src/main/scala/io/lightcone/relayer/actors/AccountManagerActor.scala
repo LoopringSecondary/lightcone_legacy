@@ -64,6 +64,7 @@ class AccountManagerActor(
   val timer = KamonSupport.timer("account_manager")
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
+  implicit val uaProcessor: UpdatedAccountsProcessor = this
   implicit val uoProcessor: UpdatedOrdersProcessor = this
 
   val manager = AccountManager.default(owner)
@@ -72,6 +73,9 @@ class AccountManagerActor(
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
   @inline def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
+
+  @inline def chainReorganizationManagerActor =
+    actors.get(ChainReorganizationManagerActor.name)
 
   var recoverTimer: Option[StartedTimer] = None
 

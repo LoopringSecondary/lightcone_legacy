@@ -17,17 +17,6 @@
 package io.lightcone.core
 
 import scala.concurrent._
-import io.lightcone.lib.FutureUtil._
-
-trait UpdatedOrdersProcessor {
-  implicit val ec: ExecutionContext
-
-  def processOrder(order: Matchable): Future[Any]
-
-  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
-    serializeFutures(orders.values)(processOrder)
-  }
-}
 
 trait ReserveEventHandler {
 

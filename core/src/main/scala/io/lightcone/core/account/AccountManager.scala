@@ -27,7 +27,8 @@ object AccountManager {
       enableTracing: Boolean = false
     )(
       implicit
-      processor: UpdatedOrdersProcessor,
+      updatedAccountsProcessor: UpdatedAccountsProcessor,
+      updatedOrdersProcessor: UpdatedOrdersProcessor,
       provider: BalanceAndAllowanceProvider,
       ec: ExecutionContext
     ): AccountManager = new AccountManagerImpl(owner)
