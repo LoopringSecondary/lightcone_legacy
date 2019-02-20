@@ -37,6 +37,9 @@ message OrderUpdate {
     io.lightcone.core.OrderStatus  status           = 3;
 }
 
+message News {
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // socketio subscription
@@ -75,11 +78,16 @@ message SocketIOSubscription {
     message ParamsForOrderUpdate {
     }
 
-    ParamsForTxRecord           params_tx_record            = 1;
-    ParamsForOrderbookUpdate    params_orderbook_update     = 2;
-    ParamsForTokenMetadata      params_token_metadata       = 3;
-    ParamsForMarketMetadata     params_market_metadata      = 4;
-    ParamsForBalanceUpdate      params_balance_update       = 5;
-    ParamsForTicker             params_ticker               = 6;
-    ParamsForOrderUpdate        params_order_update         = 7;
+    // subscribe for message News
+    message ParamsForNews {
+    }
+
+    ParamsForTxRecord           params_for_tx_record            = 1;
+    ParamsForOrderbookUpdate    params_for_orderbook_update     = 2;
+    ParamsForTokenMetadata      params_for_token_metadata       = 3;
+    ParamsForMarketMetadata     params_for_market_metadata      = 4;
+    ParamsForBalanceUpdate      params_for_balance_update       = 5;
+    ParamsForTicker             params_for_ticker               = 6;
+    ParamsForOrderUpdate        params_for_order_update         = 7;
+    ParamsForNews               params_for_news                 = 8;
 }
