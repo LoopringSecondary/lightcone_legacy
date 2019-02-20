@@ -79,9 +79,7 @@ class CoreModule(
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
-      "dbconfig-request-job",
       "dbconfig-cmc-tickers-in-usd",
-      "dbconfig-currency",
       "dbconfig-dal-ohlc-data"
     )
 

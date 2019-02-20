@@ -49,6 +49,13 @@ class CMCTickersInUsdTable(tag: Tag)
   def isEffective = column[Boolean]("is_effective")
 
   // indexes
+  def idx_request_time =
+    index(
+      "idx_request_time",
+      (requestTime),
+      unique = false
+    )
+
   def idx_request_time_effective =
     index(
       "idx_request_time_effective",
