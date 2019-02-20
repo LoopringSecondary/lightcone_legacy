@@ -106,23 +106,23 @@ message TxRecord {
 
     // To query Tx records for a address "ABC", either address1 or address2 will be ABC.
     // if address1 == address2 == ABC, we treat  address1 == ABC and ignore address2.
-    string address1             = 1; // the related address
-    string addrsse2             = 2; // the counterparty address
-    int64  block                = 3; // 0 indiciate pending
-    int64  tx_hash              = 4; // the transaction hash, multiple Tx record may share
-                                     // the same tx hash, the wallet may choose to group
+    string address1             = 1; // (indexed) the related address
+    string addrsse2             = 2; // (indexed) the counterparty address
+    int64  block                = 3; // (indexed)  0 indiciate pending
+    int64  tx_hash              = 4; // (indexed) the transaction hash, multiple Tx record may
+                                     // share the same tx hash, the wallet may choose to group
                                      // those records to display.
-    TxType tx_type              = 5;
-    int64  timestamp            = 6; // may not be unique, used in sorting
-    double fiat_value           = 78
+    TxType tx_type              = 5; //  (indexed)
+    int64  timestamp            = 6; //  (indexed) may not be unique, used in sorting
+    double fiat_value           = 7;
 
     oneof detail {
-        EtherTransfer   ether_transfer          = 11;
-        EtherConversion ether_conversion        = 12;
-        TokenTransfer   token_transfer          = 13;
-        TokenAuth       token_auth              = 14;
-        LoopringTrade   loopring_trade          = 15;
-        LoopringCancel  loopring_cancel         = 16;
+        EtherTransfer   ether_transfer          = 21;
+        EtherConversion ether_conversion        = 22;
+        TokenTransfer   token_transfer          = 23;
+        TokenAuth       token_auth              = 24;
+        LoopringTrade   loopring_trade          = 25;
+        LoopringCancel  loopring_cancel         = 26;
     }
 
     /*
