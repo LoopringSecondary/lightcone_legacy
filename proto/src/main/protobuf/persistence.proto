@@ -58,7 +58,7 @@ message BlockData {
     bytes  extra_data           = 17;
 }
 
-message TxRecord {
+message c {
 
     enum TxType {
         ETHER_TRANSFER           = 0;
