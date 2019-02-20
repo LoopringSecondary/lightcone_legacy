@@ -1,0 +1,98 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+package io.lightcone.relayer.event.push;
+
+import "core.proto";
+
+message BalanceUpdate {
+    string address                      = 1;
+    string token                        = 2;
+    bytes  balance_bytes                = 3;
+    bytes  allowance_bytes              = 4;
+    bytes  available_balance_bytes      = 5;
+    bytes  available_alloawnce_bytes    = 6;
+    int32  nonce                        = 7;
+
+    string balance                      = 10;
+    string allowance                    = 11;
+    string available_balance            = 12;
+    string available_alloawnce          = 13;
+}
+
+message OrderUpdate {
+    string order_id                                 = 1;
+    io.lightcone.core.MarketPair   market_pair      = 2;
+    io.lightcone.core.OrderStatus  status           = 3;
+}
+
+message News {
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// socketio subscription
+
+message SocketIOSubscription {
+    message Ack { // we only need to return a general message
+        io.lightcone.core.ErrorCode error   = 1;
+        string message                      = 2;
+    }
+
+    // subscribe for message TxRecord defined in persistence.proto
+    message ParamsForTxRecord {
+    }
+
+    // subscribe for message Orderbook.Update defined in core.proto
+    message ParamsForOrderbookUpdate {
+    }
+
+    // subscribe for message TokenMetadata defined in core.proto
+    message ParamsForTokenMetadata {
+    }
+
+    // subscribe for message MarketMetadata defined in core.proto
+    message ParamsForMarketMetadata {
+    }
+
+    // subscribe for message Ticker defined in persistence.proto
+    message ParamsForTicker {
+    }
+
+    // subscribe for message BalanceUpdate
+    message ParamsForBalanceUpdate {
+    }
+
+    // subscribe for message OrderUpdate
+    message ParamsForOrderUpdate {
+    }
+
+    // subscribe for message News
+    message ParamsForNews {
+    }
+
+    ParamsForTxRecord           params_for_tx_record            = 1;
+    ParamsForOrderbookUpdate    params_for_orderbook_update     = 2;
+    ParamsForTokenMetadata      params_for_token_metadata       = 3;
+    ParamsForMarketMetadata     params_for_market_metadata      = 4;
+    ParamsForBalanceUpdate      params_for_balance_update       = 5;
+    ParamsForTicker             params_for_ticker               = 6;
+    ParamsForOrderUpdate        params_for_order_update         = 7;
+    ParamsForNews               params_for_news                 = 8;
+}
