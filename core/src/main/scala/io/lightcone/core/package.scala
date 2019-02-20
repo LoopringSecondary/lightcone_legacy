@@ -41,6 +41,9 @@ package object core {
   implicit def byteArray2ByteString(bytes: Array[Byte]) =
     ByteString.copyFrom(bytes)
 
+  implicit def byteString2HexString(bytes: ByteString) =
+    Numeric.toHexStringWithPrefix(bytes.bigInteger)
+
   /// -----implicit classes -----
   implicit class Rich_OrderbookSlot(raw: Orderbook.Slot)
       extends RichOrderbookSlot(raw)

@@ -16,16 +16,17 @@
 
 package io.lightcone.core.testing
 
+import io.lightcone.core._
 import io.lightcone.lib._
 
 trait Constants {
 
   private val rand = new scala.util.Random(31)
 
-  val LRC = Address("0x0000012341111111111111").toString
-  val GTO = Address("0x000002222442222222222").toString
-  val DAI = Address("0x0000033333242333333333").toString
-  val WETH = Address("0x003424444444444444444").toString
+  val LRC = Address("0xEF68e7C694F40c8202821eDF525dE3782458639f").toString
+  val GTO = Address("0xC5bBaE50781Be1669306b9e001EFF57a2957b09d").toString
+  val DAI = Address("0x27594c42A4c7584F00C98894435Ab9a2482e882C").toString
+  val WETH = Address("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2").toString
 
   val TOKENS = Seq(LRC, GTO, DAI, WETH)
 
@@ -36,6 +37,14 @@ trait Constants {
   object Addr {
     def apply() = rand.alphanumeric.take(22).mkString("")
     def apply(idx: Int) = addresses(idx)
-    val addresses = Seq("addr0", "addr1", "addr2")
+
+    val addresses = Seq(
+      "0x76f30f4bb5D71377cAc22f6ddc39C7b3AfE6E377",
+      "0xf74d556cbB95b7BCCDad8284bc68110C74c91E7B",
+      "0x0f8aA39A58ADcc3Df98d826Ac798aB837CC0833C"
+    )
   }
+
+  val metadataManager: MetadataManager = new MetadataManagerImpl(0.6, 0.06)
+
 }

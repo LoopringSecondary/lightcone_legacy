@@ -35,6 +35,7 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
 import io.lightcone.relayer.ethereum.event._
+import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -46,6 +47,7 @@ class CoreDeployer @Inject()(
     actors: Lookup[ActorRef],
     actorMaterializer: ActorMaterializer,
     brb: EthereumBatchCallRequestBuilder,
+    chainReorgHandler: ChainReorganizationManager,
     cluster: Cluster,
     config: Config,
     dcm: DatabaseConfigManager,
@@ -63,6 +65,13 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
+    balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
+    transactionNotifier: SocketIONotifier[SubscribeTransaction],
+    orderNotifier: SocketIONotifier[SubscribeOrder],
+    tradeNotifier: SocketIONotifier[SubscribeTrade],
+    tickerNotifier: SocketIONotifier[SubscribeTicker],
+    orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
+    transferNotifier: SocketIONotifier[SubscribeTransfer],
     system: ActorSystem)
     extends Object
     with Logging {
@@ -178,6 +187,10 @@ class CoreDeployer @Inject()(
           MetadataManagerActor.start
         )
         .add(
+          ChainReorganizationManagerActor.name,
+          ChainReorganizationManagerActor.start
+        )
+        .add(
           EthereumEventExtractorActor.name,
           EthereumEventExtractorActor.start
         )
@@ -257,6 +270,12 @@ class CoreDeployer @Inject()(
           cluster.selfRoles.contains("jsonrpc")) {
         val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
         with RpcBinding
+        server.start
+      }
+      //-----------deploy SOCKETIO service-----------
+      if (deployActorsIgnoringRoles ||
+          cluster.selfRoles.contains("socketio")) {
+        val server = new SocketServer
         server.start
       }
     }
