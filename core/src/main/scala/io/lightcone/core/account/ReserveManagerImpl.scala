@@ -69,7 +69,8 @@ private[core] final class ReserveManagerImpl(
       allowance,
       balance - reserved,
       allowance - reserved,
-      reserves.size
+      reserves.size,
+      blockNumber
     )
 
   def getLastBlockNumber() = blockNumber
@@ -169,22 +170,22 @@ private[core] final class ReserveManagerImpl(
         forceEventHandling: Boolean,
         prevRequestedOpt: Option[BigInt] = None
       ) = {
-      val reserved = requested.min(spendable - this.reserved)
-      if (reserved == 0) {
+      val reserved_ = requested.min(spendable - reserved)
+      if (reserved_ == 0) {
         deleteMe(orderId)
       } else {
-        this.reserved += reserved
-        buf += Reserve(orderId, requested, reserved)
+        reserved += reserved_
+        buf += Reserve(orderId, requested, reserved_)
 
         prevRequestedOpt match {
           case Some(prevReserved)
-              if !forceEventHandling && prevReserved == reserved =>
+              if !forceEventHandling && prevReserved == reserved_ =>
           case _ =>
             eventHandler.onTokenReservedForOrder(
               blockNumber,
               orderId,
               token,
-              reserved
+              reserved_
             )
         }
       }

@@ -171,8 +171,9 @@ message CutoffEvent {
     EventHeader header  = 1;
     string broker       = 2;
     string owner        = 3;
-    string market_hash   = 4;
+    string market_hash  = 4;
     int64  cutoff       = 5; // in seconds.
+    int64 block         = 6;
 }
 
 message OrdersCancelledOnChainEvent {

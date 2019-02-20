@@ -165,10 +165,11 @@ final class AccountManagerImpl(
         amount: BigInt
       ) = {
       val order = orderPool(orderId)
-      val referenceBlockNumber = order.referenceBlockNumber.max(blockNumber)
       orderPool += order
         .withReservedAmount(amount)(token)
-        .copy(referenceBlockNumber = referenceBlockNumber)
+        .copy(
+          referenceBlockNumber = order.referenceBlockNumber.max(blockNumber)
+        )
     }
   }
 

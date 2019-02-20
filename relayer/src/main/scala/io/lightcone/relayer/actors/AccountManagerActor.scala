@@ -68,6 +68,7 @@ class AccountManagerActor(
   implicit val uoProcessor: UpdatedOrdersProcessor = this
 
   val manager = AccountManager.default(owner)
+  // TODO(dongw): in case of chain-reorg, this should also be recovered!!!
   val accountCutoffState = new AccountCutoffStateImpl()
 
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
@@ -226,24 +227,24 @@ class AccountManagerActor(
       count.refine("label" -> "get_balance_allowance").increment()
 
       // TODO(yadong): return this.
-      val blockNumber: Long = ???
       blocking(timer, "get_balance_allowance") {
         (for {
           accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
           _ = assert(tokens.size == accountInfos.size)
-          balanceAndAllowanceMap = accountInfos.map { i =>
-            i.token -> i
+          balanceAndAllowanceMap = accountInfos.map { ai =>
+            ai.token -> ai
           }.toMap.map {
             case (token, ai) =>
               token -> BalanceAndAllowance(
                 ai.balance,
                 ai.allowance,
                 ai.availableBalance,
-                ai.availableAllowance
+                ai.availableAllowance,
+                ai.blockNumber
               )
           }
           result = GetBalanceAndAllowances
-            .Res(addr, blockNumber, balanceAndAllowanceMap)
+            .Res(addr, balanceAndAllowanceMap)
         } yield result).sendTo(sender)
       }
 
@@ -299,38 +300,28 @@ class AccountManagerActor(
     case req: AddressBalanceUpdatedEvent =>
       count.refine("label" -> "balance_updated").increment()
 
-      val blockNumber: Long = ???
-
       blocking {
         assert(req.address == owner)
         manager
-          .setBalance(blockNumber, req.token, BigInt(req.balance.toByteArray))
+          .setBalance(req.block, req.token, BigInt(req.balance.toByteArray))
       }
 
     case req: AddressAllowanceUpdatedEvent =>
       count.refine("label" -> "allowance_updated").increment()
 
-      val blockNumber: Long = ???
       blocking {
         assert(req.address == owner)
         manager
-          .setAllowance(
-            blockNumber,
-            req.token,
-            BigInt(req.allowance.toByteArray)
-          )
+          .setAllowance(req.block, req.token, BigInt(req.allowance.toByteArray))
       }
 
     case req: AddressBalanceAllowanceUpdatedEvent =>
       count.refine("label" -> "balance_allowance_updated").increment()
 
-      val blockNumber: Long = ???
-
       blocking {
         assert(req.address == owner)
-
         manager.setBalanceAndAllowance(
-          blockNumber,
+          req.block,
           req.token,
           BigInt(req.balance.toByteArray),
           BigInt(req.allowance.toByteArray)
@@ -338,28 +329,32 @@ class AccountManagerActor(
       }
 
     // ownerCutoff
-    case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) //
+    case req @ CutoffEvent(Some(header), broker, owner, "", cutoff, block) //
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
-      val blockNumber: Long = ???
       count.refine("label" -> "cutoff").increment()
       blocking {
-        accountCutoffState.setCutoff(cutoff) // ??
-        manager.handleCutoff(blockNumber, cutoff)
+        accountCutoffState.setCutoff(cutoff)
+        manager.handleCutoff(block, cutoff)
       }
 
     // ownerTokenPairCutoff  tokenPair ！= ""
-    case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) //
-        if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+    case req @ CutoffEvent(
+          Some(header),
+          broker,
+          owner,
+          marketHash,
+          cutoff,
+          block
+        ) if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "cutoff_market").increment()
-      val blockNumber: Long = ???
 
       blocking {
         accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
-        manager.handleCutoff(blockNumber, cutoff, marketHash)
+        manager.handleCutoff(block, cutoff, marketHash)
       }
 
     // Currently we do not support broker-level cutoff
-    case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) //
+    case req @ CutoffEvent(Some(header), broker, owner, _, cutoff, block) //
         if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "broker_cutoff").increment()
       log.warning(s"not support this event yet: $req")
@@ -444,14 +439,16 @@ class AccountManagerActor(
     val matchable: Matchable = order
     log.debug(s"### submitOrder ${order}")
     for {
-      getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
-        Seq(orderId)
-      )).mapAs[GetFilledAmount.Res]
+      res <- (ethereumQueryActor ? GetFilledAmount.Req(Seq(orderId)))
+        .mapAs[GetFilledAmount.Res]
 
-      filledAmountS = getFilledAmountRes.filledAmountSMap
+      filledAmountS = res.filledAmountSMap
         .getOrElse(orderId, ByteString.copyFrom("0".getBytes))
 
-      adjusted = matchable.withFilledAmountS(filledAmountS)
+      adjusted = matchable
+        .withFilledAmountS(filledAmountS)
+        .copy(referenceBlockNumber = res.blockNumber)
+
       (successful, updatedOrders) <- manager.resubmitOrder(adjusted)
       updatedOrder = updatedOrders.getOrElse(orderId, adjusted)
       status = updatedOrder.status

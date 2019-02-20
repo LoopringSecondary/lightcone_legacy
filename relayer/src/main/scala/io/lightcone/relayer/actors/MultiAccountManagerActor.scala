@@ -252,7 +252,8 @@ class MultiAccountManagerActor(
         ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
         balance = BigInt(ba.balance.toByteArray)
         allowance = BigInt(ba.allowance.toByteArray)
-      } yield (res.blockNumber, balance, allowance)).andThen {
+        block = ba.blockNumber
+      } yield (block, balance, allowance)).andThen {
         case _ =>
           t.stop()
           count.refine("label" -> "get_balance_allowance").increment()

@@ -22,4 +22,5 @@ case class AccountInfo(
     allowance: BigInt,
     availableBalance: BigInt,
     availableAllowance: BigInt,
-    numOfOrders: Int)
+    numOfOrders: Int,
+    blockNumber: Long)

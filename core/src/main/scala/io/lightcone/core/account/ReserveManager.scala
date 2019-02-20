@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-import scala.concurrent._
-
 trait ReserveEventHandler {
 
   def onTokenReservedForOrder(

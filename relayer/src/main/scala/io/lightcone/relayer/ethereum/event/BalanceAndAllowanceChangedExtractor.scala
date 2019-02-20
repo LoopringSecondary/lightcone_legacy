@@ -32,6 +32,7 @@ import io.lightcone.core._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
+// TODO(yadong): extract block information.
 class BalanceAndAllowanceChangedExtractor @Inject()(
     implicit
     val config: Config,

@@ -26,6 +26,7 @@ import io.lightcone.relayer.data._
 
 import scala.concurrent._
 
+// TODO(yadong): extract block information.
 class CutoffEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
