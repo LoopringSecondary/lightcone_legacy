@@ -30,13 +30,13 @@ class EntryPointSpec_JsonFormat extends WordSpec {
     "it can be serialization and deserialization" in {
       val formatRegistry =
         JsonFormat.DefaultRegistry
-          .registerWriter[io.lightcone.core.Amount](
-            (amount: io.lightcone.core.Amount) =>
+          .registerWriter[Amount](
+            (amount: Amount) =>
               JString(
                 NumericConversion.toHexString(BigInt(amount.value.toByteArray))
               ), {
               case JString(str) =>
-                io.lightcone.core.Amount(
+                Amount(
                   value = ByteString
                     .copyFrom(NumericConversion.toBigInt(str).toByteArray)
                 )
