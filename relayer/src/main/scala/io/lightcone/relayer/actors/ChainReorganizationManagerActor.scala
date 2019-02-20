@@ -43,7 +43,6 @@ object ChainReorganizationManagerActor extends DeployedAsSingleton {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      chainReorgHandler: ChainReorganizationManager,
       // dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
@@ -57,13 +56,17 @@ class ChainReorganizationManagerActor @Inject()(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val chainReorgHandler: ChainReorganizationManager,
     val actors: Lookup[ActorRef])
     extends InitializationRetryActor
     with Stash
     with ActorLogging {
 
   import MarketMetadata.Status._
+  val selfConfig = config.getConfig(ChainReorganizationManagerActor.name)
+
+  val maxDepth = selfConfig.getInt("max-depth")
+  val strictMode = selfConfig.getBoolean("strict-mode")
+  val manager = new ChainReorganizationManagerImpl(maxDepth, strictMode)
 
   // def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   // def marketManagerActor = actors.get(MarketManagerActor.name)

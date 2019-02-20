@@ -29,6 +29,8 @@ class ChainReorganizationManagerImpl(
     extends ChainReorganizationManager
     with Logging {
 
+  log.info(s"chain-regorg-manager: maxDepth=$maxDepth strictMode=$strictMode")
+
   case class BlockData(
       val orderIds: Set[String] = Set.empty,
       val accounts: Map[String, Set[String]] = Map.empty) {
