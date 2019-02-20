@@ -73,42 +73,13 @@ class EthereumQueryActor(
 
   val base = loopringConfig.getInt("burn-rate-table.base")
 
-  var maxBlockNum: String = _
-  val latest = "latest"
-
-  protected def ethereumClientMonitor = actors.get(EthereumClientMonitor.name)
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  override def initialize(): Future[Unit] = {
-    if (actors.contains(EthereumClientMonitor.name)) {
-      (ethereumClientMonitor ? GetNodeBlockHeight.Req())
-        .mapAs[GetNodeBlockHeight.Res]
-        .map { res =>
-          maxBlockNum =
-            NumericConversion.toHexString(BigInt(res.nodes.map(_.height).max))
-          becomeReady()
-        }
-    } else {
-      Future.failed(
-        ErrorException(
-          ErrorCode.ERR_ACTOR_NOT_READY,
-          "Ethereum client monitor is not ready"
-        )
-      )
-    }
-  }
-
   def ready = LoggingReceive {
-    case _ @NodeBlockHeight(_, height) =>
-      maxBlockNum = NumericConversion.toHexString(BigInt(height))
     case req @ GetBalanceAndAllowances.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
-      val ftag = if (tag.isEmpty || tag == latest) maxBlockNum else tag
       val batchReqs =
-        brb.buildRequest(
-          delegateAddress,
-          req.copy(tokens = erc20Tokens, tag = ftag)
-        )
+        brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
@@ -124,17 +95,13 @@ class EthereumQueryActor(
           BalanceAndAllowance(ba._1, ba._2)
         }
         result = GetBalanceAndAllowances
-          .Res(
-            owner,
-            (erc20Tokens zip balanceAndAllowance).toMap,
-            blockNum = NumericConversion.toBigInt(ftag).toLong
-          )
+          .Res(owner, (erc20Tokens zip balanceAndAllowance).toMap)
 
         ethRes <- ethToken match {
           case head :: tail =>
             (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address.normalize(owner),
-              tag = ftag
+              address = Address(owner).toString,
+              tag
             )).mapAs[EthGetBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
@@ -154,9 +121,7 @@ class EthereumQueryActor(
 
     case req @ GetBalance.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
-      val ftag = if (tag.isEmpty || tag == latest) maxBlockNum else tag
-      val batchReqs =
-        brb.buildRequest(req.copy(tokens = erc20Tokens, tag = ftag))
+      val batchReqs = brb.buildRequest(req.copy(tokens = erc20Tokens))
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
@@ -165,17 +130,13 @@ class EthereumQueryActor(
           bigInt2ByteString(BigInt(Numeric.toBigInt(res.result)))
         }
 
-        result = GetBalance.Res(
-          owner,
-          (erc20Tokens zip balances).toMap,
-          blockNum = NumericConversion.toBigInt(ftag).toLong
-        )
+        result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
 
         ethRes <- ethToken match {
           case head :: tail =>
             (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address.normalize(owner),
-              tag = ftag
+              address = Address(owner).toString,
+              tag
             )).mapAs[EthGetBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
@@ -191,33 +152,24 @@ class EthereumQueryActor(
         }
       } yield finalResult) sendTo sender
 
-    case req @ GetAllowance.Req(owner, tokens, tag) =>
-      val ftag = if (tag.isEmpty || tag == latest) maxBlockNum else tag
-      batchCallEthereum(
-        sender,
-        brb.buildRequest(delegateAddress, req.copy(tag = ftag))
-      ) { result =>
-        val allowances = result.map { res =>
-          bigInt2ByteString(NumericConversion.toBigInt(res))
-        }
-        GetAllowance.Res(
-          owner,
-          (tokens zip allowances).toMap,
-          blockNum = NumericConversion.toBigInt(ftag).toLong
-        )
+    case req @ GetAllowance.Req(owner, tokens, _) =>
+      batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
+        result =>
+          val allowances = result.map { res =>
+            bigInt2ByteString(NumericConversion.toBigInt(res))
+          }
+          GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
 
-    case req @ GetFilledAmount.Req(orderIds, tag) =>
-      val ftag = if (tag.isEmpty || tag == latest) maxBlockNum else tag
+    case req @ GetFilledAmount.Req(orderIds, _) =>
       batchCallEthereum(
         sender,
         brb
-          .buildRequest(tradeHistoryAddress, req.copy(tag = ftag))
+          .buildRequest(tradeHistoryAddress, req)
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result
-            .map(res => bigInt2ByteString(NumericConversion.toBigInt(res)))).toMap,
-          blockNum = NumericConversion.toBigInt(ftag).toLong
+            .map(res => bigInt2ByteString(NumericConversion.toBigInt(res)))).toMap
         )
       }
 
@@ -229,71 +181,50 @@ class EthereumQueryActor(
           )
       }
 
-    case req @ GetCutoff.Req(_, _, _, tag) =>
-      val ftag = if (tag.isEmpty || tag == latest) maxBlockNum else tag
-      callEthereum(
-        sender,
-        rb.buildRequest(req.copy(tag = ftag), tradeHistoryAddress)
-      ) { result =>
-        GetCutoff.Res(
-          req.broker,
-          req.owner,
-          req.marketHash,
-          NumericConversion.toBigInt(result),
-          blockNum = NumericConversion.toBigInt(ftag).toLong
-        )
+    case req: GetCutoff.Req =>
+      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
+        result =>
+          GetCutoff.Res(
+            req.broker,
+            req.owner,
+            req.marketHash,
+            NumericConversion.toBigInt(result)
+          )
       }
     case req: BatchGetCutoffs.Req =>
-      val fReq = req.copy(
-        reqs = req.reqs.map(
-          r =>
-            r.copy(
-              tag = if (r.tag.isEmpty || r.tag == latest) maxBlockNum else r.tag
-            )
-        )
-      )
-      batchCallEthereum(sender, brb.buildRequest(fReq, tradeHistoryAddress)) {
+      batchCallEthereum(sender, brb.buildRequest(req, tradeHistoryAddress)) {
         result =>
-          BatchGetCutoffs.Res((fReq.reqs zip result).map {
+          BatchGetCutoffs.Res((req.reqs zip result).map {
             case (cutoffReq, res) =>
               GetCutoff.Res(
                 cutoffReq.broker,
                 cutoffReq.owner,
                 cutoffReq.marketHash,
-                NumericConversion.toBigInt(res),
-                blockNum = NumericConversion.toBigInt(cutoffReq.tag).toLong
+                NumericConversion.toBigInt(res)
               )
           })
       }
 
     case req: GetBurnRate.Req =>
-      val tag =
-        if (req.tag.isEmpty || req.tag == latest) maxBlockNum else req.tag
-      callEthereum(
-        sender,
-        rb.buildRequest(req.copy(tag = tag), burnRateTableAddress)
-      ) { result =>
-        {
-          val formatResult = Numeric.cleanHexPrefix(result)
-          if (formatResult.length == 64) {
-            val p2pRate = NumericConversion
-              .toBigInt(formatResult.substring(56, 60))
-              .doubleValue() / base
-            val marketRate = NumericConversion
-              .toBigInt(formatResult.substring(60))
-              .doubleValue() / base
-            GetBurnRate.Res(
-              forMarket = marketRate,
-              forP2P = p2pRate,
-              blockNum = NumericConversion.toBigInt(tag).toLong
-            )
-          } else {
-            throw ErrorException(
-              ErrorCode.ERR_UNEXPECTED_RESPONSE,
-              "unexpected response"
-            )
+      callEthereum(sender, rb.buildRequest(req, burnRateTableAddress)) {
+        result =>
+          {
+            val formatResult = Numeric.cleanHexPrefix(result)
+            if (formatResult.length == 64) {
+              val p2pRate = NumericConversion
+                .toBigInt(formatResult.substring(56, 60))
+                .doubleValue() / base
+              val marketRate = NumericConversion
+                .toBigInt(formatResult.substring(60))
+                .doubleValue() / base
+              GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
+            } else {
+              throw ErrorException(
+                ErrorCode.ERR_UNEXPECTED_RESPONSE,
+                "unexpected response"
+              )
+            }
           }
-        }
       }
     case req @ Notify("echo", _) =>
       sender ! req
