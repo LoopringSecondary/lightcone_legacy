@@ -31,12 +31,22 @@ enum TxStatus {
     TX_STATUS_FAILED = 2;
 }
 
+//TODO:搞明白几个ethereum文件的关系，放置到合适的位置
+message BlockHeader {
+    int64 height = 1;
+    string hash = 2;
+    string  miner = 3;
+    int64 timestamp = 4;
+    repeated string uncles = 5;
+}
+
 message EventHeader {
     string tx_hash = 1;
     TxStatus tx_status = 2;
-    string block_hash = 3;
-    int64  block_number = 4;
-    int64  block_timestamp   = 5;
+    //string block_hash = 3;
+    //int64  block_number = 4;
+    //int64  block_timestamp   = 5;
+    BlockHeader block_header = 3;
     string tx_from = 6;
     string tx_to = 7;
     bytes  tx_value = 8;
@@ -55,6 +65,14 @@ message TransferEvent {
     string to = 4;
     string token = 5;
     bytes amount = 6;
+}
+
+message ApprovalEvent {
+    EventHeader header = 1;
+    string owner = 2;
+    string spender = 3;
+    string token = 4;
+    bytes amount = 5;
 }
 
 message AddressBalanceUpdatedEvent {
@@ -153,3 +171,58 @@ message OrdersCancelledOnChainEvent {
     repeated string order_hashes = 4;
 }
 
+/////////////////////////////////////////////////////////////////////
+// Socket Notify EVENT
+/////////////////////////////////////////////////////////////////////
+
+message AddressBalanceAndAllowanceEvent{
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+    bytes allowance = 4;
+    bytes available_balance = 5;
+    bytes available_alloawnce = 6;
+}
+
+message TransactionEvent {
+    string hash = 1;
+    string nonce = 2;
+    string blockHash = 3;
+    string blockNumber = 4;
+    string transactionIndex = 5;
+    string from = 6;
+    string to = 7;
+    string value = 8;
+    string gasPrice = 9;
+    string gas = 10;
+    string gasUsed = 11;
+    string input = 12;
+    TxStatus status = 13;
+    int32 type = 14;                //corresponding to TransactionRecord.RecordType
+    string owner = 15;
+    string time = 16;
+}
+
+message TradeEvent{
+    string owner = 1;
+    string order_hash = 2;
+    string ring_hash  = 3;
+    int64  ring_index = 4;
+    int32  fill_index = 5;
+    string tx_hash = 6;
+    bytes  amount_s = 7;
+    bytes  amount_b = 8;
+    string token_s  = 9;
+    string token_b  = 10;
+    string token_fee  = 11;
+    bytes  amount_fee  = 12;
+    bytes  fee_amount_s = 13;  // for p2p
+    bytes  fee_amount_b = 14;  // for p2p
+    string fee_recipient =15;
+    int32  waive_fee_percentage  = 16; // miner waive
+    int32  wallet_split_percentage = 17;
+    string wallet = 18;
+    string miner = 19;
+    int64  block_height = 20;
+    int64  block_timestamp = 21;
+}

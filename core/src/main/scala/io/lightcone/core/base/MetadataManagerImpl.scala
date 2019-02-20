@@ -16,37 +16,16 @@
 
 package io.lightcone.core
 
-import com.google.inject.Inject
-import com.typesafe.config.Config
 import io.lightcone.ethereum.event.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
-import scala.collection.JavaConverters._
 
-final class MetadataManagerImpl @Inject()(implicit val config: Config)
+final class MetadataManagerImpl(
+    val defaultBurnRateForMarket: Double,
+    val defaultBurnRateForP2P: Double)
     extends MetadataManager
     with Logging {
 
   import ErrorCode._
-
-  val loopringConfig = config.getConfig("loopring_protocol")
-
-  val rates = loopringConfig
-    .getConfigList("burn-rate-table.tiers")
-    .asScala
-    .map(conf => {
-      val key = conf.getInt("tier")
-      val ratesConfig = conf.getConfig("rates")
-      val rates = ratesConfig.getInt("market") -> ratesConfig.getInt("p2p")
-      key -> rates
-    })
-    .sortWith(_._1 < _._1)
-    .head
-    ._2
-  val base = loopringConfig.getInt("burn-rate-table.base")
-
-  // tokens[address, token]
-  val defaultBurnRateForMarket: Double = rates._1.doubleValue() / base
-  val defaultBurnRateForP2P: Double = rates._2.doubleValue() / base
 
   private var tokenAddressMap = Map.empty[String, Token]
   private var tokenSymbolMap = Map.empty[String, Token]

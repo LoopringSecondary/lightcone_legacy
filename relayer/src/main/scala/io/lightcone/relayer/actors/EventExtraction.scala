@@ -17,23 +17,27 @@
 package io.lightcone.relayer.actors
 
 import akka.actor.ActorRef
-import io.lightcone.lib._
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
-import io.lightcone.relayer.data._
-import io.lightcone.persistence._
 import akka.pattern._
 import akka.util.Timeout
+import io.lightcone.lib._
+import io.lightcone.persistence._
+import io.lightcone.relayer.base._
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum._
+import io.lightcone.relayer.ethereum.event._
+import org.web3j.utils.Numeric
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import org.web3j.utils.Numeric
 import scala.util.{Failure, Success}
 
 trait EventExtraction {
   me: InitializationRetryActor =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
-  implicit val eventDispatchers: Seq[EventDispatcher[_]]
+  implicit val eventExtractor: EventExtractor
+  implicit val eventDispatcher: EventDispatcher
+
   implicit val dbModule: DatabaseModule
   var blockData: RawBlockData = _
 
@@ -125,9 +129,10 @@ trait EventExtraction {
     )).mapAs[BatchGetTransactionReceipts.Res]
       .map(_.resps.map(_.result))
 
-  def processEvents: Future[Unit] =
+  def processEvents: Future[Unit] = {
     for {
-      _ <- Future.sequence(eventDispatchers.map(_.dispatch(blockData)))
+      events <- eventExtractor.extractEvents(blockData)
+      _ = events.foreach(eventDispatcher.dispatch)
       _ <- dbModule.blockService.saveBlock(
         BlockData(
           hash = blockData.hash,
@@ -137,6 +142,7 @@ trait EventExtraction {
       )
       _ <- postProcessEvents()
     } yield Unit
+  }
 
   def postProcessEvents(): Future[Unit] = Future.unit
 

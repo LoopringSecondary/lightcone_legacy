@@ -16,9 +16,24 @@
 
 package io.lightcone.relayer.ethereum.event
 
-import io.lightcone.relayer.data._
-import scala.concurrent.Future
+import io.lightcone.core.MetadataManager
+import io.lightcone.relayer.data.RawBlockData
 
-trait EventExtractor {
-  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]]
+import scala.concurrent.{ExecutionContext, Future}
+
+class EventExtractorCompose(
+    extractors: EventExtractor*
+  )(
+    implicit
+    val ec: ExecutionContext,
+    val metadataManager: MetadataManager)
+    extends EventExtractor {
+
+  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] =
+    for {
+      events <- Future.sequence {
+        extractors.map(_.extractEvents(block))
+      }
+    } yield events.flatten
+
 }

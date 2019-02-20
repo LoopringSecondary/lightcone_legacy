@@ -70,9 +70,7 @@ class TransactionRecordTable(shardId: String)(tag: Tag)
     (
       txHash,
       txStatus,
-      blockHash,
-      blockNumber,
-      blockTimestamp,
+      blockHeaderProjection,
       txFrom,
       txTo,
       txValue,
@@ -87,6 +85,22 @@ class TransactionRecordTable(shardId: String)(tag: Tag)
     }, { paramsOpt: Option[EventHeader] =>
       val params = paramsOpt.getOrElse(EventHeader())
       EventHeader.unapply(params)
+    })
+
+  def blockHeaderProjection =
+    (
+      blockNumber,
+      blockHash,
+      blockTimestamp
+    ) <> ({ tuple =>
+      Option(
+        (BlockHeader.apply _).tupled(
+          (tuple._1, tuple._2, "", tuple._3, Seq.empty[String])
+        )
+      )
+    }, { paramsOpt: Option[BlockHeader] =>
+      val params = paramsOpt.getOrElse(BlockHeader())
+      Some(params.height, params.hash, params.timestamp)
     })
 
   def * =

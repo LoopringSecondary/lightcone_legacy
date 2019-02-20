@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.ethereum.event
+package io.lightcone.core
 
-import com.google.inject.Inject
-import io.lightcone.ethereum.event._
-import io.lightcone.relayer.data._
-import scala.concurrent.{ExecutionContext, Future}
+trait ChainReorganizationManager {
 
-class OrderFillEventExtractor @Inject()(
-    implicit
-    extractor: RingMinedEventExtractor,
-    val ec: ExecutionContext)
-    extends EventExtractor[OrderFilledEvent] {
+  def reset(): Unit
 
-  def extract(block: RawBlockData): Future[Seq[OrderFilledEvent]] =
-    extractor
-      .extract(block)
-      .map(_.filter(_.header.get.txStatus.isTxStatusSuccess).flatMap(_.fills))
+  def recordOrderUpdate(
+      blockIdx: Long,
+      orderId: String
+    ): Unit
+
+  def recordAccountUpdate(
+      blockIdx: Long,
+      address: String,
+      token: String
+    ): Unit
+
+  def reorganizedAt(blockIdx: Long): ChainReorganizationImpact
 }
