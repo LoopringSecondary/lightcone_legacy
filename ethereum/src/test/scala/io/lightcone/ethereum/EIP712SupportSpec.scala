@@ -69,9 +69,15 @@ class EIP712SupportSpec extends FlatSpec with Matchers {
         |}
     """.stripMargin
 
-    val message = eip712Support.getEIP712Message(typedDataJson1)
-    println(s"message: $message")
+    val typedDataEth = eip712Support.jsonToTypedData(typedDataJson1)
+    println(s"typedData: $typedDataEth")
 
+    typedDataEth match {
+      case Left(errorCode) => println(s"errorCode: $errorCode")
+      case Right(typedData) =>
+        val hash = eip712Support.getEIP712Message(typedData)
+        println(s"hash: $hash")
+    }
     assert(true)
   }
 
