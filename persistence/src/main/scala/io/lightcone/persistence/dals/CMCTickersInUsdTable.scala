@@ -45,11 +45,19 @@ class CMCTickersInUsdTable(tag: Tag)
   def marketCap = column[Double]("market_cap")
   def quoteLastUpdated = column[String]("quote_last_updated")
 
-  def batchId = column[Int]("batch_id")
+  def requestTime = column[Long]("request_time")
+  def isEffective = column[Boolean]("is_effective")
 
   // indexes
-  def idx_batch_id = index("idx_batch_id", (batchId), unique = false)
-  def pk_batch_slug = primaryKey("idx_batch_slug", (batchId, slug))
+  def idx_request_time_effective =
+    index(
+      "idx_request_time_effective",
+      (requestTime, isEffective),
+      unique = false
+    )
+
+  def pk_request_time_slug =
+    primaryKey("pk_request_time_slug", (requestTime, slug))
 
   def quoteProjection =
     (
@@ -81,6 +89,7 @@ class CMCTickersInUsdTable(tag: Tag)
       cmcRank,
       rankLastUpdated,
       quoteProjection,
-      batchId
+      requestTime,
+      isEffective
     ) <> ((CMCTickersInUsd.apply _).tupled, CMCTickersInUsd.unapply)
 }

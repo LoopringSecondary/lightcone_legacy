@@ -26,12 +26,16 @@ trait CMCTickersInUsdDal
 
   def saveTickers(tickers: Seq[CMCTickersInUsd]): Future[ErrorCode]
 
-  def getTickersByJob(jobId: Int): Future[Seq[CMCTickersInUsd]]
+  def getLatestEffectiveRequest(): Future[Option[Long]]
 
-  def countTickersByJob(jobId: Int): Future[Int]
+  def getTickersByRequestTime(requestTime: Long): Future[Seq[CMCTickersInUsd]]
+
+  def countTickersByRequestTime(requestTime: Long): Future[Int]
 
   def getTickers(
-      jobId: Int,
+      requestTime: Long,
       tokenSlugs: Seq[String]
     ): Future[Seq[CMCTickersInUsd]]
+
+  def updateEffective(requestTime: Long): Future[ErrorCode]
 }

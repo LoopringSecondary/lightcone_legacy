@@ -195,10 +195,6 @@ class CoreDeployer @Inject()(
           CMCCrawlerActor.name,
           CMCCrawlerActor.start
         )
-        .add(
-          CurrencyCrawlerActor.name,
-          CurrencyCrawlerActor.start
-        )
 
       //-----------deploy sharded actors-----------
       actors

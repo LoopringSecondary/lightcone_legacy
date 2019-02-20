@@ -16,17 +16,21 @@
 
 package io.lightcone.relayer.external
 
-import io.lightcone.cmc._
-import io.lightcone.persistence.{CMCTickersInUsd, CurrencyRate}
+import java.text.SimpleDateFormat
+import io.lightcone.core.{ErrorCode, ErrorException}
+import io.lightcone.external._
+import io.lightcone.persistence.CMCTickersInUsd
 import io.lightcone.relayer.rpc.ExternalTickerInfo
-import scala.concurrent.{ExecutionContext, Future}
+import org.slf4s.Logging
+import scala.concurrent.Future
 
-trait TickerManager {
+trait TickerManager extends Logging {
+
+  val utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS Z")
 
   def requestCMCTickers(): Future[TickerDataInfo]
 
   def convertCMCResponseToPersistence(
-      batchId: Int,
       tickers_ : Seq[CMCTickerData]
     ): Seq[CMCTickersInUsd]
 
@@ -49,16 +53,55 @@ trait TickerManager {
         .getOrElse(0)
   }
 
+  def convertDateToSecond(utcDateStr: String) = {
+    utcFormat
+      .parse(utcDateStr.replace("Z", " UTC"))
+      .getTime / 1000
+  }
+
   def convertUsdTickersToCny(
       usdTickers: Seq[ExternalTickerInfo],
-      usdToCny: Option[CurrencyRate]
+      usdToCny: Option[CMCTickersInUsd]
     ) = {
-    if (usdTickers.nonEmpty && usdToCny.nonEmpty && usdToCny.get.rate > 0) {
+    if (usdTickers.nonEmpty && usdToCny.nonEmpty) {
+      val cnyToUsd = usdToCny.get.usdQuote.get.price
       usdTickers.map { t =>
-        t.copy(price = toDouble(BigDecimal(t.price / usdToCny.get.rate)))
+        t.copy(
+          price = toDouble(BigDecimal(t.price) * BigDecimal(cnyToUsd))
+        )
       }
     } else {
       Seq.empty
     }
+  }
+
+  def convertPersistToExternal(ticker: CMCTickersInUsd) = {
+    if (ticker.usdQuote.isEmpty) {
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"not found quote with ticker slug ${ticker.slug}"
+      )
+    }
+    if (ticker.usdQuote.get.price <= 0) {
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"invalid price:${ticker.usdQuote.get.price} with ticker slug ${ticker.slug}"
+      )
+    }
+    val quote = ticker.usdQuote.get
+    ExternalTickerInfo(
+      ticker.name,
+      ticker.symbol,
+      ticker.slug,
+      "",
+      "",
+      ticker.cmcRank,
+      quote.price,
+      quote.volume24H,
+      quote.percentChange1H,
+      quote.percentChange24H,
+      quote.percentChange7D,
+      convertDateToSecond(quote.lastUpdated)
+    )
   }
 }

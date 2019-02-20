@@ -24,15 +24,9 @@ import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.base.MapBasedLookup
 import io.lightcone.relayer.actors._
 import io.lightcone.core._
-import io.lightcone.relayer.external.{
-  CMCTickerManagerImpl,
-  CurrencyManager,
-  SinaCurrencyManagerImpl,
-  TickerManager
-}
+import io.lightcone.relayer.external._
 import org.scalatest._
 import org.slf4s.Logging
-
 import scala.concurrent.duration._
 
 //启动system、以及必须的元素，包括system，TokenMetaData，等

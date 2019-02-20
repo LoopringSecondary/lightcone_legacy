@@ -29,7 +29,6 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
-import io.lightcone.persistence.RequestJob.JobType
 import scala.util._
 
 // Owner: Yongfeng
@@ -135,14 +134,13 @@ class MetadataManagerActor(
 
     case req: SaveTokenMetadatas.Req =>
       (for {
-        latestJob <- dbModule.requestJobDal.findLatest(
-          JobType.TICKERS_FROM_CMC
-        )
-        modifiedTokens <- if (latestJob.nonEmpty) {
+        latestEffectiveRequest <- dbModule.CMCTickersInUsdDal
+          .getLatestEffectiveRequest()
+        modifiedTokens <- if (latestEffectiveRequest.nonEmpty) {
           val tokenSlugs = req.tokens.map(_.slug)
           for {
             tickers_ <- dbModule.CMCTickersInUsdDal
-              .getTickers(latestJob.get.batchId, tokenSlugs)
+              .getTickers(latestEffectiveRequest.get, tokenSlugs)
           } yield {
             val tickersMap = tickers_.map { t =>
               (t.symbol, t.usdQuote.get.price)

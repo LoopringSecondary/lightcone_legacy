@@ -71,7 +71,6 @@ class ExternalDataRefresher(
     with RepeatedJobActor
     with ActorLogging {
   def tokenTickerCrawlerActor = actors.get(CMCCrawlerActor.name)
-  def currencyRateCrawlerActor = actors.get(CurrencyCrawlerActor.name)
 
   val selfConfig = config.getConfig(ExternalDataRefresher.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
@@ -84,12 +83,11 @@ class ExternalDataRefresher(
     .map(m => (m.baseTokenSymbol, m.quoteTokenSymbol))
 
   private var allTickersInUSD: Seq[ExternalTickerInfo] =
-    Seq.empty[ExternalTickerInfo]
-  private var effectiveTickersInUSD: Seq[ExternalTickerInfo] =
-    Seq.empty[ExternalTickerInfo]
-  private var effectiveTickersInCNY: Seq[ExternalTickerInfo] =
-    Seq.empty[ExternalTickerInfo]
-  private var currencyRate: Option[CurrencyRate] = None
+    Seq.empty[ExternalTickerInfo] // price represent token's fait value in USD
+  private var allTickersInCNY: Seq[ExternalTickerInfo] =
+    Seq.empty[ExternalTickerInfo] // price represent token's fait value in CNY
+  private var effectiveMarketTickers: Seq[ExternalTickerInfo] =
+    Seq.empty[ExternalTickerInfo] // price represent exchange rate of market (price of market LRC-WETH is 0.01)
 
   val repeatedJobs = Seq(
     Job(
@@ -102,19 +100,12 @@ class ExternalDataRefresher(
 
   def receive: Receive = super.receiveRepeatdJobs orElse {
     case req: GetExternalTickers.Req =>
-      val tickerSource =
-        if (req.currency == GetExternalTickers.Currency.CNY)
-          effectiveTickersInCNY
-        else effectiveTickersInUSD
       val tickers_ = if (req.market.isEmpty) {
-        tickerSource
+        effectiveMarketTickers
       } else {
-        tickerSource.filter(_.market == req.market)
+        effectiveMarketTickers.filter(_.market == req.market)
       }
-      val rate = if (currencyRate.nonEmpty) currencyRate.get.rate else 0
       sender ! GetExternalTickers.Res(
-        req.currency,
-        rate,
         tickers_
       )
   }
@@ -122,7 +113,6 @@ class ExternalDataRefresher(
   private def refreshAll() =
     for {
       _ <- refreshTickers()
-      _ <- refreshCurrencyRate()
     } yield {}
 
   private def refreshTickers() =
@@ -132,31 +122,33 @@ class ExternalDataRefresher(
         .map(_.tickers)
     } yield {
       assert(tickers_.nonEmpty)
-      allTickersInUSD = tickerManager
+      val cnyToUsd =
+        tickers_.find(t => t.symbol == "CNY" && t.slug == "rmb")
+      assert(cnyToUsd.nonEmpty)
+      assert(cnyToUsd.get.usdQuote.nonEmpty)
+      assert(cnyToUsd.get.usdQuote.get.price > 0)
+      allTickersInUSD = tickers_.map(tickerManager.convertPersistToExternal)
+      allTickersInCNY = tickers_.map { t =>
+        val t_ = tickerManager.convertPersistToExternal(t)
+        assert(t.usdQuote.nonEmpty)
+        t_.copy(
+          price = tickerManager.toDouble(
+            BigDecimal(t.usdQuote.get.price) * BigDecimal(
+              cnyToUsd.get.usdQuote.get.price
+            )
+          )
+        )
+      }
+      effectiveMarketTickers = tickerManager
         .convertPersistenceToAllQuoteMarkets(
           tickers_,
           marketQuoteTokens
         )
-      effectiveTickersInUSD = allTickersInUSD
-        .filter(isEffectiveMarket)
-      effectiveTickersInCNY = tickerManager
-        .convertUsdTickersToCny(effectiveTickersInUSD, currencyRate)
         .filter(isEffectiveMarket)
     }
 
   private def isEffectiveMarket(ticker: ExternalTickerInfo): Boolean = {
     effectiveMarketSymbols.contains((ticker.symbol, ticker.market))
-  }
-
-  private def refreshCurrencyRate() = {
-    for {
-      rate_ <- (currencyRateCrawlerActor ? GetCurrencyRate.Req())
-        .mapTo[GetCurrencyRate.Res]
-        .map(_.rate)
-    } yield {
-      assert(rate_.nonEmpty && rate_.get.rate > 0)
-      currencyRate = rate_
-    }
   }
 
 }

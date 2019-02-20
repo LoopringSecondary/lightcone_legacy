@@ -20,14 +20,13 @@ import akka.actor._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.cmc._
 import io.lightcone.core.{ErrorCode, ErrorException, TokenMetadata}
+import io.lightcone.external._
 import io.lightcone.lib._
-import io.lightcone.persistence.RequestJob.JobType
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.external.TickerManager
+import io.lightcone.relayer.external.{CurrencyManager, TickerManager}
 import scala.concurrent.{ExecutionContext, Future}
 import io.lightcone.relayer.jsonrpc._
 import scala.util.{Failure, Success}
@@ -47,6 +46,7 @@ object CMCCrawlerActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       materializer: ActorMaterializer,
       tickerManager: TickerManager,
+      currencyManager: CurrencyManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new CMCCrawlerActor()))
@@ -64,6 +64,7 @@ class CMCCrawlerActor(
     val materializer: ActorMaterializer,
     val dbModule: DatabaseModule,
     val tickerManager: TickerManager,
+    val currencyManager: CurrencyManager,
     val system: ActorSystem)
     extends InitializationRetryActor
     with JsonSupport
@@ -89,11 +90,12 @@ class CMCCrawlerActor(
 
   override def initialize() = {
     val f = for {
-      latestJob <- dbModule.requestJobDal.findLatest(
-        JobType.TICKERS_FROM_CMC
-      )
-      tickers_ <- if (latestJob.nonEmpty) {
-        dbModule.CMCTickersInUsdDal.getTickersByJob(latestJob.get.batchId)
+      latestEffectiveRequest <- dbModule.CMCTickersInUsdDal
+        .getLatestEffectiveRequest()
+      tickers_ <- if (latestEffectiveRequest.nonEmpty) {
+        dbModule.CMCTickersInUsdDal.getTickersByRequestTime(
+          latestEffectiveRequest.get
+        )
       } else {
         Future.successful(Seq.empty)
       }
@@ -119,25 +121,11 @@ class CMCCrawlerActor(
   private def syncFromCMC() = this.synchronized {
     log.info("CMCCrawlerActor run sync job")
     for {
-      savedJob <- dbModule.requestJobDal.saveJob(
-        RequestJob(
-          jobType = JobType.TICKERS_FROM_CMC,
-          requestTime = timeProvider.getTimeSeconds()
-        )
-      )
       cmcResponse <- tickerManager.requestCMCTickers()
-      updated <- if (cmcResponse.data.nonEmpty) {
-        val status = cmcResponse.status.getOrElse(TickerStatus())
+      rateResponse <- currencyManager.getUsdCnyCurrency()
+      updated <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
         for {
-          _ <- dbModule.requestJobDal.updateStatusCode(
-            savedJob.batchId,
-            status.errorCode,
-            timeProvider.getTimeSeconds()
-          )
-          _ <- persistTickers(savedJob.batchId, cmcResponse.data)
-          _ <- dbModule.requestJobDal.updateSuccessfullyPersisted(
-            savedJob.batchId
-          )
+          _ <- persistTickers(rateResponse, cmcResponse.data)
           tokens <- dbModule.tokenMetadataDal.getTokens()
           _ <- updateTokenPrice(cmcResponse.data, tokens)
         } yield true
@@ -182,20 +170,45 @@ class CMCCrawlerActor(
   }
 
   private def persistTickers(
-      batchId: Int,
+      usdTocnyRate: Double,
       tickers_ : Seq[CMCTickerData]
     ) =
     for {
       _ <- Future.unit
       tickersToPersist = tickerManager.convertCMCResponseToPersistence(
-        batchId,
         tickers_
       )
-      _ = tickers = tickersToPersist
+      cnyTicker = CMCTickersInUsd(
+        0,
+        "RMB",
+        "CNY",
+        "rmb",
+        0,
+        0,
+        0,
+        "2019-01-01T00:00:00.000Z",
+        0,
+        0,
+        "2019-01-01T00:00:00.000Z",
+        Some(
+          CMCTickersInUsd.Quote(
+            price = tickerManager
+              .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate)),
+            lastUpdated = tickersToPersist.head.rankLastUpdated
+          )
+        )
+      )
+      now = timeProvider.getTimeSeconds()
+      _ = tickers =
+        tickersToPersist.+:(cnyTicker).map(t => t.copy(requestTime = now))
       fixGroup = tickersToPersist.grouped(20).toList
       _ <- Future.sequence(
         fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
       )
-    } yield {}
+      updateSucc <- dbModule.CMCTickersInUsdDal.updateEffective(now)
+    } yield {
+      if (updateSucc != ErrorCode.ERR_NONE)
+        log.error(s"CMC persist failed, code:$updateSucc")
+    }
 
 }

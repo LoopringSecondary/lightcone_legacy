@@ -23,9 +23,8 @@ import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import com.google.inject.Inject
 import com.typesafe.config.Config
-import io.lightcone.cmc.{CurrencyData, TickerDataInfo}
 import io.lightcone.core.{ErrorCode, ErrorException}
-import io.lightcone.relayer.actors.{CMCCrawlerActor, CurrencyCrawlerActor}
+import io.lightcone.relayer.actors.CMCCrawlerActor
 import org.slf4s.Logging
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,11 +37,11 @@ class SinaCurrencyManagerImpl @Inject()(
     extends CurrencyManager
     with Logging {
 
-  val currencyConfig = config.getConfig(CurrencyCrawlerActor.name)
+  val currencyConfig = config.getConfig(CMCCrawlerActor.name)
 
   val uri = currencyConfig.getString("sina.uri")
 
-  def getUsdCnyCurrency(): Future[CurrencyData] =
+  def getUsdCnyCurrency(): Future[Double] =
     for {
       response <- Http().singleRequest(
         HttpRequest(
@@ -69,7 +68,7 @@ class SinaCurrencyManagerImpl @Inject()(
               val currency = charArr(2).toDouble
               assert(currency > 0)
               assert(time > 0)
-              CurrencyData(currency, time)
+              currency
             }
 
         case m =>

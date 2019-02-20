@@ -94,9 +94,7 @@ class CoreModule(
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
-    bind[RequestJobDal].to[RequestJobDalImpl].asEagerSingleton
     bind[CMCTickersInUsdDal].to[CMCTickersInUsdDalImpl].asEagerSingleton
-    bind[CurrencyRateDal].to[CurrencyRateDalImpl].asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------

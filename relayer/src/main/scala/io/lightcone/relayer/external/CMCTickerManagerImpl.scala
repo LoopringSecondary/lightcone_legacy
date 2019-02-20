@@ -16,20 +16,19 @@
 
 package io.lightcone.relayer.external
 
-import java.text.SimpleDateFormat
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
-import io.lightcone.cmc.{CMCTickerData, TickerDataInfo}
 import org.slf4s.Logging
 import scalapb.json4s.Parser
 import io.lightcone.core._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import com.google.inject._
 import io.lightcone.core.ErrorException
+import io.lightcone.external._
 import io.lightcone.persistence.CMCTickersInUsd
 import io.lightcone.persistence.CMCTickersInUsd.Quote
 import io.lightcone.relayer.actors.CMCCrawlerActor
@@ -45,11 +44,11 @@ class CMCTickerManagerImpl @Inject()(
     with Logging {
 
   val cmcConfig = config.getConfig(CMCCrawlerActor.name)
-  val requestHeader = cmcConfig.getString("request.header")
-  val apiKey = cmcConfig.getString("request.api-key")
-  val prefixUrl = cmcConfig.getString("request.prefix-url")
-  val limitSize = cmcConfig.getString("request.limit-size")
-  val convertCurrency = cmcConfig.getString("request.convert-currency")
+  val requestHeader = cmcConfig.getString("cmc.header")
+  val apiKey = cmcConfig.getString("cmc.api-key")
+  val prefixUrl = cmcConfig.getString("cmc.prefix-url")
+  val limitSize = cmcConfig.getString("cmc.limit-size")
+  val convertCurrency = cmcConfig.getString("cmc.convert-currency")
 
   val uri =
     s"$prefixUrl/v1/cryptocurrency/listings/latest?start=1&limit=${limitSize}&convert=${convertCurrency}"
@@ -100,7 +99,6 @@ class CMCTickerManagerImpl @Inject()(
   }
 
   def convertCMCResponseToPersistence(
-      batchId: Int,
       tickers_ : Seq[CMCTickerData]
     ): Seq[CMCTickersInUsd] = {
     tickers_.map { t =>
@@ -133,8 +131,7 @@ class CMCTickerManagerImpl @Inject()(
         t.numMarketPairs,
         t.cmcRank,
         t.lastUpdated,
-        Some(usdQuote),
-        batchId
+        Some(usdQuote)
       )
     }
   }
@@ -228,10 +225,7 @@ class CMCTickerManagerImpl @Inject()(
         val percentChange1h = quote.percentChange1H
         val percentChange24h = quote.percentChange24H
         val percentChange7d = quote.percentChange7D
-        val utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS Z")
-        val lastUpdated = utcFormat
-          .parse(quote.lastUpdated.replace("Z", " UTC"))
-          .getTime / 1000
+        val lastUpdated = convertDateToSecond(quote.lastUpdated)
         val pair = symbol + "-" + market
 
         ExternalTickerInfo(

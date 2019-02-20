@@ -29,7 +29,6 @@ trait ExternalSupport extends DatabaseModuleSupport {
   me: CommonSpec =>
 
   actors.add(CMCCrawlerActor.name, CMCCrawlerActor.start)
-  actors.add(CurrencyCrawlerActor.name, CurrencyCrawlerActor.start)
 
   try Unreliables.retryUntilTrue(
     10,

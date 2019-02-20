@@ -330,11 +330,3 @@ message GetTickers {
         repeated io.lightcone.persistence.CMCTickersInUsd tickers = 1;
     }
 }
-
-message GetCurrencyRate {
-    message Req {}
-
-    message Res {
-        io.lightcone.persistence.CurrencyRate rate = 1;
-    }
-}

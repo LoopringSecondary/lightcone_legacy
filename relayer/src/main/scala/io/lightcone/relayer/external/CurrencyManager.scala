@@ -16,10 +16,12 @@
 
 package io.lightcone.relayer.external
 
-import io.lightcone.cmc.CurrencyData
+import java.text.SimpleDateFormat
 import scala.concurrent.Future
 
 trait CurrencyManager {
 
-  def getUsdCnyCurrency(): Future[CurrencyData]
+  val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+  def getUsdCnyCurrency(): Future[Double]
 }

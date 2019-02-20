@@ -46,20 +46,37 @@ class CMCTickersInUsdDalImpl @Inject()(
         ERR_NONE
     }
 
-  def getTickersByJob(jobId: Int): Future[Seq[CMCTickersInUsd]] =
-    db.run(query.filter(_.batchId === jobId).result)
+  def getLatestEffectiveRequest() = {
+    db.run(query.filter(_.isEffective === true).map(_.requestTime).max.result)
+  }
 
-  def countTickersByJob(jobId: Int) =
-    db.run(query.filter(_.batchId === jobId).size.result)
+  def getTickersByRequestTime(requestTime: Long): Future[Seq[CMCTickersInUsd]] =
+    db.run(query.filter(_.requestTime === requestTime).result)
+
+  def countTickersByRequestTime(requestTime: Long) =
+    db.run(query.filter(_.requestTime === requestTime).size.result)
 
   def getTickers(
-      jobId: Int,
+      requestTime: Long,
       tokenSlugs: Seq[String]
     ): Future[Seq[CMCTickersInUsd]] =
     db.run(
       query
-        .filter(_.batchId === jobId)
+        .filter(_.requestTime === requestTime)
         .filter(_.slug inSet tokenSlugs)
         .result
     )
+
+  def updateEffective(requestTime: Long) =
+    for {
+      result <- db.run(
+        query
+          .filter(_.requestTime === requestTime)
+          .map(_.isEffective)
+          .update(true)
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
 }
