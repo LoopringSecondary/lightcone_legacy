@@ -29,7 +29,9 @@ import io.lightcone.core._
 case class TypeItem(
     name: String,
     `type`: String)
-case class Type(typeItems: List[TypeItem])
+case class Type(
+    name: String,
+    typeItems: List[TypeItem])
 case class Types(types: Map[String, Type])
 case class EIP712TypedData(
     types: Types,
@@ -81,7 +83,7 @@ class DefaultEIP712Support extends EIP712Support {
       val root = parse(jsonStr)
 
       val typesMap = (root \ "types").extract[Map[String, List[TypeItem]]]
-      val types = Types(typesMap.map(kv => (kv._1, Type(kv._2))))
+      val types = Types(typesMap.map(kv => (kv._1, Type(kv._1, kv._2))))
       val primaryType = (root \ "primaryType").asInstanceOf[JString].values
       val domain = (root \ "domain").asInstanceOf[JObject].values
       val message = (root \ "message").asInstanceOf[JObject].values
@@ -180,39 +182,46 @@ class DefaultEIP712Support extends EIP712Support {
 
   private def hashType(
       dataType: String,
-      types: Types
+      allTypes: Types
     ): Array[Byte] = {
-    val encodedTypeStr = encodeType(dataType, types)
+    val encodedTypeStr = encodeType(dataType, allTypes)
     Hash.sha3(encodedTypeStr.getBytes)
   }
 
   private def encodeType(
       dataType: String,
-      types: Types
+      allTypes: Types
     ) = {
-    var typeList = List[JArray]()
-    ""
+    val deps = findTypeDependencies(dataType, allTypes, List[Type]())
+    val depsSorted = deps.sortBy(t => t.name)
+
+    depsSorted
+      .map(t => {
+        t.name + t.typeItems
+          .map(item => {
+            item.`type` + " " + item.name
+          })
+          .mkString(",")
+      })
+      .mkString
   }
 
   private def findTypeDependencies(
-      targetType: JValue,
-      types: JValue,
-      results: Array[JValue]
-    ) = {
-    ""
-    // targetType match {
-    //   case t: JNothing              =>
-    //   case t if results.contains(t) =>
-    //   case t =>
-    //     val fieldTypes = t.foldField(List(): List[JValue])((l, t) => t :: l)
-    //     fieldTypes
-    //       .map(
-    //         fieldType => findTypeDependencies(fieldType, types, results)
-    //       )
-    //       .flatten
-    //       .distinct
-    //       .toArray
-    // }
-  }
+      targetType: String,
+      allTypes: Types,
+      results: List[Type]
+    ): List[Type] =
+    allTypes.types.get(targetType) match {
+      case Some(typeDef) =>
+        typeDef.typeItems
+          .map(item => {
+            val typeDeps =
+              findTypeDependencies(item.`type`, allTypes, typeDef :: results)
+            typeDef :: typeDeps
+          })
+          .flatten
+          .distinct
+      case None => results
+    }
 
 }
