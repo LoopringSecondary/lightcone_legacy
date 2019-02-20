@@ -239,7 +239,7 @@ class MultiAccountManagerActor(
     def getBalanceAndALlowance(
         address: String,
         token: String
-      ): Future[(BigInt, BigInt)] = {
+      ): Future[(Long, BigInt, BigInt)] = {
 
       val t = timer.refine("label" -> "get_balance_allowance").start
       val ethereumQueryActor = actors.get(EthereumQueryActor.name)
@@ -252,7 +252,7 @@ class MultiAccountManagerActor(
         ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
         balance = BigInt(ba.balance.toByteArray)
         allowance = BigInt(ba.allowance.toByteArray)
-      } yield (balance, allowance)).andThen {
+      } yield (res.blockNumber, balance, allowance)).andThen {
         case _ =>
           t.stop()
           count.refine("label" -> "get_balance_allowance").increment()

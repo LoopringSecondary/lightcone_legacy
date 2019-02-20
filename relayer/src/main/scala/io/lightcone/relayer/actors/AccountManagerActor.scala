@@ -220,6 +220,9 @@ class AccountManagerActor(
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
       count.refine("label" -> "get_balance_allowance").increment()
+
+      // TODO(yadong): return this.
+      val blockNumber: Long = ???
       blocking(timer, "get_balance_allowance") {
         (for {
           accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
@@ -235,7 +238,8 @@ class AccountManagerActor(
                 ai.availableAllowance
               )
           }
-          result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
+          result = GetBalanceAndAllowances
+            .Res(addr, blockNumber, balanceAndAllowanceMap)
         } yield result).sendTo(sender)
       }
 

@@ -54,10 +54,9 @@ final class AccountManagerImpl(
       token: String,
       balance: BigInt,
       allowance: BigInt
-    ) =
-    setBalanceAndAllowanceInternal(token) {
-      _.setBalanceAndAllowance(blockNumber, balance, allowance)
-    }
+    ) = setBalanceAndAllowanceInternal(token) {
+    _.setBalanceAndAllowance(blockNumber, balance, allowance)
+  }
 
   def setBalance(
       blockNumber: Long,
@@ -269,9 +268,9 @@ final class AccountManagerImpl(
         }
         tuples = missing.zip(balanceAndAllowances)
         newManagers = tuples.map {
-          case (token, (balance, allowance)) =>
+          case (token, (blockNumber, balance, allowance)) =>
             val manager = ReserveManager.default(token, enableTracing)
-            manager.setBalanceAndAllowance(0L, balance, allowance)
+            manager.setBalanceAndAllowance(blockNumber, balance, allowance)
             tokens += token -> manager
             token -> manager
         }.toMap
@@ -288,9 +287,9 @@ final class AccountManagerImpl(
     else if (!mustReturn) Future.successful(None)
     else {
       provider.getBalanceAndALlowance(owner, token).map { result =>
-        val (balance, allowance) = result
+        val (blockNumber, balance, allowance) = result
         val manager = ReserveManager.default(token, enableTracing)
-        manager.setBalanceAndAllowance(0L, balance, allowance)
+        manager.setBalanceAndAllowance(blockNumber, balance, allowance)
         tokens += token -> manager
         Some(manager)
       }
