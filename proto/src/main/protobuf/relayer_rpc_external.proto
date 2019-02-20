@@ -3,8 +3,122 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.relayer.rpc;
 
+import "core.proto";
+import "relayer_external.proto";
 
-message GetOrderbook{
-    message Req {}
-    message Res {}
+message BalanceAndAllowance{
+    string token = 1;
+    string balance = 2;
+    string allowance = 3;
+    string available_balance = 4;
+    string available_allowance = 5;
 }
+
+message AddressBalanceAndAllowance{
+    string address = 1;
+    BalanceAndAllowance balance_and_allowance = 2;
+}
+
+message GetBalances{
+    message Params{
+        repeated string addresses  = 1;
+        repeated string tokens = 2;
+    }
+    message Result{
+        repeated AddressBalanceAndAllowance balances = 1;
+    }
+}
+
+message SubmitOrder{
+    message Result {
+        string order_hash = 1;
+    }
+}
+
+message GetOrders{
+    message Params {
+        string owner = 1;
+        io.lightcone.core.MarketPair market = 2;
+        repeated string statuses = 3;
+        string sort = 4;
+        int32 page_num = 5;
+        int32 page_size = 6;
+    }
+
+    message Result{
+        string owner = 1;
+        int32 page_num = 2;
+        int32 page_size = 3;
+        int32 total = 4;
+        repeated io.lightcone.relayer.external.RawOrder orders = 5;
+    }
+
+}
+
+message GetTrades{
+    message Params {
+        string owner = 1;
+        io.lightcone.core.MarketPair market = 2;
+        string sort = 3;
+        int32 page_num = 4;
+        int32 page_size = 5;
+    }
+    message Result {
+        string owner = 1;
+        int32 page_num = 2;
+        int32 page_size = 3;
+        int32 total = 4;
+        repeated io.lightcone.relayer.external.Trade trades = 5;
+    }
+}
+
+message GetRings{
+    message Params {
+        string ringHash = 1;
+        string ringIndex = 2;
+        string sort = 3;
+        int32 page_num = 4;
+        int32 page_size = 5;
+    }
+
+    message Result {
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total  = 3;
+        repeated io.lightcone.relayer.external.Ring rings = 4;
+    }
+}
+
+message GetTransactions{
+    message Params {
+        string owner = 1;
+        string type = 2;
+        string sort = 3;
+        int32 page_num = 4;
+        int32 page_size = 5;
+    }
+
+    //TODO定义Transaction的前端结构
+    message Result {
+        string owner = 1;
+        int32 page_num = 2;
+        int32 page_size = 3;
+        int32 total = 4;
+    }
+}
+
+message GetTokens{
+
+    message  Result {
+        repeated io.lightcone.core.TokenMetadata tokens  =1;
+    }
+}
+
+message GetMarkets{
+
+    message  Result {
+        repeated io.lightcone.core.MarketMetadata markets  =1;
+    }
+}
+
+//order book 可以使用 relayer_rpc_internal_core 中的GetOrderbook
