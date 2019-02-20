@@ -17,6 +17,7 @@
 package io.lightcone.relayer.ethereum
 
 import io.lightcone.ethereum.abi._
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 import io.lightcone.lib._
 import org.web3j.utils.Numeric
@@ -65,7 +66,7 @@ class EthereumBatchCallRequestBuilder {
   }
 
   def buildRequest(
-      addresses: Seq[AddressBalanceUpdated],
+      addresses: Seq[AddressBalanceUpdatedEvent],
       tag: String
     ): BatchCallContracts.Req = {
     val balanceCallReqs = addresses.zipWithIndex.map {
@@ -81,7 +82,7 @@ class EthereumBatchCallRequestBuilder {
 
   def buildRequest(
       delegateAddress: Address,
-      addresses: Seq[AddressAllowanceUpdated],
+      addresses: Seq[AddressAllowanceUpdatedEvent],
       tag: String
     ): BatchCallContracts.Req = {
     val balanceCallReqs = addresses.zipWithIndex.map {

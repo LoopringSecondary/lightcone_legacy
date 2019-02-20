@@ -16,18 +16,24 @@
 
 package io.lightcone.relayer.ethereum.event
 
-import com.google.inject.Inject
-import io.lightcone.relayer.data._
+import io.lightcone.core.MetadataManager
+import io.lightcone.relayer.data.RawBlockData
+
 import scala.concurrent.{ExecutionContext, Future}
 
-class OrderFillEventExtractor @Inject()(
+class EventExtractorCompose(
+    extractors: EventExtractor*
+  )(
     implicit
-    extractor: RingMinedEventExtractor,
-    val ec: ExecutionContext)
-    extends EventExtractor[OrderFilledEvent] {
+    val ec: ExecutionContext,
+    val metadataManager: MetadataManager)
+    extends EventExtractor {
 
-  def extract(block: RawBlockData): Future[Seq[OrderFilledEvent]] =
-    extractor
-      .extract(block)
-      .map(_.filter(_.header.get.txStatus.isTxStatusSuccess).flatMap(_.fills))
+  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] =
+    for {
+      events <- Future.sequence {
+        extractors.map(_.extractEvents(block))
+      }
+    } yield events.flatten
+
 }

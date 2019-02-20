@@ -18,12 +18,13 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base.BaseDalImpl
 import scala.concurrent.Future
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 
-trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
+trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawDataEvent] {
 
   // Save a order to the database and returns the saved order and indicate
-  def saveData(record: OHLCRawData): Future[PersistOHLCData.Res]
+  def saveData(record: OHLCRawDataEvent): Future[PersistOHLCData.Res]
 
   def getOHLCData(
       marketHash: String,

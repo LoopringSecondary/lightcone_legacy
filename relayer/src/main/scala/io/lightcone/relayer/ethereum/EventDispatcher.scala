@@ -17,33 +17,44 @@
 package io.lightcone.relayer.ethereum
 
 import akka.actor.ActorRef
-import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.ethereum.event._
-import io.lightcone.relayer.data._
-import scala.concurrent._
+import io.lightcone.relayer.base._
+import org.slf4s.Logging
 
-trait EventDispatcher[R <: AnyRef] {
-  implicit val ec: ExecutionContext
-  val extractor: EventExtractor[R]
-  def targets: Seq[ActorRef]
-
-  def dispatch(block: RawBlockData): Future[Int] = {
-    for {
-      events <- extractor.extract(block)
-      _ = events.foreach { e =>
-        targets.foreach(_ ! e)
-      }
-    } yield events.size
-  }
+trait EventDispatcher {
+  def dispatch(evt: AnyRef)
 }
 
-class NameBasedEventDispatcher[R <: AnyRef](
-    names: Seq[String],
-    actors: Lookup[ActorRef]
-  )(
-    implicit
-    val ec: ExecutionContext,
-    val extractor: EventExtractor[R])
-    extends EventDispatcher[R] {
-  def targets: Seq[ActorRef] = names.map(actors.get)
+class EventDispatcherImpl(actors: Lookup[ActorRef])
+    extends EventDispatcher
+    with Logging {
+  var targets = Map.empty[Class[_], Set[String]]
+
+  def register(
+      cls: Class[_],
+      actorNames: String*
+    ) = {
+    val t = targets.getOrElse(cls, Set.empty[String]) ++ actorNames.toSet
+    targets = targets + (cls -> t)
+    this
+  }
+
+  def dispatch(evt: AnyRef) = {
+    targets.get(evt.getClass) match {
+      case None =>
+        log.error(
+          s"unable to dispatch message of type: ${evt.getClass.getName}"
+        )
+
+      case Some(names) =>
+        val (found, notFound) = names.partition(actors.contains)
+        if (notFound.size > 0) {
+          log.error(
+            s"unable to dispatch message to actor with the following names: $notFound"
+          )
+        }
+
+        found.map(actors.get).foreach(_ ! evt)
+    }
+  }
+
 }

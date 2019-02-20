@@ -17,52 +17,8 @@
 package io.lightcone.relayer.ethereum.event
 
 import io.lightcone.relayer.data._
-import io.lightcone.core._
-import io.lightcone.lib._
+import scala.concurrent.Future
 
-import scala.concurrent.{ExecutionContext, Future}
-
-trait EventExtractor[R] {
-
-  implicit val ec: ExecutionContext
-
-  def extract(block: RawBlockData): Future[Seq[R]]
-
-  def getEventHeader(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ) =
-    EventHeader(
-      txHash = tx.hash,
-      txFrom = Address.normalize(tx.from),
-      txTo = Address.normalize(tx.to),
-      txValue = NumericConversion.toBigInt(tx.value),
-      txIndex = NumericConversion.toBigInt(tx.transactionIndex).intValue,
-      txStatus = getStatus(receipt.status),
-      blockHash = tx.blockHash,
-      blockTimestamp = NumericConversion.toBigInt(blockTime).longValue,
-      blockNumber = NumericConversion.toBigInt(tx.blockNumber).longValue,
-      gasPrice = NumericConversion.toBigInt(tx.gasPrice).longValue,
-      gasLimit = NumericConversion.toBigInt(tx.gas).intValue,
-      gasUsed = NumericConversion.toBigInt(receipt.gasUsed).intValue
-    )
-
-  def getStatus(status: String): TxStatus = {
-    if (isSucceed(status)) TxStatus.TX_STATUS_SUCCESS
-    else TxStatus.TX_STATUS_FAILED
-
-  }
-
-  def isSucceed(status: String): Boolean = {
-    try {
-      NumericConversion.toBigInt(status).intValue == 1
-    } catch {
-      case e: Throwable => false
-    }
-  }
-
-  // def hex2ArrayBytes(str: String): Array[Byte] = {
-  //   Numeric.toBigInt(str).toByteArray
-  // }
+trait EventExtractor {
+  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]]
 }
