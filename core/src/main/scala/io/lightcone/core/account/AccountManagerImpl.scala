@@ -54,7 +54,7 @@ final class AccountManagerImpl(
       token: String,
       balance: BigInt,
       allowance: BigInt
-    ) = setBalanceAndAllowanceInternal(token) {
+    ) = setBalanceAndAllowanceInternal(blockNumber, token) {
     _.setBalanceAndAllowance(blockNumber, balance, allowance)
   }
 
@@ -62,7 +62,7 @@ final class AccountManagerImpl(
       blockNumber: Long,
       token: String,
       balance: BigInt
-    ) = setBalanceAndAllowanceInternal(token) {
+    ) = setBalanceAndAllowanceInternal(blockNumber, token) {
     _.setBalance(blockNumber, balance)
   }
 
@@ -70,7 +70,7 @@ final class AccountManagerImpl(
       blockNumber: Long,
       token: String,
       allowance: BigInt
-    ) = setBalanceAndAllowanceInternal(token) {
+    ) = setBalanceAndAllowanceInternal(blockNumber, token) {
     _.setAllowance(blockNumber, allowance)
   }
 
@@ -99,16 +99,18 @@ final class AccountManagerImpl(
       status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
     ) =
     for {
-      orders <- cancelOrderInternal(status)(orderPool.getOrder(orderId).toSeq)
+      orders <- cancelOrderInternal(status, None)(
+        orderPool.getOrder(orderId).toSeq
+      )
     } yield (orders.size > 0, orders)
 
   def cancelOrders(orderIds: Seq[String]) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER, None) {
       orderPool.orders.filter(o => orderIds.contains(o.id))
     }
 
   def cancelOrders(marketPair: MarketPair) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER, None) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
         (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
@@ -116,18 +118,18 @@ final class AccountManagerImpl(
     }
 
   def cancelAllOrders() =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER, None)(orderPool.orders)
 
   def hardCancelOrder(
       blockNumber: Long,
       orderId: String
     ) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(blockNumber)) {
       orderPool.getOrder(orderId).toSeq
     }
 
   def purgeOrders(marketPair: MarketPair) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, true) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, None, true) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
         (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
@@ -138,7 +140,7 @@ final class AccountManagerImpl(
       blockNumber: Long,
       cutoff: Long
     ) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(blockNumber)) {
       orderPool.orders.filter(_.validSince <= cutoff)
     }
 
@@ -146,13 +148,14 @@ final class AccountManagerImpl(
       blockNumber: Long,
       cutoff: Long,
       marketHash: String
-    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
-    orderPool.orders.filter { order =>
-      order.validSince <= cutoff && MarketHash(
-        MarketPair(order.tokenS, order.tokenB)
-      ).hashString == marketHash
+    ) =
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(blockNumber)) {
+      orderPool.orders.filter { order =>
+        order.validSince <= cutoff && MarketHash(
+          MarketPair(order.tokenS, order.tokenB)
+        ).hashString == marketHash
+      }
     }
-  }
 
   implicit private val reserveEventHandler = new ReserveEventHandler {
 
@@ -171,6 +174,7 @@ final class AccountManagerImpl(
   }
 
   private def setBalanceAndAllowanceInternal(
+      blockNumber: Long,
       token: String
     )(method: ReserveManager => Set[String]
     ): Future[Map[String, Matchable]] = {
@@ -179,9 +183,10 @@ final class AccountManagerImpl(
       manager = managerOpt.get
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
-        ordersToDelete
-      )
+      _ <- cancelOrderInternal(
+        STATUS_SOFT_CANCELLED_LOW_BALANCE,
+        Some(blockNumber)
+      )(ordersToDelete)
       updatedOrders = orderPool.takeUpdatedOrders
       _ <- processor.processOrders(updatedOrders)
     } yield updatedOrders
@@ -189,6 +194,7 @@ final class AccountManagerImpl(
 
   private def cancelOrderInternal(
       status: OrderStatus,
+      blockNumberOpt: Option[Long],
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
