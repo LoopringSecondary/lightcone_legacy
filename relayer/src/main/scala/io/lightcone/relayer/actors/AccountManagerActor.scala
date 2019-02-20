@@ -291,25 +291,38 @@ class AccountManagerActor(
     case req: AddressBalanceUpdatedEvent =>
       count.refine("label" -> "balance_updated").increment()
 
+      val blockNumber: Long = ???
+
       blocking {
         assert(req.address == owner)
-        manager.setBalance(req.token, BigInt(req.balance.toByteArray))
+        manager
+          .setBalance(blockNumber, req.token, BigInt(req.balance.toByteArray))
       }
 
     case req: AddressAllowanceUpdatedEvent =>
       count.refine("label" -> "allowance_updated").increment()
 
+      val blockNumber: Long = ???
       blocking {
         assert(req.address == owner)
-        manager.setAllowance(req.token, BigInt(req.allowance.toByteArray))
+        manager
+          .setAllowance(
+            blockNumber,
+            req.token,
+            BigInt(req.allowance.toByteArray)
+          )
       }
 
     case req: AddressBalanceAllowanceUpdatedEvent =>
       count.refine("label" -> "balance_allowance_updated").increment()
+
+      val blockNumber: Long = ???
+
       blocking {
         assert(req.address == owner)
 
         manager.setBalanceAndAllowance(
+          blockNumber,
           req.token,
           BigInt(req.balance.toByteArray),
           BigInt(req.allowance.toByteArray)
@@ -319,20 +332,22 @@ class AccountManagerActor(
     // ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) //
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+      val blockNumber: Long = ???
       count.refine("label" -> "cutoff").increment()
       blocking {
-        accountCutoffState.setCutoff(cutoff)
-        manager.handleCutoff(cutoff)
+        accountCutoffState.setCutoff(cutoff) // ??
+        manager.handleCutoff(blockNumber, cutoff)
       }
 
     // ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) //
         if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "cutoff_market").increment()
+      val blockNumber: Long = ???
 
       blocking {
         accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
-        manager.handleCutoff(cutoff, marketHash)
+        manager.handleCutoff(blockNumber, cutoff, marketHash)
       }
 
     // Currently we do not support broker-level cutoff
@@ -344,6 +359,7 @@ class AccountManagerActor(
     case req: OrdersCancelledOnChainEvent
         if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
       count.refine("label" -> "order_cancel").increment()
+
       for {
         orders <- dbModule.orderService.getOrders(req.orderHashes)
         _ = orders.foreach { o =>

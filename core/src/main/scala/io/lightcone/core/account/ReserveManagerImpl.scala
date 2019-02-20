@@ -42,6 +42,7 @@ private[core] final class ReserveManagerImpl(
   protected var balance: BigInt = 0
   protected var spendable: BigInt = 0
   protected var reserved: BigInt = 0
+  protected var blockNumber: Long = 0
 
   protected var reserves = List.empty[Reserve]
 
@@ -71,16 +72,26 @@ private[core] final class ReserveManagerImpl(
       reserves.size
     )
 
-  def setBalance(balance: BigInt) =
-    setBalanceAndAllowance(balance, this.allowance)
+  def getLastBlockNumber() = blockNumber
 
-  def setAllowance(allowance: BigInt) =
-    setBalanceAndAllowance(this.balance, allowance)
+  def setBalance(
+      blockNumber: Long,
+      balance: BigInt
+    ) =
+    setBalanceAndAllowance(blockNumber, balance, this.allowance)
+
+  def setAllowance(
+      blockNumber: Long,
+      allowance: BigInt
+    ) =
+    setBalanceAndAllowance(blockNumber, this.balance, allowance)
 
   def setBalanceAndAllowance(
+      blockNumber: Long,
       balance: BigInt,
       allowance: BigInt
     ) = trace("setBalanceAndAllowance") {
+    this.blockNumber = blockNumber
     this.balance = balance
     this.allowance = allowance
     spendable = balance.min(allowance)
@@ -158,17 +169,23 @@ private[core] final class ReserveManagerImpl(
         forceEventHandling: Boolean,
         prevRequestedOpt: Option[BigInt] = None
       ) = {
-      val available = requested.min(spendable - reserved)
-      if (available == 0) {
+      val reserved = requested.min(spendable - this.reserved)
+      if (reserved == 0) {
         deleteMe(orderId)
       } else {
-        this.reserved += available
-        buf += Reserve(orderId, requested, available)
+        this.reserved += reserved
+        buf += Reserve(orderId, requested, reserved)
 
         prevRequestedOpt match {
-          case Some(amount) if !forceEventHandling && amount == available =>
+          case Some(prevReserved)
+              if !forceEventHandling && prevReserved == reserved =>
           case _ =>
-            eventHandler.onTokenReservedForOrder(orderId, token, available)
+            eventHandler.onTokenReservedForOrder(
+              blockNumber,
+              orderId,
+              token,
+              reserved
+            )
         }
       }
     }

@@ -50,26 +50,29 @@ final class AccountManagerImpl(
     })
 
   def setBalanceAndAllowance(
+      blockNumber: Long,
       token: String,
       balance: BigInt,
       allowance: BigInt
     ) =
     setBalanceAndAllowanceInternal(token) {
-      _.setBalanceAndAllowance(balance, allowance)
+      _.setBalanceAndAllowance(blockNumber, balance, allowance)
     }
 
   def setBalance(
+      blockNumber: Long,
       token: String,
       balance: BigInt
     ) = setBalanceAndAllowanceInternal(token) {
-    _.setBalance(balance)
+    _.setBalance(blockNumber, balance)
   }
 
   def setAllowance(
+      blockNumber: Long,
       token: String,
       allowance: BigInt
     ) = setBalanceAndAllowanceInternal(token) {
-    _.setAllowance(allowance)
+    _.setAllowance(blockNumber, allowance)
   }
 
   def resubmitOrder(order: Matchable) = {
@@ -116,7 +119,10 @@ final class AccountManagerImpl(
   def cancelAllOrders() =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
 
-  def hardCancelOrder(orderId: String) =
+  def hardCancelOrder(
+      blockNumber: Long,
+      orderId: String
+    ) =
     cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
       orderPool.getOrder(orderId).toSeq
     }
@@ -129,12 +135,16 @@ final class AccountManagerImpl(
       }
     }
 
-  def handleCutoff(cutoff: Long) =
+  def handleCutoff(
+      blockNumber: Long,
+      cutoff: Long
+    ) =
     cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
       orderPool.orders.filter(_.validSince <= cutoff)
     }
 
   def handleCutoff(
+      blockNumber: Long,
       cutoff: Long,
       marketHash: String
     ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
@@ -148,12 +158,16 @@ final class AccountManagerImpl(
   implicit private val reserveEventHandler = new ReserveEventHandler {
 
     def onTokenReservedForOrder(
+        blockNumber: Long,
         orderId: String,
         token: String,
         amount: BigInt
       ) = {
       val order = orderPool(orderId)
-      orderPool += order.withReservedAmount(amount)(token)
+      val referenceBlockNumber = order.referenceBlockNumber.max(blockNumber)
+      orderPool += order
+        .withReservedAmount(amount)(token)
+        .copy(referenceBlockNumber = referenceBlockNumber)
     }
   }
 
@@ -257,7 +271,7 @@ final class AccountManagerImpl(
         newManagers = tuples.map {
           case (token, (balance, allowance)) =>
             val manager = ReserveManager.default(token, enableTracing)
-            manager.setBalanceAndAllowance(balance, allowance)
+            manager.setBalanceAndAllowance(0L, balance, allowance)
             tokens += token -> manager
             token -> manager
         }.toMap
@@ -276,7 +290,7 @@ final class AccountManagerImpl(
       provider.getBalanceAndALlowance(owner, token).map { result =>
         val (balance, allowance) = result
         val manager = ReserveManager.default(token, enableTracing)
-        manager.setBalanceAndAllowance(balance, allowance)
+        manager.setBalanceAndAllowance(0L, balance, allowance)
         tokens += token -> manager
         Some(manager)
       }

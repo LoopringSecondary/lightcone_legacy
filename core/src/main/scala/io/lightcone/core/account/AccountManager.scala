@@ -43,17 +43,20 @@ trait AccountManager {
   def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]]
 
   def setBalanceAndAllowance(
+      blockNumber: Long,
       token: String,
       balance: BigInt,
       allowance: BigInt
     ): Future[Map[String, Matchable]]
 
   def setBalance(
+      blockNumber: Long,
       token: String,
       balance: BigInt
     ): Future[Map[String, Matchable]]
 
   def setAllowance(
+      blockNumber: Long,
       token: String,
       allowance: BigInt
     ): Future[Map[String, Matchable]]
@@ -65,17 +68,25 @@ trait AccountManager {
       orderId: String,
       status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
     ): Future[(Boolean, Map[String, Matchable])]
+
   def cancelOrders(orderIds: Seq[String]): Future[Map[String, Matchable]]
   def cancelOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
   def cancelAllOrders(): Future[Map[String, Matchable]]
 
   // cancel an order based on onchain cancel event
-  def hardCancelOrder(orderId: String): Future[Map[String, Matchable]]
+  def hardCancelOrder(
+      blockNumber: Long,
+      orderId: String
+    ): Future[Map[String, Matchable]]
 
   // hard cancel multiple orders
-  def handleCutoff(cutoff: Long): Future[Map[String, Matchable]]
+  def handleCutoff(
+      blockNumber: Long,
+      cutoff: Long
+    ): Future[Map[String, Matchable]]
 
   def handleCutoff(
+      blockNumber: Long,
       cutoff: Long,
       marketHash: String
     ): Future[Map[String, Matchable]]

@@ -32,6 +32,7 @@ trait UpdatedOrdersProcessor {
 trait ReserveEventHandler {
 
   def onTokenReservedForOrder(
+      blockNumber: Long,
       orderId: String,
       token: String,
       amount: BigInt
@@ -54,11 +55,20 @@ private[core] trait ReserveManager {
   val token: String
 
   def getAccountInfo(): AccountInfo
+  def getLastBlockNumber(): Long
 
-  def setBalance(balance: BigInt): Set[String]
-  def setAllowance(allowance: BigInt): Set[String]
+  def setBalance(
+      blockNumber: Long,
+      balance: BigInt
+    ): Set[String]
+
+  def setAllowance(
+      blockNumber: Long,
+      allowance: BigInt
+    ): Set[String]
 
   def setBalanceAndAllowance(
+      blockNumber: Long,
       balance: BigInt,
       allowance: BigInt
     ): Set[String]

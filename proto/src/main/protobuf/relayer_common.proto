@@ -39,12 +39,13 @@ message Order {
     int64 valid_since               = 8;
     int64 submitted_at              = 9;
     int32 num_attempts              = 10;
-    io.lightcone.core.OrderStatus status              = 11;
-    double wallet_split_percentage  = 12;
-    OrderState outstanding          = 13;
-    OrderState reserved             = 14;
-    OrderState actual               = 15;
-    OrderState matchable            = 16;
+    int64 reference_block_number    = 11;
+    io.lightcone.core.OrderStatus status              = 12;
+    double wallet_split_percentage  = 13;
+    OrderState outstanding          = 14;
+    OrderState reserved             = 15;
+    OrderState actual               = 16;
+    OrderState matchable            = 17;
 }
 
 message ExpectedOrderFill {
