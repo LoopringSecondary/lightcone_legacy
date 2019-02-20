@@ -30,7 +30,6 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.jsonrpc.JsonRpcServer
 import io.lightcone.relayer.validator._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
@@ -51,7 +50,6 @@ class CoreDeployer @Inject()(
     chainReorgHandler: ChainReorganizationManager,
     cluster: Cluster,
     config: Config,
-    dispatchers: Seq[EventDispatcher[_]],
     dcm: DatabaseConfigManager,
     dbModule: DatabaseModule,
     dustOrderEvaluator: DustOrderEvaluator,
@@ -187,10 +185,12 @@ class CoreDeployer @Inject()(
         .add(
           MetadataManagerActor.name, //
           MetadataManagerActor.start
-        ).add(
-        ChainReorganizationManagerActor.name,
-        ChainReorganizationManagerActor.start
-        ).add(
+        )
+        .add(
+          ChainReorganizationManagerActor.name,
+          ChainReorganizationManagerActor.start
+        )
+        .add(
           EthereumEventExtractorActor.name,
           EthereumEventExtractorActor.start
         )

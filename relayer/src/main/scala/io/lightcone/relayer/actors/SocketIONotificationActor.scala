@@ -163,10 +163,12 @@ class SocketIONotificationActor @Inject()(
         token = event.token,
         amount = event.amount,
         txHash = event.getHeader.txHash,
-        blockNum =
-          NumericConversion.toHexString(BigInt(event.getHeader.blockNumber)),
-        time =
-          NumericConversion.toHexString(BigInt(event.getHeader.blockTimestamp))
+        blockNum = NumericConversion.toHexString(
+          BigInt(event.getHeader.getBlockHeader.height)
+        ),
+        time = NumericConversion.toHexString(
+          BigInt(event.getHeader.getBlockHeader.timestamp)
+        )
       )
       transferNotifier.notifyEvent(data)
   }
