@@ -22,18 +22,23 @@ package io.lightcone.relayer.event.push;
 import "core.proto";
 
 message BalanceUpdate {
-    string address              = 1;
-    string token                = 2;
-    bytes  balance              = 3;
-    bytes  allowance            = 4;
-    bytes  available_balance    = 5;
-    bytes  available_alloawnce  = 6;
-    int32  nonce                = 7;
+    string address                      = 1;
+    string token                        = 2;
+    bytes  balance_bytes                = 3;
+    bytes  allowance_bytes              = 4;
+    bytes  available_balance_bytes      = 5;
+    bytes  available_alloawnce_bytes    = 6;
+    int32  nonce                        = 7;
+
+    string balance                      = 10;
+    string allowance                    = 11;
+    string available_balance            = 12;
+    string available_alloawnce          = 13;
 }
 
 message OrderUpdate {
     string order_id                                 = 1;
-    io.lightcone.core.MarketPair  market_pair       = 2;
+    io.lightcone.core.MarketPair   market_pair      = 2;
     io.lightcone.core.OrderStatus  status           = 3;
 }
 

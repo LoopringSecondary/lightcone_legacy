@@ -75,33 +75,40 @@ message TxRecord {
 
     message EtherTransfer {
         string  address         = 1;  // 'to' or 'from'
-        double  amount          = 2;  // can be 0
+        bytes   amount_bytes    = 2;  // can be 0
+        string  amount          = 3;  // used for frontend display, not persistence
     }
 
     message EtherConversion {
-        double  amount          = 2;  // can be 0
+        bytes   amount_bytes    = 1;  // can be 0
+        string  amount          = 2;  // used for frontend display, not persistence
     }
 
     message TokenTransfer {
         string  address         = 1;  // 'to' or 'from'
-        double  amount          = 2;  // can be 0
-        string  token           = 3;  // symbol (if we know)or) or address (otherwise)
+        string  token           = 2;  // symbol (if we know)or) or address (otherwise)
+        bytes   amount_bytes    = 3;  // can be 0
+        string  amount          = 4;  // used for frontend display, not persistence
     }
 
     message TokenAuth {
-        double  amount          = 1;
-        string  token           = 2;  // symbol (if we know)or) or address (otherwise)
+        string  token           = 1;  // symbol (if we know)or) or address (otherwise)
+        string  target          = 2;
+        bytes   amount_bytes    = 3;
+        string  amount          = 4;  // used for frontend display, not persistence
     }
 
 
     // If the txType is TRADE_BUY:
     message LoopringTrade {
-        string  address         = 1;
-        double  amount_base     = 2;
-        double  amount_quote    = 3;
-        string  token_base      = 4;  // symbol (if we know)or) or address (otherwise)
-        string  token_quote     = 5;  // symbol (if we know)or) or address (otherwise)
-        string  price           = 6;  // == amount_quote / amount_base
+        string  address                 = 1;
+        string  token_base              = 2;  // symbol (if we know)or) or address (otherwise)
+        string  token_quote             = 3;  // symbol (if we know)or) or address (otherwise)
+        string  price                   = 4;  // == _amountquote / _amountbase
+        bytes   amount_base_bytes       = 5;
+        bytes   amount_quote_bytes      = 6;
+        string  amount_base             = 7;  // used for frontend display, not persistence
+        string  amount_quote            = 8;  // used for frontend display, not persistence
     }
 
     message LoopringCancel {
