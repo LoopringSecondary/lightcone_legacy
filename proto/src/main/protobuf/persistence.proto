@@ -57,3 +57,97 @@ message BlockData {
     bytes  uncle_reward         = 16;
     bytes  extra_data           = 17;
 }
+
+message Tx {
+
+    enum TxType {
+        ETHER_TRANSFER           = 0;
+        ETHER_CONVERSION         = 1;
+        TOKEN_TRANSFER           = 2;
+        TOKEN_AUTH               = 3;
+        LOOPRING_TRADE           = 4;
+        LOOPRING_CANCEL          = 5;
+    }
+
+    message EtherTransfer {
+        double  amount          = 2;  // can be 0
+    }
+
+    message EtherConversion {
+        double  amount          = 2;  // can be 0
+    }
+
+    message TokenTransfer {
+        double  amount          = 2;  // can be 0
+        string  token           = 3;  // symbol (if we know)or) or address (otherwise)
+    }
+
+    message TokenAuth {
+        double  amount          = 1;
+        string  token           = 2;  // symbol (if we know)or) or address (otherwise)
+    }
+
+
+    // If the txType is TRADE_BUY:
+    message LoopringTrade {
+        double  amount_base     = 1;
+        double  amount_quote    = 2;
+        string  token_base      = 3;  // symbol (if we know)or) or address (otherwise)
+        string  token_quote     = 4;  // symbol (if we know)or) or address (otherwise)
+        string  price           = 5;  // == amount_quote / amount_base
+    }
+
+    message LoopringCancel {
+        string order_id         = 1;
+        int64  cutoff           = 2; // if order_id is not "", this must be not 0.
+        string market_pair      = 3; // dispaly as "LRC/ETH", if missing, means all markets.
+    }
+
+
+    // To query Tx records for a address "ABC", either address1 or address2 will be ABC.
+    // if address1 == address2 == ABC, we treat  address1 == ABC and ignore address2.
+    string address1             = 1; // the related address
+    string addrsse2             = 2; // the counterparty address
+    int64  block                = 3; // 0 indiciate pending
+    int64  tx_hash              = 4; // the transaction hash, multiple Tx record may share
+                                     // the same tx hash, the wallet may choose to group
+                                     // those records to display.
+    TxType tx_type              = 5;
+    int64  timestamp            = 6; // may not be unique, used in sorting
+    double fiat_value           = 7;
+
+    oneof detail {
+        EtherTransfer   ether_transfer          = 11;
+        EtherConversion ether_conversion        = 12;
+        TokenTransfer   token_transfer          = 13;
+        TokenAuth       token_auth              = 14;
+        LoopringTrade   loopring_trade          = 15;
+        LoopringCancel  loopring_cancel         = 16;
+    }
+
+    /*
+    tx_type must match the detail fields.
+
+    - for ETHER_TRANSFER events, for example, address1 transfered 10 ETH to address 2,
+    there will be only one record saved, which is:
+
+    ```
+    {
+        address1: address1, // (indexed)
+        address2: address2, // (indexed)
+        block: 12345,
+        tx_hash: 0x567e1f9675c5ce74d267d4e7f6bc24cf0d1dbe70a5edec077681de1f92babe0a,
+        tx_type: ETHER_TRANSFER,
+        timestamp: 1550622394985
+    }
+
+    when query the Tx records for a address `ABC`, we need to query using filter like:
+        where address1 == ABC || address2== ABC
+
+    if address1 == ABC, then this is a transfer OUT, other wise it is a transfer IN event;
+    the same will apply to other sub-types, for example, if address1 == ABC, then a trade
+    record is a SELL, otherwise it is a BUY event; if address1 == ABC, then a auth record
+    is AUTHORING, otherwise it is a AUTHORIZED record; if address1 == ABC, then a conversion
+    record is wrapping ETH to WETH, otherwise it is unwrapping WETH to ETH.
+    */
+}
