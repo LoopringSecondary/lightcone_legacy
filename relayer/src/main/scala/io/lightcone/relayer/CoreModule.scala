@@ -24,16 +24,19 @@ import com.google.inject._
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum.Dispatchers._
-import io.lightcone.relayer.ethereum.{EventDispatcher, _}
+import io.lightcone.relayer.ethereum._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
-import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
-import io.lightcone.relayer.data._
+import io.lightcone.ethereum.event._
+import io.lightcone.relayer.actors._
+import io.lightcone.relayer.ethereum.event._
+
+import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.socketio.notifiers._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -102,8 +105,10 @@ class CoreModule(
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
-    bind[MetadataManager].asEagerSingleton
-
+    bind[ChainReorganizationManager]
+      .to[ChainReorganizationManagerImpl]
+      .asEagerSingleton
+    bind[MetadataManager].toInstance(new MetadataManagerImpl(0.6, 0.06))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
     // --- bind other classes ---------------------
@@ -117,48 +122,22 @@ class CoreModule(
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
-    // --- bind event extractors ---------------------
-    bind[EventExtractor[AddressAllowanceUpdated]]
-      .to[AllowanceChangedAddressExtractor]
-
-    bind[EventExtractor[AddressBalanceUpdated]]
-      .to[BalanceChangedAddressExtractor]
-
-    bind[EventExtractor[OrdersCancelledEvent]]
-      .to[OrdersCancelledEventExtractor]
-
-    bind[EventExtractor[TokenBurnRateChangedEvent]]
-      .to[TokenBurnRateEventExtractor]
-
-    bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
-    bind[EventExtractor[RawOrder]].to[OnchainOrderExtractor]
-    bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
-    bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
-    bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
-    bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
-    bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
-
-    // --- bind event dispatchers ---------------------
-    bind[EventDispatcher[AddressAllowanceUpdated]]
-      .to[AllowanceEventDispatcher]
-
-    bind[EventDispatcher[AddressBalanceUpdated]]
-      .to[BalanceEventDispatcher]
-
-    bind[EventDispatcher[OrdersCancelledEvent]]
-      .to[OrdersCancelledEventDispatcher]
-
-    bind[EventDispatcher[OrderFilledEvent]]
-      .to[OrderFilledEventDispatcher]
-
-    bind[EventDispatcher[TokenBurnRateChangedEvent]]
-      .to[TokenBurnRateChangedEventDispatcher]
-
-    bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
-    bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
-    bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
-    bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
-    bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
+    //bind socket listener
+    bind[SocketIONotifier[SubscribeBalanceAndAllowance]]
+      .to[BalanceNotifier]
+      .asEagerSingleton
+    bind[SocketIONotifier[SubscribeTransaction]]
+      .to[TransactionNotifier]
+      .asEagerSingleton
+    bind[SocketIONotifier[SubscribeOrder]].to[OrderNotifier].asEagerSingleton
+    bind[SocketIONotifier[SubscribeTrade]].to[TradeNotifier].asEagerSingleton
+    bind[SocketIONotifier[SubscribeTicker]].to[TickerNotifier].asEagerSingleton
+    bind[SocketIONotifier[SubscribeOrderBook]]
+      .to[OrderBookNotifier]
+      .asEagerSingleton
+    bind[SocketIONotifier[SubscribeTransfer]]
+      .to[TransferNotifier]
+      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -172,32 +151,81 @@ class CoreModule(
       .toInstance(deployActorsIgnoringRoles)
   }
 
+  // --- bind event dispatchers ---------------------
   @Provides
-  def getEventDispathcers(
-      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdated],
-      ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
-      orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
-      cutoffEventDispatcher: EventDispatcher[CutoffEvent],
-      transferEventDispatcher: EventDispatcher[TransferEvent],
-      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
-      ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
-      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
-      blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
-      tokenBurnRateChangedEventDispatcher: EventDispatcher[
-        TokenBurnRateChangedEvent
-      ]
-    ): Seq[EventDispatcher[_]] =
-    Seq(
-      balanceEventDispatcher,
-      ringMinedEventDispatcher,
-      orderFilledEventDispatcher,
-      cutoffEventDispatcher,
-      transferEventDispatcher,
-      allowanceEventDispatcher,
-      ordersCancelledEventDispatcher,
-      ohlcRawDataEventDispatcher,
-      blockGasPricesDispatcher,
-      tokenBurnRateChangedEventDispatcher
+  def bindEventDispatcher(
+      implicit
+      actors: Lookup[ActorRef]
+    ): EventDispatcher = {
+    new EventDispatcherImpl(actors)
+      .register(
+        classOf[RingMinedEvent],
+        MarketManagerActor.name,
+        RingAndTradePersistenceActor.name
+      )
+      .register(
+        classOf[CutoffEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[OrderFilledEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[OrdersCancelledOnChainEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[TokenBurnRateChangedEvent], //
+        MetadataManagerActor.name
+      )
+      .register(
+        classOf[TransferEvent], //
+        TransactionRecordActor.name
+      )
+      .register(
+        classOf[OHLCRawDataEvent], //
+        OHLCDataHandlerActor.name
+      )
+      .register(
+        classOf[BlockGasPricesExtractedEvent], //
+        GasPriceActor.name
+      )
+      .register(
+        classOf[AddressAllowanceUpdatedEvent],
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[AddressBalanceUpdatedEvent],
+        MultiAccountManagerActor.name,
+        RingSettlementManagerActor.name
+      )
+
+  }
+
+  // --- bind event extractors ---------------------
+  @Provides
+  def bindEventExtractor(
+      implicit
+      config: Config,
+      brb: EthereumBatchCallRequestBuilder,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      ec: ExecutionContext,
+      metadataManager: MetadataManager,
+      rawOrderValidatorArg: RawOrderValidator
+    ): EventExtractor =
+    new EventExtractorCompose(
+      new BalanceAndAllowanceChangedExtractor(),
+      new BlockGasPriceExtractor(),
+      new CutoffEventExtractor(),
+      new OnchainOrderExtractor(),
+      new OrdersCancelledEventExtractor(),
+      new RingMinedEventExtractor(),
+      new TokenBurnRateEventExtractor()
     )
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {

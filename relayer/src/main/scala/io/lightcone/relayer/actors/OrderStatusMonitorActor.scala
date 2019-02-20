@@ -65,6 +65,7 @@ class OrderStatusMonitorActor(
     with ActorLogging
     with RepeatedJobActor {
   import OrderStatus._
+  import MarketMetadata.Status._
 
   val selfConfig = config.getConfig(OrderStatusMonitorActor.name)
 
@@ -123,7 +124,11 @@ class OrderStatusMonitorActor(
         _ <- Future.sequence(orders.map { o =>
           //只有是有效的市场订单才会发送该取消订单的数据，否则只会更改数据库状态
           if (!metadataManager
-                .isMarketActiveOrReadOnly(MarketPair(o.tokenS, o.tokenB))) {
+                .isMarketStatus(
+                  MarketPair(o.tokenS, o.tokenB),
+                  ACTIVE,
+                  READONLY
+                )) {
             Future.unit
           } else {
             val cancelReq = CancelOrder.Req(

@@ -21,17 +21,22 @@ import akka.pattern.ask
 import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.web3j.utils._
+import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
 
 // Owner: Hongyu
 object MultiAccountManagerActor extends DeployedAsShardedByAddress {
+
+  import MarketMetadata.Status._
+
   val name = "multi_account_manager"
 
   var metadataManager: MetadataManager = _
@@ -57,28 +62,35 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
   //在validator 中已经做了拦截，该处再做一次，用于recover过滤
   val extractShardingObject: PartialFunction[Any, String] = {
     case SubmitOrder.Req(Some(rawOrder))
-        if metadataManager.isMarketActiveOrReadOnly(
-          MarketPair(rawOrder.tokenS, rawOrder.tokenB)
+        if metadataManager.isMarketStatus(
+          MarketPair(rawOrder.tokenS, rawOrder.tokenB),
+          ACTIVE,
+          READONLY
         ) =>
       rawOrder.owner
 
     case ActorRecover.RecoverOrderReq(Some(raworder))
-        if metadataManager.isMarketActiveOrReadOnly(
-          MarketPair(raworder.tokenS, raworder.tokenB)
+        if metadataManager.isMarketStatus(
+          MarketPair(raworder.tokenS, raworder.tokenB),
+          ACTIVE,
+          READONLY
         ) =>
       raworder.owner
 
     case req: CancelOrder.Req
-        if req.marketPair.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
-          req.getMarketPair
+        if req.marketPair.nonEmpty && metadataManager.isMarketStatus(
+          req.getMarketPair,
+          ACTIVE,
+          READONLY
         ) =>
       req.owner
 
-    case req: GetBalanceAndAllowances.Req => req.address
-    case req: AddressBalanceUpdated       => req.address
-    case req: AddressAllowanceUpdated     => req.address
-    case req: CutoffEvent                 => req.owner // TODO:暂不支持broker
-    case req: OrderFilledEvent            => req.owner
+    case req: GetBalanceAndAllowances.Req  => req.address
+    case req: AddressBalanceUpdatedEvent   => req.address
+    case req: AddressAllowanceUpdatedEvent => req.address
+    case req: CutoffEvent                  => req.owner // TODO:暂不支持broker
+    case req: OrderFilledEvent             => req.owner
+    case req: OrdersCancelledOnChainEvent  => req.owner
 
     case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
@@ -101,11 +113,20 @@ class MultiAccountManagerActor(
 
   import ErrorCode._
 
-  log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
+  val metricName = s"multi_account_${entityId}"
+  val count = KamonSupport.counter(metricName)
+  val gauge = KamonSupport.gauge(metricName)
+  val histo = KamonSupport.histogram(metricName)
+  val timer = KamonSupport.timer(metricName)
+
+  val getBalanceAndALlowanceCounter =
+    KamonSupport.counter("mama.get-balance-and-allowance")
 
   val selfConfig = config.getConfig(MultiAccountManagerActor.name)
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
+
+  log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
@@ -116,6 +137,7 @@ class MultiAccountManagerActor(
     MultiAccountManagerActor.extractShardingObject.lift
 
   var autoSwitchBackToReady: Option[Cancellable] = None
+  var recoverTimer: Option[StartedTimer] = None
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
   // TODO: 完成recovery后，需要再次测试异常恢复情况
@@ -130,6 +152,8 @@ class MultiAccountManagerActor(
     }
 
   override def initialize() = {
+    recoverTimer = Some(timer.refine("label" -> "recover").start)
+
     if (skiprecover) Future.successful {
       log.debug(s"actor recover skipped: ${self.path}")
       becomeReady()
@@ -163,6 +187,13 @@ class MultiAccountManagerActor(
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
       becomeReady()
 
+      recoverTimer.foreach(_.stop)
+      recoverTimer = None
+
+      val numOfAccounts = accountManagerActors.size
+      gauge.refine("label" -> "num_accounts").set(numOfAccounts)
+      histo.refine("label" -> "num_accounts").record(numOfAccounts)
+
     case msg: Any =>
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
       //sender 是自己时，不再发送Error信息
@@ -175,6 +206,9 @@ class MultiAccountManagerActor(
   }
 
   def ready: Receive = {
+    case req: MetadataChanged =>
+      accountManagerActors.all() foreach { _ ! req }
+
     case req: Any => handleRequest(req)
   }
 
@@ -182,11 +216,13 @@ class MultiAccountManagerActor(
   private def handleRequest(req: Any) = extractShardingObject(req) match {
     case Some(address) => {
       req match {
-        case _: AddressBalanceUpdated | _: AddressAllowanceUpdated |
+        case _: AddressBalanceUpdatedEvent | _: AddressAllowanceUpdatedEvent |
             _: CutoffEvent | _: OrderFilledEvent =>
           if (accountManagerActors.contains(address))
             accountManagerActorFor(address) forward req
-        case _ => accountManagerActorFor(address) forward req
+
+        case _ =>
+          accountManagerActorFor(address) forward req
       }
     }
     case None =>
@@ -202,8 +238,11 @@ class MultiAccountManagerActor(
         address: String,
         token: String
       ): Future[(BigInt, BigInt)] = {
+
+      val t = timer.refine("label" -> "get_balance_allowance").start
       val ethereumQueryActor = actors.get(EthereumQueryActor.name)
-      for {
+
+      (for {
         res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
           address,
           Seq(token)
@@ -211,7 +250,11 @@ class MultiAccountManagerActor(
         ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
         balance = BigInt(ba.balance.toByteArray)
         allowance = BigInt(ba.allowance.toByteArray)
-      } yield (balance, allowance)
+      } yield (balance, allowance)).andThen {
+        case _ =>
+          t.stop()
+          count.refine("label" -> "get_balance_allowance").increment()
+      }
     }
   }
 

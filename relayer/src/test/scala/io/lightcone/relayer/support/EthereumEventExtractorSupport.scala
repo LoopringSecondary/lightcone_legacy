@@ -16,10 +16,11 @@
 
 package io.lightcone.relayer.support
 
+import io.lightcone.ethereum.{RawOrderValidator, RawOrderValidatorImpl}
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.ethereum.Dispatchers._
 import io.lightcone.relayer.ethereum.event._
-import io.lightcone.ethereum._
+import io.lightcone.ethereum.event._
+import io.lightcone.relayer.ethereum._
 
 trait EthereumEventExtractorSupport
     extends DatabaseModuleSupport
@@ -29,7 +30,6 @@ trait EthereumEventExtractorSupport
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with OrderCutoffSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with DatabaseQueryMessageSupport
@@ -39,37 +39,75 @@ trait EthereumEventExtractorSupport
 
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
-  implicit val balanceExtractor = new BalanceChangedAddressExtractor
-  implicit val allowanceExtractor = new AllowanceChangedAddressExtractor
-  implicit val cutoffExtractor = new CutoffEventExtractor
-  implicit val ordersCancelledExtractor = new OrdersCancelledEventExtractor
-  implicit val tokenBurnRateExtractor = new TokenBurnRateEventExtractor
-  implicit val transferExtractor = new TransferEventExtractor
-  implicit val ringMinedExtractor = new RingMinedEventExtractor
-  implicit val orderFillEventExtractor = new OrderFillEventExtractor
-  implicit val ohlcRawDataExtractor = new OHLCRawDataExtractor
-  implicit val gasPricesExtractor = new BlockGasPriceExtractor
-
-  implicit val dispatchers = Seq(
-    new CutoffEventDispatcher(actors),
-    new OrdersCancelledEventDispatcher(actors),
-    new TokenBurnRateChangedEventDispatcher(actors),
-    new TransferEventDispatcher(actors),
-    new OrderFilledEventDispatcher(actors),
-    new RingMinedEventDispatcher(actors),
-    new BalanceEventDispatcher(actors),
-    new AllowanceEventDispatcher(actors),
-    new OHLCRawDataEventDispatcher(actors),
-    new BlockGasPricesDispatcher(actors)
+  implicit val eventExtractor: EventExtractor = new EventExtractorCompose(
+    new BalanceAndAllowanceChangedExtractor(),
+    new BlockGasPriceExtractor(),
+    new CutoffEventExtractor(),
+    new OnchainOrderExtractor(),
+    new OrdersCancelledEventExtractor(),
+    new RingMinedEventExtractor(),
+    new TokenBurnRateEventExtractor()
   )
 
-  actors.add(
-    EthereumEventExtractorActor.name,
-    EthereumEventExtractorActor.start
-  )
-  actors.add(
-    MissingBlocksEventExtractorActor.name,
-    MissingBlocksEventExtractorActor.start
-  )
-  actors.add(OHLCDataHandlerActor.name, OHLCDataHandlerActor.start)
+  implicit val eventDispatcher: EventDispatcher =
+    new EventDispatcherImpl(actors)
+      .register(
+        classOf[RingMinedEvent],
+        MarketManagerActor.name,
+        RingAndTradePersistenceActor.name
+      )
+      .register(
+        classOf[CutoffEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[OrderFilledEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[OrdersCancelledOnChainEvent],
+        TransactionRecordActor.name,
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[TokenBurnRateChangedEvent], //
+        MetadataManagerActor.name
+      )
+      .register(
+        classOf[TransferEvent], //
+        TransactionRecordActor.name
+      )
+      .register(
+        classOf[OHLCRawDataEvent], //
+        OHLCDataHandlerActor.name
+      )
+      .register(
+        classOf[BlockGasPricesExtractedEvent], //
+        GasPriceActor.name
+      )
+      .register(
+        classOf[AddressAllowanceUpdatedEvent],
+        MultiAccountManagerActor.name
+      )
+      .register(
+        classOf[AddressBalanceUpdatedEvent],
+        MultiAccountManagerActor.name,
+        RingSettlementManagerActor.name
+      )
+
+  actors
+    .add(
+      OHLCDataHandlerActor.name, //
+      OHLCDataHandlerActor.start
+    )
+    .add(
+      EthereumEventExtractorActor.name, //
+      EthereumEventExtractorActor.start
+    )
+    .add(
+      MissingBlocksEventExtractorActor.name,
+      MissingBlocksEventExtractorActor.start
+    )
 }

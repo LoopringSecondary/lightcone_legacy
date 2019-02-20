@@ -20,6 +20,7 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.core._
 import io.lightcone.lib._
@@ -72,8 +73,8 @@ class RingAndTradePersistenceActor(
           e.miner,
           header.txHash,
           Some(Ring.Fees(tradeAndFees.map(_._1))),
-          header.blockNumber,
-          header.blockTimestamp
+          header.getBlockHeader.height,
+          header.getBlockHeader.timestamp
         )
         for {
           // TODO(du): 如果用事务需要在dal里注入dbModule
@@ -114,13 +115,13 @@ class RingAndTradePersistenceActor(
         f.filledAmountB,
         f.tokenS,
         f.tokenB,
-        MarketHash(MarketPair(f.tokenS, f.tokenB)).longId,
+        MarketHash(MarketPair(f.tokenS, f.tokenB)).longId(),
         f.split,
         Some(fee),
         f.wallet,
         e.miner,
-        header.blockNumber,
-        header.blockTimestamp
+        header.getBlockHeader.height,
+        header.getBlockHeader.timestamp
       )
       (fee, trade)
     }

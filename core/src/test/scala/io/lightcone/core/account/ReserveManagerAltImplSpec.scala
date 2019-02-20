@@ -63,14 +63,22 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     result = manager.reserve("order1", 100)
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 110, 90, 20, 0, 1))
-    proccssedOrderIds should be(Seq("order1" -> 80, "order1" -> 90))
+    proccssedOrderIds should be(
+      Seq("order1" -> 80, "order1" -> 90, "order1" -> 90)
+    )
 
     manager.setBalanceAndAllowance(110, 100)
     result = manager.reserve("order1", 100)
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 110, 100, 10, 0, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100)
+      Seq(
+        "order1" -> 80,
+        "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 100,
+        "order1" -> 100
+      )
     )
 
     manager.setBalanceAndAllowance(110, 110)
@@ -78,7 +86,14 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 110, 110, 10, 10, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100)
+      Seq(
+        "order1" -> 80,
+        "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 100
+      )
     )
 
     manager.setBalanceAndAllowance(100, 110)
@@ -86,7 +101,15 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 100, 110, 0, 10, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100)
+      Seq(
+        "order1" -> 80,
+        "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 100
+      )
     )
 
     manager.setBalanceAndAllowance(90, 110)
@@ -94,7 +117,17 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 90, 110, 0, 20, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100, "order1" -> 90)
+      Seq(
+        "order1" -> 80,
+        "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 90,
+        "order1" -> 90
+      )
     )
 
     manager.setBalanceAndAllowance(80, 110)
@@ -105,8 +138,14 @@ class ReserveManagerAltImplSpec extends CommonSpec {
       Seq(
         "order1" -> 80,
         "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 100,
         "order1" -> 100,
         "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 80,
         "order1" -> 80
       )
     )
@@ -119,8 +158,14 @@ class ReserveManagerAltImplSpec extends CommonSpec {
       Seq(
         "order1" -> 80,
         "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 100,
+        "order1" -> 100,
+        "order1" -> 100,
         "order1" -> 100,
         "order1" -> 90,
+        "order1" -> 90,
+        "order1" -> 80,
         "order1" -> 80
       )
     )
@@ -200,7 +245,7 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     proccssedOrderIds should be(Nil)
   }
 
-  "an existing order" should "reserve as the last item" in {
+  "an existing order" should "reserve as the last item if its new size is greater" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders
@@ -210,12 +255,59 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     }
     manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
 
-    var result = manager.reserve("order2", 11)
+    var result = manager.reserve("order2", 11) // > 10
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
-    println("== " + manager.getReserves)
 
     result = manager.setBalanceAndAllowance(90, 90)
+    result should be(Set("order2"))
+
+    result = manager.setBalanceAndAllowance(11, 11)
+    result = manager.setBalanceAndAllowance(10, 10)
+    result should be(Set("order3"))
+  }
+
+  "an existing order" should "reserve in place if its new size remains the same" in {
+    manager.setBalanceAndAllowance(100, 100)
+
+    // create 10 orders
+    val orderIds = (1 to 10).map("order" + _).toSeq
+    orderIds.foreach { orderId =>
+      manager.reserve(orderId, 10)
+    }
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
+
+    var result = manager.reserve("order2", 10) // == 10
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
+
+    result = manager.setBalanceAndAllowance(90, 90)
+    result should be(Set("order10"))
+
+    result = manager.setBalanceAndAllowance(11, 11)
+    result = manager.setBalanceAndAllowance(10, 10)
+    result should be(Set("order2"))
+  }
+
+  "an existing order" should "reserve in place if its new size remains the smaller" in {
+    manager.setBalanceAndAllowance(100, 100)
+
+    // create 10 orders
+    val orderIds = (1 to 10).map("order" + _).toSeq
+    orderIds.foreach { orderId =>
+      manager.reserve(orderId, 10)
+    }
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
+
+    var result = manager.reserve("order2", 9) // M 10
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 1, 1, 10))
+
+    result = manager.setBalanceAndAllowance(89, 89)
+    result should be(Set("order10"))
+
+    result = manager.setBalanceAndAllowance(11, 11)
+    result = manager.setBalanceAndAllowance(10, 10)
     result should be(Set("order2"))
   }
 

@@ -62,6 +62,7 @@ class OrderRecoverActor(
     metadataManager: MetadataManager)
     extends InitializationRetryActor {
   import OrderStatus._
+  import MarketMetadata.Status._
 
   val selfConfig = config.getConfig(OrderRecoverActor.name)
   val batchSize = selfConfig.getInt("batch-size")
@@ -116,8 +117,10 @@ class OrderRecoverActor(
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         // filter unsupported markets
         availableOrders = orders.filter { o =>
-          metadataManager.isMarketActiveOrReadOnly(
-            MarketPair(o.tokenS, o.tokenB)
+          metadataManager.isMarketStatus(
+            MarketPair(o.tokenS, o.tokenB),
+            ACTIVE,
+            READONLY
           )
         }
         _ <- if (availableOrders.nonEmpty) {

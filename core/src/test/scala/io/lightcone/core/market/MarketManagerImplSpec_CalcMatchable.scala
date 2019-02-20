@@ -14,43 +14,43 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+// package io.lightcone.core
 
-import io.lightcone.core.testing._
+// import io.lightcone.core.testing._
 
-class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
+// class MarketManagerImplSpec_CalcMatchable extends MarketManagerImplSpec {
 
-  "MarketManager" should "generate a ring for buy order as taker" in {
-    var buyOrder = actualNotDust(buyGTO(BigInt(100000), BigInt(100), 0)) // price =  100000/100.0 = 1000.00
-    var sellOrder = actualNotDust(sellGTO(BigInt(100000), BigInt(101), 0)) // price =  100000/101.0 = 989.12
+//   "MarketManager" should "generate a ring for buy order as taker" in {
+//     var buyOrder = actualNotDust(buyGTO(BigInt(100000), BigInt(100), 0)) // price =  100000/100.0 = 1000.00
+//     var sellOrder = actualNotDust(sellGTO(BigInt(100000), BigInt(101), 0)) // price =  100000/101.0 = 989.12
 
-    (fakePendingRingPool.getOrderPendingAmountS _)
-      .when(sellOrder.id)
-      .returns(555)
-    (fakePendingRingPool.getOrderPendingAmountS _)
-      .when(buyOrder.id)
-      .returns(66)
-    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+//     (fakePendingRingPool.getOrderPendingAmountS _)
+//       .when(sellOrder.id)
+//       .returns(555)
+//     (fakePendingRingPool.getOrderPendingAmountS _)
+//       .when(buyOrder.id)
+//       .returns(66)
+//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-    val ring = MatchableRing(null, null)
-    (fackRingMatcher
-      .matchOrders(_: Matchable, _: Matchable, _: Double))
-      .when(*, *, *)
-      .returns(Right(ring))
+//     val ring = MatchableRing(null, null)
+//     (fakeRingMatcher
+//       .matchOrders(_: Matchable, _: Matchable, _: Double))
+//       .when(*, *, *)
+//       .returns(Right(ring))
 
-    marketManager.submitOrder(sellOrder, 1)
-    marketManager.submitOrder(buyOrder, 2)
+//     marketManager.submitOrder(sellOrder, 1)
+//     marketManager.submitOrder(buyOrder, 2)
 
-    (fackRingMatcher
-      .matchOrders(_: Matchable, _: Matchable, _: Double))
-      .verify(
-        buyOrder.asPending.withActualAsOriginal
-          .copy(_matchable = Some(MatchableState(34, 34000, 0))),
-        sellOrder.asPending.withActualAsOriginal
-          .copy(_matchable = Some(MatchableState(99445, 100, 0))),
-        2.0
-      )
-      .once
-  }
+//     (fakeRingMatcher
+//       .matchOrders(_: Matchable, _: Matchable, _: Double))
+//       .verify(
+//         buyOrder.asPending.withActualAsOriginal
+//           .copy(_matchable = Some(MatchableState(34, 34000, 0))),
+//         sellOrder.asPending.withActualAsOriginal
+//           .copy(_matchable = Some(MatchableState(99445, 100, 0))),
+//         2.0
+//       )
+//       .once
+//   }
 
-}
+// }

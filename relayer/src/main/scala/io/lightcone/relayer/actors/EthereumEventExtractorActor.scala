@@ -25,8 +25,8 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
-import org.web3j.utils.Numeric
+import io.lightcone.relayer.ethereum.event._
+
 import scala.concurrent._
 import scala.util._
 
@@ -43,7 +43,8 @@ object EthereumEventExtractorActor extends DeployedAsSingleton {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      dispatchers: Seq[EventDispatcher[_]],
+      eventDispatcher: EventDispatcher,
+      eventExtractor: EventExtractor,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new EthereumEventExtractorActor()))
@@ -56,7 +57,8 @@ class EthereumEventExtractorActor(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val eventDispatchers: Seq[EventDispatcher[_]],
+    val eventDispatcher: EventDispatcher,
+    val eventExtractor: EventExtractor,
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {
@@ -71,7 +73,7 @@ class EthereumEventExtractorActor(
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
-        .map(res => Numeric.toBigInt(formatHex(res.result)).longValue())
+        .map(res => NumericConversion.toBigInt(res.result).longValue)
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = currentBlock > blockStart + 1
       _ = if (missing) {

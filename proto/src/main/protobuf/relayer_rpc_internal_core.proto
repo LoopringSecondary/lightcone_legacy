@@ -49,21 +49,7 @@ message SettleRings {
     bytes gas_price = 3;
 }
 
-message AddressBalanceUpdated {
-    string address = 1;
-    string token = 2;
-    bytes balance = 3;
-}
 
-message AddressAllowanceUpdated {
-    string address = 1;
-    string token = 2;
-    bytes allowance = 3;
-}
-
-message GasPriceUpdated {
-    int64 gas_price = 1;
-}
 
 message OrderStatusMonitor {
     string monitoring_type = 1;
@@ -86,6 +72,7 @@ message SubmitOrder {
 
     message Res {
         Order order = 1;
+        bool success = 2;
     }
 }
 

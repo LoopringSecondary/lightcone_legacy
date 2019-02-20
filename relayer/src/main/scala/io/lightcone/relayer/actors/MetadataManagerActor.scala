@@ -21,8 +21,8 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
-import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
@@ -40,7 +40,6 @@ object MetadataManagerActor extends DeployedAsSingleton {
       system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
-      timeProvider: TimeProvider,
       timeout: Timeout,
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
@@ -56,7 +55,6 @@ class MetadataManagerActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager,
@@ -103,8 +101,8 @@ class MetadataManagerActor(
     } yield {
       assert(tokensUpdated nonEmpty)
       assert(markets_ nonEmpty)
-      tokens = tokensUpdated.map(MetadataManager.normalizeToken)
-      markets = markets_.map(MetadataManager.normalizeMarket)
+      tokens = tokensUpdated.map(MetadataManager.normalize)
+      markets = markets_.map(MetadataManager.normalize)
       metadataManager.reset(tokens, markets)
     }
     f onComplete {

@@ -20,6 +20,7 @@ import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
@@ -69,7 +70,7 @@ class OrderCutoffHandlerActor(
 
     // TODO du: 收到任务后先存入db，一批处理完之后删除。
     // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
-    case req: OrdersCancelledEvent =>
+    case req: OrdersCancelledOnChainEvent =>
       dbModule.orderService
         .getOrders(req.orderHashes)
         .map(cancelOrders(_, STATUS_ONCHAIN_CANCELLED_BY_USER))

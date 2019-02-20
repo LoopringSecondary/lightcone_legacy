@@ -21,7 +21,6 @@ import scala.collection.mutable.Map
 
 class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
     extends AccountCutoffState {
-  import ErrorCode._
 
   private val marketPairCutoffs = Map.empty[String, Long]
   private var ownerCutoff: Long = -1L
@@ -41,26 +40,19 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
   }
 
   def setCutoff(cutoff: Long) = {
-    if (!(cutoff <= timeProvider.getTimeSeconds()))
-      if (ownerCutoff < cutoff) ownerCutoff = cutoff
+    if (cutoff > timeProvider.getTimeSeconds && cutoff > ownerCutoff) {
+      ownerCutoff = cutoff
+    }
   }
 
-  def checkOrderCutoff(rawOrder: RawOrder) = {
-    if (ownerCutoff >= rawOrder.validSince) {
-      throw ErrorException(
-        ERR_ORDER_VALIDATION_INVALID_CUTOFF,
-        s"this address has been set cutoff=$ownerCutoff."
-      )
-    }
-    val marketHash = MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
+  def isOrderCutoffByOwner(validSince: Long) = {
+    ownerCutoff >= validSince
+  }
 
-    if (marketPairCutoffs.contains(marketHash) &&
-        marketPairCutoffs(marketHash) > rawOrder.validSince) {
-      throw ErrorException(
-        ERR_ORDER_VALIDATION_INVALID_CUTOFF,
-        s"the market ${rawOrder.tokenS}-${rawOrder.tokenB} " +
-          s"of this address has been set cutoff=$ownerCutoff."
-      )
-    }
+  def isOrderCutoffByTradingPair(
+      marketHash: String,
+      validSince: Long
+    ) = {
+    marketPairCutoffs.getOrElse(marketHash, 0L) >= validSince
   }
 }

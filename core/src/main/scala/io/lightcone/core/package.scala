@@ -16,39 +16,33 @@
 
 package io.lightcone
 
+import io.lightcone.lib._
 import org.web3j.utils.Numeric
-import spire.math.Rational
 import com.google.protobuf.ByteString
 
 package object core {
-
-  // TODO(dongw): we need to remove this method.
-  def formatHex(str: String): String = {
-    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
-  }
 
   def createRingIdByOrderHash(
       orderhash1: String,
       orderhash2: String
     ) = {
-    val hash = Numeric.toBigInt(orderhash1) xor
-      Numeric.toBigInt(orderhash2)
+    val hash = NumericConversion.toBigInt(orderhash1) ^
+      NumericConversion.toBigInt(orderhash2)
     Numeric.toHexString(hash.toByteArray).toLowerCase()
   }
 
   /// -----implicit methods -----
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
-    if (bytes.size() > 0) BigInt(bytes.toByteArray)
-    else BigInt(0)
-  }
-
-  implicit def rational2BigInt(r: Rational) = r.toBigInt
+  implicit def byteString2BigInt(bs: ByteString): BigInt =
+    NumericConversion.toBigInt(bs)
 
   implicit def bigInt2ByteString(b: BigInt): ByteString =
-    ByteString.copyFrom(b.toByteArray)
+    new RichBigInt(b).toByteString
 
   implicit def byteArray2ByteString(bytes: Array[Byte]) =
     ByteString.copyFrom(bytes)
+
+  implicit def byteString2HexString(bytes: ByteString) =
+    Numeric.toHexStringWithPrefix(bytes.bigInteger)
 
   /// -----implicit classes -----
   implicit class Rich_OrderbookSlot(raw: Orderbook.Slot)

@@ -18,6 +18,7 @@ package io.lightcone.relayer.actors
 
 import akka.pattern._
 import io.lightcone.relayer.support._
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent.{Await, Future}
@@ -32,7 +33,6 @@ class ProcessEthereumSpec_OwnerCutoff
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with OrderCutoffSupport
     with OrderGenerateSupport {
 
   "AccountMangerActor should reject orders after receive cutoff event" must {
@@ -69,7 +69,6 @@ class ProcessEthereumSpec_OwnerCutoff
       )
       val sendCutoffF = Future.sequence(
         Seq(
-          actors.get(OrderCutoffHandlerActor.name) ? cutoff,
           actors.get(MultiAccountManagerActor.name) ? cutoff
         )
       )

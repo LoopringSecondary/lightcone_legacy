@@ -17,6 +17,7 @@
 package io.lightcone.relayer.order
 
 import akka.pattern._
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
@@ -33,8 +34,7 @@ class OrderCutoffSpec
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with OrderGenerateSupport
-    with OrderCutoffSupport {
+    with OrderGenerateSupport {
 
   val account = getUniqueAccountWithoutEth
 
@@ -83,7 +83,7 @@ class OrderCutoffSpec
       val res = Await.result(f.mapTo[Seq[SubmitOrder.Res]], timeout.duration)
       res.map {
         _ match {
-          case SubmitOrder.Res(Some(order)) =>
+          case SubmitOrder.Res(Some(order), _) =>
             info(s" response ${order}")
             (order.status.isStatusPending || order.status.isStatusNew) should be(
               true
@@ -136,10 +136,12 @@ class OrderCutoffSpec
       // 4. send cutoff
       val txHash = "0x999"
       val cutoff = CutoffEvent(
+        header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_SUCCESS)),
         owner = owner,
+        broker = owner,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
-      actors.get(OrderCutoffHandlerActor.name) ? cutoff
+      actors.get(MultiAccountManagerActor.name) ? cutoff
 
       Thread.sleep(5000)
       // 5. get orderbook first， waiting cutoffevent finish

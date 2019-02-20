@@ -17,6 +17,8 @@
 package io.lightcone.relayer
 
 import io.lightcone.core._
+import io.lightcone.ethereum.event._
+import io.lightcone.lib._
 import io.lightcone.core.ErrorCode._
 
 package object data {
@@ -28,7 +30,7 @@ package object data {
   implicit class RichEventHeader(header: EventHeader) {
 
     def sequenceId() = {
-      if (header.blockNumber > 500000000) // < pow(2, 29)
+      if (header.getBlockHeader.height > 500000000) // < pow(2, 29)
         throw ErrorException(
           ERR_INTERNAL_UNKNOWN,
           s"blockNumber >= 500000000 in ${header}"
@@ -43,7 +45,7 @@ package object data {
           ERR_INTERNAL_UNKNOWN,
           s"eventIndex >= 1024 in ${header}"
         )
-      val b: Long = header.blockNumber << 34
+      val b: Long = header.getBlockHeader.height << 34
       val t: Long = header.txIndex.toLong << 22
       val l: Long = header.logIndex.toLong << 10
       b + t + l + header.eventIndex
@@ -160,7 +162,7 @@ package object data {
     def hashString = MarketHash(marketPair).hashString
     def longId = MarketHash(marketPair).longId
 
-    def toLowerCase() =
+    def normalize() =
       MarketPair(
         baseToken = Address.normalize(marketPair.baseToken),
         quoteToken = Address.normalize(marketPair.quoteToken)
@@ -187,5 +189,8 @@ package object data {
       val state = order.getState.copy(status = newStatus)
       order.copy(state = Some(state))
     }
+
+    def getMarketHash() =
+      MarketHash(MarketPair(order.tokenS, order.tokenB)).hashString
   }
 }

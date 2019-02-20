@@ -22,7 +22,7 @@ import com.typesafe.config.Config
 import io.lightcone.lib._
 import io.lightcone.relayer._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
+import io.lightcone.ethereum.event._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data._
@@ -52,7 +52,7 @@ object TransactionRecordActor extends DeployedAsShardedByAddress {
   val extractShardingObject: PartialFunction[Any, String] = {
     case req: TransferEvent                 => req.owner
     case req: CutoffEvent                   => req.owner
-    case req: OrdersCancelledEvent          => req.owner
+    case req: OrdersCancelledOnChainEvent   => req.owner
     case req: OrderFilledEvent              => req.owner
     case req: GetTransactionRecords.Req     => req.owner
     case req: GetTransactionRecordCount.Req => req.owner
@@ -111,7 +111,7 @@ class TransactionRecordActor(
       )
       txRecordDal.saveRecord(record)
 
-    case req: OrdersCancelledEvent =>
+    case req: OrdersCancelledOnChainEvent =>
       val header = req.header.get
       val record = TransactionRecord(
         header = req.header,

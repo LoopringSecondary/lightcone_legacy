@@ -17,6 +17,7 @@
 package io.lightcone.relayer.entrypoint
 
 import com.google.protobuf.ByteString
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors.RingAndTradePersistenceActor
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
@@ -284,8 +285,9 @@ class EntryPointSpec_DatabaseQuery
   val header = EventHeader(
     txHash = hash1,
     txStatus = TxStatus.TX_STATUS_SUCCESS,
-    blockHash = hash1,
-    blockNumber = height1
+    blockHeader = Some(
+      BlockHeader(height = height1, hash = hash1)
+    )
   )
 
   val fill1 = OrderFilledEvent(
@@ -311,7 +313,12 @@ class EntryPointSpec_DatabaseQuery
   )
 
   val fill2 = OrderFilledEvent(
-    Some(header.copy(txHash = hash2, blockHash = hash2, blockNumber = height2)),
+    Some(
+      header.copy(
+        txHash = hash2,
+        blockHeader = Some(BlockHeader(hash = hash2, height = height2))
+      )
+    ),
     owner2,
     hash2,
     "0x0",
@@ -333,7 +340,12 @@ class EntryPointSpec_DatabaseQuery
   )
 
   val fill3 = OrderFilledEvent(
-    Some(header.copy(txHash = hash3, blockHash = hash3, blockNumber = height2)),
+    Some(
+      header.copy(
+        txHash = hash3,
+        blockHeader = Some(BlockHeader(hash = hash3, height = height2))
+      )
+    ),
     owner1,
     hash3,
     "0x0",
@@ -372,7 +384,10 @@ class EntryPointSpec_DatabaseQuery
     )
     val e2 = RingMinedEvent(
       Some(
-        header.copy(txHash = hash2, blockHash = hash2, blockNumber = height2)
+        header.copy(
+          txHash = hash2,
+          blockHeader = Some(BlockHeader(hash = hash2, height = height2))
+        )
       ),
       height2,
       hash2,
@@ -387,7 +402,10 @@ class EntryPointSpec_DatabaseQuery
     )
     val e3 = RingMinedEvent(
       Some(
-        header.copy(txHash = hash3, blockHash = hash3, blockNumber = height3)
+        header.copy(
+          txHash = hash3,
+          blockHeader = Some(BlockHeader(hash = hash3, height = height3))
+        )
       ),
       height3,
       hash3,

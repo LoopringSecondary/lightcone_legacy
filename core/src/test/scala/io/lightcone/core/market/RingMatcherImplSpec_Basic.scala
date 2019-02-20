@@ -16,11 +16,10 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.testing._
-
-class RingMatcherImplSpec_Basic extends OrderAwareSpec {
+class RingMatcherImplSpec_Basic extends testing.CommonSpec {
 
   import ErrorCode._
+  // import OrderStatus._
 
   implicit val alwaysProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
@@ -34,10 +33,8 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
   val matcher = new RingMatcherImpl()
 
   "RingMatcherImpl" should "not match untradable orders" in {
-    val maker =
-      sellDAI(BigInt(100000000), BigInt(100000001), 0).matchableAsOriginal
-    val taker =
-      buyDAI(BigInt(100000000), BigInt(100000000), 0).matchableAsOriginal
+    val maker = (Addr() |> 1000.0.dai --> 1000001.0.weth).matchableAsOriginal
+    val taker = (Addr() |> 1000000.0.weth --> 1000.0.dai).matchableAsOriginal
 
     matcher.matchOrders(taker, maker, 0) should be(
       Left(ERR_MATCHING_ORDERS_NOT_TRADABLE)
@@ -46,78 +43,61 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
 
   "RingMatcherImpl" should "not match orders if one of them has tokenB as 0 " in {
     matcher.matchOrders(
-      sellDAI(10, 0).matchableAsOriginal,
-      buyDAI(10, 10).matchableAsOriginal
+      (Addr() |> 10.0.dai --> 0.0.weth).matchableAsOriginal,
+      (Addr() |> 10.0.weth --> 100.0.dai).matchableAsOriginal
     ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
 
     matcher.matchOrders(
-      sellDAI(10, 10).matchableAsOriginal,
-      buyDAI(10, 0).matchableAsOriginal
+      (Addr() |> 10.0.dai --> 1.0.weth).matchableAsOriginal,
+      (Addr() |> 1.0.weth --> 0.0.dai).matchableAsOriginal
     ) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
 
     matcher.matchOrders(
-      sellDAI(10, 0).matchableAsOriginal,
-      buyDAI(10, 0).matchableAsOriginal
+      (Addr() |> 10.0.dai --> 0.0.weth).matchableAsOriginal,
+      (Addr() |> 1.0.weth --> 0.0.dai).matchableAsOriginal
     ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
   }
 
   "RingMatcherImpl" should "not match orders if one of them has tokenS as 0 " in {
     matcher.matchOrders(
-      sellDAI(0, 10).matchableAsOriginal,
-      buyDAI(10, 10).matchableAsOriginal
+      (Addr() |> .0.dai --> 10.0.weth).matchableAsOriginal,
+      (Addr() |> 10.0.weth --> 10.0.dai).matchableAsOriginal
     ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
 
     matcher.matchOrders(
-      sellDAI(10, 10).matchableAsOriginal,
-      buyDAI(0, 10).matchableAsOriginal
+      (Addr() |> 10.0.dai --> 10.0.weth).matchableAsOriginal,
+      (Addr() |> .0.weth --> 10.0.dai).matchableAsOriginal
     ) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
 
     matcher.matchOrders(
-      sellDAI(0, 10).matchableAsOriginal,
-      buyDAI(0, 10).matchableAsOriginal
+      (Addr() |> .0.dai --> 10.0.weth).matchableAsOriginal,
+      (Addr() |> .0.weth --> 10.0.dai).matchableAsOriginal
     ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
   }
 
-  "RingMatcherImpl" should "verify two orders in MarketManagerImplSpec_Performance should be matched in a ring " in {
+  "RingMatcherImpl" should "match two orders into a ring " in {
+    val v1 = BigInt("60000000000000006000000000")
+    val v2 = BigInt("50000000000000")
+
+    val taker = Matchable(
+      id = Addr(),
+      tokenS = WETH,
+      tokenB = GTO,
+      tokenFee = LRC,
+      amountS = v1,
+      amountB = v2
+    ).matchableAsOriginal
+
+    val maker = Matchable(
+      id = Addr(),
+      tokenS = GTO,
+      tokenB = WETH,
+      tokenFee = LRC,
+      amountS = v2,
+      amountB = v1
+    ).matchableAsOriginal
     matcher
-      .matchOrders(
-        taker = Matchable(
-          "taker",
-          WETH,
-          GTO,
-          LRC,
-          BigInt("60000000000000006000000000"),
-          BigInt("50000000000000"),
-          0,
-          -1,
-          0,
-          0,
-          OrderStatus.STATUS_PENDING,
-          0.0,
-          None,
-          None,
-          None,
-          Some(MatchableState(0, 0, 0))
-        ).matchableAsOriginal,
-        maker = Matchable(
-          "maker",
-          GTO,
-          WETH,
-          LRC,
-          BigInt("50000000000000"),
-          BigInt("60000000000000006000000000"),
-          0,
-          -1,
-          0,
-          0,
-          OrderStatus.STATUS_PENDING,
-          0.0,
-          None,
-          None,
-          None,
-          Some(MatchableState(0, 0, 0))
-        ).matchableAsOriginal
-      )
+      .matchOrders(taker, maker)
       .isRight should be(true)
   }
 }

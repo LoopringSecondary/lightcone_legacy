@@ -34,8 +34,11 @@ object Dependencies {
     "org.json4s" %% "json4s-native" % json4sVersion,
     "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.1")
 
+  lazy val libDependency = Seq(
+    "org.web3j" % "core" % "4.1.0")
+
   lazy val ethereumDependency = Seq(
-    "org.web3j" % "core" % "4.1.0",
+
     "org.ethereum" % "ethereumj-core" % "1.9.1-RELEASE")
 
   lazy val akkaDependency = Seq(
@@ -52,6 +55,11 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-http" % "10.1.5",
     "de.heikoseeberger" %% "akka-http-json4s" % "1.22.0")
 
+  lazy val socketDependency = Seq(
+    "com.corundumstudio.socketio" % "netty-socketio" % "1.7.7",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.8"
+  )
+
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "0.20",
@@ -66,12 +74,15 @@ object Dependencies {
     "io.kamon" %% "kamon-core" % "1.1.0",
     "io.kamon" %% "kamon-jmx" % "0.6.7",
     "io.kamon" %% "kamon-akka-2.5" % "1.0.1",
+    "io.kamon" %% "kamon-akka-remote-2.5" % "1.0.1",
     "io.kamon" %% "kamon-akka-http-2.5" % "1.0.1",
     "io.kamon" %% "kamon-zipkin" % "1.0.0",
     "io.kamon" %% "kamon-datadog" % "1.0.0",
-    "io.kamon" %% "kamon-prometheus" % "1.1.1")
+    "io.kamon" %% "kamon-prometheus" % "1.1.1",
+    "io.kamon" %% "kamon-scala-future" % "1.0.0")
 
   lazy val dependency4Lib = commonDependency ++
+    libDependency ++
     json4sDependency ++
     testDependency
 
@@ -96,6 +107,7 @@ object Dependencies {
 
   lazy val dependency4Relayer = dependency4Persistence ++
     httpDependency ++
+    socketDependency ++
     akkaDependency ++
     json4sDependency ++
     monitoringDependencies ++

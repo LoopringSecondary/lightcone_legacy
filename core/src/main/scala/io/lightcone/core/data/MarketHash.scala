@@ -16,7 +16,8 @@
 
 package io.lightcone.core
 
-import io.lightcone.lib.MurmurHash64
+import io.lightcone.lib._
+import org.slf4s.Logging
 
 object MarketHash {
   def apply(marketPair: MarketPair): MarketHash = new MarketHash(marketPair)
@@ -29,7 +30,7 @@ object MarketHash {
   }
 }
 
-class MarketHash(marketPair: MarketPair) {
+class MarketHash(marketPair: MarketPair) extends Object with Logging {
   import MarketHash._
 
   val bigIntValue = {
@@ -37,7 +38,9 @@ class MarketHash(marketPair: MarketPair) {
       (Address(marketPair.baseToken).toBigInt ^
         Address(marketPair.quoteToken).toBigInt)
     } catch {
-      case e: Throwable => BigInt(0)
+      case e: Throwable =>
+        log.error(s"unable to convert token addresses into BigInt: $marketPair")
+        throw e
     }
   }
 

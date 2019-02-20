@@ -21,6 +21,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.google.protobuf.any.Any
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
@@ -64,7 +65,7 @@ class OHLCDataDalImpl @Inject()(
     }
   }
 
-  def saveData(record: OHLCRawData): Future[PersistOHLCData.Res] = {
+  def saveData(record: OHLCRawDataEvent): Future[PersistOHLCData.Res] = {
     for {
       result <- db.run(query.insertOrUpdate(record))
     } yield {

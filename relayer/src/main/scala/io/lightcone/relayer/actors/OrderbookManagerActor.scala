@@ -74,23 +74,24 @@ class OrderbookManagerActor(
     with ShardingEntityAware
     with RepeatedJobActor {
 
+  import MarketMetadata.Status._
+
   val selfConfig = config.getConfig(OrderbookManagerActor.name)
   val orderbookRecoverSize = selfConfig.getInt("orderbook-recover-size")
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  val marketPair = {
-    metadataManager.getValidMarketPairs.values
-      .find(m => OrderbookManagerActor.getEntityId(m) == entityId) match {
-      case Some(pair) => pair
-      case None =>
-        val error = s"unable to find market pair matching entity id ${entityId}"
-        log.error(error)
-        throw new IllegalStateException(error)
+  val marketPair = metadataManager
+    .getMarkets(ACTIVE, READONLY)
+    .find(m => OrderbookManagerActor.getEntityId(m.marketPair.get) == entityId)
+    .map(_.marketPair.get)
+    .getOrElse {
+      val error = s"unable to find market pair matching entity id ${entityId}"
+      log.error(error)
+      throw new IllegalStateException(error)
     }
-  }
 
-  def marketMetadata = metadataManager.getMarketMetadata(marketPair)
+  def marketMetadata = metadataManager.getMarket(marketPair)
   def marketManagerActor = actors.get(MarketManagerActor.name)
   val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
@@ -103,8 +104,6 @@ class OrderbookManagerActor(
       run = () => syncOrderbookFromMarket()
     )
   )
-
-  actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
@@ -128,16 +127,21 @@ class OrderbookManagerActor(
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarketMetadata(marketPair))
+        Option(metadataManager.getMarket(marketPair))
       } catch {
         case _: Throwable => None
       }
       metadataOpt match {
-        case None => context.system.stop(self)
+        case None =>
+          log.warning("I'm stopping myself as the market metadata is not found")
+          context.system.stop(self)
         case Some(metadata) if metadata.status.isTerminated =>
+          log.warning(
+            s"I'm stopping myself as the market is terminiated: $metadata"
+          )
           context.system.stop(self)
         case Some(metadata) =>
-          log.debug(
+          log.info(
             s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
           )
       }

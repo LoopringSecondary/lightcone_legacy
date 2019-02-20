@@ -77,9 +77,11 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_INVALID_SIG                        = 2010;
     ERR_ORDER_VALIDATION_INVALID                            = 2011;
     ERR_ORDER_VALIDATION_INVALID_CUTOFF                     = 2012;
-    ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2013;
-    ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2014;
-    ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2015;
+    ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR        = 2013;
+    ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2014;
+    ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2015;
+    ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2016;
+
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
     // EIP712 typed json data format error
@@ -101,6 +103,7 @@ enum ErrorCode{
     ERR_FAILED_HANDLE_MSG               = 3013;
     ERR_REJECTED_DURING_RECOVER         = 3014;
     ERR_ACTOR_NOT_READY                 = 3015;
+    ERR_ORDER_PENDING_ACTIVE            = 3016;
 
     //4001 -- 5000 persistence Error
     ERR_PERSISTENCE_INVALID_DATA        = 4001;
@@ -292,4 +295,18 @@ message MarketStats {
     double latest_price         = 7;
     bool   is_last_taker_sell   = 8;
 }
+
+
+message ChainReorganizationImpact {
+
+    message AccountInfo {
+        string address          = 1;
+        repeated string tokens  = 2;
+    }
+
+   repeated string order_ids    = 1;
+   repeated AccountInfo accounts  = 2;
+}
+
+
 
