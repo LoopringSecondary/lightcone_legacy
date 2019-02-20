@@ -212,7 +212,6 @@ enum SigningAlgorithm {
     ALGO_NONE       = 255;
 }
 
-
 // use bytes to represent big-numbers and string for addresses
 message RawOrder  {
     message Params {
@@ -283,6 +282,21 @@ message RawOrder  {
     int64  market_entity_id           = 17;
 }
 
+message Amount {
+    bytes value = 1;
+}
+
+message RawOrder1 {
+    message FeeParams {
+        string token_fee               = 1;
+        Amount  amount_fee              = 2;
+        int32  wallet_split_percentage = 3;
+    }
+    FeeParams fee_params = 15;
+    string token_s = 16;
+    bytes amount_s = 17;
+    Amount amount_a = 18;
+}
 
 message MarketStats {
     int32  num_buys             = 1;
