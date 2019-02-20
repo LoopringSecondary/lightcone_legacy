@@ -21,7 +21,7 @@ import scala.collection.mutable.ListBuffer
 import java.util.concurrent.atomic.AtomicInteger
 
 // This class is not thread safe.
-// orderOrdersHavePriority = true
+// olderOrdersHavePriority = true
 // allowPartialReserve = true
 private[core] final class ReserveManagerImpl(
     val token: String,
