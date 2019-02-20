@@ -134,8 +134,9 @@ final class TransactionRecordMessageValidator(
 
     val header = headerOpt.get
     if (header.txHash.isEmpty ||
-        header.blockHash.isEmpty ||
-        header.blockTimestamp < 0 ||
+        header.blockHeader.isEmpty ||
+        header.getBlockHeader.hash.isEmpty ||
+        header.getBlockHeader.timestamp < 0 ||
         header.txFrom.isEmpty ||
         header.txTo.isEmpty ||
         header.gasPrice < 0 ||
@@ -146,7 +147,7 @@ final class TransactionRecordMessageValidator(
         s"Invalid value in header:$header"
       )
 
-    if (header.blockNumber < 0 ||
+    if (header.getBlockHeader.height < 0 ||
         header.txIndex < 0 ||
         header.logIndex < 0 ||
         header.eventIndex < 0)
@@ -155,7 +156,7 @@ final class TransactionRecordMessageValidator(
         s"Invalid index in header:$header"
       )
 
-    if (header.blockNumber > 500000000)
+    if (header.getBlockHeader.height > 500000000)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
         s"Parameter blockNumber larger than 500000000 in ${header}"

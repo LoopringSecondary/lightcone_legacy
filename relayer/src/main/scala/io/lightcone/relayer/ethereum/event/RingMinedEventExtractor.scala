@@ -18,10 +18,12 @@ package io.lightcone.relayer.ethereum.event
 
 import com.google.inject.Inject
 import com.typesafe.config.Config
+import io.lightcone.core.MarketMetadata.Status.{ACTIVE, READONLY}
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
 import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
+
 import scala.concurrent._
 import io.lightcone.core._
 import io.lightcone.lib._
@@ -31,9 +33,15 @@ class RingMinedEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     config: Config,
-    metadataManager: MetadataManager,
-    rawOrderValidator: RawOrderValidator)
-    extends EventExtractor[PRingMinedEvent] {
+    metadataManagerArg: MetadataManager,
+    rawOrderValidatorArg: RawOrderValidator)
+    extends AbstractEventExtractor
+    with RingMinedEventSupport
+    with FillEventSupport
+    with OHLCRawDataSupport {
+
+  implicit val metadataManager = metadataManagerArg
+  implicit val rawOrderValidator = rawOrderValidatorArg
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
@@ -43,108 +51,206 @@ class RingMinedEventExtractor @Inject()(
   )
   val fillLength: Int = 8 * 64
 
-  def extract(block: RawBlockData): Future[Seq[PRingMinedEvent]] = Future {
-    var rings = (block.txs zip block.receipts).flatMap {
-      case (tx, receipt) if tx.to.equalsIgnoreCase(ringSubmitterAddress) =>
-        val header = getEventHeader(tx, receipt, block.timestamp)
-        receipt.logs.zipWithIndex.map {
-          case (log, index) =>
-            loopringProtocolAbi
-              .unpackEvent(log.data, log.topics.toArray) match {
-              case Some(event: RingMinedEvent.Result) =>
-                val fillContent = Numeric.cleanHexPrefix(event._fills)
-                val fillStrs = (0 until (fillContent.length / fillLength)).map {
-                  index =>
-                    fillContent.substring(
-                      index * fillLength,
-                      fillLength * (index + 1)
-                    )
-                }
-                val orderFilledEvents = fillStrs.zipWithIndex.map {
-                  case (fill, eventIndex) =>
-                    val _fill =
-                      if (eventIndex + 1 >= fillStrs.size) fillStrs.head
-                      else fillStrs(eventIndex + 1)
-                    fillToOrderFilledEvent(
-                      fill,
-                      _fill,
-                      event,
-                      receipt,
-                      Some(
-                        header
-                          .copy(logIndex = index, eventIndex = eventIndex)
-                      )
-                    )
-                }
-                Some(
-                  PRingMinedEvent(
-                    header = Some(header.withLogIndex(index)),
-                    ringIndex = event._ringIndex.longValue,
-                    ringHash = event._ringHash,
-                    fills = orderFilledEvents
-                  )
-                )
-              case _ =>
-                None
-            }
-        }.filter(_.nonEmpty).map(_.get)
-      case _ => Seq.empty
-    }
+  def extractEventsFromTx(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[AnyRef]] =
+    for {
+      ringMinedEvents <- extractRingMinedEvents(tx, receipt, eventHeader)
+      fillEvents = extractFilledEvents(ringMinedEvents)
+      ohlcRawDataEvents = extractOHLCRawData(ringMinedEvents)
+    } yield ringMinedEvents ++ fillEvents ++ ohlcRawDataEvents
 
-    val ringBatches: Map[String, RingBatch] =
-      (block.txs zip block.receipts).map {
-        case (tx, receipt) =>
-          ringSubmitterAbi.unpackFunctionInput(tx.input) match {
-            case Some(params: SubmitRingsFunction.Params) =>
-              val ringData = params.data
-              new SimpleRingBatchDeserializer(Numeric.toHexString(ringData)).deserialize match {
-                case Left(_) =>
-                  None
-                case Right(ringBatch) =>
-                  if (!isSucceed(receipt.status)) {
-                    val header = getEventHeader(tx, receipt, block.timestamp)
-                    rings = rings.++(ringBatch.rings.map { ring =>
-                      PRingMinedEvent(
-                        header = Some(header),
-                        fills = ring.orderIndexes.map(index => {
-                          val order = ringBatch.orders(index)
-                          OrderFilledEvent(
-                            header = Some(header),
-                            orderHash = order.hash,
-                            tokenS = Address.normalize(order.tokenS)
-                          )
-                        })
-                      )
-                    })
-                  }
-                  Some(tx.hash -> ringBatch)
+}
+
+trait OHLCRawDataSupport {
+  extractor: RingMinedEventExtractor =>
+
+  def extractOHLCRawData(ringMinedEvents: Seq[PRingMinedEvent]) = {
+    ringMinedEvents
+      .filter(
+        ring =>
+          ring.header.isDefined && ring.getHeader.txStatus.isTxStatusSuccess
+      )
+      .flatMap { ring =>
+        ring.fills.map { fill =>
+          val marketHash =
+            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).toString
+
+          if (!metadataManager.isMarketStatus(marketHash, ACTIVE, READONLY))
+            None
+          else {
+            val marketMetadata =
+              metadataManager.getMarket(marketHash)
+            val marketPair = marketMetadata.getMarketPair
+            val baseToken =
+              metadataManager.getTokenWithAddress(marketPair.baseToken).get
+            val quoteToken =
+              metadataManager.getTokenWithAddress(marketPair.quoteToken).get
+            val (baseAmount, quoteAmount) =
+              getAmounts(fill, baseToken, quoteToken, marketMetadata)
+            Some(
+              OHLCRawDataEvent(
+                ringIndex = ring.ringIndex,
+                txHash = ring.header.get.txHash,
+                marketHash = marketHash,
+                time = ring.getHeader.getBlockHeader.timestamp,
+                baseAmount = baseAmount,
+                quoteAmount = quoteAmount,
+                price = BigDecimal(quoteAmount / baseAmount)
+                  .setScale(marketMetadata.priceDecimals)
+                  .doubleValue()
+              )
+            )
+          }
+        }.filter(_.isDefined).map(_.get).distinct
+      }
+  }
+
+  // LRC-WETH market, LRC is the base token, WETH is the quote token.
+  private def getAmounts(
+      fill: OrderFilledEvent,
+      baseToken: Token,
+      quoteToken: Token,
+      marketMetadata: MarketMetadata
+    ): (Double, Double) = {
+    val amountInWei =
+      if (Address(baseToken.meta.address).equals(Address(fill.tokenS)))
+        Numeric.toBigInt(fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
+
+    val amount: Double = quoteToken
+      .fromWei(amountInWei, marketMetadata.precisionForAmount)
+      .doubleValue()
+
+    val totalInWei =
+      if (Address(quoteToken.meta.address).equals(Address(fill.tokenS)))
+        Numeric.toBigInt(fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
+
+    val total: Double = baseToken
+      .fromWei(totalInWei, marketMetadata.precisionForTotal)
+      .doubleValue()
+
+    amount -> total
+  }
+}
+
+trait FillEventSupport {
+  extractor: RingMinedEventExtractor =>
+
+  def extractFilledEvents(ringMinedEvents: Seq[PRingMinedEvent]) = {
+    ringMinedEvents
+      .filter(_.getHeader.txStatus.isTxStatusSuccess)
+      .flatMap(_.fills)
+  }
+}
+
+trait RingMinedEventSupport {
+  extractor: RingMinedEventExtractor =>
+
+  def extractRingMinedEvents(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[PRingMinedEvent]] = Future {
+    if (!tx.to.equalsIgnoreCase(ringSubmitterAddress)) {
+      Seq.empty[PRingMinedEvent]
+    } else {
+      var rings = receipt.logs.zipWithIndex.map {
+        case (log, index) =>
+          loopringProtocolAbi
+            .unpackEvent(log.data, log.topics.toArray) match {
+            case Some(event: RingMinedEvent.Result) =>
+              val fillContent = Numeric.cleanHexPrefix(event._fills)
+              val fillStrs = (0 until (fillContent.length / fillLength)).map {
+                index =>
+                  fillContent.substring(
+                    index * fillLength,
+                    fillLength * (index + 1)
+                  )
               }
+              val orderFilledEvents = fillStrs.zipWithIndex.map {
+                case (fill, eventIndex) =>
+                  val _fill =
+                    if (eventIndex + 1 >= fillStrs.size) fillStrs.head
+                    else fillStrs(eventIndex + 1)
+                  fillToOrderFilledEvent(
+                    fill,
+                    _fill,
+                    event,
+                    receipt,
+                    Some(
+                      eventHeader
+                        .copy(logIndex = index, eventIndex = eventIndex)
+                    )
+                  )
+              }
+              Some(
+                PRingMinedEvent(
+                  header = Some(eventHeader.withLogIndex(index)),
+                  ringIndex = event._ringIndex.longValue,
+                  ringHash = event._ringHash,
+                  fills = orderFilledEvents
+                )
+              )
             case _ =>
               None
           }
-      }.filter(_.isDefined).map(_.get).toMap
+      }.filter(_.nonEmpty).map(_.get)
 
-    rings.map { ring =>
-      if (ring.header.get.txStatus.isTxStatusSuccess) {
-        val ringBatch = ringBatches(ring.getHeader.txHash)
-        val fills = ring.fills.map { fill =>
-          val order = ringBatch.orders
-            .find(order => fill.orderHash.equalsIgnoreCase(order.hash))
-            .get
-          fill.copy(
-            waiveFeePercentage = order.getFeeParams.waiveFeePercentage,
-            walletSplitPercentage = order.getFeeParams.walletSplitPercentage,
-            tokenFee = Address.normalize(order.feeParams.get.tokenFee),
-            wallet = Address.normalize(order.getParams.wallet)
-          )
+      val ringBatches: Map[String, RingBatch] =
+        ringSubmitterAbi.unpackFunctionInput(tx.input) match {
+          case Some(params: SubmitRingsFunction.Params) =>
+            val ringData = params.data
+            new SimpleRingBatchDeserializer(Numeric.toHexString(ringData)).deserialize match {
+              case Left(_) =>
+                Map.empty
+              case Right(ringBatch) =>
+                if (!isSucceed(receipt.status)) {
+                  rings = rings.++(ringBatch.rings.map { ring =>
+                    PRingMinedEvent(
+                      header = Some(eventHeader),
+                      fills = ring.orderIndexes.map(index => {
+                        val order = ringBatch.orders(index)
+                        OrderFilledEvent(
+                          header = Some(eventHeader),
+                          orderHash = order.hash,
+                          tokenS = Address.normalize(order.tokenS)
+                        )
+                      })
+                    )
+                  })
+                }
+                Map(tx.hash -> ringBatch)
+            }
+          case _ =>
+            Map.empty
         }
-        ring.copy(
-          fills = fills,
-          miner = Address.normalize(ringBatch.miner),
-          feeRecipient = Address.normalize(ringBatch.feeRecipient)
-        )
-      } else {
-        ring
+
+      rings.map { ring =>
+        if (ring.header.get.txStatus.isTxStatusSuccess) {
+          val ringBatch = ringBatches(ring.getHeader.txHash)
+          val fills = ring.fills.map { fill =>
+            val order = ringBatch.orders
+              .find(order => fill.orderHash.equalsIgnoreCase(order.hash))
+              .get
+            fill.copy(
+              waiveFeePercentage = order.getFeeParams.waiveFeePercentage,
+              walletSplitPercentage = order.getFeeParams.walletSplitPercentage,
+              tokenFee = Address.normalize(order.feeParams.get.tokenFee),
+              wallet = Address.normalize(order.getParams.wallet)
+            )
+          }
+          ring.copy(
+            fills = fills,
+            miner = Address.normalize(ringBatch.miner),
+            feeRecipient = Address.normalize(ringBatch.feeRecipient)
+          )
+        } else {
+          ring
+        }
       }
     }
   }
@@ -179,5 +285,4 @@ class RingMinedEventExtractor @Inject()(
         .toBigInt(data.substring(64 * 7, 64 * 8))
     )
   }
-
 }
