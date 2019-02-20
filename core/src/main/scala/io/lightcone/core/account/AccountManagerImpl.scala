@@ -99,18 +99,16 @@ final class AccountManagerImpl(
       status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
     ) =
     for {
-      orders <- cancelOrderInternal(status, None)(
-        orderPool.getOrder(orderId).toSeq
-      )
+      orders <- cancelOrderInternal(status)(orderPool.getOrder(orderId).toSeq)
     } yield (orders.size > 0, orders)
 
   def cancelOrders(orderIds: Seq[String]) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER, None) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
       orderPool.orders.filter(o => orderIds.contains(o.id))
     }
 
   def cancelOrders(marketPair: MarketPair) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER, None) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
         (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
@@ -118,7 +116,7 @@ final class AccountManagerImpl(
     }
 
   def cancelAllOrders() =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER, None)(orderPool.orders)
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
 
   def hardCancelOrder(
       blockNumber: Long,
@@ -194,7 +192,7 @@ final class AccountManagerImpl(
 
   private def cancelOrderInternal(
       status: OrderStatus,
-      blockNumberOpt: Option[Long],
+      blockNumberOpt: Option[Long] = None,
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
