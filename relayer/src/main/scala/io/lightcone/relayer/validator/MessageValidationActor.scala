@@ -52,7 +52,7 @@ class MessageValidationActor(
     extends Actor
     with ActorLogging {
 
-  private def destinationActor = actors.get(destinationName)
+  @inline def destinationActor = actors.get(destinationName)
   private val validate = validator.validate.lift
 
   override def receive: Receive = {

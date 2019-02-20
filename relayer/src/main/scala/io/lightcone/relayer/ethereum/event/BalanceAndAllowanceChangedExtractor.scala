@@ -52,7 +52,7 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   val wethAddress = Address(
     metadataManager.getTokenWithSymbol("weth").get.meta.address
   )
-  def ethereumAccessor = actors.get(EthereumAccessActor.name)
+  @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   def extractEventsFromTx(
       tx: Transaction,

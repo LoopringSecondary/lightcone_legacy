@@ -63,8 +63,8 @@ class OrderCutoffHandlerActor(
   import ErrorCode._
 
   val selfConfig = config.getConfig(OrderCutoffHandlerActor.name)
-  def mama = actors.get(MultiAccountManagerActor.name)
   val batchSize = selfConfig.getInt("batch-size")
+  @inline def mama = actors.get(MultiAccountManagerActor.name)
 
   def ready: Receive = {
 

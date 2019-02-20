@@ -73,7 +73,8 @@ class EthereumQueryActor(
 
   val base = loopringConfig.getInt("burn-rate-table.base")
 
-  protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
+  @inline protected def ethereumAccessorActor =
+    actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
     case req @ GetBalanceAndAllowances.Req(owner, tokens, tag) =>

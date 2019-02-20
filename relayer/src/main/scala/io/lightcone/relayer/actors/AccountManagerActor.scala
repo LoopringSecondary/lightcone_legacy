@@ -69,9 +69,9 @@ class AccountManagerActor(
   val manager = AccountManager.default(owner)
   val accountCutoffState = new AccountCutoffStateImpl()
 
-  def ethereumQueryActor = actors.get(EthereumQueryActor.name)
-  def marketManagerActor = actors.get(MarketManagerActor.name)
-  def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
+  @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
+  @inline def marketManagerActor = actors.get(MarketManagerActor.name)
+  @inline def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   var recoverTimer: Option[StartedTimer] = None
 

@@ -91,8 +91,8 @@ class OrderbookManagerActor(
       throw new IllegalStateException(error)
     }
 
+  @inline def marketManagerActor = actors.get(MarketManagerActor.name)
   def marketMetadata = metadataManager.getMarket(marketPair)
-  def marketManagerActor = actors.get(MarketManagerActor.name)
   val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 

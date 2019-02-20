@@ -40,8 +40,8 @@ class RecoverOrdersActor(
     extends Actor
     with Logging {
 
-  val mama = actors.get(MultiAccountManagerActor.name)
-  val query = actors.get(EthereumQueryActor.name)
+  @inline def mama = actors.get(MultiAccountManagerActor.name)
+  @inline def query = actors.get(EthereumQueryActor.name)
 
   private val NEXT = Notify("next")
   var orderIds: Seq[String] = _
