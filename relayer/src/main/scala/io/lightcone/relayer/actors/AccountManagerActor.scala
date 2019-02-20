@@ -50,7 +50,7 @@ class AccountManagerActor(
     val metadataManager: MetadataManager,
     val baProvider: BalanceAndAllowanceProvider)
     extends Actor
-    with AccountManagerUpdatedOrdersProcessor
+    with AccountManagerActorProcessors
     with Stash
     with BlockingReceive
     with ActorLogging {

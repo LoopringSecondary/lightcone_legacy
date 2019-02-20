@@ -91,7 +91,7 @@ final class AccountManagerImpl(
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- updatedOrdersProcessor.processOrders(updatedOrders)
+      _ <- updatedOrdersProcessor.processOrders(true, updatedOrders)
     } yield (successful, updatedOrders)
   }
 
@@ -188,7 +188,7 @@ final class AccountManagerImpl(
         Some(blockNumber)
       )(ordersToDelete)
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- updatedOrdersProcessor.processOrders(updatedOrders)
+      _ <- updatedOrdersProcessor.processOrders(true, updatedOrders)
       _ <- {
         if (lastBlockNumber == blockNumber) Future.unit
         else updatedAccountsProcessor.processAccount(blockNumber, owner, token)
@@ -233,7 +233,11 @@ final class AccountManagerImpl(
         updatedOrders = orderPool.takeUpdatedOrders
         _ <- {
           if (skipProcessingUpdatedOrders) Future.unit
-          else updatedOrdersProcessor.processOrders(updatedOrders)
+          else
+            updatedOrdersProcessor.processOrders(
+              blockNumberOpt.isDefined,
+              updatedOrders
+            )
         }
       } yield updatedOrders
     }

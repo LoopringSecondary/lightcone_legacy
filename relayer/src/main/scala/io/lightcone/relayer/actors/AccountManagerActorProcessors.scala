@@ -26,7 +26,7 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
-trait AccountManagerUpdatedOrdersProcessor
+trait AccountManagerActorProcessors
     extends Object
     with UpdatedAccountsProcessor
     with UpdatedOrdersProcessor {
@@ -47,12 +47,14 @@ trait AccountManagerUpdatedOrdersProcessor
       address: String,
       tokenAddress: String
     ) = Future {
-
     chainReorganizationManagerActor ! reorg
       .RecordAccountUpdateReq(block, address, tokenAddress)
   }
 
-  def processOrder(order: Matchable): Future[Any] = {
+  def processOrder(
+      trackOrderUpdated: Boolean,
+      order: Matchable
+    ): Future[Any] = {
     val state = RawOrder.State(
       actualAmountS = order.actual.amountS,
       actualAmountB = order.actual.amountB,
@@ -113,10 +115,12 @@ trait AccountManagerUpdatedOrdersProcessor
             s"unexpected order status: $status in: $order"
           )
       }
-      _ = chainReorganizationManagerActor ! reorg.RecordOrderUpdateReq(
-        order.referenceBlockNumber,
-        Seq(order.id)
-      )
+      _ = if (trackOrderUpdated) {
+        chainReorganizationManagerActor ! reorg.RecordOrderUpdateReq(
+          order.referenceBlockNumber,
+          Seq(order.id)
+        )
+      }
     } yield Unit
   }
 

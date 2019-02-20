@@ -22,9 +22,15 @@ import io.lightcone.lib.FutureUtil._
 trait UpdatedOrdersProcessor {
   implicit val ec: ExecutionContext
 
-  def processOrder(order: Matchable): Future[Any]
+  def processOrder(
+      trackOrderUpdated: Boolean,
+      order: Matchable
+    ): Future[Any]
 
-  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
-    serializeFutures(orders.values)(processOrder)
+  def processOrders(
+      trackOrderUpdated: Boolean,
+      orders: Map[String, Matchable]
+    ): Future[Any] = {
+    serializeFutures(orders.values)(o => processOrder(trackOrderUpdated, o))
   }
 }
