@@ -32,5 +32,5 @@ trait SocketSupport {
   val socketServer = new SocketServer()
   socketServer.start()
 
-  println(s"${"." * 10}start socket server${"." * 10}")
+  println("start socket server......")
 }
