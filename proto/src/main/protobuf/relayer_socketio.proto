@@ -22,29 +22,6 @@ package io.lightcone.relayer.data.ext;
 import "core.proto";
 import "relayer_common.proto";
 
-// TODO(yadong): remove this and always use Account in relayer_rpc_external.
-message BalanceUpdate {
-    string address                      = 1;
-    string token                        = 2;
-    int32  nonce                        = 3;
-    string balance                      = 4；
-    string allowance                    = 5;
-    string available_balance            = 6;
-    string available_alloawnce          = 7;
-}
-
-// TODO(yadong): remove this and use OrderSnippet in relayer_rpc_external
-message OrderUpdate {
-    string order_id                                 = 1;
-    string owner                                    = 2;
-    io.lightcone.core.MarketPair   market_pair      = 3;
-    io.lightcone.core.OrderStatus  status           = 4;
-    io.lightcone.relayer.data.OrderState state      = 5;
-}
-
-message News {
-
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // socketio subscription
@@ -58,7 +35,7 @@ message SocketIOSubscription {
     // subscribe for message Activity defined in persistence.proto
     message ParamsForActivities {
         repeated string addresses = 1;
-        repeated string tx_types = 2;
+        repeated string activity_types = 2;
     }
 
     // subscribe for message Orderbook.Update defined in core.proto
@@ -93,7 +70,7 @@ message SocketIOSubscription {
         repeated string addresses  = 1;
     }
 
-    // subscribe for message News
+    // subscribe for message News defined in persistence.proto
     message ParamsForNews {
     }
 
