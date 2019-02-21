@@ -121,7 +121,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       actors.get(MultiAccountManagerActor.name) ? AddressBalanceUpdatedEvent(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        ByteString.copyFrom("15".zeros(LRC_TOKEN.decimals).toByteArray)
+        "15".zeros(LRC_TOKEN.decimals)
       )
 
       info("the depth should be empty after balance change to 10.")

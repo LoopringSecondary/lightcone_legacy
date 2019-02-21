@@ -292,12 +292,12 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       createdAt = now,
       updatedAt = now,
       status = OrderStatus.STATUS_PARTIALLY_FILLED,
-      actualAmountB = ByteString.copyFrom("111", "UTF-8"),
-      actualAmountS = ByteString.copyFrom("112", "UTF-8"),
-      actualAmountFee = ByteString.copyFrom("113", "UTF-8"),
-      outstandingAmountB = ByteString.copyFrom("114", "UTF-8"),
-      outstandingAmountS = ByteString.copyFrom("115", "UTF-8"),
-      outstandingAmountFee = ByteString.copyFrom("116", "UTF-8")
+      actualAmountB = BigInt(111),
+      actualAmountS = BigInt(112),
+      actualAmountFee = BigInt(113),
+      outstandingAmountB = BigInt(114),
+      outstandingAmountS = BigInt(115),
+      outstandingAmountFee = BigInt(116)
     )
     val result = for {
       saved <- testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
@@ -308,7 +308,9 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val res =
       Await.result(result.mapTo[(ErrorCode, Option[RawOrder])], 5.second)
     val x = res._1 === ErrorCode.ERR_NONE && res._2.nonEmpty && res._2.get.state.get.status === OrderStatus.STATUS_NEW &&
-      res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
+      NumericConversion.toBigInt(res._2.get.state.get.actualAmountB) === BigInt(
+        111
+      )
     x should be(true)
   }
 

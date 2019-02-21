@@ -200,9 +200,9 @@ class EntryPointSpec_DatabaseQuery
         case Some(f) =>
           val fee = Trade.Fee(
             "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-            ByteString.copyFrom("3", "UTF-8"),
-            ByteString.copyFrom("5", "UTF-8"),
-            ByteString.copyFrom("6", "UTF-8"),
+            BigInt(3),
+            BigInt(5),
+            BigInt(6),
             feeRecipient,
             1,
             1
@@ -263,18 +263,18 @@ class EntryPointSpec_DatabaseQuery
     Seq(
       Trade.Fee(
         tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-        amountFee = ByteString.copyFrom("10", "UTF-8"),
-        feeAmountS = ByteString.copyFrom("11", "UTF-8"),
-        feeAmountB = ByteString.copyFrom("12", "UTF-8"),
+        amountFee = BigInt(10),
+        feeAmountS = BigInt(11),
+        feeAmountB = BigInt(12),
         feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
         waiveFeePercentage = 10,
         walletSplitPercentage = 5
       ),
       Trade.Fee(
         tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
-        amountFee = ByteString.copyFrom("20", "UTF-8"),
-        feeAmountS = ByteString.copyFrom("21", "UTF-8"),
-        feeAmountB = ByteString.copyFrom("22", "UTF-8"),
+        amountFee = BigInt(20),
+        feeAmountS = BigInt(21),
+        feeAmountB = BigInt(22),
         feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
         waiveFeePercentage = 8,
         walletSplitPercentage = 2
@@ -298,18 +298,18 @@ class EntryPointSpec_DatabaseQuery
     hash1,
     10,
     0,
-    ByteString.copyFrom("10", "UTF-8"),
-    ByteString.copyFrom("1", "UTF-8"),
-    ByteString.copyFrom("2", "UTF-8"),
+    BigInt(10),
+    BigInt(1),
+    BigInt(2),
     tokenS1,
     tokenB1,
     wallet,
     1,
     1,
     "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    ByteString.copyFrom("3", "UTF-8"),
-    ByteString.copyFrom("5", "UTF-8"),
-    ByteString.copyFrom("6", "UTF-8")
+    BigInt(3),
+    BigInt(5),
+    BigInt(6)
   )
 
   val fill2 = OrderFilledEvent(
@@ -325,18 +325,18 @@ class EntryPointSpec_DatabaseQuery
     hash2,
     11,
     0,
-    ByteString.copyFrom("13", "UTF-8"),
-    ByteString.copyFrom("2", "UTF-8"),
-    ByteString.copyFrom("2", "UTF-8"),
+    BigInt(13),
+    BigInt(2),
+    BigInt(2),
     tokenS2,
     tokenB2,
     wallet,
     1,
     1,
     "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    ByteString.copyFrom("3", "UTF-8"),
-    ByteString.copyFrom("5", "UTF-8"),
-    ByteString.copyFrom("6", "UTF-8")
+    BigInt(3),
+    BigInt(5),
+    BigInt(6)
   )
 
   val fill3 = OrderFilledEvent(
@@ -352,18 +352,18 @@ class EntryPointSpec_DatabaseQuery
     hash3,
     12,
     0,
-    ByteString.copyFrom("53", "UTF-8"),
-    ByteString.copyFrom("7", "UTF-8"),
-    ByteString.copyFrom("3", "UTF-8"),
+    BigInt(53),
+    BigInt(7),
+    BigInt(3),
     tokenS2,
     tokenB2,
     wallet,
     1,
     1,
     "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    ByteString.copyFrom("3", "UTF-8"),
-    ByteString.copyFrom("5", "UTF-8"),
-    ByteString.copyFrom("6", "UTF-8")
+    BigInt(3),
+    BigInt(5),
+    BigInt(6)
   )
 
   private def testSaveSomeRings() = {

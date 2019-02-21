@@ -18,7 +18,6 @@ package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import com.google.protobuf.ByteString
 import com.mysql.jdbc.exceptions.jdbc4._
 import io.lightcone.lib._
 import io.lightcone.persistence.base._
@@ -26,9 +25,10 @@ import io.lightcone.relayer.data._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.{GetResult, JdbcProfile}
+import slick.jdbc._
 import slick.basic._
 import slick.lifted.Query
+
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -302,6 +302,14 @@ class OrderDalImpl @Inject()(
       accountEntityIds: Set[Long] = Set.empty,
       paging: CursorPaging
     ): Future[Seq[RawOrder]] = {
+    def getNextAmount(r: PositionedResult): Option[Amount] = {
+      val nextBytes = r.nextBytes()
+      if (null != nextBytes && nextBytes.length > 0) {
+        BigInt(nextBytes)
+      } else {
+        None
+      }
+    }
     implicit val paramsResult = GetResult[RawOrder.Params](
       r =>
         RawOrder.Params(
@@ -321,7 +329,7 @@ class OrderDalImpl @Inject()(
       r =>
         RawOrder.FeeParams(
           r.nextString,
-          ByteString.copyFrom(r.nextBytes()),
+          getNextAmount(r),
           r.nextInt,
           r.nextInt,
           r.nextInt,
@@ -350,12 +358,12 @@ class OrderDalImpl @Inject()(
           r.nextLong,
           r.nextLong,
           OrderStatus.fromValue(r.nextInt),
-          ByteString.copyFrom(r.nextBytes()),
-          ByteString.copyFrom(r.nextBytes()),
-          ByteString.copyFrom(r.nextBytes()),
-          ByteString.copyFrom(r.nextBytes()),
-          ByteString.copyFrom(r.nextBytes()),
-          ByteString.copyFrom(r.nextBytes())
+          getNextAmount(r),
+          getNextAmount(r),
+          getNextAmount(r),
+          getNextAmount(r),
+          getNextAmount(r),
+          getNextAmount(r)
         )
     )
 
@@ -367,8 +375,8 @@ class OrderDalImpl @Inject()(
           r.nextString,
           r.nextString,
           r.nextString,
-          ByteString.copyFrom(r.nextBytes()),
-          ByteString.copyFrom(r.nextBytes()),
+          getNextAmount(r),
+          getNextAmount(r),
           r.nextInt,
           Some(paramsResult(r)),
           Some(feeParamsResult(r)),

@@ -69,10 +69,11 @@ class SocketIONotificationActor @Inject()(
         owner = event.address,
         balanceAndAllowance = TokenBalanceAndAllowance(
           address = event.token,
-          balance = event.balance,
-          allowance = event.allowance,
-          availableBalance = event.availableBalance,
-          availableAllowance = event.allowance
+          balance = NumericConversion.toHexString(event.balance),
+          allowance = NumericConversion.toHexString(event.allowance),
+          availableBalance =
+            NumericConversion.toHexString(event.availableBalance),
+          availableAllowance = NumericConversion.toHexString(event.allowance)
         )
       )
       balanceNotifier.notifyEvent(data)
@@ -106,8 +107,8 @@ class SocketIONotificationActor @Inject()(
         version = event.version,
         tokenB = event.tokenB,
         tokenS = event.tokenS,
-        amountB = event.amountB,
-        amountS = event.amountS,
+        amountB = NumericConversion.toHexString(event.amountB),
+        amountS = NumericConversion.toHexString(event.amountS),
         validSince = NumericConversion.toHexString(BigInt(event.validSince)),
         dualAuthAddr = event.params.get.dualAuthAddr,
         broker = event.getParams.broker,
@@ -117,14 +118,17 @@ class SocketIONotificationActor @Inject()(
           NumericConversion.toHexString(BigInt(event.getParams.validUntil)),
         allOrNone = event.getParams.allOrNone,
         tokenFee = event.getFeeParams.tokenFee,
-        amountFee = event.getFeeParams.amountFee,
+        amountFee = NumericConversion.toHexString(event.getFeeParams.amountFee),
         tokenRecipient = event.getFeeParams.tokenRecipient,
         status = event.getState.status.name,
         createdAt =
           NumericConversion.toHexString(BigInt(event.getState.createdAt)),
-        outstandingAmountS = event.getState.outstandingAmountS,
-        outstandingAmountB = event.getState.outstandingAmountB,
-        outstandingAmountFee = event.getState.outstandingAmountFee
+        outstandingAmountS =
+          NumericConversion.toHexString(event.getState.outstandingAmountS),
+        outstandingAmountB =
+          NumericConversion.toHexString(event.getState.outstandingAmountB),
+        outstandingAmountFee =
+          NumericConversion.toHexString(event.getState.outstandingAmountFee)
       )
 
       orderNotifier.notifyEvent(data)
@@ -139,11 +143,11 @@ class SocketIONotificationActor @Inject()(
         tokenS = event.tokenS,
         tokenB = event.tokenB,
         tokenFee = event.tokenFee,
-        amountS = event.amountS,
-        amountB = event.amountB,
-        amountFee = event.amountFee,
-        feeAmountS = event.feeAmountS,
-        feeAmountB = event.feeAmountB,
+        amountS = NumericConversion.toHexString(event.amountS),
+        amountB = NumericConversion.toHexString(event.amountB),
+        amountFee = NumericConversion.toHexString(event.amountFee),
+        feeAmountS = NumericConversion.toHexString(event.feeAmountS),
+        feeAmountB = NumericConversion.toHexString(event.feeAmountB),
         feeRecipient = event.feeRecipient,
         waiveFeePercentage = event.waiveFeePercentage,
         walletSplitPercentage = event.walletSplitPercentage,
@@ -161,7 +165,7 @@ class SocketIONotificationActor @Inject()(
         from = event.from,
         to = event.to,
         token = event.token,
-        amount = event.amount,
+        amount = NumericConversion.toHexString(event.amount),
         txHash = event.getHeader.txHash,
         blockNum = NumericConversion.toHexString(
           BigInt(event.getHeader.getBlockHeader.height)

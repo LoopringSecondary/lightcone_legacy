@@ -20,6 +20,8 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.lib.NumericConversion
+
 import scala.concurrent.{Await, Future}
 
 class RingSettlementSpec
@@ -123,7 +125,7 @@ class RingSettlementSpec
       info(s"balance of account0 : ${resOpt.get}")
       val wethBalance: BigInt =
         resOpt.get.balanceAndAllowanceMap(WETH_TOKEN.address).balance
-      assert(wethBalance == byteString2BigInt(order1.amountB))
+      assert(wethBalance == NumericConversion.toBigInt(order1.amountB))
 
     }
   }

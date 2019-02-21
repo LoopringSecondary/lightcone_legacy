@@ -212,7 +212,6 @@ enum SigningAlgorithm {
     ALGO_NONE       = 255;
 }
 
-
 // use bytes to represent big-numbers and string for addresses
 message RawOrder  {
     message Params {
@@ -229,7 +228,7 @@ message RawOrder  {
 
     message FeeParams {
         string token_fee               = 1;
-        bytes  amount_fee              = 2;
+        Amount  amount_fee              = 2;
         int32  waive_fee_percentage    = 3;
         int32  token_s_fee_percentage  = 4;
         int32  token_b_fee_percentage  = 5;
@@ -256,12 +255,12 @@ message RawOrder  {
         int64 updated_at_block        = 104;
         io.lightcone.core.OrderStatus status            = 105;
 
-        bytes actual_amount_s         = 200;
-        bytes actual_amount_b         = 201;
-        bytes actual_amount_fee       = 202;
-        bytes outstanding_amount_s    = 203;
-        bytes outstanding_amount_b    = 204;
-        bytes outstanding_amount_fee  = 205;
+        Amount actual_amount_s         = 200;
+        Amount actual_amount_b         = 201;
+        Amount actual_amount_fee       = 202;
+        Amount outstanding_amount_s    = 203;
+        Amount outstanding_amount_b    = 204;
+        Amount outstanding_amount_fee  = 205;
     }
 
     // string  id          = 1; // order hash
@@ -270,8 +269,8 @@ message RawOrder  {
     string owner                      = 4;
     string token_s                    = 5;
     string token_b                    = 6;
-    bytes  amount_s                   = 7;
-    bytes  amount_b                   = 8;
+    Amount  amount_s                   = 7;
+    Amount  amount_b                   = 8;
     int32  valid_since                = 9; // in seconds
     Params params                     = 10;
     FeeParams fee_params              = 11;
@@ -283,6 +282,9 @@ message RawOrder  {
     int64  market_entity_id           = 17;
 }
 
+message Amount {
+    bytes value = 1;
+}
 
 message MarketStats {
     int32  num_buys             = 1;
