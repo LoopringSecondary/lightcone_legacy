@@ -276,7 +276,15 @@ class CoreDeployer @Inject()(
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("socketio")) {
         val server = new SocketServer
-        server.start
+        server
+          .addNotifier(classOf[SubscribeBalanceAndAllowance], balanceNotifier)
+          .addNotifier(classOf[SubscribeTransaction], transactionNotifier)
+          .addNotifier(classOf[SubscribeOrder], orderNotifier)
+          .addNotifier(classOf[SubscribeTrade], tradeNotifier)
+          .addNotifier(classOf[SubscribeTicker], tickerNotifier)
+          .addNotifier(classOf[SubscribeOrderBook], orderBookNotifier)
+          .addNotifier(classOf[SubscribeTransfer], transferNotifier)
+          .start()
       }
     }
   }

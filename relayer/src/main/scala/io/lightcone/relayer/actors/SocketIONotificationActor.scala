@@ -65,17 +65,7 @@ class SocketIONotificationActor @Inject()(
   def receive: Receive = {
     // events to deliver to socket.io clients must be generated here, not inside the listeners.
     case event: AddressBalanceAndAllowanceEvent =>
-      val data = BalanceAndAllowanceResponse(
-        owner = event.address,
-        balanceAndAllowance = TokenBalanceAndAllowance(
-          address = event.token,
-          balance = event.balance,
-          allowance = event.allowance,
-          availableBalance = event.availableBalance,
-          availableAllowance = event.allowance
-        )
-      )
-      balanceNotifier.notifyEvent(data)
+      balanceNotifier.notifyEvent(event)
 
     case event: TransactionEvent =>
       val transaction = TransactionResponse(

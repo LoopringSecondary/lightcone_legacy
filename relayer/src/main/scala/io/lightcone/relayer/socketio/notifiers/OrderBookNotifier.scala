@@ -39,14 +39,16 @@ class OrderBookNotifier @Inject() extends SocketIONotifier[SubscribeOrderBook] {
       )
     )
 
-  def shouldNotifyClient(
+  def extractNotifyData(
       subscription: SubscribeOrderBook,
       event: AnyRef
-    ): Boolean = {
+    ): Option[AnyRef] = {
     event match {
       case orderBook: OrderBookResponse =>
-        subscription.market == orderBook.market && subscription.level == orderBook.level
-      case _ => false
+        if(subscription.market == orderBook.market && subscription.level == orderBook.level){
+
+        }
+      case _ => None
     }
 
   }

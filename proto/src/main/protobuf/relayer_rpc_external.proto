@@ -6,6 +6,15 @@ package io.lightcone.relayer.rpc;
 import "core.proto";
 import "relayer_external.proto";
 
+message GetOrderbook{
+    message Req{
+
+    }
+    message Res {
+
+    }
+}
+
 message BalanceAndAllowance{
     string token = 1;
     string balance = 2;

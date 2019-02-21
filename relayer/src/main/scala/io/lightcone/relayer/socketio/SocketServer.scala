@@ -24,14 +24,7 @@ import com.typesafe.config.Config
 class SocketServer(
   )(
     implicit
-    val config: Config,
-    val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-    val transactionNotifier: SocketIONotifier[SubscribeTransaction],
-    val orderNotifier: SocketIONotifier[SubscribeOrder],
-    val tradeNotifier: SocketIONotifier[SubscribeTrade],
-    val tickerNotifier: SocketIONotifier[SubscribeTicker],
-    val orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
-    val transferNotifier: SocketIONotifier[SubscribeTransfer]) {
+    val config: Config) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
@@ -41,48 +34,17 @@ class SocketServer(
 
   val server = new SocketIOServer(socketConfig)
 
-  server.addEventListener(
-    balanceNotifier.eventName,
-    classOf[SubscribeBalanceAndAllowance],
-    balanceNotifier
-  )
-
-  server.addEventListener(
-    transactionNotifier.eventName,
-    classOf[SubscribeTransaction],
-    transactionNotifier
-  )
-
-  server.addEventListener(
-    orderNotifier.eventName,
-    classOf[SubscribeOrder],
-    orderNotifier
-  )
-
-  server.addEventListener(
-    tradeNotifier.eventName,
-    classOf[SubscribeTrade],
-    tradeNotifier
-  )
-
-  server.addEventListener(
-    tickerNotifier.eventName,
-    classOf[SubscribeTicker],
-    tickerNotifier
-  )
-
-  server.addEventListener(
-    orderBookNotifier.eventName,
-    classOf[SubscribeOrderBook],
-    orderBookNotifier
-  )
-
-  server.addEventListener(
-    transferNotifier.eventName,
-    classOf[SubscribeTransfer],
-    transferNotifier
-  )
-  // def addNotifier()
+  def addNotifier[R](
+      cls: Class[R],
+      notifier: SocketIONotifier[R]
+    ): SocketServer = {
+    server.addEventListener(
+      notifier.eventName,
+      cls,
+      notifier
+    )
+    this
+  }
 
   def start(): Unit = server.start()
 }
