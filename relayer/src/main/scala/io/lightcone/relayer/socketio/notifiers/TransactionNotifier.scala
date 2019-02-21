@@ -22,29 +22,39 @@ import com.google.inject.Inject
 import io.lightcone.lib._
 
 class TransactionNotifier @Inject()
-    extends SocketIONotifier[SubscribeTransaction] {
+    extends SocketIONotifier[SocketIOSubscription.ParamsForTxRecord] {
 
   val eventName = "transactions"
 
   def wrapClient(
       client: SocketIOClient,
-      req: SubscribeTransaction
+      req: SocketIOSubscription.ParamsForTxRecord
     ) =
     new SocketIOSubscriber(
       client,
       req.copy(addresses = req.addresses.map(Address.normalize))
     )
 
-  def shouldNotifyClient(
-      request: SubscribeTransaction,
+  def extractNotifyData(
+      subscription: SocketIOSubscription.ParamsForTxRecord,
       event: AnyRef
-    ): Boolean =
+    ): Option[AnyRef] =
     event match {
-      case e: TransactionResponse =>
-        request.addresses.contains(e.owner) &&
-          (request.types.isEmpty || request.types.contains(
-            e.transaction.`type`
-          ))
-      case _ => false
+      case e: TxRecordUpdate =>
+        if (subscription.addresses.contains(e.owner) &&
+            (subscription.txTypes.isEmpty || subscription.txTypes.contains(
+              e.txType
+            ))) {
+          Some(
+            Transaction(
+              gasUsed = e.gasUsed,
+              hash = e.txHash,
+              blockNum = e.blockNum,
+              time = e.time,
+              status = e.status
+            )
+          )
+        } else None
+      case _ => None
     }
 }

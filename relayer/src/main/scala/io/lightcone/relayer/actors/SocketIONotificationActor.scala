@@ -35,13 +35,25 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       system: ActorSystem,
       ec: ExecutionContext,
       timeout: Timeout,
-      balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-      transactionNotifier: SocketIONotifier[SubscribeTransaction],
-      orderNotifier: SocketIONotifier[SubscribeOrder],
-      tradeNotifier: SocketIONotifier[SubscribeTrade],
-      tickerNotifier: SocketIONotifier[SubscribeTicker],
-      orderBook: SocketIONotifier[SubscribeOrderBook],
-      transferNotifier: SocketIONotifier[SubscribeTransfer],
+      balanceNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForBalanceUpdate
+      ],
+      transactionNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForTxRecord
+      ],
+      orderNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForOrderUpdate
+      ],
+      tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTicker],
+      orderBookNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForOrderbookUpdate
+      ],
+      tokenMetadataNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForTokenMetadata
+      ],
+      marketMetadataNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForMarketMetadata
+      ],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -53,113 +65,37 @@ class SocketIONotificationActor @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
-    val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-    val transactionNotifier: SocketIONotifier[SubscribeTransaction],
-    val orderNotifier: SocketIONotifier[SubscribeOrder],
-    val tradeNotifier: SocketIONotifier[SubscribeTrade],
-    val tickerNotifier: SocketIONotifier[SubscribeTicker],
-    val orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
-    val transferNotifier: SocketIONotifier[SubscribeTransfer])
+    val balanceNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForBalanceUpdate
+    ],
+    val transactionNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForTxRecord
+    ],
+    val orderNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForOrderUpdate
+    ],
+    val tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTicker],
+    val orderBookNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForOrderbookUpdate
+    ],
+    val tokenMetadataNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForTokenMetadata
+    ],
+    val marketMetadataNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForMarketMetadata
+    ])
     extends Actor {
 
   def receive: Receive = {
     // events to deliver to socket.io clients must be generated here, not inside the listeners.
-    case event: AddressBalanceAndAllowanceEvent =>
+    case event: BalanceUpdate =>
       balanceNotifier.notifyEvent(event)
 
-    case event: TransactionEvent =>
-      val transaction = TransactionResponse(
-        owner = event.owner,
-        transaction = Transaction(
-          from = event.from,
-          to = event.to,
-          value = event.value,
-          gasPrice = event.gasPrice,
-          gasLimit = event.gas,
-          gasUsed = event.gasUsed,
-          data = event.input,
-          nonce = event.nonce,
-          hash = event.hash,
-          blockNum = event.blockNumber,
-          time = event.time,
-          status = event.status.name.substring(10),
-          `type` = "0x" + event.`type`.toHexString
-        )
-      )
+    case event: TxRecordUpdate =>
+      transactionNotifier.notifyEvent(event)
 
-      transactionNotifier.notifyEvent(transaction)
+    case event: OrderUpdate =>
+      orderNotifier.notifyEvent(event)
 
-    case event: RawOrder =>
-      val data = Order(
-        hash = event.hash,
-        owner = event.owner,
-        version = event.version,
-        tokenB = event.tokenB,
-        tokenS = event.tokenS,
-        amountB = event.amountB,
-        amountS = event.amountS,
-        validSince = NumericConversion.toHexString(BigInt(event.validSince)),
-        dualAuthAddr = event.params.get.dualAuthAddr,
-        broker = event.getParams.broker,
-        orderInterceptor = event.getParams.orderInterceptor,
-        wallet = event.getParams.wallet,
-        validUntil =
-          NumericConversion.toHexString(BigInt(event.getParams.validUntil)),
-        allOrNone = event.getParams.allOrNone,
-        tokenFee = event.getFeeParams.tokenFee,
-        amountFee = event.getFeeParams.amountFee,
-        tokenRecipient = event.getFeeParams.tokenRecipient,
-        status = event.getState.status.name,
-        createdAt =
-          NumericConversion.toHexString(BigInt(event.getState.createdAt)),
-        outstandingAmountS = event.getState.outstandingAmountS,
-        outstandingAmountB = event.getState.outstandingAmountB,
-        outstandingAmountFee = event.getState.outstandingAmountFee
-      )
-
-      orderNotifier.notifyEvent(data)
-
-    case event: TradeEvent =>
-      val data = Trade(
-        owner = event.owner,
-        orderHash = event.orderHash,
-        ringHash = event.ringHash,
-        ringIndex = NumericConversion.toHexString(BigInt(event.ringIndex)),
-        fillIndex = NumericConversion.toHexString(BigInt(event.fillIndex)),
-        tokenS = event.tokenS,
-        tokenB = event.tokenB,
-        tokenFee = event.tokenFee,
-        amountS = event.amountS,
-        amountB = event.amountB,
-        amountFee = event.amountFee,
-        feeAmountS = event.feeAmountS,
-        feeAmountB = event.feeAmountB,
-        feeRecipient = event.feeRecipient,
-        waiveFeePercentage = event.waiveFeePercentage,
-        walletSplitPercentage = event.walletSplitPercentage,
-        wallet = event.wallet,
-        time = NumericConversion.toHexString(BigInt(event.blockTimestamp)),
-        blockNum = NumericConversion.toHexString(BigInt(event.blockHeight)),
-        txHash = event.txHash,
-        miner = event.miner
-      )
-      tradeNotifier.notifyEvent(data)
-
-    case event: TransferEvent =>
-      val data = Transfer(
-        owner = event.owner,
-        from = event.from,
-        to = event.to,
-        token = event.token,
-        amount = event.amount,
-        txHash = event.getHeader.txHash,
-        blockNum = NumericConversion.toHexString(
-          BigInt(event.getHeader.getBlockHeader.height)
-        ),
-        time = NumericConversion.toHexString(
-          BigInt(event.getHeader.getBlockHeader.timestamp)
-        )
-      )
-      transferNotifier.notifyEvent(data)
   }
 }

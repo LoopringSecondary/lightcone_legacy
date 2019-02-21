@@ -64,13 +64,25 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
-    balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-    transactionNotifier: SocketIONotifier[SubscribeTransaction],
-    orderNotifier: SocketIONotifier[SubscribeOrder],
-    tradeNotifier: SocketIONotifier[SubscribeTrade],
-    tickerNotifier: SocketIONotifier[SubscribeTicker],
-    orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
-    transferNotifier: SocketIONotifier[SubscribeTransfer],
+    balanceNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForBalanceUpdate
+    ],
+    transactionNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForTxRecord
+    ],
+    orderNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForOrderUpdate
+    ],
+    tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTicker],
+    orderBookNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForOrderbookUpdate
+    ],
+    tokenMetadataNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForTokenMetadata
+    ],
+    marketMetadataNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForMarketMetadata
+    ],
     system: ActorSystem)
     extends Object
     with Logging {
@@ -280,13 +292,34 @@ class CoreDeployer @Inject()(
           cluster.selfRoles.contains("socketio")) {
         val server = new SocketServer
         server
-          .addNotifier(classOf[SubscribeBalanceAndAllowance], balanceNotifier)
-          .addNotifier(classOf[SubscribeTransaction], transactionNotifier)
-          .addNotifier(classOf[SubscribeOrder], orderNotifier)
-          .addNotifier(classOf[SubscribeTrade], tradeNotifier)
-          .addNotifier(classOf[SubscribeTicker], tickerNotifier)
-          .addNotifier(classOf[SubscribeOrderBook], orderBookNotifier)
-          .addNotifier(classOf[SubscribeTransfer], transferNotifier)
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForBalanceUpdate],
+            balanceNotifier
+          )
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForTxRecord],
+            transactionNotifier
+          )
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForOrderUpdate],
+            orderNotifier
+          )
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForTicker],
+            tickerNotifier
+          )
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForOrderbookUpdate],
+            orderBookNotifier
+          )
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForTokenMetadata],
+            tokenMetadataNotifier
+          )
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForMarketMetadata],
+            marketMetadataNotifier
+          )
           .start()
       }
     }

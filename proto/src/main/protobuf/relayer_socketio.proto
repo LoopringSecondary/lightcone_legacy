@@ -20,6 +20,7 @@ option java_multiple_files = true;
 package io.lightcone.relayer.socketio;
 
 import "core.proto";
+import "relayer_common.proto";
 
 message BalanceUpdate {
     string address                      = 1;
@@ -38,8 +39,20 @@ message BalanceUpdate {
 
 message OrderUpdate {
     string order_id                                 = 1;
-    io.lightcone.core.MarketPair   market_pair      = 2;
-    io.lightcone.core.OrderStatus  status           = 3;
+    string owner                                    = 2;
+    io.lightcone.core.MarketPair   market_pair      = 3;
+    io.lightcone.core.OrderStatus  status           = 4;
+    io.lightcone.relayer.data.OrderState state      = 5;
+}
+
+message TxRecordUpdate{
+    string tx_hash = 1;
+    string status = 2;
+    string gasUsed = 3;
+    string block_num = 4;
+    string time = 5;
+    string owner = 6;
+    string tx_type = 7;
 }
 
 message News {

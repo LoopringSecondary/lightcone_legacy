@@ -18,21 +18,19 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio._
 import com.google.inject.Inject
-import io.lightcone.ethereum.event.AddressBalanceAndAllowanceEvent
 import io.lightcone.lib.Address
 import io.lightcone.relayer.socketio._
-import io.lightcone.core._
 
 class BalanceNotifier @Inject()
-    extends SocketIONotifier[SubscribeBalanceAndAllowance] {
+    extends SocketIONotifier[SocketIOSubscription.ParamsForBalanceUpdate] {
 
   val eventName = "balances"
 
   def wrapClient(
       client: SocketIOClient,
-      req: SubscribeBalanceAndAllowance
+      req: SocketIOSubscription.ParamsForBalanceUpdate
     ) =
-    new SocketIOSubscriber(
+    new SocketIOSubscriber[SocketIOSubscription.ParamsForBalanceUpdate](
       client,
       req.copy(
         addresses = req.addresses.map(Address.normalize),
@@ -41,11 +39,11 @@ class BalanceNotifier @Inject()
     )
 
   def extractNotifyData(
-      subscription: SubscribeBalanceAndAllowance,
+      subscription: SocketIOSubscription.ParamsForBalanceUpdate,
       event: AnyRef
     ): Option[AnyRef] = {
     event match {
-      case e: AddressBalanceAndAllowanceEvent =>
+      case e: BalanceUpdate =>
         if (subscription.addresses.contains(e.address)
             && (subscription.tokens.isEmpty || subscription.tokens.contains(
               e.token

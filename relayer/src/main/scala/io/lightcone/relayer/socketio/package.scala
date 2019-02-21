@@ -18,36 +18,9 @@ package io.lightcone.relayer
 
 package object socketio {
 
-  case class SubscribeBalanceAndAllowance(
-      addresses: Seq[String],
-      tokens: Seq[String])
-
-  case class SubscribeTransaction(
-      addresses: Seq[String],
-      types: Seq[String])
-
   case class Market(
       baseToken: String,
       quoteToken: String)
-
-  case class SubscribeOrder(
-      addresses: Seq[String],
-      market: Market = null)
-
-  case class SubscribeTrade(
-      addresses: Seq[String],
-      market: Market = null)
-
-  case class SubscribeTicker(market: Market = null)
-
-  case class SubscribeOrderBook(
-      level: Int,
-      market: Market)
-
-  case class SubscribeTransfer(
-      address: String,
-      `type`: String,
-      tokens: Seq[String])
 
   case class TokenBalanceAndAllowance(
       address: String,
@@ -56,75 +29,20 @@ package object socketio {
       availableBalance: String,
       availableAllowance: String)
 
-  case class BalanceAndAllowanceResponse(
-      owner: String,
-      balanceAndAllowance: TokenBalanceAndAllowance)
-
   case class Transaction(
-      from: String,
-      to: String,
-      value: String,
-      gasPrice: String,
-      gasLimit: String,
       gasUsed: String = "0x0",
-      data: String,
-      nonce: String,
       hash: String,
       blockNum: String,
       time: String,
-      status: String,
-      `type`: String)
-
-  case class TransactionResponse(
-      owner: String,
-      transaction: Transaction)
+      status: String)
 
   case class Order(
       hash: String,
-      owner: String,
-      version: Int,
-      tokenS: String,
-      tokenB: String,
-      amountS: String,
-      amountB: String,
-      validSince: String,
-      dualAuthAddr: String,
-      broker: String,
-      orderInterceptor: String,
-      wallet: String,
-      validUntil: String,
-      allOrNone: Boolean,
-      tokenFee: String,
-      amountFee: String,
-      tokenRecipient: String,
       status: String,
-      createdAt: String,
-      outstandingAmountS: String,
-      outstandingAmountB: String,
-      outstandingAmountFee: String)
+      dealtAmountS: String,
+      dealtAmountB: String,
+      dealtAmountFee: String)
 
-  case class Trade(
-      owner: String,
-      orderHash: String,
-      ringHash: String,
-      ringIndex: String,
-      fillIndex: String,
-      tokenS: String,
-      tokenB: String,
-      tokenFee: String,
-      amountS: String,
-      amountB: String,
-      amountFee: String,
-      feeAmountS: String,
-      feeAmountB: String,
-      feeRecipient: String,
-      waiveFeePercentage: Int,
-      walletSplitPercentage: Int,
-      wallet: String,
-      time: String,
-      blockNum: String,
-      txHash: String,
-      miner: String)
   case class Ticker(
       high: Double,
       low: Double,
@@ -152,13 +70,4 @@ package object socketio {
       level: Int,
       orderBook: OrderBook)
 
-  case class Transfer(
-      owner: String,
-      from: String,
-      to: String,
-      token: String,
-      amount: String,
-      txHash: String,
-      blockNum: String,
-      time: String)
 }

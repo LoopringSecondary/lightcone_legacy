@@ -19,38 +19,37 @@ package io.lightcone.relayer.socketio.notifiers
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
 import io.lightcone.lib.Address
-import io.lightcone.relayer.socketio.{
-  SocketIONotifier,
-  SocketIOSubscriber,
-  SubscribeTicker,
-  TickerResponse
-}
+import io.lightcone.relayer.socketio._
 
-class TickerNotifier @Inject() extends SocketIONotifier[SubscribeTicker] {
+class TickerNotifier @Inject()
+    extends SocketIONotifier[SocketIOSubscription.ParamsForTicker] {
   val eventName = "tickers"
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SubscribeTicker
-    ): SocketIOSubscriber[SubscribeTicker] =
-    new SocketIOSubscriber[SubscribeTicker](
+      subscription: SocketIOSubscription.ParamsForTicker
+    ): SocketIOSubscriber[SocketIOSubscription.ParamsForTicker] =
+    new SocketIOSubscriber[SocketIOSubscription.ParamsForTicker](
       client,
       subscription.copy(
-        market = subscription.market.copy(
-          baseToken = Address.normalize(subscription.market.baseToken),
-          quoteToken = Address.normalize(subscription.market.quoteToken)
+        market = subscription.market.map(
+          market =>
+            market.copy(
+              baseToken = Address.normalize(market.baseToken),
+              quoteToken = Address.normalize(market.quoteToken)
+            )
         )
       )
     )
 
-  def shouldNotifyClient(
-      subscription: SubscribeTicker,
+  def extractNotifyData(
+      subscription: SocketIOSubscription.ParamsForTicker,
       event: AnyRef
-    ): Boolean = {
+    ): Option[AnyRef] = {
     event match {
-      case ticker: TickerResponse =>
-        subscription.market == ticker.market
-      case _ => false
+      case ticker: Ticker =>
+        Some(ticker) // TODO 等待ticker实现
+      case _ => None
 
     }
   }

@@ -18,35 +18,45 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
+import io.lightcone.core.MarketPair
 import io.lightcone.lib.Address
 import io.lightcone.relayer.socketio._
 
-class OrderBookNotifier @Inject() extends SocketIONotifier[SubscribeOrderBook] {
+class OrderBookNotifier @Inject()
+    extends SocketIONotifier[SocketIOSubscription.ParamsForOrderbookUpdate] {
 
   val eventName: String = "order_book"
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SubscribeOrderBook
-    ): SocketIOSubscriber[SubscribeOrderBook] =
-    new SocketIOSubscriber[SubscribeOrderBook](
+      subscription: SocketIOSubscription.ParamsForOrderbookUpdate
+    ): SocketIOSubscriber[SocketIOSubscription.ParamsForOrderbookUpdate] =
+    new SocketIOSubscriber[SocketIOSubscription.ParamsForOrderbookUpdate](
       client,
       subscription.copy(
-        market = subscription.market.copy(
-          baseToken = Address.normalize(subscription.market.baseToken),
-          quoteToken = Address.normalize(subscription.market.quoteToken)
+        market = subscription.market.map(
+          market =>
+            market.copy(
+              baseToken = Address.normalize(market.baseToken),
+              quoteToken = Address.normalize(market.quoteToken)
+            )
         )
       )
     )
 
   def extractNotifyData(
-      subscription: SubscribeOrderBook,
+      subscription: SocketIOSubscription.ParamsForOrderbookUpdate,
       event: AnyRef
     ): Option[AnyRef] = {
     event match {
       case orderBook: OrderBookResponse =>
-        if(subscription.market == orderBook.market && subscription.level == orderBook.level){
-
+        if (subscription.market.isDefined && subscription.getMarket == MarketPair(
+              orderBook.market.baseToken,
+              orderBook.market.quoteToken
+            ) && subscription.level == orderBook.level) {
+          Some(orderBook) //TODO （yd）等待order book 通知的结构
+        } else {
+          None
         }
       case _ => None
     }

@@ -18,44 +18,57 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
-import io.lightcone.core.{MarketHash, MarketPair}
-import io.lightcone.lib.Address
+import io.lightcone.core._
+import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.relayer.socketio._
 
-class OrderNotifier @Inject() extends SocketIONotifier[SubscribeOrder] {
+class OrderNotifier @Inject()
+    extends SocketIONotifier[SocketIOSubscription.ParamsForOrderUpdate] {
 
   val eventName = "orders"
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SubscribeOrder
-    ): SocketIOSubscriber[SubscribeOrder] =
-    new SocketIOSubscriber[SubscribeOrder](
+      subscription: SocketIOSubscription.ParamsForOrderUpdate
+    ): SocketIOSubscriber[SocketIOSubscription.ParamsForOrderUpdate] =
+    new SocketIOSubscriber[SocketIOSubscription.ParamsForOrderUpdate](
       client,
       subscription.copy(
         addresses = subscription.addresses.map(Address.normalize),
-        market = subscription.market.copy(
-          baseToken = Address.normalize(subscription.market.baseToken),
-          quoteToken = Address.normalize(subscription.market.quoteToken)
+        market = subscription.market.map(
+          market =>
+            market.copy(
+              baseToken = Address.normalize(market.baseToken),
+              quoteToken = Address.normalize(market.quoteToken)
+            )
         )
       )
     )
 
-  def shouldNotifyClient(
-      subscription: SubscribeOrder,
+  def extractNotifyData(
+      subscription: SocketIOSubscription.ParamsForOrderUpdate,
       event: AnyRef
-    ): Boolean = {
+    ): Option[AnyRef] = {
     event match {
-      case order: Order =>
-        subscription.addresses.contains(order.owner) &&
-          (MarketHash(
-            MarketPair(
-              subscription.market.baseToken,
-              subscription.market.quoteToken
+      case order: OrderUpdate =>
+        if (subscription.addresses.contains(order.owner) && subscription.market == order.marketPair) {
+          Some(
+            Order(
+              hash = order.orderId,
+              status = order.status.name,
+              dealtAmountB = order.state
+                .map(state => NumericConversion.toHexString(state.amountB))
+                .getOrElse(""),
+              dealtAmountS = order.state
+                .map(state => NumericConversion.toHexString(state.amountB))
+                .getOrElse(""),
+              dealtAmountFee = order.state
+                .map(state => NumericConversion.toHexString(state.amountFee))
+                .getOrElse("")
             )
-          ) == MarketHash(MarketPair(order.tokenB, order.tokenS)))
-      case _ => false
+          )
+        } else None
+      case _ => None
     }
   }
-
 }

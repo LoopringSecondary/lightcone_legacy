@@ -120,20 +120,20 @@ class CoreModule(
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
     //bind socket listener
-    bind[SocketIONotifier[SubscribeBalanceAndAllowance]]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForBalanceUpdate]]
       .to[BalanceNotifier]
       .asEagerSingleton
-    bind[SocketIONotifier[SubscribeTransaction]]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForTxRecord]]
       .to[TransactionNotifier]
       .asEagerSingleton
-    bind[SocketIONotifier[SubscribeOrder]].to[OrderNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeTrade]].to[TradeNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeTicker]].to[TickerNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeOrderBook]]
-      .to[OrderBookNotifier]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrderUpdate]]
+      .to[OrderNotifier]
       .asEagerSingleton
-    bind[SocketIONotifier[SubscribeTransfer]]
-      .to[TransferNotifier]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForTicker]]
+      .to[TickerNotifier]
+      .asEagerSingleton
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrderbookUpdate]]
+      .to[OrderBookNotifier]
       .asEagerSingleton
 
     // --- bind primative types ---------------------
