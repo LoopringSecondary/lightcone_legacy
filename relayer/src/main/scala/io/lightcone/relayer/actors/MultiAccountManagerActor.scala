@@ -85,12 +85,13 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
         ) =>
       req.owner
 
-    case req: GetBalanceAndAllowances.Req  => req.address
-    case req: AddressBalanceUpdatedEvent   => req.address
-    case req: AddressAllowanceUpdatedEvent => req.address
-    case req: CutoffEvent                  => req.owner // TODO:暂不支持broker
-    case req: OrderFilledEvent             => req.owner
-    case req: OrdersCancelledOnChainEvent  => req.owner
+    case req: GetBalanceAndAllowances.Req         => req.address
+    case req: AddressBalanceUpdatedEvent          => req.address
+    case req: AddressBalanceAllowanceUpdatedEvent => req.address
+    case req: AddressAllowanceUpdatedEvent        => req.address
+    case req: CutoffEvent                         => req.owner // TODO:暂不支持broker
+    case req: OrderFilledEvent                    => req.owner
+    case req: OrdersCancelledOnChainEvent         => req.owner
 
     case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
@@ -217,7 +218,8 @@ class MultiAccountManagerActor(
     case Some(address) => {
       req match {
         case _: AddressBalanceUpdatedEvent | _: AddressAllowanceUpdatedEvent |
-            _: CutoffEvent | _: OrderFilledEvent =>
+            _: AddressBalanceAllowanceUpdatedEvent | _: CutoffEvent |
+            _: OrderFilledEvent =>
           if (accountManagerActors.contains(address))
             accountManagerActorFor(address) forward req
 

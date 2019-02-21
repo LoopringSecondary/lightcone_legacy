@@ -81,6 +81,7 @@ package object ethereum {
     )
   }
 
+  @inline
   def isAddressValidAndNonZero(addr: String) = addr match {
     case ad if isValidAddress(addr) =>
       BigInt(Numeric.cleanHexPrefix(ad), 16) > 0
@@ -88,6 +89,9 @@ package object ethereum {
   }
 
   // ----- implicit methods -----
+  @inline
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
+
+  @inline
   implicit def string2BigInt(x: String): BigInt = NumericConversion.toBigInt(x)
 }
