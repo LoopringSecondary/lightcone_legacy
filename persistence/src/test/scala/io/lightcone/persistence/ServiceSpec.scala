@@ -17,7 +17,6 @@
 package io.lightcone.persistence
 
 import com.dimafeng.testcontainers._
-import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import io.lightcone.lib._
 import io.lightcone.core._

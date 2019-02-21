@@ -70,6 +70,9 @@ package object core {
       extends RichOrderbookSlot(raw)
 
   @inline
+  implicit class Rich_Int(raw: Int) extends RichInt(raw)
+
+  @inline
   implicit class Rich_BigInt(raw: BigInt) extends RichBigInt(raw)
 
   @inline
