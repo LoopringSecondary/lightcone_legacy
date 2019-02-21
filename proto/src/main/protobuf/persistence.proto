@@ -19,7 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.persistence;
 
-// import "core.proto";
+import "core.proto";
 // import "ethereum.proto";
 
 enum SortingType {
@@ -58,7 +58,7 @@ message BlockData {
     bytes  extra_data           = 17;
 }
 
-message CMCTickersInUsd {
+message ThirdPartyTokenPrice {
     message Quote {
         double price = 1;
         double volume_24h = 2;
@@ -66,20 +66,14 @@ message CMCTickersInUsd {
         double percent_change_24h = 4;
         double percent_change_7d = 5;
         double market_cap = 6;
-        string last_updated = 7;
     }
-    int32 coin_id = 1;
-    string name = 2;
-    string symbol = 3;
-    string slug = 4;
-    double circulating_supply = 5;
-    double total_supply = 6;
-    double max_supply = 7;
-    string date_added = 8;
-    int32 num_market_pairs = 9;
-    int32 cmc_rank = 10;
-    string rank_last_updated = 11;
-    Quote usd_quote = 12;
-    int64 request_time = 13;
-    bool  is_effective = 14;
+    string slug = 1;
+    Quote usd_quote = 2;
+    int64 sync_time = 3;
+    bool  is_effective = 4;
+}
+
+message CMCTokenSlug {
+    string symbol = 1;
+    string slug   = 2;
 }

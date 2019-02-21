@@ -15,6 +15,7 @@
  */
 
 package io.lightcone.relayer.actors
+
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import akka.pattern.ask
@@ -35,7 +36,7 @@ import scala.concurrent.duration._
 // Owner: Hongyu
 object MultiAccountManagerActor extends DeployedAsShardedByAddress {
 
-  import MarketMetadata.Status._
+  import io.lightcone.core.MarketMetadata.Status._
 
   val name = "multi_account_manager"
 

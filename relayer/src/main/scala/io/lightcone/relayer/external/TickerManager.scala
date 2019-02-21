@@ -18,9 +18,8 @@ package io.lightcone.relayer.external
 
 import java.text.SimpleDateFormat
 import io.lightcone.core.{ErrorCode, ErrorException}
-import io.lightcone.external._
-import io.lightcone.persistence.CMCTickersInUsd
-import io.lightcone.relayer.rpc.ExternalTickerInfo
+import io.lightcone.persistence.{CMCTokenSlug, ThirdPartyTokenPrice}
+import io.lightcone.relayer.data._
 import org.slf4s.Logging
 import scala.concurrent.Future
 
@@ -32,10 +31,11 @@ trait TickerManager extends Logging {
 
   def convertCMCResponseToPersistence(
       tickers_ : Seq[CMCTickerData]
-    ): Seq[CMCTickersInUsd]
+    ): Seq[ThirdPartyTokenPrice]
 
   def convertPersistenceToAllQuoteMarkets(
-      usdTickers: Seq[CMCTickersInUsd],
+      usdTickers: Seq[ThirdPartyTokenPrice],
+      slugSymbols: Seq[CMCTokenSlug],
       marketQuoteTokens: Set[String]
     ): Seq[ExternalTickerInfo]
 
@@ -61,7 +61,7 @@ trait TickerManager extends Logging {
 
   def convertUsdTickersToCny(
       usdTickers: Seq[ExternalTickerInfo],
-      usdToCny: Option[CMCTickersInUsd]
+      usdToCny: Option[ThirdPartyTokenPrice]
     ) = {
     if (usdTickers.nonEmpty && usdToCny.nonEmpty) {
       val cnyToUsd = usdToCny.get.usdQuote.get.price
@@ -75,7 +75,10 @@ trait TickerManager extends Logging {
     }
   }
 
-  def convertPersistToExternal(ticker: CMCTickersInUsd) = {
+  def convertPersistToExternal(
+      ticker: ThirdPartyTokenPrice,
+      slugSymbols: Seq[CMCTokenSlug]
+    ) = {
     if (ticker.usdQuote.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
@@ -88,20 +91,25 @@ trait TickerManager extends Logging {
         s"invalid price:${ticker.usdQuote.get.price} with ticker slug ${ticker.slug}"
       )
     }
+    val slugSymbol = slugSymbols
+      .find(_.slug == ticker.slug)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found slug: ${ticker.slug} symbol"
+        )
+      )
     val quote = ticker.usdQuote.get
     ExternalTickerInfo(
-      ticker.name,
-      ticker.symbol,
+      slugSymbol.symbol,
       ticker.slug,
       "",
       "",
-      ticker.cmcRank,
       quote.price,
       quote.volume24H,
       quote.percentChange1H,
       quote.percentChange24H,
-      quote.percentChange7D,
-      convertDateToSecond(quote.lastUpdated)
+      quote.percentChange7D
     )
   }
 }

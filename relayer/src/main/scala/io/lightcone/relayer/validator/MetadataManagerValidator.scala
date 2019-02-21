@@ -18,7 +18,6 @@ package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
 import io.lightcone.core.MetadataManager
-
 import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}

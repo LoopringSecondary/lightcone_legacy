@@ -320,13 +320,3 @@ message GetOrderbookSlots {
         io.lightcone.core.Orderbook.Update update = 1;
     }
 }
-
-message TokenTickerChanged {}
-
-message GetTickers {
-    message Req {}
-
-    message Res {
-        repeated io.lightcone.persistence.CMCTickersInUsd tickers = 1;
-    }
-}

@@ -27,7 +27,6 @@ import io.lightcone.relayer.base._
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.external.TickerManager
-import io.lightcone.relayer.rpc._
 import scala.concurrent._
 
 // Owner: YongFeng
@@ -76,12 +75,15 @@ class ExternalDataRefresher(
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  private val marketQuoteTokens = metadataManager.getMarketQuoteTokens
+  private val marketQuoteTokens =
+    metadataManager.getMarkets().map(_.quoteTokenSymbol).toSet
   private val effectiveMarketSymbols = metadataManager
     .getMarkets()
     .filter(_.status != MarketMetadata.Status.TERMINATED)
     .map(m => (m.baseTokenSymbol, m.quoteTokenSymbol))
 
+  private var slugSymbols
+    : Seq[CMCTokenSlug] = Seq.empty[CMCTokenSlug] // slug -> symbol
   private var allTickersInUSD: Seq[ExternalTickerInfo] =
     Seq.empty[ExternalTickerInfo] // price represent token's fait value in USD
   private var allTickersInCNY: Seq[ExternalTickerInfo] =
@@ -113,7 +115,10 @@ class ExternalDataRefresher(
   private def refreshAll() =
     for {
       _ <- refreshTickers()
-    } yield {}
+      slugSymbols_ <- dbModule.cmcTokenSlugDal.getAll()
+    } yield {
+      slugSymbols = slugSymbols_
+    }
 
   private def refreshTickers() =
     for {
@@ -123,13 +128,15 @@ class ExternalDataRefresher(
     } yield {
       assert(tickers_.nonEmpty)
       val cnyToUsd =
-        tickers_.find(t => t.symbol == "CNY" && t.slug == "rmb")
+        tickers_.find(_.slug == "rmb")
       assert(cnyToUsd.nonEmpty)
       assert(cnyToUsd.get.usdQuote.nonEmpty)
       assert(cnyToUsd.get.usdQuote.get.price > 0)
-      allTickersInUSD = tickers_.map(tickerManager.convertPersistToExternal)
-      allTickersInCNY = tickers_.map { t =>
-        val t_ = tickerManager.convertPersistToExternal(t)
+      val withoutRMB = tickers_.filter(_.slug != "rmb")
+      allTickersInUSD = withoutRMB
+        .map(tickerManager.convertPersistToExternal(_, slugSymbols))
+      allTickersInCNY = withoutRMB.map { t =>
+        val t_ = tickerManager.convertPersistToExternal(t, slugSymbols)
         assert(t.usdQuote.nonEmpty)
         t_.copy(
           price = tickerManager.toDouble(
@@ -141,7 +148,8 @@ class ExternalDataRefresher(
       }
       effectiveMarketTickers = tickerManager
         .convertPersistenceToAllQuoteMarkets(
-          tickers_,
+          withoutRMB,
+          slugSymbols,
           marketQuoteTokens
         )
         .filter(isEffectiveMarket)

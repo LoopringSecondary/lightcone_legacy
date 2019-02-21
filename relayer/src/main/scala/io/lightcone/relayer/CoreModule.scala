@@ -79,7 +79,8 @@ class CoreModule(
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
-      "dbconfig-cmc-tickers-in-usd",
+      "dbconfig-third-party-token-price",
+      "dbconfig-cmc-token-slug",
       "dbconfig-dal-ohlc-data"
     )
 
@@ -92,7 +93,9 @@ class CoreModule(
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
-    bind[CMCTickersInUsdDal].to[CMCTickersInUsdDalImpl].asEagerSingleton
+    bind[ThirdPartyTokenPriceDal]
+      .to[ThirdPartyTokenPriceDalImpl]
+      .asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------

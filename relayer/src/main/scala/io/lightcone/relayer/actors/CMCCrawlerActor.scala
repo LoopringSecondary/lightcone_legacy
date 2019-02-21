@@ -21,7 +21,6 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core.{ErrorCode, ErrorException, TokenMetadata}
-import io.lightcone.external._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
@@ -77,7 +76,9 @@ class CMCCrawlerActor(
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  private var tickers: Seq[CMCTickersInUsd] = Seq.empty[CMCTickersInUsd]
+  private var tickers: Seq[ThirdPartyTokenPrice] =
+    Seq.empty[ThirdPartyTokenPrice]
+  private var slugSymbols: Seq[CMCTokenSlug] = Seq.empty[CMCTokenSlug]
 
   val repeatedJobs = Seq(
     Job(
@@ -90,10 +91,10 @@ class CMCCrawlerActor(
 
   override def initialize() = {
     val f = for {
-      latestEffectiveRequest <- dbModule.CMCTickersInUsdDal
+      latestEffectiveRequest <- dbModule.thirdPartyTokenPriceDal
         .getLatestEffectiveRequest()
       tickers_ <- if (latestEffectiveRequest.nonEmpty) {
-        dbModule.CMCTickersInUsdDal.getTickersByRequestTime(
+        dbModule.thirdPartyTokenPriceDal.getTickersByRequestTime(
           latestEffectiveRequest.get
         )
       } else {
@@ -123,6 +124,7 @@ class CMCCrawlerActor(
     for {
       cmcResponse <- tickerManager.requestCMCTickers()
       rateResponse <- currencyManager.getUsdCnyCurrency()
+      slugSymbols_ <- dbModule.cmcTokenSlugDal.getAll()
       updated <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
         for {
           _ <- persistTickers(rateResponse, cmcResponse.data)
@@ -133,6 +135,7 @@ class CMCCrawlerActor(
         Future.successful(false)
       }
     } yield {
+      slugSymbols = slugSymbols_
       if (updated) {
         metadataManagerActor ! ReloadMetadataFromDb()
       }
@@ -145,23 +148,35 @@ class CMCCrawlerActor(
     ) = {
     var changedTokens = Seq.empty[TokenMetadata]
     tokens.foreach { token =>
+      val slugSymbolOpt = slugSymbols.find(t => t.symbol == token.symbol)
+      if (slugSymbolOpt.isEmpty) {
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found slug for symbol: ${token.symbol}"
+        )
+      }
+
       val priceQuote =
-        usdTickers.find(_.slug == token.slug).flatMap(_.quote.get("USD"))
+        usdTickers
+          .find(_.slug == slugSymbolOpt.get.slug)
+          .flatMap(_.quote.get("USD"))
       val usdPriceQuote = priceQuote.getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"can not found slug:[${token.slug}] price in USD"
+          s"can not found slug:[${slugSymbolOpt.get.slug}] price in USD"
         )
       )
-      if (token.usdPrice != usdPriceQuote.price) {
+      val externalData = token.externalData
+      if (externalData.get.usdPrice != usdPriceQuote.price) {
         changedTokens = changedTokens :+ token.copy(
-          usdPrice = usdPriceQuote.price
+          externalData =
+            Some(externalData.get.copy(usdPrice = usdPriceQuote.price))
         )
       }
     }
     Future.sequence(changedTokens.map { token =>
       dbModule.tokenMetadataDal
-        .updateTokenPrice(token.address, token.usdPrice)
+        .updateTokenPrice(token.address, token.externalData.get.usdPrice)
         .map { r =>
           if (r != ErrorCode.ERR_NONE)
             log.error(s"failed to update token price:$token")
@@ -178,34 +193,23 @@ class CMCCrawlerActor(
       tickersToPersist = tickerManager.convertCMCResponseToPersistence(
         tickers_
       )
-      cnyTicker = CMCTickersInUsd(
-        0,
-        "RMB",
-        "CNY",
+      cnyTicker = ThirdPartyTokenPrice(
         "rmb",
-        0,
-        0,
-        0,
-        "2019-01-01T00:00:00.000Z",
-        0,
-        0,
-        "2019-01-01T00:00:00.000Z",
         Some(
-          CMCTickersInUsd.Quote(
+          ThirdPartyTokenPrice.Quote(
             price = tickerManager
-              .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate)),
-            lastUpdated = tickersToPersist.head.rankLastUpdated
+              .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
           )
         )
       )
       now = timeProvider.getTimeSeconds()
       _ = tickers =
-        tickersToPersist.+:(cnyTicker).map(t => t.copy(requestTime = now))
+        tickersToPersist.+:(cnyTicker).map(t => t.copy(syncTime = now))
       fixGroup = tickersToPersist.grouped(20).toList
       _ <- Future.sequence(
-        fixGroup.map(dbModule.CMCTickersInUsdDal.saveTickers)
+        fixGroup.map(dbModule.thirdPartyTokenPriceDal.saveTickers)
       )
-      updateSucc <- dbModule.CMCTickersInUsdDal.updateEffective(now)
+      updateSucc <- dbModule.thirdPartyTokenPriceDal.updateEffective(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE)
         log.error(s"CMC persist failed, code:$updateSucc")

@@ -7,28 +7,3 @@ message GetOrderbook{
     message Req {}
     message Res {}
 }
-
-message ExternalTickerInfo {
-    string name = 1;
-    string symbol = 2;
-    string slug = 3;
-    string market= 4;
-    string pair = 5;
-    int32  rank = 6;
-    double price = 7;
-    double volume_24h = 8;
-    double percent_change_1h = 9;
-    double percent_change_24h = 10;
-    double percent_change_7d = 11;
-    int64  last_updated = 12;
-}
-
-message GetExternalTickers {
-    message Req {
-        string   market = 1;
-    }
-
-    message Res {
-        repeated ExternalTickerInfo tickers = 2;
-    }
-}

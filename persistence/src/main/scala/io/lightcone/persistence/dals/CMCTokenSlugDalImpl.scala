@@ -18,6 +18,7 @@ package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import io.lightcone.core.ErrorCode
 import io.lightcone.core.ErrorCode._
 import io.lightcone.persistence._
 import slick.basic._
@@ -26,18 +27,18 @@ import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-class CMCTickersInUsdDalImpl @Inject()(
+class CMCTokenSlugDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-cmc-tickers-in-usd") val dbConfig: DatabaseConfig[
+    @Named("dbconfig-cmc-token-slug") val dbConfig: DatabaseConfig[
       JdbcProfile
     ])
-    extends CMCTickersInUsdDal {
+    extends CMCTokenSlugDal {
 
-  val query = TableQuery[CMCTickersInUsdTable]
+  val query = TableQuery[CMCTokenSlugTable]
 
-  def saveTickers(tickers: Seq[CMCTickersInUsd]) =
-    db.run((query ++= tickers).asTry).map {
+  def saveSlugs(slugs: Seq[CMCTokenSlug]): Future[ErrorCode] =
+    db.run((query ++= slugs).asTry).map {
       case Failure(ex) => {
         logger.error(s"save tickers error : ${ex.getMessage}")
         ERR_PERSISTENCE_INTERNAL
@@ -46,34 +47,22 @@ class CMCTickersInUsdDalImpl @Inject()(
         ERR_NONE
     }
 
-  def getLatestEffectiveRequest() = {
-    db.run(query.filter(_.isEffective === true).map(_.requestTime).max.result)
-  }
+  def getAll(): Future[Seq[CMCTokenSlug]] =
+    db.run(query.take(Integer.MAX_VALUE).result)
 
-  def getTickersByRequestTime(requestTime: Long): Future[Seq[CMCTickersInUsd]] =
-    db.run(query.filter(_.requestTime === requestTime).result)
+  def getBySlugs(slugs: Seq[String]): Future[Seq[CMCTokenSlug]] =
+    db.run(query.filter(_.slug inSet slugs).result)
 
-  def countTickersByRequestTime(requestTime: Long) =
-    db.run(query.filter(_.requestTime === requestTime).size.result)
-
-  def getTickers(
-      requestTime: Long,
-      tokenSlugs: Seq[String]
-    ): Future[Seq[CMCTickersInUsd]] =
-    db.run(
-      query
-        .filter(_.requestTime === requestTime)
-        .filter(_.slug inSet tokenSlugs)
-        .result
-    )
-
-  def updateEffective(requestTime: Long) =
+  def update(
+      fromSlug: String,
+      to: CMCTokenSlug
+    ): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.requestTime === requestTime)
-          .map(_.isEffective)
-          .update(true)
+          .filter(_.slug === fromSlug)
+          .map(c => (c.slug, c.symbol))
+          .update(to.slug, to.symbol)
       )
     } yield {
       if (result >= 1) ERR_NONE

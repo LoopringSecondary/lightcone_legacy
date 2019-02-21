@@ -20,21 +20,11 @@ import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 
-class CMCTickersInUsdTable(tag: Tag)
-    extends BaseTable[CMCTickersInUsd](tag, "T_CMC_TICKERS_IN_USD") {
+class ThirdPartyTokenPriceTable(tag: Tag)
+    extends BaseTable[ThirdPartyTokenPrice](tag, "T_THRID_PARTY_TOKEN_PRICE") {
 
-  def id = ""
-  def coinId = column[Int]("coin_id")
-  def name = column[String]("name")
-  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
+  def id = slug
   def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
-  def circulatingSupply = column[Double]("circulating_supply")
-  def totalSupply = column[Double]("total_supply")
-  def maxSupply = column[Double]("max_supply")
-  def dateAdded = column[String]("date_added")
-  def numMarketPairs = column[Int]("num_market_pairs")
-  def cmcRank = column[Int]("cmc_rank")
-  def rankLastUpdated = column[String]("rank_last_updated")
 
   // usd_quote
   def price = column[Double]("price")
@@ -43,7 +33,6 @@ class CMCTickersInUsdTable(tag: Tag)
   def percentChange24H = column[Double]("percent_change_24h")
   def percentChange7D = column[Double]("percent_change_7d")
   def marketCap = column[Double]("market_cap")
-  def quoteLastUpdated = column[String]("quote_last_updated")
 
   def requestTime = column[Long]("request_time")
   def isEffective = column[Boolean]("is_effective")
@@ -73,30 +62,19 @@ class CMCTickersInUsdTable(tag: Tag)
       percentChange1H,
       percentChange24H,
       percentChange7D,
-      marketCap,
-      quoteLastUpdated
+      marketCap
     ) <> ({ tuple =>
-      Option((CMCTickersInUsd.Quote.apply _).tupled(tuple))
-    }, { paramsOpt: Option[CMCTickersInUsd.Quote] =>
-      val params = paramsOpt.getOrElse(CMCTickersInUsd.Quote())
-      CMCTickersInUsd.Quote.unapply(params)
+      Option((ThirdPartyTokenPrice.Quote.apply _).tupled(tuple))
+    }, { paramsOpt: Option[ThirdPartyTokenPrice.Quote] =>
+      val params = paramsOpt.getOrElse(ThirdPartyTokenPrice.Quote())
+      ThirdPartyTokenPrice.Quote.unapply(params)
     })
 
   def * =
     (
-      coinId,
-      name,
-      symbol,
       slug,
-      circulatingSupply,
-      totalSupply,
-      maxSupply,
-      dateAdded,
-      numMarketPairs,
-      cmcRank,
-      rankLastUpdated,
       quoteProjection,
       requestTime,
       isEffective
-    ) <> ((CMCTickersInUsd.apply _).tupled, CMCTickersInUsd.unapply)
+    ) <> ((ThirdPartyTokenPrice.apply _).tupled, ThirdPartyTokenPrice.unapply)
 }

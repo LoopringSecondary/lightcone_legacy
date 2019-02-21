@@ -31,7 +31,6 @@ class TokenMetadataTable(tag: Tag)
   def `type` = column[TokenMetadata.Type]("type")
   def status = column[TokenMetadata.Status]("status")
   def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
-  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
   def name = column[String]("name", O.SqlType("VARCHAR(50)"))
   def address = columnAddress("address", O.PrimaryKey, O.Unique)
   def unit = column[String]("unit")
@@ -40,20 +39,39 @@ class TokenMetadataTable(tag: Tag)
   def precision = column[Int]("precision")
   def burnRateForMarket = column[Double]("burn_rate_for_market")
   def burnRateForP2P = column[Double]("burn_rate_for_p2p")
+
+  // external data
   def usdPrice = column[Double]("usd_price")
+  def circulatingSupply = column[Double]("circulating_supply")
+  def totalSupply = column[Double]("total_supply")
+  def maxSupply = column[Double]("max_supply")
+  def cmcRank = column[Int]("cmc_rank")
+
   def updateAt = column[Long]("update_at")
 
   def idx_type = index("idx_type", (`type`), unique = false)
   def idx_status = index("idx_status", (status), unique = false)
   def idx_symbol = index("idx_symbol", (symbol), unique = true)
-  def idx_slug = index("idx_slug", (slug), unique = true)
+
+  def externalDataProjection =
+    (
+      usdPrice,
+      circulatingSupply,
+      totalSupply,
+      maxSupply,
+      cmcRank
+    ) <> ({ tuple =>
+      Option((TokenMetadata.ExternalData.apply _).tupled(tuple))
+    }, { paramsOpt: Option[TokenMetadata.ExternalData] =>
+      val params = paramsOpt.getOrElse(TokenMetadata.ExternalData())
+      TokenMetadata.ExternalData.unapply(params)
+    })
 
   def * =
     (
       `type`,
       status,
       symbol,
-      slug,
       name,
       address,
       unit,
@@ -62,7 +80,7 @@ class TokenMetadataTable(tag: Tag)
       precision,
       burnRateForMarket,
       burnRateForP2P,
-      usdPrice,
+      externalDataProjection,
       updateAt
     ) <> ((TokenMetadata.apply _).tupled, TokenMetadata.unapply)
 }

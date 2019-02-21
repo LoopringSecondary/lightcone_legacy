@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.external;
+package io.lightcone.relayer.data;
 
 import "persistence.proto";
 
@@ -33,7 +33,7 @@ message CMCTickerData {
     int32 num_market_pairs = 9;
     int32 cmc_rank = 10;
     string last_updated = 11;
-    map<string, io.lightcone.persistence.CMCTickersInUsd.Quote> quote = 12;
+    map<string, io.lightcone.persistence.ThirdPartyTokenPrice.Quote> quote = 12;
 }
 
 message TickerStatus {
@@ -47,4 +47,26 @@ message TickerStatus {
 message TickerDataInfo {
     TickerStatus status = 1;
     repeated CMCTickerData data = 2;
+}
+
+message ExternalTickerInfo {
+    string symbol = 1;
+    string slug = 2;
+    string market= 3;
+    string pair = 4;
+    double price = 6;
+    double volume_24h = 7;
+    double percent_change_1h = 8;
+    double percent_change_24h = 9;
+    double percent_change_7d = 10;
+}
+
+message GetExternalTickers {
+    message Req {
+        string   market = 1;
+    }
+
+    message Res {
+        repeated ExternalTickerInfo tickers = 2;
+    }
 }

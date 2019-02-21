@@ -96,25 +96,26 @@ class MetadataManagerSpec
 
     "get all tokens config" in {
       info("save some tokens config")
-      val lrc = TokenMetadata(
-        `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VALID,
-        symbol = "AAA",
-        name = "AAA Token",
-        address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
-        unit = "AAA",
-        decimals = 18,
-        precision = 6,
-        burnRateForMarket = 0.1,
-        burnRateForP2P = 0.2,
-        usdPrice = 10
-      )
       val tokens = Seq(
-        lrc,
-        TokenMetadata(
+        SaveTokenMetadata(
+          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
+          status = TokenMetadata.Status.VALID,
+          symbol = "AAA",
+          slug = "aaa",
+          name = "AAA Token",
+          address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
+          unit = "AAA",
+          decimals = 18,
+          precision = 6,
+          burnRateForMarket = 0.1,
+          burnRateForP2P = 0.2,
+          externalData = Some(TokenMetadata.ExternalData(10))
+        ),
+        SaveTokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "ABC",
+          slug = "abc",
           name = "ABC Token",
           address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
           unit = "ABC",
@@ -122,12 +123,13 @@ class MetadataManagerSpec
           precision = 6,
           burnRateForMarket = 0.3,
           burnRateForP2P = 0.4,
-          usdPrice = 8
+          externalData = Some(TokenMetadata.ExternalData(8))
         ),
-        TokenMetadata(
+        SaveTokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "BBB",
+          slug = "bbb",
           name = "BBB Token",
           address = "0x989fcbc46845a290e971a6303ef3753fb039d8d5",
           unit = "BBB",
@@ -135,12 +137,13 @@ class MetadataManagerSpec
           precision = 3,
           burnRateForMarket = 0.1,
           burnRateForP2P = 0.3,
-          usdPrice = 1
+          externalData = Some(TokenMetadata.ExternalData(1))
         ),
-        TokenMetadata(
+        SaveTokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "BBC",
+          slug = "bbc",
           name = "BBC Token",
           address = "0x61a11f3d1f3b4dbd3f780f004773e620daf065c4",
           unit = "BBC",
@@ -148,12 +151,13 @@ class MetadataManagerSpec
           precision = 6,
           burnRateForMarket = 0.2,
           burnRateForP2P = 0.1,
-          usdPrice = 8
+          externalData = Some(TokenMetadata.ExternalData(8))
         ),
-        TokenMetadata(
+        SaveTokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "CCC",
+          slug = "ccc",
           name = "CCC Token",
           address = "0x34a381433f45230390d750113aab46c65129ffab",
           unit = "CCC",
@@ -161,12 +165,13 @@ class MetadataManagerSpec
           precision = 6,
           burnRateForMarket = 0.6,
           burnRateForP2P = 0.8,
-          usdPrice = 7
+          externalData = Some(TokenMetadata.ExternalData(7))
         ),
-        TokenMetadata(
+        SaveTokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.INVALID,
           symbol = "CDE",
+          slug = "cde",
           name = "CDE Token",
           address = "0xfdeda15e2922c5ed41fc1fdf36da2fb2623666b3",
           unit = "CDE",
@@ -174,7 +179,7 @@ class MetadataManagerSpec
           precision = 3,
           burnRateForMarket = 0.1,
           burnRateForP2P = 0.9,
-          usdPrice = 1
+          externalData = Some(TokenMetadata.ExternalData(1))
         )
       )
 
@@ -214,12 +219,25 @@ class MetadataManagerSpec
           precision = 3,
           burnRateForMarket = 0.5,
           burnRateForP2P = 0.5,
-          usdPrice = 1
+          externalData = Some(TokenMetadata.ExternalData(1))
         )
       )
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
       assert(res2 == ErrorCode.ERR_NONE)
 
+      val lrc = TokenMetadata(
+        `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
+        status = TokenMetadata.Status.VALID,
+        symbol = "AAA",
+        name = "AAA Token",
+        address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
+        unit = "AAA",
+        decimals = 18,
+        precision = 6,
+        burnRateForMarket = 0.1,
+        burnRateForP2P = 0.2,
+        externalData = Some(TokenMetadata.ExternalData(10))
+      )
       val burnRateRes = Await.result(
         (ethereumQueryActor ? GetBurnRate.Req(token = lrc.address))
           .mapTo[GetBurnRate.Res],
@@ -231,7 +249,12 @@ class MetadataManagerSpec
       )
       val updated = Await.result(
         (actor ? UpdateTokenMetadata.Req(
-          Some(lrc.copy(burnRateForMarket = 0.2, usdPrice = 20))
+          Some(
+            lrc.copy(
+              burnRateForMarket = 0.2,
+              externalData = Some(TokenMetadata.ExternalData(20))
+            )
+          )
         )).mapTo[UpdateTokenMetadata.Res],
         5.second
       )
@@ -244,7 +267,7 @@ class MetadataManagerSpec
       )
       assert(
         query1.length == 1 && query1.head.burnRateForMarket === burnRateRes.forMarket &&
-          query1.head.burnRateForP2P == burnRateRes.forP2P && query1.head.usdPrice == 20
+          query1.head.burnRateForP2P == burnRateRes.forP2P && query1.head.externalData.get.usdPrice == 20
       )
 
       info("send a message to disable lrc")
@@ -422,7 +445,7 @@ class MetadataManagerSpec
         precision = 6,
         burnRateForMarket = 0.1,
         burnRateForP2P = 0.2,
-        usdPrice = 10
+        externalData = Some(TokenMetadata.ExternalData(10))
       )
       val b = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
@@ -435,7 +458,7 @@ class MetadataManagerSpec
         precision = 6,
         burnRateForMarket = 0.3,
         burnRateForP2P = 0.4,
-        usdPrice = 8
+        externalData = Some(TokenMetadata.ExternalData(8))
       )
       info("token A and formatedA should same")
       val formatedA = MetadataManager.normalize(a)

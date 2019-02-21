@@ -28,11 +28,10 @@ import io.lightcone.core._
 import scala.concurrent.ExecutionContext
 import com.google.inject._
 import io.lightcone.core.ErrorException
-import io.lightcone.external._
-import io.lightcone.persistence.CMCTickersInUsd
-import io.lightcone.persistence.CMCTickersInUsd.Quote
+import io.lightcone.persistence.{CMCTokenSlug, ThirdPartyTokenPrice}
+import io.lightcone.persistence.ThirdPartyTokenPrice.Quote
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors.CMCCrawlerActor
-import io.lightcone.relayer.rpc.ExternalTickerInfo
 
 class CMCTickerManagerImpl @Inject()(
     implicit
@@ -100,7 +99,7 @@ class CMCTickerManagerImpl @Inject()(
 
   def convertCMCResponseToPersistence(
       tickers_ : Seq[CMCTickerData]
-    ): Seq[CMCTickersInUsd] = {
+    ): Seq[ThirdPartyTokenPrice] = {
     tickers_.map { t =>
       if (t.quote.get("USD").isEmpty) {
         log.error(s"CMC not return ${t.symbol} quote for USD")
@@ -110,38 +109,28 @@ class CMCTickerManagerImpl @Inject()(
         )
       }
       val q = t.quote("USD")
-      val usdQuote = CMCTickersInUsd.Quote(
+      val usdQuote = ThirdPartyTokenPrice.Quote(
         q.price,
         q.volume24H,
         q.percentChange1H,
         q.percentChange24H,
         q.percentChange7D,
-        q.marketCap,
-        q.lastUpdated
+        q.marketCap
       )
-      CMCTickersInUsd(
-        t.id,
-        t.name,
-        t.symbol,
+      ThirdPartyTokenPrice(
         t.slug,
-        t.circulatingSupply,
-        t.totalSupply,
-        t.maxSupply,
-        t.dateAdded,
-        t.numMarketPairs,
-        t.cmcRank,
-        t.lastUpdated,
         Some(usdQuote)
       )
     }
   }
 
   def convertPersistenceToAllQuoteMarkets(
-      usdTickers: Seq[CMCTickersInUsd],
+      usdTickers: Seq[ThirdPartyTokenPrice],
+      slugSymbols: Seq[CMCTokenSlug],
       marketQuoteTokens: Set[String]
     ): Seq[ExternalTickerInfo] = {
     val tickersInUsdWithQuoteMarkets =
-      getTickersWithAllQuoteMarkets(usdTickers, marketQuoteTokens)
+      getTickersWithAllQuoteMarkets(usdTickers, slugSymbols, marketQuoteTokens)
     val tickersWithAllQuoteMarkets = convertToAllQuoteMarketsInUsd(
       tickersInUsdWithQuoteMarkets
     )
@@ -151,20 +140,22 @@ class CMCTickerManagerImpl @Inject()(
   }
 
   private def getTickersWithAllQuoteMarkets(
-      usdTickers: Seq[CMCTickersInUsd],
+      usdTickers: Seq[ThirdPartyTokenPrice],
+      slugSymbols: Seq[CMCTokenSlug],
       supportMarketSymbols: Set[String]
     ) = {
-    val marketsQuote = getAllMarketQuoteInUSD(usdTickers, supportMarketSymbols)
+    val marketsQuote =
+      getAllMarketQuoteInUSD(usdTickers, slugSymbols, supportMarketSymbols)
     usdTickers.map { usdTicker =>
       val usdQuote = usdTicker.usdQuote
       if (usdQuote.isEmpty) {
-        log.error(s"can not found ${usdTicker.symbol} quote for USD")
+        log.error(s"can not found slug:${usdTicker.slug} quote for USD")
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"can not found ${usdTicker.symbol} quote for USD"
+          s"can not found ${usdTicker.slug} quote for USD"
         )
       }
-      val ticker = convertPersistenceWithUsdQuote(usdTicker)
+      val ticker = convertPersistenceWithUsdQuote(usdTicker, slugSymbols)
       val priceQuote = usdQuote.get
       val quoteMap = marketsQuote.foldLeft(ticker.quote) { (map, marketQuote) =>
         //添加市场代币的Quote ("LRC", "WETH", "TUSD", "USDT")
@@ -175,29 +166,30 @@ class CMCTickerManagerImpl @Inject()(
     }
   }
 
-  private def convertPersistenceWithUsdQuote(t: CMCTickersInUsd) = {
+  private def convertPersistenceWithUsdQuote(
+      t: ThirdPartyTokenPrice,
+      slugSymbols: Seq[CMCTokenSlug]
+    ) = {
     val q = t.usdQuote.get
-    CMCTickerData(
-      t.coinId,
-      t.name,
-      t.symbol,
-      t.slug,
-      t.circulatingSupply,
-      t.totalSupply,
-      t.maxSupply,
-      t.dateAdded,
-      t.numMarketPairs,
-      t.cmcRank,
-      t.rankLastUpdated,
-      Map(
+    val slugSymbol = slugSymbols
+      .find(_.slug == t.slug)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found slug: ${t.slug} symbol"
+        )
+      )
+    new CMCTickerData(
+      symbol = slugSymbol.symbol,
+      slug = t.slug,
+      quote = Map(
         "USD" -> Quote(
           q.price,
           q.volume24H,
           q.percentChange1H,
           q.percentChange24H,
           q.percentChange7D,
-          q.marketCap,
-          q.lastUpdated
+          q.marketCap
         )
       )
     )
@@ -225,22 +217,18 @@ class CMCTickerManagerImpl @Inject()(
         val percentChange1h = quote.percentChange1H
         val percentChange24h = quote.percentChange24H
         val percentChange7d = quote.percentChange7D
-        val lastUpdated = convertDateToSecond(quote.lastUpdated)
         val pair = symbol + "-" + market
 
         ExternalTickerInfo(
-          name,
           symbol,
           ticker.slug,
           market,
           pair,
-          rank,
           price,
           volume24h,
           percentChange1h,
           percentChange24h,
-          percentChange7d,
-          lastUpdated
+          percentChange7d
         )
       }
     }
@@ -248,13 +236,22 @@ class CMCTickerManagerImpl @Inject()(
 
   // 找到市场代币对USD的priceQuote
   private def getAllMarketQuoteInUSD(
-      tickers: Seq[CMCTickersInUsd],
+      tickers: Seq[ThirdPartyTokenPrice],
+      slugSymbols: Seq[CMCTokenSlug],
       supportMarketSymbols: Set[String]
-    ): Seq[(String, CMCTickersInUsd.Quote)] = {
+    ): Seq[(String, ThirdPartyTokenPrice.Quote)] = {
     supportMarketSymbols.toSeq.map { s =>
       val symbol = if (s == "WETH") "ETH" else s
+      val slugSymbol = slugSymbols
+        .find(_.symbol == symbol)
+        .getOrElse(
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not found symbol: ${symbol}"
+          )
+        )
       val priceQuote =
-        tickers.find(_.symbol == symbol).flatMap(_.usdQuote)
+        tickers.find(_.slug == slugSymbol.slug).flatMap(_.usdQuote)
       if (priceQuote.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
@@ -288,15 +285,13 @@ class CMCTickerManagerImpl @Inject()(
     val percent_change_7d = BigDecimal(1 + tokenQuote.percentChange7D) / BigDecimal(
       1 + marketQuote.percentChange7D
     ) - 1
-    val last_updated = marketQuote.lastUpdated
     Quote(
       price,
       volume_24h,
       toDouble(percent_change_1h),
       toDouble(percent_change_24h),
       toDouble(percent_change_7d),
-      toDouble(market_cap),
-      last_updated
+      toDouble(market_cap)
     )
   }
 

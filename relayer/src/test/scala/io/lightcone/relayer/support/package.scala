@@ -36,9 +36,8 @@ package object support {
     burnRateForMarket = 0.4,
     burnRateForP2P = 0.5,
     symbol = "WETH",
-    slug = "weth",
     name = "WETH",
-    usdPrice = 1000,
+    externalData = Some(TokenMetadata.ExternalData(1000)),
     status = TokenMetadata.Status.VALID
   )
 
@@ -48,9 +47,8 @@ package object support {
     burnRateForMarket = 0.4,
     burnRateForP2P = 0.5,
     symbol = "LRC",
-    slug = "loopring",
     name = "LRC",
-    usdPrice = 1000,
+    externalData = Some(TokenMetadata.ExternalData(1000)),
     status = TokenMetadata.Status.VALID
   )
 
@@ -60,9 +58,8 @@ package object support {
     burnRateForMarket = 0.4,
     burnRateForP2P = 0.5,
     symbol = "GTO",
-    slug = "gifto",
     name = "GTO",
-    usdPrice = 1000,
+    externalData = Some(TokenMetadata.ExternalData(1000)),
     status = TokenMetadata.Status.VALID
   )
 
@@ -116,6 +113,12 @@ package object support {
   )
 
   val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
+
+  val TOKEN_SLUGS_SYMBOLS = Seq(
+    ("WETH", "weth"),
+    ("LRC", "loopring"),
+    ("GTO", "gifto")
+  )
 
   val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET, GTO_LRC_MARKET)
 

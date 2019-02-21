@@ -65,7 +65,6 @@ class MetadataManagerActor(
     extends InitializationRetryActor
     with RepeatedJobActor
     with ActorLogging {
-
   import ErrorCode._
 
   val selfConfig = config.getConfig(MetadataManagerActor.name)
@@ -134,23 +133,42 @@ class MetadataManagerActor(
 
     case req: SaveTokenMetadatas.Req =>
       (for {
-        latestEffectiveRequest <- dbModule.CMCTickersInUsdDal
+        latestEffectiveRequest <- dbModule.thirdPartyTokenPriceDal
           .getLatestEffectiveRequest()
+        _ = if (latestEffectiveRequest.nonEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not found tickers in db"
+          )
         modifiedTokens <- if (latestEffectiveRequest.nonEmpty) {
-          val tokenSlugs = req.tokens.map(_.slug)
+          val tokenSlugSymbols = req.tokens.map { t =>
+            (t.slug, t.symbol)
+          }.toMap
           for {
-            tickers_ <- dbModule.CMCTickersInUsdDal
-              .getTickers(latestEffectiveRequest.get, tokenSlugs)
+            tickers_ <- dbModule.thirdPartyTokenPriceDal
+              .getTickers(
+                latestEffectiveRequest.get,
+                tokenSlugSymbols.keys.toSeq
+              )
           } yield {
-            val tickersMap = tickers_.map { t =>
-              (t.symbol, t.usdQuote.get.price)
-            }.toMap
-            req.tokens.map { t =>
-              t.copy(usdPrice = tickersMap.getOrElse(t.symbol, 0))
+            if (tickers_.nonEmpty || tickers_.length == tokenSlugSymbols.keys.size) {
+              val tickersMap = tickers_.map { t =>
+                (tokenSlugSymbols(t.slug), t)
+              }.toMap
+              req.tokens.map(convertTokenToPersist(_, tickersMap))
+            } else {
+              throw ErrorException(
+                ErrorCode.ERR_INTERNAL_UNKNOWN,
+                s"not found all tickers in request slugs: ${tokenSlugSymbols.keys}, found:${tickers_
+                  .map(_.slug)}"
+              )
             }
           }
         } else {
-          Future.successful(req.tokens)
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not found tickers in db"
+          )
         }
         saved <- dbModule.tokenMetadataDal.saveTokens(modifiedTokens)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
@@ -291,5 +309,43 @@ class MetadataManagerActor(
     } yield {
       checkAndPublish(Some(tokens_), Some(markets_))
     }
+  }
+
+  private def convertTokenToPersist(
+      token: SaveTokenMetadata,
+      tickersMap: Map[String, ThirdPartyTokenPrice]
+    ) = {
+    val usdTicker = tickersMap.getOrElse(
+      token.symbol,
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"not found ticker of symbol:${token.symbol}"
+      )
+    )
+    val usdQuote = usdTicker.usdQuote.getOrElse(
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"not found ticker usdQuote of symbol:${token.symbol}"
+      )
+    )
+    val externalData = if (token.externalData.nonEmpty) {
+      Some(token.externalData.get.copy(usdPrice = usdQuote.price))
+    } else {
+      Some(TokenMetadata.ExternalData(usdQuote.price))
+    }
+    TokenMetadata(
+      token.`type`,
+      token.status,
+      token.symbol,
+      token.name,
+      token.address,
+      token.unit,
+      token.decimals,
+      token.websiteUrl,
+      token.precision,
+      token.burnRateForMarket,
+      token.burnRateForP2P,
+      externalData
+    )
   }
 }

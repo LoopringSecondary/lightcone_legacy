@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import spire.math.Rational
+import io.lightcone.core.ErrorCode
+import io.lightcone.persistence._
+import io.lightcone.persistence.base._
+import scala.concurrent._
 
-// TODO(dongw): we need a price provider
-class TokenValueEvaluator @Inject()()(implicit mm: MetadataManager) {
+trait CMCTokenSlugDal extends BaseDalImpl[CMCTokenSlugTable, CMCTokenSlug] {
 
-  def getValue(
-      tokenAddr: String,
-      amount: BigInt
-    ): Double = {
-    if (amount.signum <= 0) 0
-    else
-      mm.getTokenWithAddress(tokenAddr)
-        .map { token =>
-          (Rational(token.fromWei(amount)) *
-            Rational(token.meta.externalData.get.usdPrice)).doubleValue
-        }
-        .getOrElse(0)
+  def saveSlugs(slugs: Seq[CMCTokenSlug]): Future[ErrorCode]
 
-  }
+  def getAll(): Future[Seq[CMCTokenSlug]]
 
+  def getBySlugs(slugs: Seq[String]): Future[Seq[CMCTokenSlug]]
+
+  def update(
+      fromSlug: String,
+      to: CMCTokenSlug
+    ): Future[ErrorCode]
 }

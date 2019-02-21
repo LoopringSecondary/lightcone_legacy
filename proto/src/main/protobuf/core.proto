@@ -164,20 +164,27 @@ message TokenMetadata {
         INVALID     = 1;  // This token is displayed in wallet.
     }
 
+    message ExternalData {
+        double   usd_price              = 1;
+        double   circulating_supply     = 2;
+        double   total_supply           = 3;
+        double   max_supply             = 4;
+        int32    cmc_rank               = 5;
+    }
+
     Type     type                   = 1;
     Status   status                 = 2;
     string   symbol                 = 3; // BTC
-    string   slug                   = 4; // bitcoin, use for query, same with cmc slug
-    string   name                   = 5; // Bitcoin
-    string   address                = 6;
-    string   unit                   = 7;
-    int32    decimals               = 8;
-    string   website_url            = 9;
-    int32    precision              = 10;
-    double   burn_rate_for_market   = 11;
-    double   burn_rate_for_p2p      = 12;
-    double   usd_price              = 13;
-    int64    updated_at             = 14;
+    string   name                   = 4; // Bitcoin
+    string   address                = 5;
+    string   unit                   = 6;
+    int32    decimals               = 7;
+    string   website_url            = 8;
+    int32    precision              = 9;
+    double   burn_rate_for_market   = 10;
+    double   burn_rate_for_p2p      = 11;
+    ExternalData external_data      = 12;
+    int64    updated_at             = 13;
 }
 
 message MarketMetadata {
@@ -198,8 +205,8 @@ message MarketMetadata {
     bool            browsable_in_wallet     = 9;
     int64           updated_at              = 10;
 
-    io.lightcone.core.MarketPair        market_pair               = 20; // computed
-    string          market_hash              = 21; // computed
+    MarketPair      market_pair             = 20; // computed
+    string          market_hash             = 21; // computed
 }
 
 enum TokenStandard {
