@@ -141,7 +141,7 @@ message GetBalance {
     }
     message Res {
         string address = 1;
-        map<string, Balance> balance_map = 2;
+        map<string, AmountAtBlock> balance_map = 2;
         io.lightcone.core.Error error = 3;
     }
 }
@@ -154,7 +154,7 @@ message GetAllowance {
     }
     message Res {
         string address = 1;
-        map<string, Allowance> allowance_map = 2;
+        map<string, AmountAtBlock> allowance_map = 2;
         io.lightcone.core.Error error = 3;
     }
 }
@@ -171,17 +171,13 @@ message UpdateFilledAmount {
 }
 
 message GetFilledAmount {
-    message FilledAmount {
-        bytes amount = 1;
-        int64 block_num = 2;
-    }
     message Req {
         repeated string order_ids = 1;
         string tag = 2;
     }
 
     message Res {
-        map<string, FilledAmount> filled_amount_s_map = 1;
+        map<string, AmountAtBlock> filled_amount_s_map = 1;
     }
 }
 
@@ -217,6 +213,7 @@ message GetCutoff {
 message BatchGetCutoffs {
     message Req {
         repeated GetCutoff.Req reqs = 1;
+        string tag = 2;
     }
 
     message Res {

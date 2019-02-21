@@ -30,6 +30,7 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import kamon.metric._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -417,7 +418,7 @@ class AccountManagerAltActor(
       filledAmountS = getFilledAmountRes.filledAmountSMap
         .getOrElse(
           orderId,
-          GetFilledAmount.FilledAmount(ByteString.copyFrom("0".getBytes))
+          AmountAtBlock(ByteString.copyFrom("0".getBytes))
         )
 
       adjusted = matchable.withFilledAmountS(filledAmountS.amount)

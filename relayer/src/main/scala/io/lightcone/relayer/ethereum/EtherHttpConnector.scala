@@ -308,7 +308,7 @@ class HttpConnector(
           )
         }
       }
-      if (batchR.withBlockNum) {
+      if (batchR.returnBlockNum) {
         batchReqs = batchReqs.+:(
           BatchMethod(
             id = randInt(),
@@ -324,7 +324,7 @@ class HttpConnector(
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[EthCall.Res](respJson)
         })
-        if (batchR.withBlockNum)
+        if (batchR.returnBlockNum)
           BatchCallContracts.Res(callResps.drop(1), callResps.head.result)
         else
           BatchCallContracts.Res(resps = callResps)
@@ -394,7 +394,7 @@ class HttpConnector(
           )
         }
       }
-      if (batchR.withBlockNum) {
+      if (batchR.returnBlockNum) {
         batchReqs = batchReqs.+:(
           BatchMethod(
             id = randInt(),
@@ -409,7 +409,7 @@ class HttpConnector(
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[EthGetBalance.Res](respJson)
         })
-        if (batchR.withBlockNum)
+        if (batchR.returnBlockNum)
           BatchGetEthBalance.Res(txResps.drop(1), txResps.head.result)
         else
           BatchGetEthBalance.Res(txResps)

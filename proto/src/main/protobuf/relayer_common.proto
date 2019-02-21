@@ -67,15 +67,8 @@ message BalanceAndAllowance {
     int64 block_num = 5;
 }
 
-message Balance {
-    bytes balance                   = 1;
-    bytes available_balance         = 2;
-    int64 block_num = 3;
-}
-
-message Allowance {
-    bytes allowance                 = 1;
-    bytes available_allowance       = 2;
+message AmountAtBlock {
+    bytes amount                   = 1;
     int64 block_num = 3;
 }
 

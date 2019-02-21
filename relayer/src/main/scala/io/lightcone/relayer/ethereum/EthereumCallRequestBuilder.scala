@@ -24,8 +24,6 @@ import org.web3j.utils.Numeric
 // Owner: Yadong
 class EthereumCallRequestBuilder {
 
-  val LATEST = "latest"
-
   def buildRequest(
       req: GetBurnRate.Req,
       contractAddress: Address
@@ -37,7 +35,7 @@ class EthereumCallRequestBuilder {
     val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
     BatchCallContracts.Req(
       reqs,
-      withBlockNum = req.tag.isEmpty || req.tag.toLowerCase == LATEST
+      returnBlockNum(req.tag)
     )
   }
 
@@ -55,7 +53,7 @@ class EthereumCallRequestBuilder {
     val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
     BatchCallContracts.Req(
       reqs,
-      withBlockNum = req.tag.isEmpty || req.tag.toLowerCase == LATEST
+      returnBlockNum(req.tag)
     )
   }
 
@@ -91,7 +89,9 @@ class EthereumCallRequestBuilder {
     val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
     BatchCallContracts.Req(
       reqs,
-      withBlockNum = req.tag.isEmpty || req.tag.toLowerCase == LATEST
+      returnBlockNum(req.tag)
     )
   }
+
+  def returnBlockNum(tag: String) = tag.isEmpty || tag == "latest"
 }
