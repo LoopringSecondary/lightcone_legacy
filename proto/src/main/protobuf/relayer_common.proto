@@ -68,8 +68,8 @@ message BalanceAndAllowance {
 }
 
 message AmountAtBlock {
-    bytes amount                   = 1;
-    int64 block_num = 3;
+    bytes amount                    = 1;
+    int64 block_num                 = 2;
 }
 
 message EthereumProxySettings {
