@@ -20,8 +20,6 @@ import com.google.protobuf.ByteString
 import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data.BalanceAndAllowance
 import org.json4s.JsonAST.JString
-import org.json4s.jackson.Serialization
-import org.json4s.native.JsonMethods.parse
 import org.json4s.{jackson, CustomSerializer, JNothing, JNull, NoTypeHints}
 import org.scalatest.WordSpec
 import scalapb.json4s.JsonFormat
@@ -60,10 +58,7 @@ class EntryPointSpec_JsonFormat2 extends WordSpec {
         .formats(NoTypeHints) + new ByteStringSerializer + new EmptyValueSerializer
 
       val value = ByteString.copyFrom(BigInt("f" * 64, 16).toByteArray)
-      val ba = BalanceAndAllowance(
-        balance = value,
-        allowance = value
-      )
+      val ba = BalanceAndAllowance(balance = value, allowance = value)
       val baStr = serialization.write(ba)
       println(baStr)
       info(baStr)

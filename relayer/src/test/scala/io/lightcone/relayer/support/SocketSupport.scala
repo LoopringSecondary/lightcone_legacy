@@ -26,8 +26,6 @@ trait SocketSupport {
   implicit val orderNotifier = new OrderNotifier()
   implicit val orderBookNotifier = new OrderBookNotifier()
   implicit val tickerNotifier = new TickerNotifier()
-  implicit val tradeNotifier = new TradeNotifier()
-  implicit val transferNotifier = new TransferNotifier()
 
   val socketServer = new SocketServer()
   socketServer.start()
