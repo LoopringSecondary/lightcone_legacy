@@ -75,7 +75,34 @@ class CoreDeployer @Inject()(
     extends Object
     with Logging {
 
+  def deployEthereum() = {
+    actors
+      .add(
+        EthereumClientMonitor.name, //
+        EthereumClientMonitor.start
+      )
+      .add(
+        EthereumAccessActor.name, //
+        EthereumAccessActor.start
+      )
+      .add(
+        EthereumEventExtractorActor.name,
+        EthereumEventExtractorActor.start
+      )
+      .add(
+        MissingBlocksEventExtractorActor.name,
+        MissingBlocksEventExtractorActor.start
+      )
+      .add(
+        EthereumQueryActor.name, //
+        EthereumQueryActor.start
+      )
+  }
+
   def deploy(): Unit = {
+
+    //deploy ethereum actors
+    deployEthereum()
 
     //-----------deploy local actors-----------
     actors
@@ -166,14 +193,6 @@ class CoreDeployer @Inject()(
       //-----------deploy singleton actors-----------
       actors
         .add(
-          EthereumClientMonitor.name, //
-          EthereumClientMonitor.start
-        )
-        .add(
-          EthereumAccessActor.name, //
-          EthereumAccessActor.start
-        )
-        .add(
           OrderRecoverCoordinator.name, //
           OrderRecoverCoordinator.start
         )
@@ -190,14 +209,6 @@ class CoreDeployer @Inject()(
           ChainReorganizationManagerActor.start
         )
         .add(
-          EthereumEventExtractorActor.name,
-          EthereumEventExtractorActor.start
-        )
-        .add(
-          MissingBlocksEventExtractorActor.name,
-          MissingBlocksEventExtractorActor.start
-        )
-        .add(
           RingSettlementManagerActor.name, //
           RingSettlementManagerActor.start
         )
@@ -208,10 +219,6 @@ class CoreDeployer @Inject()(
 
       //-----------deploy sharded actors-----------
       actors
-        .add(
-          EthereumQueryActor.name, //
-          EthereumQueryActor.start
-        )
         .add(
           DatabaseQueryActor.name, //
           DatabaseQueryActor.start
