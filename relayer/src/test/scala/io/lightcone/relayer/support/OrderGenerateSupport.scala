@@ -48,8 +48,8 @@ trait OrderGenerateSupport {
       version = 0,
       tokenS = tokenS,
       tokenB = tokenB,
-      amountS = ByteString.copyFrom(amountS.toByteArray),
-      amountB = ByteString.copyFrom(amountB.toByteArray),
+      amountS = amountS,
+      amountB = amountB,
       validSince = validSince,
       state = Some(
         RawOrder.State(
@@ -61,7 +61,7 @@ trait OrderGenerateSupport {
       feeParams = Some(
         RawOrder.FeeParams(
           tokenFee = tokenFee,
-          amountFee = ByteString.copyFrom(amountFee.toByteArray)
+          amountFee = amountFee
         )
       ),
       params = Some(RawOrder.Params(validUntil = validUntil)),

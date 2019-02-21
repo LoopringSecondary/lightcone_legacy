@@ -415,7 +415,9 @@ class AccountManagerAltActor(
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {
+    println(s"##### rawOrder ${rawOrder}")
     val order = rawOrder.toOrder
+    println(s"#### order ${order}")
     val orderId = order.id
     val matchable: Matchable = order
     log.debug(s"### submitOrder ${order}")
@@ -425,7 +427,7 @@ class AccountManagerAltActor(
       )).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap
-        .getOrElse(orderId, ByteString.copyFrom("0".getBytes))
+        .getOrElse(orderId, Amount(ByteString.copyFrom("0".getBytes)))
 
       adjusted = matchable.withFilledAmountS(filledAmountS)
       (successful, updatedOrders) <- manager.resubmitOrder(adjusted)

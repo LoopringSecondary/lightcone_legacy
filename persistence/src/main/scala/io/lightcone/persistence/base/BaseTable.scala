@@ -18,7 +18,7 @@ package io.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
-import com.google.protobuf.ByteString
+import io.lightcone.core.Amount
 
 private[persistence] abstract class BaseTable[T](
     tag: Tag,
@@ -39,9 +39,9 @@ private[persistence] abstract class BaseTable[T](
 
   def columnAmount(
       name: String,
-      options: ColumnOption[ByteString]*
+      options: ColumnOption[Option[Amount]]*
     ) =
-    column[ByteString](name, options: _*)
+    column[Option[Amount]](name, options: _*)
 
   def id: slick.lifted.Rep[String]
 }

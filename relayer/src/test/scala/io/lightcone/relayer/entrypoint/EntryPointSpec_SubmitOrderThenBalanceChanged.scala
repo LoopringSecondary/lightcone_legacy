@@ -135,7 +135,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdatedEvent(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        ByteString.copyFrom("25".zeros(LRC_TOKEN.decimals).toByteArray)
+        "25".zeros(LRC_TOKEN.decimals)
       )
 
       Thread.sleep(2000)

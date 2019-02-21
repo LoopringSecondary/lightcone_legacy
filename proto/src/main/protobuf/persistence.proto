@@ -19,7 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.persistence;
 
-// import "core.proto";
+import "core.proto";
 // import "ethereum.proto";
 
 enum SortingType {
@@ -46,15 +46,15 @@ message BlockData {
     string parent_hash          = 5;
     string sha3_uncles          = 6;
     string mined_by             = 7;
-    bytes  difficulty           = 8;
-    bytes  total_difficulty     = 9;
+    io.lightcone.core.Amount  difficulty           = 8;
+    io.lightcone.core.Amount  total_difficulty     = 9;
     int64  size                 = 10;
-    bytes  gas_used             = 11;
-    bytes  gas_limit            = 12;
+    io.lightcone.core.Amount  gas_used             = 11;
+    io.lightcone.core.Amount  gas_limit            = 12;
     int64  avg_gas_price        = 13;
     int64  nonce                = 14;
-    bytes  block_reward         = 15;
-    bytes  uncle_reward         = 16;
+    io.lightcone.core.Amount  block_reward         = 15;
+    io.lightcone.core.Amount  uncle_reward         = 16;
     bytes  extra_data           = 17;
 }
 
@@ -75,27 +75,23 @@ message TxRecord {
 
     message EtherTransfer {
         string  address         = 1;  // 'to' or 'from'
-        bytes   amount_bytes    = 2;  // can be 0
-        string  amount          = 3;  // used for frontend display, not persistence
+        io.lightcone.core.Amount   amount    = 2;  // can be 0
     }
 
     message EtherConversion {
-        bytes   amount_bytes    = 1;  // can be 0
-        string  amount          = 2;  // used for frontend display, not persistence
+        io.lightcone.core.Amount   amount     = 1;  // can be 0
     }
 
     message TokenTransfer {
         string  address         = 1;  // 'to' or 'from'
         string  token           = 2;  // symbol (if we know)or) or address (otherwise)
-        bytes   amount_bytes    = 3;  // can be 0
-        string  amount          = 4;  // used for frontend display, not persistence
+        io.lightcone.core.Amount   amount     = 3;  // can be 0
     }
 
     message TokenAuth {
         string  token           = 1;  // symbol (if we know)or) or address (otherwise)
         string  target          = 2;
-        bytes   amount_bytes    = 3;
-        string  amount          = 4;  // used for frontend display, not persistence
+        io.lightcone.core.Amount   amount     = 3;
     }
 
 
@@ -105,10 +101,8 @@ message TxRecord {
         string  token_base              = 2;  // symbol (if we know)or) or address (otherwise)
         string  token_quote             = 3;  // symbol (if we know)or) or address (otherwise)
         string  price                   = 4;  // == _amountquote / _amountbase
-        bytes   amount_base_bytes       = 5;
-        bytes   amount_quote_bytes      = 6;
-        string  amount_base             = 7;  // used for frontend display, not persistence
-        string  amount_quote            = 8;  // used for frontend display, not persistence
+        io.lightcone.core.Amount   amount_base       = 5;
+        io.lightcone.core.Amount   amount_quote     = 6;
     }
 
     message LoopringCancel {
