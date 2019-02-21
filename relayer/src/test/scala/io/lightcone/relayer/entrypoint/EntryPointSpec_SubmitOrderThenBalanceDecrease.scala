@@ -17,7 +17,6 @@
 package io.lightcone.relayer.entrypoint
 
 import akka.pattern._
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
@@ -133,7 +132,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
-//          assert(sells.isEmpty && buys.isEmpty)
+        //          assert(sells.isEmpty && buys.isEmpty)
         case _ => assert(false)
       }
     }

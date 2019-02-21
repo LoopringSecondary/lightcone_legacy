@@ -27,7 +27,7 @@ import io.lightcone.relayer.RpcBinding
 import io.lightcone.relayer.jsonrpc._
 import io.lightcone.relayer.data.{GetTransactionRecords, _}
 import io.lightcone.core._
-import io.lightcone.lib.{NumericConversion, ProtoSerializer}
+import io.lightcone.lib.NumericConversion
 import org.json4s.JsonAST.JString
 import org.slf4s.Logging
 import scalapb.GeneratedMessage
@@ -192,10 +192,7 @@ trait HttpSupport extends RpcBinding with Logging {
            System.currentTimeMillis() <= lastTime) {
       val getTransferRecordsF =
         singleRequest(req, "get_transactions").mapTo[GetTransactionRecords.Res]
-      val res = Await.result(
-        getTransferRecordsF,
-        timeout.duration
-      )
+      val res = Await.result(getTransferRecordsF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {
@@ -223,10 +220,7 @@ trait HttpSupport extends RpcBinding with Logging {
            System.currentTimeMillis() <= lastTime) {
       val getTradesF =
         singleRequest(req, "get_trades").mapTo[GetTrades.Res]
-      val res = Await.result(
-        getTradesF,
-        timeout.duration
-      )
+      val res = Await.result(getTradesF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {

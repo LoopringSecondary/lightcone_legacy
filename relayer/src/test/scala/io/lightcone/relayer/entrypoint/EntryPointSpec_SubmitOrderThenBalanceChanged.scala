@@ -17,7 +17,6 @@
 package io.lightcone.relayer.entrypoint
 
 import akka.pattern._
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._

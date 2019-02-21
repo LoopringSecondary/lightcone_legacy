@@ -18,10 +18,6 @@ package io.lightcone.core
 
 import com.google.protobuf.ByteString
 
-private[core] class RichBigInt(bigint: BigInt) {
-  def min(that: BigInt): BigInt = if (bigint < that) bigint else that
-  def max(that: BigInt): BigInt = if (bigint > that) bigint else that
-
-  def toByteString() = ByteString.copyFrom(bigint.toByteArray)
-  def toAmount() = Amount(ByteString.copyFrom(bigint.toByteArray))
+private[core] class RichInt(int: Int) {
+  def toAmount() = Amount(ByteString.copyFrom(BigInt(int).toByteArray))
 }

@@ -16,7 +16,6 @@
 
 package io.lightcone.persistence
 
-import com.google.protobuf.ByteString
 import io.lightcone.core._
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data._
