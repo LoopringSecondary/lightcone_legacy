@@ -69,7 +69,7 @@ class IntegrationTest
       .withFallback(ConfigFactory.load())
 
     injector = Guice.createInjector(new CoreModule(config, true))
-    injector.instance[CoreDeployer].deploy()
+    injector.instance[CoreDeployerForTest].deploy()
 
     entrypointActor =
       injector.instance[Lookup[ActorRef]].get(EntryPointActor.name)

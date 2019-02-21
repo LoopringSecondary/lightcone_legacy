@@ -1,44 +1,45 @@
 /*
-
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-*/
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package io.lightcone.relayer
 
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.ethereum.{BatchMethod, DebugParams}
-import org.json4s.jackson.Serialization
-import org.json4s.native.JsonMethods.parse
-import scalapb.json4s.JsonFormat
+import io.lightcone.relayer.ethereum._
 
 object DataPool {
   var results = Map.empty[String, AnyRef]
 
+  def getResult(req: Any) = results.get(getRequestHash(req))
 
-  def getResult(req:Any) = results.get(getRequestHash(req))
+  def setResult(
+      req1: Any,
+      res: AnyRef
+    ) = req1 match {
+    case req: GetBalanceAndAllowances.Req =>
+      results = results + (getRequestHash(req) -> res)
 
-  def setResult(req1:Any, res:AnyRef) = req1 match {
-      case req:GetBalanceAndAllowances.Req =>
-        results = results + (getRequestHash(req) -> res)
+    case req =>
+      results = results + (getRequestHash(req) -> res)
+  }
 
-      case req =>
-        results = results + (getRequestHash(req) -> res)
-    }
+  def dispatchEvent(evt: AnyRef)(implicit dispatcher: EventDispatcher) = {
+    dispatcher.dispatch(evt)
+  }
 
-  def getRequestHash(req1:Any):String = req1 match {
+  def getRequestHash(req1: Any): String = req1 match {
     case req: NodeBlockHeight =>
       s"req_${req.nodeName}"
     case req: JsonRpc.Request =>
@@ -87,7 +88,7 @@ object DataPool {
     case req: GetUncle.Req =>
       s"uncle_${req.blockNum}_${req.index}"
 
-      //batch的请求不需要再次设置
+    //batch的请求不需要再次设置
     case batchR: BatchCallContracts.Req =>
       throw new Exception("not support")
 
