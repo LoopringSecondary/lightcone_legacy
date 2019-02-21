@@ -6,61 +6,6 @@ package io.lightcone.relayer.data.ext;
 import "core.proto";
 import "persistence.proto";
 
-// TODO(yadong)： I think we can still use proto enums in these data structures.
-// RPC Submit Order
-message RawOrder {
-    int32       version                          = 1;
-    string      owner                            = 2;
-    string      token_s                          = 3;
-    string      token_b                          = 4;
-    string      amount_s                         = 5;
-    string      amount_b                         = 6;
-    string      valid_since                      = 7; // in seconds
-    string      dual_auth_addr                   = 8;
-    string      broker                           = 9;
-    string      order_interceptor                = 10;
-    string      wallet                           = 11;
-    string      valid_until                      = 12; // in seconds
-    string      sig                              = 13;
-    string      dual_auth_sig                    = 14;
-    bool        all_or_none                      = 15;
-    string      dual_auth_private_key            = 16;
-    string      token_fee                        = 17;
-    string      amount_fee                       = 18;
-    int32       token_s_fee_percentage           = 19;
-    int32       token_b_fee_percentage           = 20;
-    string      token_recipient                  = 21;
-    int32       wallet_split_percentage          = 22;
-    int32       token_standard_s                 = 23;
-    int32       token_standard_b                 = 24;
-    int32       token_standard_fee               = 25;
-    string      tranche_s                        = 26;
-    string      tranche_b                        = 27;
-    string      transfer_data_s                  = 28;
-}
-
-// Usef for JSON RPC and WEB SOCKET
-message OrderSnippet {
-    string order_id                                 = 1;
-    string owner                                    = 2;
-    io.lightcone.core.MarketPair   market_pair      = 3;
-    io.lightcone.core.OrderStatus  status           = 4;
-    io.lightcone.relayer.data.OrderState state      = 5;
-}
-
-// Usef for JSON RPC and WEB SOCKET
-message RingSnippet {
-    string   ring_hash         = 1;
-    int64    ring_index        = 2;
-    int32    fills_amount      = 3;
-    string   miner             = 4;
-    string   tx_hash           = 5;
-    repeated Trade.Fee fees    = 6;
-    int64    block_height      = 7;
-    int64    block_timestamp   = 8;
-    OrderSnippet  taker        = 9;
-    OrderSnippet  maker        = 10;
-}
 
 // Usef for JSON RPC
 message Account {
@@ -89,7 +34,7 @@ message GetAccounts{
 
 message SubmitOrder{
     message Params {
-        RawOrder order = 1;
+        io.lightcone.ore.RawOrder.RawOrder order = 1;
     }
     message Result {
         string order_hash = 1;
@@ -112,12 +57,12 @@ message GetOrders{
         int32 page_size = 3;
         int32 total = 4;
         // Do not return the full order, only return a small pice of information.
-        repeated OrderSnippet orders = 5;
+        repeated io.lightcone.ore.RawOrder orders = 5;
     }
 
 }
 
-message GetTrades{
+message GetFills{
     message Params {
         string owner = 1;
         io.lightcone.core.MarketPair market = 2;
@@ -130,7 +75,7 @@ message GetTrades{
         int32 page_num = 2;
         int32 page_size = 3;
         int32 total = 4;
-        repeated io.lightcone.persistence.Activity trades = 5;
+        repeated io.lightcone.persistence.Fill fills = 5;
     }
 }
 
@@ -147,11 +92,11 @@ message GetRings {
         int32 page_num = 1;
         int32 page_size = 2;
         int32 total  = 3;
-        repeated RingSnippet rings = 4;
+        repeated io.lightcone.persistence.Ring rings = 4;
     }
 }
 
-message GetActivities {
+message GetAccountActivities {
     message Params {
         string owner = 1;
         string type = 2;  // TODO(yadong): I think we can use Enum type here.
@@ -166,7 +111,7 @@ message GetActivities {
         int32 page_num = 2;
         int32 page_size = 3;
         int32 total = 4;
-        repeated io.lightcone.persistence.Activity activities = 5;
+        repeated io.lightcone.persistence.AccountActivity activities = 5;
     }
 }
 

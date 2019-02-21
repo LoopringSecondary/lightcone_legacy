@@ -16,7 +16,6 @@
 
 package io.lightcone.persistence
 
-import com.google.protobuf.ByteString
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data.GetRings._
 import io.lightcone.core._
@@ -102,9 +101,9 @@ class RingServiceSpec extends ServiceSpec[RingService] {
 
   val fee1 = Trade.Fee(
     tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    amountFee = ByteString.copyFrom("10", "UTF-8"),
-    feeAmountS = ByteString.copyFrom("11", "UTF-8"),
-    feeAmountB = ByteString.copyFrom("12", "UTF-8"),
+    amountFee = BigInt(10),
+    feeAmountS = BigInt(11),
+    feeAmountB = BigInt(12),
     feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
     waiveFeePercentage = 10,
     walletSplitPercentage = 5
@@ -112,9 +111,9 @@ class RingServiceSpec extends ServiceSpec[RingService] {
 
   val fee2 = Trade.Fee(
     tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
-    amountFee = ByteString.copyFrom("20", "UTF-8"),
-    feeAmountS = ByteString.copyFrom("21", "UTF-8"),
-    feeAmountB = ByteString.copyFrom("22", "UTF-8"),
+    amountFee = BigInt(20),
+    feeAmountS = BigInt(21),
+    feeAmountB = BigInt(22),
     feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
     waiveFeePercentage = 8,
     walletSplitPercentage = 2
