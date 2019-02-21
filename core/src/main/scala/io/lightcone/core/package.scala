@@ -32,26 +32,38 @@ package object core {
   }
 
   /// -----implicit methods -----
+  @inline
   implicit def byteString2BigInt(bs: ByteString): BigInt =
     NumericConversion.toBigInt(bs)
 
+  @inline
   implicit def bigInt2ByteString(b: BigInt): ByteString =
     new RichBigInt(b).toByteString
 
+  @inline
   implicit def byteArray2ByteString(bytes: Array[Byte]) =
     ByteString.copyFrom(bytes)
 
+  @inline
+  implicit def byteString2HexString(bytes: ByteString) =
+    Numeric.toHexStringWithPrefix(bytes.bigInteger)
+
   /// -----implicit classes -----
+  @inline
   implicit class Rich_OrderbookSlot(raw: Orderbook.Slot)
       extends RichOrderbookSlot(raw)
 
+  @inline
   implicit class Rich_BigInt(raw: BigInt) extends RichBigInt(raw)
 
+  @inline
   implicit class Rich_ExpectedFill(raw: ExpectedMatchableFill)
       extends RichExpectedFill(raw)
 
+  @inline
   implicit class Rich_Matchable(raw: Matchable) extends RichMatchable(raw)
 
+  @inline
   implicit class Rich_MatchableRing(raw: MatchableRing)
       extends RichMatchableRing(raw)
 }

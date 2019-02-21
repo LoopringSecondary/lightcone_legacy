@@ -16,7 +16,20 @@
 
 package io.lightcone.core
 
-package object testing {
+trait ChainReorganizationManager {
 
-  implicit class Rich_Double(v: Double) extends RichDouble(v)
+  def reset(): Unit
+
+  def recordOrderUpdate(
+      blockIdx: Long,
+      orderId: String
+    ): Unit
+
+  def recordAccountUpdate(
+      blockIdx: Long,
+      address: String,
+      token: String
+    ): Unit
+
+  def reorganizedAt(blockIdx: Long): ChainReorganizationImpact
 }

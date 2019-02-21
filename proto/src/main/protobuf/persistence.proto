@@ -58,6 +58,88 @@ message BlockData {
     bytes  extra_data           = 17;
 }
 
+message TxRecord {
+
+    enum TxType {
+        ETHER_TRANSFER_OUT           = 0;
+        ETHER_TRANSFER_IN            = 1;
+        ETHER_WRAP                   = 2;
+        ETHER_UNWRAP                 = 3;
+        TOKEN_TRANSFER_OUT           = 4;
+        TOKEN_TRANSFER_IN            = 5;
+        TOKEN_AUTH                   = 6;
+        LOOPRING_TRADE_SELL          = 7;
+        LOOPRING_TRADE_BUY           = 8;
+        LOOPRING_CANCEL              = 9;
+    }
+
+    message EtherTransfer {
+        string  address         = 1;  // 'to' or 'from'
+        bytes   amount_bytes    = 2;  // can be 0
+        string  amount          = 3;  // used for frontend display, not persistence
+    }
+
+    message EtherConversion {
+        bytes   amount_bytes    = 1;  // can be 0
+        string  amount          = 2;  // used for frontend display, not persistence
+    }
+
+    message TokenTransfer {
+        string  address         = 1;  // 'to' or 'from'
+        string  token           = 2;  // symbol (if we know)or) or address (otherwise)
+        bytes   amount_bytes    = 3;  // can be 0
+        string  amount          = 4;  // used for frontend display, not persistence
+    }
+
+    message TokenAuth {
+        string  token           = 1;  // symbol (if we know)or) or address (otherwise)
+        string  target          = 2;
+        bytes   amount_bytes    = 3;
+        string  amount          = 4;  // used for frontend display, not persistence
+    }
+
+
+    // If the txType is TRADE_BUY:
+    message LoopringTrade {
+        string  address                 = 1;
+        string  token_base              = 2;  // symbol (if we know)or) or address (otherwise)
+        string  token_quote             = 3;  // symbol (if we know)or) or address (otherwise)
+        string  price                   = 4;  // == _amountquote / _amountbase
+        bytes   amount_base_bytes       = 5;
+        bytes   amount_quote_bytes      = 6;
+        string  amount_base             = 7;  // used for frontend display, not persistence
+        string  amount_quote            = 8;  // used for frontend display, not persistence
+    }
+
+    message LoopringCancel {
+        string order_id         = 1;
+        int64  cutoff           = 2; // if order_id is not "", this must be not 0.
+        string market_pair      = 3; // dispaly as "LRC/ETH", if missing, means all markets.
+        string broker           = 4; // optional
+    }
+
+
+    // To query Tx records for a address "ABC", either owner or target will be ABC.
+    // if owner == target == ABC, we treat  owner == ABC and ignore target.
+    string owner                = 1; // (indexed) the related address
+    int64  block                = 2; // (indexed)  0 indiciate pending
+    int64  tx_hash              = 3; // (indexed) the transaction hash, multiple Tx record may
+                                     // share the same tx hash, the wallet may choose to group
+                                     // those records to display.
+    TxType tx_type              = 4; //  (indexed)
+    int64  timestamp            = 5; //  (indexed) may not be unique, used in sorting
+    double fiat_value           = 6;
+
+    oneof detail {
+        EtherTransfer   ether_transfer          = 21;
+        EtherConversion ether_conversion        = 22;
+        TokenTransfer   token_transfer          = 23;
+        TokenAuth       token_auth              = 24;
+        LoopringTrade   loopring_trade          = 25;
+        LoopringCancel  loopring_cancel         = 26;
+    }
+}
+
 message ThirdPartyTokenPrice {
     message Ticker {
         double price = 1;

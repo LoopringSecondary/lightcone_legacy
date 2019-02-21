@@ -302,3 +302,17 @@ message MarketStats {
     bool   is_last_taker_sell   = 8;
 }
 
+
+message ChainReorganizationImpact {
+
+    message AccountInfo {
+        string address          = 1;
+        repeated string tokens  = 2;
+    }
+
+   repeated string order_ids    = 1;
+   repeated AccountInfo accounts  = 2;
+}
+
+
+

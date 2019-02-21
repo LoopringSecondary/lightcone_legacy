@@ -35,4 +35,6 @@ object NumericConversion {
       case e: Throwable => BigInt(0)
     }
 
+  def toHexString(bi: BigInt): String =
+    Numeric.toHexStringWithPrefix(bi.bigInteger)
 }

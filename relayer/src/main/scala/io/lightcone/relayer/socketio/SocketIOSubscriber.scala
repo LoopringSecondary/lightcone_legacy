@@ -14,9 +14,30 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer.socketio
 
-package object testing {
+import com.corundumstudio.socketio.SocketIOClient
 
-  implicit class Rich_Double(v: Double) extends RichDouble(v)
+class SocketIOSubscriber[R](
+    val client: SocketIOClient,
+    val subscription: R) {
+
+  def sendEvent(
+      eventName: String,
+      event: AnyRef
+    ): Unit = {
+    if (client.isChannelOpen) {
+      client.sendEvent(eventName, event)
+    }
+  }
+
+  override def equals(obj: Any): Boolean = {
+    if (obj == null) false
+    else
+      obj match {
+        case c: SocketIOSubscriber[_] =>
+          c.client.getSessionId.equals(client.getSessionId)
+        case _ => false
+      }
+  }
 }

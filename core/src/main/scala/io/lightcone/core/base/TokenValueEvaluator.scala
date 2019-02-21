@@ -34,7 +34,6 @@ class TokenValueEvaluator @Inject()()(implicit mm: MetadataManager) {
             Rational(token.meta.externalData.get.usdPrice)).doubleValue
         }
         .getOrElse(0)
-
   }
 
 }
