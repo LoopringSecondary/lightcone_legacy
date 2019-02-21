@@ -75,7 +75,6 @@ message EthCall {
         string jsonrpc = 2;
         string result = 3;
         EthRpcError error = 4;
-        int64 block_num = 5;
     }
 }
 

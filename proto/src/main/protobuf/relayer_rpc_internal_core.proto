@@ -194,6 +194,7 @@ message GetOrderCancellation {
 
     message Res {
        bool  cancelled = 1;
+       int64 block_num = 2;
     }
 }
 
@@ -231,6 +232,7 @@ message GetBurnRate {
     message Res {
         double for_market = 1;
         double for_p2p = 2;
+        int64 block_num = 3;
     }
 }
 

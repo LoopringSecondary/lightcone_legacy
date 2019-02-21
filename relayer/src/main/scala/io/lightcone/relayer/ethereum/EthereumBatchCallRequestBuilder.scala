@@ -91,7 +91,10 @@ class EthereumBatchCallRequestBuilder {
         val param = TransactionParams(to = address.token, data = data)
         EthCall.Req(index, Some(param), tag)
     }
-    BatchCallContracts.Req(balanceCallReqs)
+    BatchCallContracts.Req(
+      balanceCallReqs,
+      withBlockNum = tag.isEmpty || tag.toLowerCase() == LATEST
+    )
   }
 
   def buildRequest(
@@ -110,7 +113,10 @@ class EthereumBatchCallRequestBuilder {
         val param = TransactionParams(to = address.token, data = data)
         EthCall.Req(index, Some(param), tag)
     }
-    BatchCallContracts.Req(balanceCallReqs)
+    BatchCallContracts.Req(
+      balanceCallReqs,
+      withBlockNum = tag.isEmpty || tag.toLowerCase() == LATEST
+    )
   }
 
   def buildRequest(
@@ -120,9 +126,8 @@ class EthereumBatchCallRequestBuilder {
       implicit
       rb: EthereumCallRequestBuilder
     ): BatchCallContracts.Req = {
-
     val cutoffCallReqs = req.reqs.map { cutoffReq =>
-      rb.buildRequest(cutoffReq, tradeHistoryAddress)
+      rb.buildRequest(cutoffReq, tradeHistoryAddress).reqs.head
     }
     BatchCallContracts.Req(cutoffCallReqs)
   }

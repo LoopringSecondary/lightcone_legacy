@@ -79,12 +79,14 @@ message AddressBalanceUpdatedEvent {
     string address = 1;
     string token = 2;
     bytes balance = 3;
+    int64 block_num = 4;
 }
 
 message AddressAllowanceUpdatedEvent {
     string address = 1;
     string token = 2;
     bytes allowance = 3;
+    int64 block_num = 4;
 }
 
 message GasPriceUpdatedEvent {

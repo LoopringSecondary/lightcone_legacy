@@ -102,10 +102,15 @@ class EthereumQueryActor(
 
         ethRes <- ethToken match {
           case head :: tail =>
-            (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address.normalize(owner),
-              tag
-            )).mapAs[EthGetBalance.Res].map(Some(_))
+            (ethereumAccessorActor ? BatchGetEthBalance.Req(
+              Seq(
+                EthGetBalance.Req(
+                  address = Address.normalize(owner),
+                  tag
+                )
+              ),
+              withBlockNum = tag.isEmpty || tag.toLowerCase == "latest"
+            )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
@@ -113,8 +118,9 @@ class EthereumQueryActor(
           result.copy(
             balanceAndAllowanceMap = result.balanceAndAllowanceMap +
               (ethToken.head -> BalanceAndAllowance(
-                NumericConversion.toBigInt(ethRes.get.result),
-                BigInt(0)
+                NumericConversion.toBigInt(ethRes.get.resps.head.result),
+                BigInt(0),
+                NumericConversion.toBigInt(ethRes.get.blockNum)
               ))
           )
         } else {
@@ -139,10 +145,15 @@ class EthereumQueryActor(
 
         ethRes <- ethToken match {
           case head :: tail =>
-            (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address.normalize(owner),
-              tag
-            )).mapAs[EthGetBalance.Res].map(Some(_))
+            (ethereumAccessorActor ? BatchGetEthBalance.Req(
+              Seq(
+                EthGetBalance.Req(
+                  address = Address.normalize(owner),
+                  tag
+                )
+              ),
+              withBlockNum = tag.isEmpty || tag.toLowerCase == "latest"
+            )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
@@ -150,7 +161,11 @@ class EthereumQueryActor(
           result.copy(
             balanceMap = result.balanceMap +
               (Address.ZERO.toString ->
-                Balance(NumericConversion.toBigInt(ethRes.get.result)))
+                Balance(
+                  NumericConversion.toBigInt(ethRes.get.resps.head.result),
+                  blockNum =
+                    NumericConversion.toBigInt(ethRes.get.blockNum).toLong
+                ))
           )
         } else {
           result
@@ -188,21 +203,23 @@ class EthereumQueryActor(
       }
 
     case req: GetOrderCancellation.Req =>
-      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
+      batchCallEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
           GetOrderCancellation.Res(
-            NumericConversion.toBigInt(result).intValue == 1
+            NumericConversion.toBigInt(result.resps.head.result).intValue == 1,
+            blockNum = NumericConversion.toBigInt(result.blockNum).toLong
           )
       }
 
     case req: GetCutoff.Req =>
-      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
+      batchCallEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
           GetCutoff.Res(
             req.broker,
             req.owner,
             req.marketHash,
-            NumericConversion.toBigInt(result)
+            NumericConversion.toBigInt(result.resps.head.result),
+            NumericConversion.toBigInt(result.blockNum).toLong
           )
       }
     case req: BatchGetCutoffs.Req =>
@@ -221,10 +238,10 @@ class EthereumQueryActor(
       }
 
     case req: GetBurnRate.Req =>
-      callEthereum(sender, rb.buildRequest(req, burnRateTableAddress)) {
+      batchCallEthereum(sender, rb.buildRequest(req, burnRateTableAddress)) {
         result =>
           {
-            val formatResult = Numeric.cleanHexPrefix(result)
+            val formatResult = Numeric.cleanHexPrefix(result.resps.head.result)
             if (formatResult.length == 64) {
               val p2pRate = NumericConversion
                 .toBigInt(formatResult.substring(56, 60))
@@ -232,7 +249,11 @@ class EthereumQueryActor(
               val marketRate = NumericConversion
                 .toBigInt(formatResult.substring(60))
                 .doubleValue() / base
-              GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
+              GetBurnRate.Res(
+                forMarket = marketRate,
+                forP2P = p2pRate,
+                blockNum = NumericConversion.toBigInt(result.blockNum).toLong
+              )
             } else {
               throw ErrorException(
                 ErrorCode.ERR_UNEXPECTED_RESPONSE,
