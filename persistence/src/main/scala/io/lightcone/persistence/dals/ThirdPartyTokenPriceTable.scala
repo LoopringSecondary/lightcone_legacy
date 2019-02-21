@@ -64,10 +64,10 @@ class ThirdPartyTokenPriceTable(tag: Tag)
       percentChange7D,
       marketCap
     ) <> ({ tuple =>
-      Option((ThirdPartyTokenPrice.Quote.apply _).tupled(tuple))
-    }, { paramsOpt: Option[ThirdPartyTokenPrice.Quote] =>
-      val params = paramsOpt.getOrElse(ThirdPartyTokenPrice.Quote())
-      ThirdPartyTokenPrice.Quote.unapply(params)
+      Option((ThirdPartyTokenPrice.Ticker.apply _).tupled(tuple))
+    }, { paramsOpt: Option[ThirdPartyTokenPrice.Ticker] =>
+      val params = paramsOpt.getOrElse(ThirdPartyTokenPrice.Ticker())
+      ThirdPartyTokenPrice.Ticker.unapply(params)
     })
 
   def * =

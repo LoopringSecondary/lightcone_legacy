@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext
 import com.google.inject._
 import io.lightcone.core.ErrorException
 import io.lightcone.persistence.{CMCTokenSlug, ThirdPartyTokenPrice}
-import io.lightcone.persistence.ThirdPartyTokenPrice.Quote
+import io.lightcone.persistence.ThirdPartyTokenPrice.Ticker
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors.CMCCrawlerActor
 
@@ -109,7 +109,7 @@ class CMCTickerManagerImpl @Inject()(
         )
       }
       val q = t.quote("USD")
-      val usdQuote = ThirdPartyTokenPrice.Quote(
+      val usdQuote = ThirdPartyTokenPrice.Ticker(
         q.price,
         q.volume24H,
         q.percentChange1H,
@@ -183,7 +183,7 @@ class CMCTickerManagerImpl @Inject()(
       symbol = slugSymbol.symbol,
       slug = t.slug,
       quote = Map(
-        "USD" -> Quote(
+        "USD" -> Ticker(
           q.price,
           q.volume24H,
           q.percentChange1H,
@@ -239,7 +239,7 @@ class CMCTickerManagerImpl @Inject()(
       tickers: Seq[ThirdPartyTokenPrice],
       slugSymbols: Seq[CMCTokenSlug],
       supportMarketSymbols: Set[String]
-    ): Seq[(String, ThirdPartyTokenPrice.Quote)] = {
+    ): Seq[(String, ThirdPartyTokenPrice.Ticker)] = {
     supportMarketSymbols.toSeq.map { s =>
       val symbol = if (s == "WETH") "ETH" else s
       val slugSymbol = slugSymbols
@@ -266,9 +266,9 @@ class CMCTickerManagerImpl @Inject()(
 
   //锚定市场币的priceQuote换算
   private def convertQuote(
-      tokenQuote: Quote,
-      marketQuote: Quote
-    ): Quote = {
+      tokenQuote: Ticker,
+      marketQuote: Ticker
+    ): Ticker = {
     val price = toDouble(BigDecimal(tokenQuote.price / marketQuote.price))
     val volume_24h = toDouble(
       BigDecimal(tokenQuote.volume24H / tokenQuote.price) * price
@@ -285,7 +285,7 @@ class CMCTickerManagerImpl @Inject()(
     val percent_change_7d = BigDecimal(1 + tokenQuote.percentChange7D) / BigDecimal(
       1 + marketQuote.percentChange7D
     ) - 1
-    Quote(
+    Ticker(
       price,
       volume_24h,
       toDouble(percent_change_1h),

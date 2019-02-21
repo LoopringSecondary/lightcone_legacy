@@ -196,7 +196,7 @@ class CMCCrawlerActor(
       cnyTicker = ThirdPartyTokenPrice(
         "rmb",
         Some(
-          ThirdPartyTokenPrice.Quote(
+          ThirdPartyTokenPrice.Ticker(
             price = tickerManager
               .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
           )

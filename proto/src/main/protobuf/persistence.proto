@@ -59,7 +59,7 @@ message BlockData {
 }
 
 message ThirdPartyTokenPrice {
-    message Quote {
+    message Ticker {
         double price = 1;
         double volume_24h = 2;
         double percent_change_1h = 3;
@@ -68,7 +68,7 @@ message ThirdPartyTokenPrice {
         double market_cap = 6;
     }
     string slug = 1;
-    Quote usd_quote = 2;
+    Ticker usd_quote = 2;
     int64 sync_time = 3;
     bool  is_effective = 4;
 }

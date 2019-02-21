@@ -92,7 +92,7 @@ class CMCCrawlerSpec
         50.second
       )
       q1._1.data.length should be(2072)
-      q1._2.length should be(2073) // CNY added
+      q1._2.length should be(2073) // RMB added
       q1._5.nonEmpty should be(true)
       tickers = q1._2
       slugSymbols = q1._5 ++ q1._1.data.map(t => CMCTokenSlug(t.symbol, t.slug))
@@ -206,7 +206,7 @@ class CMCCrawlerSpec
       cnyTicker = ThirdPartyTokenPrice(
         "rmb",
         Some(
-          ThirdPartyTokenPrice.Quote(
+          ThirdPartyTokenPrice.Ticker(
             price = tickerManager
               .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
           )

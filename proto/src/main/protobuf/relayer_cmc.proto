@@ -33,7 +33,7 @@ message CMCTickerData {
     int32 num_market_pairs = 9;
     int32 cmc_rank = 10;
     string last_updated = 11;
-    map<string, io.lightcone.persistence.ThirdPartyTokenPrice.Quote> quote = 12;
+    map<string, io.lightcone.persistence.ThirdPartyTokenPrice.Ticker> quote = 12;
 }
 
 message TickerStatus {
