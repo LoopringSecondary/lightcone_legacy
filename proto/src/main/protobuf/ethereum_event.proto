@@ -77,9 +77,9 @@ message ApprovalEvent {
 }
 
 message AddressBalanceUpdatedEvent {
-    string address = 1;
-    string token = 2;
-    bytes balance = 3;
+    string address  = 1;
+    string token    = 2;
+    bytes balance   = 3;
     int64 block_num = 4;
 }
 
@@ -95,7 +95,7 @@ message AddressBalanceAllowanceUpdatedEvent {
     string token    = 2;
     bytes balance   = 3;
     bytes allowance = 4;
-    int64 block_num     = 5;
+    int64 block_num = 5;
 }
 
 message GasPriceUpdatedEvent {
