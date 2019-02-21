@@ -135,11 +135,6 @@ class MetadataManagerActor(
       (for {
         latestEffectiveRequest <- dbModule.thirdPartyTokenPriceDal
           .getLatestEffectiveRequest()
-        _ = if (latestEffectiveRequest.nonEmpty)
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found tickers in db"
-          )
         modifiedTokens <- if (latestEffectiveRequest.nonEmpty) {
           val tokenSlugSymbols = req.tokens.map { t =>
             (t.slug, t.symbol)

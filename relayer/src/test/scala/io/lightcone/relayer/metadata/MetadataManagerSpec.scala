@@ -25,8 +25,10 @@ import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
 import scala.concurrent.duration._
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import akka.pattern._
+import io.lightcone.persistence.ThirdPartyTokenPrice
+import scalapb.json4s.Parser
 
 class MetadataManagerSpec
     extends CommonSpec
@@ -45,6 +47,18 @@ class MetadataManagerSpec
   def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   "load tokens config" must {
+    "initialize tickers" in {
+      val f = for {
+        cmcResponse <- getMockedCMCTickers()
+        rateResponse <- currencyManager.getUsdCnyCurrency()
+        tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
+          persistTickers(rateResponse, cmcResponse.data)
+        } else {
+          Future.successful(Seq.empty)
+        }
+      } yield {}
+      Await.result(f.mapTo[Unit], 30.second)
+    }
     "initialized metadataManager completely" in {
       info("check tokens: address at lower and upper case")
       assert(metadataManager.getTokens.length >= TOKENS.length) // in case added some tokens after initialized (metadataManager.addToken(token))
@@ -101,7 +115,7 @@ class MetadataManagerSpec
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "AAA",
-          slug = "aaa",
+          slug = "aurora",
           name = "AAA Token",
           address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
           unit = "AAA",
@@ -115,7 +129,7 @@ class MetadataManagerSpec
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "ABC",
-          slug = "abc",
+          slug = "pivx",
           name = "ABC Token",
           address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
           unit = "ABC",
@@ -129,7 +143,7 @@ class MetadataManagerSpec
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "BBB",
-          slug = "bbb",
+          slug = "linkey",
           name = "BBB Token",
           address = "0x989fcbc46845a290e971a6303ef3753fb039d8d5",
           unit = "BBB",
@@ -143,7 +157,7 @@ class MetadataManagerSpec
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "BBC",
-          slug = "bbc",
+          slug = "decentraland",
           name = "BBC Token",
           address = "0x61a11f3d1f3b4dbd3f780f004773e620daf065c4",
           unit = "BBC",
@@ -157,7 +171,7 @@ class MetadataManagerSpec
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
           symbol = "CCC",
-          slug = "ccc",
+          slug = "moac",
           name = "CCC Token",
           address = "0x34a381433f45230390d750113aab46c65129ffab",
           unit = "CCC",
@@ -171,7 +185,7 @@ class MetadataManagerSpec
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.INVALID,
           symbol = "CDE",
-          slug = "cde",
+          slug = "veritaseum",
           name = "CDE Token",
           address = "0xfdeda15e2922c5ed41fc1fdf36da2fb2623666b3",
           unit = "CDE",
@@ -517,4 +531,58 @@ class MetadataManagerSpec
     }
   }
 
+  val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
+
+  private def getMockedCMCTickers() = {
+    import scala.io.Source
+    val fileContents = Source.fromResource("cmc.data").getLines.mkString
+
+    val res = parser.fromJsonString[TickerDataInfo](fileContents)
+    res.status match {
+      case Some(r) if r.errorCode == 0 =>
+        Future.successful(res.copy(data = res.data))
+      case Some(r) if r.errorCode != 0 =>
+        log.error(
+          s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
+        )
+        Future.successful(res)
+      case m =>
+        log.error(s"Failed request CMC, return:[$m]")
+        Future.successful(TickerDataInfo(Some(TickerStatus(errorCode = 404))))
+    }
+  }
+
+  private def persistTickers(
+      usdTocnyRate: Double,
+      tickers_ : Seq[CMCTickerData]
+    ) =
+    for {
+      _ <- Future.unit
+      tickersToPersist = tickerManager.convertCMCResponseToPersistence(
+        tickers_
+      )
+      cnyTicker = ThirdPartyTokenPrice(
+        "rmb",
+        Some(
+          ThirdPartyTokenPrice.Quote(
+            price = tickerManager
+              .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
+          )
+        )
+      )
+      now = timeProvider.getTimeSeconds()
+      tickers = tickersToPersist.+:(cnyTicker).map(t => t.copy(syncTime = now))
+      fixGroup = tickers.grouped(20).toList
+      _ <- Future.sequence(
+        fixGroup.map(dbModule.thirdPartyTokenPriceDal.saveTickers)
+      )
+      updateSucc <- dbModule.thirdPartyTokenPriceDal.updateEffective(now)
+    } yield {
+      if (updateSucc != ErrorCode.ERR_NONE) {
+        log.error(s"CMC persist failed, code:$updateSucc")
+        Seq.empty
+      } else {
+        tickers
+      }
+    }
 }
