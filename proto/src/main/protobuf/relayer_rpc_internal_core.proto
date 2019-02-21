@@ -131,7 +131,8 @@ message GetBalanceAndAllowances {
     message Res {
         string address = 1;
         map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-        io.lightcone.core.Error error = 3;
+        int64 block_number = 3;
+        io.lightcone.core.Error error = 4;
     }
 }
 

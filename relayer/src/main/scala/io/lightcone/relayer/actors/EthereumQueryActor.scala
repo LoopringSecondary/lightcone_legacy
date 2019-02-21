@@ -96,9 +96,10 @@ class EthereumQueryActor(
           BalanceAndAllowance(ba._1, ba._2)
         }
 
-        blockNumber: Long = ??? // TODO(yadong): implement this.
+        // TODO(yadong): implement this.
+        blockNumber: Long = 0
         result = GetBalanceAndAllowances
-          .Res(owner, (erc20Tokens zip balanceAndAllowance).toMap)
+          .Res(owner, (erc20Tokens zip balanceAndAllowance).toMap, blockNumber)
 
         ethRes <- ethToken match {
           case head :: tail =>
