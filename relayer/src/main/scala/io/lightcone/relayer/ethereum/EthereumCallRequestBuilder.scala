@@ -93,5 +93,5 @@ class EthereumCallRequestBuilder {
     )
   }
 
-  def returnBlockNum(tag: String) = tag.isEmpty || tag == "latest"
+  @inline def returnBlockNum(tag: String) = tag.isEmpty || tag == "latest"
 }

@@ -60,7 +60,7 @@ class RecoverAccountsActor(
                 token = token,
                 balance = balance,
                 allowance = allowance,
-                block = block
+                blockNum = block
               )
           }
 

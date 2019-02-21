@@ -109,7 +109,7 @@ class EthereumQueryActor(
                   tag
                 )
               ),
-              returnBlockNum = tag.isEmpty || tag.toLowerCase == "latest"
+              returnBlockNum = brb.returnBlockNum(tag)
             )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
@@ -152,7 +152,7 @@ class EthereumQueryActor(
                   tag
                 )
               ),
-              returnBlockNum = tag.isEmpty || tag.toLowerCase == "latest"
+              returnBlockNum = brb.returnBlockNum(tag)
             )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }

@@ -37,7 +37,7 @@ class EthereumBatchCallRequestBuilder {
 
     BatchCallContracts.Req(
       allowanceCallReqs ++ balanceCallReqs,
-      withBlockNum(req.tag)
+      returnBlockNum(req.tag)
     )
   }
 
@@ -47,7 +47,7 @@ class EthereumBatchCallRequestBuilder {
     val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, req.tag)
     BatchCallContracts.Req(
       balanceCallReqs,
-      withBlockNum(req.tag)
+      returnBlockNum(req.tag)
     )
   }
 
@@ -61,7 +61,7 @@ class EthereumBatchCallRequestBuilder {
       buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, req.tag)
     BatchCallContracts.Req(
       allowanceCallReqs,
-      withBlockNum(req.tag)
+      returnBlockNum(req.tag)
     )
   }
 
@@ -73,7 +73,7 @@ class EthereumBatchCallRequestBuilder {
       buildBatchFilledAmountReq(tradeHistoryAddress, req.orderIds, req.tag)
     BatchCallContracts.Req(
       batchFilledAmountReqs,
-      withBlockNum(req.tag)
+      returnBlockNum(req.tag)
     )
   }
 
@@ -91,7 +91,7 @@ class EthereumBatchCallRequestBuilder {
     }
     BatchCallContracts.Req(
       balanceCallReqs,
-      withBlockNum(tag)
+      returnBlockNum(tag)
     )
   }
 
@@ -113,7 +113,7 @@ class EthereumBatchCallRequestBuilder {
     }
     BatchCallContracts.Req(
       balanceCallReqs,
-      withBlockNum(tag)
+      returnBlockNum(tag)
     )
   }
 
@@ -127,7 +127,7 @@ class EthereumBatchCallRequestBuilder {
     val cutoffCallReqs = req.reqs.map { cutoffReq =>
       rb.buildRequest(cutoffReq, tradeHistoryAddress).reqs.head
     }
-    BatchCallContracts.Req(cutoffCallReqs, withBlockNum(req.tag))
+    BatchCallContracts.Req(cutoffCallReqs, returnBlockNum(req.tag))
   }
 
   private def buildBatchErc20AllowanceReq(
@@ -174,5 +174,5 @@ class EthereumBatchCallRequestBuilder {
     }
   }
 
-  def withBlockNum(tag: String) = tag.isEmpty || tag == "latest"
+  @inline def returnBlockNum(tag: String) = tag.isEmpty || tag == "latest"
 }
