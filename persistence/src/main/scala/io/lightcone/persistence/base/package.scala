@@ -23,18 +23,21 @@ import io.lightcone.relayer.data._
 
 package object base {
 
+  @inline
   implicit val byteStringColumnType: BaseColumnType[ByteString] =
     MappedColumnType.base[ByteString, Array[Byte]](
       bs => bs.toByteArray(),
       bytes => ByteString.copyFrom(bytes)
     )
 
+  @inline
   def enumColumnType[T <: scalapb.GeneratedEnum: ClassTag](
       enumCompanion: scalapb.GeneratedEnumCompanion[T]
     ): BaseColumnType[T] =
     MappedColumnType
       .base[T, Int](enum => enum.value, int => enumCompanion.fromValue(int))
 
+  @inline
   def eventDataColumnType(): BaseColumnType[TransactionRecord.EventData] =
     MappedColumnType
       .base[TransactionRecord.EventData, Array[Byte]](
@@ -42,6 +45,7 @@ package object base {
         bytes => TransactionRecord.EventData.parseFrom(bytes)
       )
 
+  @inline
   def eventDataOptColumnType(
     ): BaseColumnType[Option[TransactionRecord.EventData]] =
     MappedColumnType
@@ -50,6 +54,7 @@ package object base {
         case None    => TransactionRecord.EventData().toByteArray
       }, bytes => Some(TransactionRecord.EventData.parseFrom(bytes)))
 
+  @inline
   def ringFeesOptColumnType(): BaseColumnType[Option[Ring.Fees]] =
     MappedColumnType
       .base[Option[Ring.Fees], Array[Byte]]({

@@ -301,9 +301,19 @@ class AccountManagerAltActor(
 
       blocking {
         assert(req.address == owner)
-        manager
-          .setAllowance(req.token, BigInt(req.allowance.toByteArray))
+        manager.setAllowance(req.token, BigInt(req.allowance.toByteArray))
+      }
 
+    case req: AddressBalanceAllowanceUpdatedEvent =>
+      count.refine("label" -> "balance_allowance_updated").increment()
+      blocking {
+        assert(req.address == owner)
+
+        manager.setBalanceAndAllowance(
+          req.token,
+          BigInt(req.balance.toByteArray),
+          BigInt(req.allowance.toByteArray)
+        )
       }
 
     // ownerCutoff
