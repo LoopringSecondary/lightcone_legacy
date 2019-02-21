@@ -29,6 +29,8 @@ class ChainReorganizationManagerImpl(
     extends ChainReorganizationManager
     with Logging {
 
+  log.info(s"chain-regorg-manager: maxDepth=$maxDepth strictMode=$strictMode")
+
   case class BlockData(
       val orderIds: Set[String] = Set.empty,
       val accounts: Map[String, Set[String]] = Map.empty) {
@@ -112,6 +114,7 @@ class ChainReorganizationManagerImpl(
     updateBlockData(blockIdx, _.recordAccountUpdate(address, token))
   }
 
+  @inline
   private def checkBlockIdxTo(blockIdx: Long)(call: => Unit): Unit = {
     val lastKnownBlock = blocks.lastOption.map(_._1).getOrElse(0L)
     if (blockIdx >= lastKnownBlock) call
