@@ -70,13 +70,13 @@ message BalanceAndAllowance {
 message Balance {
     bytes balance                   = 1;
     bytes available_balance         = 2;
-    int64 block_num = 3;
+    int64 block_num                 = 3;
 }
 
 message Allowance {
     bytes allowance                 = 1;
     bytes available_allowance       = 2;
-    int64 block_num = 3;
+    int64 block_num                 = 3;
 }
 
 message EthereumProxySettings {
@@ -163,10 +163,10 @@ message NodeBlockHeight{
 }
 
 message MissingBlocksRecord {
-    int64 block_start = 1;
-    int64 block_end = 2;
-    int64 last_handled_block = 3;
-    int64 sequence_id = 4;
+    int64 block_start           = 1;
+    int64 block_end             = 2;
+    int64 last_handled_block    = 3;
+    int64 sequence_id           = 4;
 }
 
 // Used as statistical data, such as a histogram
