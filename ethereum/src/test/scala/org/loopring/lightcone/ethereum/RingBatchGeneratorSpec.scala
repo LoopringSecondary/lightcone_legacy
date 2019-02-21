@@ -17,7 +17,6 @@
 package io.lightcone.ethereum
 
 import org.scalatest._
-import com.google.protobuf.ByteString
 import io.lightcone.core._
 
 class RingBatchGeneratorSpec extends FlatSpec with Matchers {

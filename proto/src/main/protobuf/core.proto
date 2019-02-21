@@ -284,6 +284,7 @@ message RawOrder  {
 
 message Amount {
     bytes value = 1;
+    int64 block = 2; // At which block this value is obtained. In many cases this field is not used.
 }
 
 message MarketStats {

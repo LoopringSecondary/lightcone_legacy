@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.entrypoint
 
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors.RingAndTradePersistenceActor
 import io.lightcone.relayer.data._
@@ -285,9 +284,7 @@ class EntryPointSpec_DatabaseQuery
   val header = EventHeader(
     txHash = hash1,
     txStatus = TxStatus.TX_STATUS_SUCCESS,
-    blockHeader = Some(
-      BlockHeader(height = height1, hash = hash1)
-    )
+    blockHeader = Some(BlockHeader(height = height1, hash = hash1))
   )
 
   val fill1 = OrderFilledEvent(

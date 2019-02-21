@@ -16,7 +16,6 @@
 
 package io.lightcone.lib
 
-
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import org.json4s.JsonAST.JValue

@@ -16,7 +16,6 @@
 
 package io.lightcone.persistence.dals
 
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.event._
 import io.lightcone.persistence.base._
 import io.lightcone.relayer.data._
@@ -88,15 +87,10 @@ class TransactionRecordTable(shardId: String)(tag: Tag)
     })
 
   def blockHeaderProjection =
-    (
-      blockNumber,
-      blockHash,
-      blockTimestamp
-    ) <> ({ tuple =>
+    (blockNumber, blockHash, blockTimestamp) <> ({ tuple =>
       Option(
-        (BlockHeader.apply _).tupled(
-          (tuple._1, tuple._2, "", tuple._3, Seq.empty[String])
-        )
+        (BlockHeader.apply _)
+          .tupled((tuple._1, tuple._2, "", tuple._3, Seq.empty[String]))
       )
     }, { paramsOpt: Option[BlockHeader] =>
       val params = paramsOpt.getOrElse(BlockHeader())
