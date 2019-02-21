@@ -58,6 +58,7 @@ message BlockData {
     bytes  extra_data           = 17;
 }
 
+// TODO(yadong): rename to AccountActivity
 message TxRecord {
 
     enum TxType {

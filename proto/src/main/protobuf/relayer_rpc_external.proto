@@ -4,8 +4,9 @@ option java_multiple_files = true;
 package io.lightcone.relayer.data.ext;
 
 import "core.proto";
+import "persistence.proto";
 
-
+// TODO(yadong)： I think we can still use proto enums in these data structures.
 // RPC Submit Order
 message RawOrder {
     int32       version                          = 1;
@@ -38,42 +39,17 @@ message RawOrder {
     string      transfer_data_s                  = 28;
 }
 
-
-message Trade {
-    message Fee {
-        // for market
-        string token_fee               = 1;
-        string  amount_fee              = 2;
-        // for p2p
-        string  fee_amount_s            = 3;
-        string  fee_amount_b            = 4;
-
-        string fee_recipient           = 5;
-        int32  waive_fee_percentage    = 6; // miner waive
-        int32  wallet_split_percentage = 7;
-    }
-
-    string owner             = 1;
-    string order_hash        = 2;
-    string ring_hash         = 3;
-    int64  ring_index        = 4;
-    int32  fill_index        = 5;
-    string tx_hash           = 6;
-    string amount_s          = 7;
-    string amount_b          = 8;
-    string token_s           = 9;
-    string token_b           = 10;
-    int64  market_id         = 11;
-    string split             = 12; // tokenS
-    Fee    fee               = 13;
-    string wallet            = 14;
-    string miner             = 15;
-    int64  block_height      = 16;
-    int64  block_timestamp   = 17;
+// Usef for JSON RPC and WEB SOCKET
+message OrderSnippet {
+    string order_id                                 = 1;
+    string owner                                    = 2;
+    io.lightcone.core.MarketPair   market_pair      = 3;
+    io.lightcone.core.OrderStatus  status           = 4;
+    io.lightcone.relayer.data.OrderState state      = 5;
 }
 
-
-message Ring {
+// Usef for JSON RPC and WEB SOCKET
+message RingSnippet {
     string   ring_hash         = 1;
     int64    ring_index        = 2;
     int32    fills_amount      = 3;
@@ -82,43 +58,39 @@ message Ring {
     repeated Trade.Fee fees    = 6;
     int64    block_height      = 7;
     int64    block_timestamp   = 8;
+    OrderSnippet  taker        = 9;
+    OrderSnippet  maker        = 10;
 }
 
-
-message GetOrderbook{
-    message Req{
-
+// Usef for JSON RPC
+message Account {
+    message BalanceAndAllowance{
+        string token                = 1;
+        string balance              = 2;
+        string allowance            = 3;
+        string available_balance    = 4;
+        string available_allowance  = 5;
     }
-    message Res {
 
-    }
+    string address  = 1;
+    int32  nonce    = 2;
+    map<string, BalanceAndAllowance> token_balance_and_allowances_map = 3;
 }
 
-message BalanceAndAllowance{
-    string token = 1;
-    string balance = 2;
-    string allowance = 3;
-    string available_balance = 4;
-    string available_allowance = 5;
-}
-
-message AddressBalanceAndAllowance{
-    string address = 1;
-    BalanceAndAllowance balance_and_allowance = 2;
-}
-
-message GetBalances{
-    message Params{
+message GetAccounts{
+    message Params {
         repeated string addresses  = 1;
         repeated string tokens = 2;
     }
-    message Result{
-        repeated AddressBalanceAndAllowance balances = 1;
+    message Result {
+       repeated Account accounts = 1;
     }
 }
 
 message SubmitOrder{
-    //params 应该是relayer.rpc.external中RawOrder结构
+    message Params {
+        RawOrder order = 1;
+    }
     message Result {
         string order_hash = 1;
     }
@@ -139,7 +111,8 @@ message GetOrders{
         int32 page_num = 2;
         int32 page_size = 3;
         int32 total = 4;
-        repeated io.lightcone.relayer.data.ext.RawOrder orders = 5;
+        // Do not return the full order, only return a small pice of information.
+        repeated OrderSnippet orders = 5;
     }
 
 }
@@ -157,11 +130,11 @@ message GetTrades{
         int32 page_num = 2;
         int32 page_size = 3;
         int32 total = 4;
-        repeated io.lightcone.relayer.data.ext.Trade trades = 5;
+        repeated io.lightcone.persistence.Activity trades = 5;
     }
 }
 
-message GetRings{
+message GetRings {
     message Params {
         string ringHash = 1;
         string ringIndex = 2;
@@ -174,15 +147,15 @@ message GetRings{
         int32 page_num = 1;
         int32 page_size = 2;
         int32 total  = 3;
-        repeated io.lightcone.relayer.data.ext.Ring rings = 4;
+        repeated RingSnippet rings = 4;
     }
 }
 
-message GetTransactions{
+message GetActivities {
     message Params {
         string owner = 1;
-        string type = 2;
-        string sort = 3;
+        string type = 2;  // TODO(yadong): I think we can use Enum type here.
+        string sort = 3;  // TODO(yadong): I think we can use Enum type here.
         int32 page_num = 4;
         int32 page_size = 5;
     }
@@ -193,11 +166,12 @@ message GetTransactions{
         int32 page_num = 2;
         int32 page_size = 3;
         int32 total = 4;
+        repeated io.lightcone.persistence.Activity activities = 5;
     }
 }
 
-message GetTokens{
-    message Params{
+message GetTokens {
+    message Params {
     }
 
     message  Result {
@@ -205,11 +179,11 @@ message GetTokens{
     }
 }
 
-message GetMarkets{
-    message Params{
+message GetMarkets {
+    message Params {
     }
 
-    message  Result {
+    message Result {
         repeated io.lightcone.core.MarketMetadata markets  =1;
     }
 }
