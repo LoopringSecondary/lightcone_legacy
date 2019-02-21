@@ -145,7 +145,8 @@ message GetBalance {
     message Res {
         string address = 1;
         map<string, bytes> balance_map = 2;
-        io.lightcone.core.Error error = 3;
+        int64 block_number = 3;
+        io.lightcone.core.Error error = 4;
     }
 }
 
@@ -158,7 +159,8 @@ message GetAllowance {
     message Res {
         string address = 1;
         map<string, bytes> allowance_map = 2;
-        io.lightcone.core.Error error = 3;
+        int64 block_number = 3;
+        io.lightcone.core.Error error = 4;
     }
 }
 

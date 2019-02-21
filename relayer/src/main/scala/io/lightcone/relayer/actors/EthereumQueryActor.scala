@@ -49,6 +49,7 @@ object EthereumQueryActor extends DeployedAsShardedEvenly {
   }
 }
 
+// TODO(yadong): all these methods need to return a blockNumber field.
 class EthereumQueryActor(
     implicit
     val config: Config,
@@ -133,8 +134,10 @@ class EthereumQueryActor(
         balances = batchRes.resps.map { res =>
           bigInt2ByteString(BigInt(Numeric.toBigInt(res.result)))
         }
-
-        result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
+        // TODO(yadong): implement this.
+        val blockNumber: Long = 0
+        result = GetBalance
+          .Res(owner, (erc20Tokens zip balances).toMap, blockNumber)
 
         ethRes <- ethToken match {
           case head :: tail =>
@@ -162,7 +165,10 @@ class EthereumQueryActor(
           val allowances = result.map { res =>
             bigInt2ByteString(NumericConversion.toBigInt(res))
           }
-          GetAllowance.Res(owner, (tokens zip allowances).toMap)
+
+          // TODO(yadong): implement this.
+          val blockNumber: Long = 0
+          GetAllowance.Res(owner, (tokens zip allowances).toMap, blockNumber)
       }
 
     // TODOO(yadong): return the block number
