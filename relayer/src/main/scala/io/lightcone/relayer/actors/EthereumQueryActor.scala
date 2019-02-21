@@ -176,7 +176,10 @@ class EthereumQueryActor(
       batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
         resp =>
           val allowances = resp.resps.map { res =>
-            Allowance(NumericConversion.toBigInt(res.result))
+            Allowance(
+              NumericConversion.toBigInt(res.result),
+              blockNum = NumericConversion.toBigInt(resp.blockNum).toLong
+            )
           }
           GetAllowance.Res(
             owner,
