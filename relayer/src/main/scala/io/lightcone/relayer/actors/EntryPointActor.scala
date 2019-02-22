@@ -92,10 +92,6 @@ class EntryPointActor(
     case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
       Some(TransactionRecordMessageValidator.name)
 
-    // TODO(hongyu): remove all of the folloiwng
-    case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req =>
-      Some(EthereumQueryMessageValidator.name)
-
     case _ => None
   }
 

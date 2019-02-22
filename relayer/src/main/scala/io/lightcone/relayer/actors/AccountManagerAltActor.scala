@@ -417,9 +417,7 @@ class AccountManagerAltActor(
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {
-    println(s"##### rawOrder ${rawOrder}")
     val order = rawOrder.toOrder
-    println(s"#### order ${order}")
     val orderId = order.id
     val matchable: Matchable = order
     log.debug(s"### submitOrder ${order}")

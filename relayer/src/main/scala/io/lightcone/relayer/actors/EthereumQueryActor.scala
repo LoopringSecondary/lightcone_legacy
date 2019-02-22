@@ -119,48 +119,6 @@ class EthereumQueryActor(
         }
       } yield GetAccount.Res(Some(finalBalance))) sendTo sender
 
-    case req @ GetBalance.Req(owner, tokens, tag) =>
-      val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
-      val batchReqs = brb.buildRequest(req.copy(tokens = erc20Tokens))
-      (for {
-        batchRes <- (ethereumAccessorActor ? batchReqs)
-          .mapAs[BatchCallContracts.Res]
-
-        balances = batchRes.resps.map { res =>
-          NumericConversion.toAmount(res.result)
-        }
-
-        result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
-
-        ethRes <- ethToken match {
-          case head :: tail =>
-            (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address(owner).toString,
-              tag
-            )).mapAs[EthGetBalance.Res].map(Some(_))
-          case Nil => Future.successful(None)
-        }
-
-        finalResult = if (ethRes.isDefined) {
-          result.copy(
-            balanceMap = result.balanceMap +
-              (Address.ZERO.toString ->
-                NumericConversion.toBigInt(ethRes.get.result))
-          )
-        } else {
-          result
-        }
-      } yield finalResult) sendTo sender
-
-    case req @ GetAllowance.Req(owner, tokens, _) =>
-      batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
-        result =>
-          val allowances = result.map { res =>
-            NumericConversion.toAmount(res)
-          }
-          GetAllowance.Res(owner, (tokens zip allowances).toMap)
-      }
-
     case req @ GetFilledAmount.Req(orderIds, _) =>
       batchCallEthereum(
         sender,

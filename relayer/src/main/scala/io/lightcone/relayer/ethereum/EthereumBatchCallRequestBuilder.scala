@@ -38,24 +38,6 @@ class EthereumBatchCallRequestBuilder {
     BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
   }
 
-  def buildRequest(req: GetBalance.Req): BatchCallContracts.Req = {
-    val owner = Address(req.address)
-    val tokens = req.tokens.map(Address(_))
-    val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, req.tag)
-    BatchCallContracts.Req(balanceCallReqs)
-  }
-
-  def buildRequest(
-      delegateAddress: Address,
-      req: GetAllowance.Req
-    ): BatchCallContracts.Req = {
-    val owner = Address(req.address)
-    val tokens = req.tokens.map(Address(_))
-    val allowanceCallReqs =
-      buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, req.tag)
-    BatchCallContracts.Req(allowanceCallReqs)
-  }
-
   def buildRequest(
       tradeHistoryAddress: Address,
       req: GetFilledAmount.Req

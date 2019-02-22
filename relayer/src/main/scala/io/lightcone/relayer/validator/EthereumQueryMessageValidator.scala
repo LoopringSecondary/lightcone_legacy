@@ -56,20 +56,6 @@ final class EthereumQueryMessageValidator(
           .copy(address = Address.normalize(req.address))
       }
 
-    case req: GetBalance.Req =>
-      Future {
-        req
-          .copy(tokens = req.tokens.map(normalize))
-          .copy(address = Address.normalize(req.address))
-      }
-
-    case req: GetAllowance.Req =>
-      Future {
-        req
-          .copy(tokens = req.tokens.map(normalize))
-          .copy(address = Address.normalize(req.address))
-      }
-
     // case req: GetFilledAmount.Req =>
   }
 }
