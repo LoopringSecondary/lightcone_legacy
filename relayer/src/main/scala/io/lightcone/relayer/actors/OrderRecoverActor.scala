@@ -117,6 +117,7 @@ class OrderRecoverActor(
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         // filter unsupported markets
         availableOrders = orders.filter { o =>
+          println(s"### recover ${o}")
           metadataManager.isMarketStatus(
             MarketPair(o.tokenS, o.tokenB),
             ACTIVE,

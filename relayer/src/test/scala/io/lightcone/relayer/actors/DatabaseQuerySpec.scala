@@ -38,11 +38,11 @@ class DatabaseQuerySpec
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
       }
-      val request = GetOrdersForUser.Req(
+      val request = GetOrders.Req(
         owner = accounts(0).getAddress,
         statuses = Seq(OrderStatus.STATUS_NEW),
         market = Some(
-          GetOrdersForUser.Req
+          GetOrders.Req
             .Market(LRC_TOKEN.address, WETH_TOKEN.address, true)
         )
       )
@@ -54,7 +54,7 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetOrdersForUser.Res(orders, total) =>
+        case GetOrders.Res(orders, total) =>
           assert(orders.nonEmpty && orders.length == 6)
           assert(total == 6)
         case _ => assert(false)
@@ -64,13 +64,13 @@ class DatabaseQuerySpec
 
   "send an trades request" must {
     "receive a response without trades" in {
-      val method = "get_trades"
+      val method = "get_fills"
       val tokenS = "0xaaaaaaa2"
       val tokenB = "0xbbbbbbb2"
       val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
-      val tradesReq = GetTrades.Req(
+      val tradesReq = GetFills.Req(
         owner = owner,
-        market = Some(GetTrades.Req.Market(tokenS, tokenB, true)),
+        market = Some(GetFills.Req.Market(tokenS, tokenB, true)),
         skip = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )
@@ -83,28 +83,28 @@ class DatabaseQuerySpec
       )
       val r = for {
         _ <- Future.sequence(hashes.map { hash =>
-          testSaveTrade(hash, owner, tokenS, tokenB, 1L)
+          testSaveFill(hash, owner, tokenS, tokenB, 1L)
         })
         response <- singleRequest(tradesReq, method)
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetTrades.Res(trades, total) =>
+        case GetFills.Res(trades, total) =>
           assert(trades.nonEmpty && trades.length === 5 && total == 5)
         case _ => assert(false)
       }
     }
   }
 
-  private def testSaveTrade(
+  private def testSaveFill(
       txHash: String,
       owner: String,
       tokenS: String,
       tokenB: String,
       blockHeight: Long
     ): Future[ErrorCode] = {
-    dbModule.tradeService.saveTrade(
-      Trade(
+    dbModule.fillService.saveFill(
+      Fill(
         txHash = txHash,
         owner = owner,
         tokenB = tokenB,

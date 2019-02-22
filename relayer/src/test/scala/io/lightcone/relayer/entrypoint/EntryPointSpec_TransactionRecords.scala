@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.entrypoint
 
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
@@ -69,7 +68,7 @@ class EntryPointSpec_TransactionRecords
         from = txFrom,
         to = txTo,
         token = "0",
-        amount = ByteString.copyFrom("11", "utf-8")
+        amount = BigInt(11)
       )
 
       actor ! TransferEvent(
@@ -78,7 +77,7 @@ class EntryPointSpec_TransactionRecords
         from = txFrom,
         to = txTo,
         token = "0",
-        amount = ByteString.copyFrom("11", "utf-8")
+        amount = BigInt(11)
       )
       info("save erc20 transfer for both sender and receiver")
       val header2 = header1.copy(
@@ -93,7 +92,7 @@ class EntryPointSpec_TransactionRecords
         from = txFrom,
         to = txTo,
         token = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
-        amount = ByteString.copyFrom("11", "utf-8")
+        amount = BigInt(11)
       )
       actor ! TransferEvent(
         header = Some(header2.copy(eventIndex = 1)),
@@ -101,7 +100,7 @@ class EntryPointSpec_TransactionRecords
         from = txFrom,
         to = txTo,
         token = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
-        amount = ByteString.copyFrom("11", "utf-8")
+        amount = BigInt(11)
       )
 
       info("save cancelled from sender")

@@ -67,7 +67,7 @@ class CoreDeployer @Inject()(
     balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
     transactionNotifier: SocketIONotifier[SubscribeTransaction],
     orderNotifier: SocketIONotifier[SubscribeOrder],
-    tradeNotifier: SocketIONotifier[SubscribeTrade],
+    tradeNotifier: SocketIONotifier[SubscribeFill],
     tickerNotifier: SocketIONotifier[SubscribeTicker],
     orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
     transferNotifier: SocketIONotifier[SubscribeTransfer],
@@ -212,10 +212,6 @@ class CoreDeployer @Inject()(
           RingSettlementManagerActor.name, //
           RingSettlementManagerActor.start
         )
-        .add(
-          ChainReorganizationManagerActor.name, //
-          ChainReorganizationManagerActor.start
-        )
 
       //-----------deploy sharded actors-----------
       actors
@@ -224,8 +220,8 @@ class CoreDeployer @Inject()(
           DatabaseQueryActor.start
         )
         .add(
-          RingAndTradePersistenceActor.name,
-          RingAndTradePersistenceActor.start
+          RingAndFillPersistenceActor.name,
+          RingAndFillPersistenceActor.start
         )
         .add(
           GasPriceActor.name, //

@@ -41,6 +41,22 @@ package object core {
     new RichBigInt(b).toByteString
 
   @inline
+  implicit def amount2BigInt(amount: Amount): BigInt =
+    NumericConversion.toBigInt(amount)
+
+  @inline
+  implicit def bigInt2Amount(b: BigInt): Amount =
+    NumericConversion.toAmount(b)
+
+  @inline
+  implicit def amountOpt2BigInt(amountOpt: Option[Amount]): BigInt =
+    NumericConversion.toBigInt(amountOpt)
+
+  @inline
+  implicit def bigInt2AmountOpt(b: BigInt): Option[Amount] =
+    Some(NumericConversion.toAmount(b))
+
+  @inline
   implicit def byteArray2ByteString(bytes: Array[Byte]) =
     ByteString.copyFrom(bytes)
 
@@ -52,6 +68,9 @@ package object core {
   @inline
   implicit class Rich_OrderbookSlot(raw: Orderbook.Slot)
       extends RichOrderbookSlot(raw)
+
+  @inline
+  implicit class Rich_Int(raw: Int) extends RichInt(raw)
 
   @inline
   implicit class Rich_BigInt(raw: BigInt) extends RichBigInt(raw)

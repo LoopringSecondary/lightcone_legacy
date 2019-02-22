@@ -16,9 +16,8 @@
 
 package io.lightcone.relayer.entrypoint
 
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.event._
-import io.lightcone.relayer.actors.RingAndTradePersistenceActor
+import io.lightcone.relayer.actors.RingAndFillPersistenceActor
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
@@ -35,120 +34,120 @@ class EntryPointSpec_DatabaseQuery
     with OrderHandleSupport
     with OrderGenerateSupport
     with DatabaseQueryMessageSupport
-    with RingAndTradePersistenceSupport {
+    with RingAndFillPersistenceSupport {
 
-  val ringAndTradePersistActor = actors.get(RingAndTradePersistenceActor.name)
+  val ringAndFillPersistActor = actors.get(RingAndFillPersistenceActor.name)
 
   "DatabaseQueryActor Entrypoint" must {
     "init" in {
-      info("save some ring and trades")
+      info("save some ring and fills")
       testSaveSomeRings()
       Thread.sleep(3000)
     }
 
-    "get trades" in {
-      info("query trades: by owner")
-      val q3 = GetTrades.Req(owner = owner1)
+    "get fills" in {
+      info("query fills: by owner")
+      val q3 = GetFills.Req(owner = owner1)
       val r3 = Await.result(
-        singleRequest(q3, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q3, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r3.trades.length == 4 && r3.total == 4)
+      assert(r3.fills.length == 4 && r3.total == 4)
 
-      info("query trades: sort")
-      val q3_2 = GetTrades.Req(owner = owner1, sort = SortingType.DESC)
+      info("query fills: sort")
+      val q3_2 = GetFills.Req(owner = owner1, sort = SortingType.DESC)
       val r3_2 = Await.result(
-        singleRequest(q3_2, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q3_2, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r3_2.trades.length == 4 && r3_2.total == 4)
-      assert(r3.trades.head == r3_2.trades.last)
+      assert(r3_2.fills.length == 4 && r3_2.total == 4)
+      assert(r3.fills.head == r3_2.fills.last)
 
-      info("query trades: skip")
-      val q3_3 = GetTrades.Req(skip = Some(Paging(skip = 1, size = 10)))
+      info("query fills: skip")
+      val q3_3 = GetFills.Req(skip = Some(Paging(skip = 1, size = 10)))
       val r3_3 = Await.result(
-        singleRequest(q3_3, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q3_3, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r3_3.trades.length == 5 && r3_3.total == 6)
+      assert(r3_3.fills.length == 5 && r3_3.total == 6)
 
-      info("query trades: by owner and market")
-      val q4 = GetTrades.Req(
+      info("query fills: by owner and market")
+      val q4 = GetFills.Req(
         owner = owner1,
-        market = Some(GetTrades.Req.Market(tokenS1, tokenB1))
+        market = Some(GetFills.Req.Market(tokenS1, tokenB1))
       )
       val r4 = Await.result(
-        singleRequest(q4, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q4, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r4.trades.length == 1 && r4.total == 1)
+      assert(r4.fills.length == 1 && r4.total == 1)
       val q5 =
-        GetTrades.Req(
+        GetFills.Req(
           owner = owner1,
-          market = Some(GetTrades.Req.Market(tokenS1, tokenB1, true))
+          market = Some(GetFills.Req.Market(tokenS1, tokenB1, true))
         )
       val r5 = Await.result(
-        singleRequest(q5, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q5, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r5.trades.length == 2 && r5.total == 2)
+      assert(r5.fills.length == 2 && r5.total == 2)
 
-      info("query trades: by ring")
-      val q6 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2)))
+      info("query fills: by ring")
+      val q6 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2)))
       val r6 = Await.result(
-        singleRequest(q6, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q6, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r6.trades.length == 2 && r6.total == 2)
-      val q7 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "11", "1")))
+      assert(r6.fills.length == 2 && r6.total == 2)
+      val q7 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "11", "1")))
       val r7 = Await.result(
-        singleRequest(q7, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q7, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r7.trades.length == 1 && r7.total == 1)
-      val q8 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "11", "2")))
+      assert(r7.fills.length == 1 && r7.total == 1)
+      val q8 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "11", "2")))
       val r8 = Await.result(
-        singleRequest(q8, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q8, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r8.trades.isEmpty && r8.total == 0)
+      assert(r8.fills.isEmpty && r8.total == 0)
 
-      info("query trades: full parameters")
-      val q9 = GetTrades.Req(
+      info("query fills: full parameters")
+      val q9 = GetFills.Req(
         owner = owner1,
         txHash = hash1,
         orderHash = hash1,
-        market = Some(GetTrades.Req.Market(tokenS1, tokenB1)),
-        ring = Some(GetTrades.Req.Ring(hash1, "10", "0")),
+        market = Some(GetFills.Req.Market(tokenS1, tokenB1)),
+        ring = Some(GetFills.Req.Ring2(hash1, "10", "0")),
         wallet = wallet,
         miner = miner
       )
       val r9 = Await.result(
-        singleRequest(q9, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q9, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r9.trades.length == 1 && r9.total == 1)
-      val q10 = GetTrades.Req(
+      assert(r9.fills.length == 1 && r9.total == 1)
+      val q10 = GetFills.Req(
         owner = owner2,
         txHash = hash1,
         orderHash = hash1,
-        market = Some(GetTrades.Req.Market(tokenS1, tokenB1)),
-        ring = Some(GetTrades.Req.Ring(hash1, "1", "0")),
+        market = Some(GetFills.Req.Market(tokenS1, tokenB1)),
+        ring = Some(GetFills.Req.Ring2(hash1, "1", "0")),
         wallet = wallet,
         miner = miner
       )
       val r10 = Await.result(
-        singleRequest(q10, "get_trades").mapTo[GetTrades.Res],
+        singleRequest(q10, "get_fills").mapTo[GetFills.Res],
         5.second
       )
-      assert(r10.trades.isEmpty && r10.total == 0)
+      assert(r10.fills.isEmpty && r10.total == 0)
 
       info("invalid ringIndex")
       val q11 =
-        GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "invalidIndex")))
+        GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "invalidIndex")))
       try {
         Await.result(
-          singleRequest(q11, "get_trades").mapTo[GetTrades.Res],
+          singleRequest(q11, "get_fills").mapTo[GetFills.Res],
           5.second
         )
         assert(false)
@@ -160,12 +159,12 @@ class EntryPointSpec_DatabaseQuery
 
       info("invalid fillIndex")
       val q12 =
-        GetTrades.Req(
-          ring = Some(GetTrades.Req.Ring(hash2, "2", "invalidIndex"))
+        GetFills.Req(
+          ring = Some(GetFills.Req.Ring2(hash2, "2", "invalidIndex"))
         )
       try {
         Await.result(
-          singleRequest(q12, "get_trades").mapTo[GetTrades.Res],
+          singleRequest(q12, "get_fills").mapTo[GetFills.Res],
           5.second
         )
         assert(false)
@@ -179,7 +178,8 @@ class EntryPointSpec_DatabaseQuery
     "get rings" in {
       info("query rings: by ringHash and ringIndex")
       val q3 = GetRings.Req(
-        ring = Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingHash(hash2)))
+        ring =
+          Some(GetRings.Req.Ring2(GetRings.Req.Ring2.Filter.RingHash(hash2)))
       )
       val r3 = Await.result(
         singleRequest(q3, "get_rings").mapTo[GetRings.Res],
@@ -188,7 +188,7 @@ class EntryPointSpec_DatabaseQuery
       assert(r3.rings.length == 1 && r3.total == 1)
       val q4 = GetRings.Req(
         ring =
-          Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingIndex(height2)))
+          Some(GetRings.Req.Ring2(GetRings.Req.Ring2.Filter.RingIndex(height2)))
       )
       val r4 = Await.result(
         singleRequest(q4, "get_rings").mapTo[GetRings.Res],
@@ -198,11 +198,11 @@ class EntryPointSpec_DatabaseQuery
       assert(r3.rings.head == r4.rings.head)
       r3.rings.head.fees match {
         case Some(f) =>
-          val fee = Trade.Fee(
+          val fee = Fill.Fee(
             "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-            ByteString.copyFrom("3", "UTF-8"),
-            ByteString.copyFrom("5", "UTF-8"),
-            ByteString.copyFrom("6", "UTF-8"),
+            BigInt(3),
+            BigInt(5),
+            BigInt(6),
             feeRecipient,
             1,
             1
@@ -261,20 +261,20 @@ class EntryPointSpec_DatabaseQuery
 
   val fees = Ring.Fees(
     Seq(
-      Trade.Fee(
+      Fill.Fee(
         tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-        amountFee = ByteString.copyFrom("10", "UTF-8"),
-        feeAmountS = ByteString.copyFrom("11", "UTF-8"),
-        feeAmountB = ByteString.copyFrom("12", "UTF-8"),
+        amountFee = BigInt(10),
+        feeAmountS = BigInt(11),
+        feeAmountB = BigInt(12),
         feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
         waiveFeePercentage = 10,
         walletSplitPercentage = 5
       ),
-      Trade.Fee(
+      Fill.Fee(
         tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
-        amountFee = ByteString.copyFrom("20", "UTF-8"),
-        feeAmountS = ByteString.copyFrom("21", "UTF-8"),
-        feeAmountB = ByteString.copyFrom("22", "UTF-8"),
+        amountFee = BigInt(20),
+        feeAmountS = BigInt(21),
+        feeAmountB = BigInt(22),
         feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
         waiveFeePercentage = 8,
         walletSplitPercentage = 2
@@ -285,9 +285,7 @@ class EntryPointSpec_DatabaseQuery
   val header = EventHeader(
     txHash = hash1,
     txStatus = TxStatus.TX_STATUS_SUCCESS,
-    blockHeader = Some(
-      BlockHeader(height = height1, hash = hash1)
-    )
+    blockHeader = Some(BlockHeader(height = height1, hash = hash1))
   )
 
   val fill1 = OrderFilledEvent(
@@ -298,18 +296,18 @@ class EntryPointSpec_DatabaseQuery
     hash1,
     10,
     0,
-    ByteString.copyFrom("10", "UTF-8"),
-    ByteString.copyFrom("1", "UTF-8"),
-    ByteString.copyFrom("2", "UTF-8"),
+    BigInt(10),
+    BigInt(1),
+    BigInt(2),
     tokenS1,
     tokenB1,
     wallet,
     1,
     1,
     "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    ByteString.copyFrom("3", "UTF-8"),
-    ByteString.copyFrom("5", "UTF-8"),
-    ByteString.copyFrom("6", "UTF-8")
+    BigInt(3),
+    BigInt(5),
+    BigInt(6)
   )
 
   val fill2 = OrderFilledEvent(
@@ -325,18 +323,18 @@ class EntryPointSpec_DatabaseQuery
     hash2,
     11,
     0,
-    ByteString.copyFrom("13", "UTF-8"),
-    ByteString.copyFrom("2", "UTF-8"),
-    ByteString.copyFrom("2", "UTF-8"),
+    BigInt(13),
+    BigInt(2),
+    BigInt(2),
     tokenS2,
     tokenB2,
     wallet,
     1,
     1,
     "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    ByteString.copyFrom("3", "UTF-8"),
-    ByteString.copyFrom("5", "UTF-8"),
-    ByteString.copyFrom("6", "UTF-8")
+    BigInt(3),
+    BigInt(5),
+    BigInt(6)
   )
 
   val fill3 = OrderFilledEvent(
@@ -352,18 +350,18 @@ class EntryPointSpec_DatabaseQuery
     hash3,
     12,
     0,
-    ByteString.copyFrom("53", "UTF-8"),
-    ByteString.copyFrom("7", "UTF-8"),
-    ByteString.copyFrom("3", "UTF-8"),
+    BigInt(53),
+    BigInt(7),
+    BigInt(3),
     tokenS2,
     tokenB2,
     wallet,
     1,
     1,
     "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    ByteString.copyFrom("3", "UTF-8"),
-    ByteString.copyFrom("5", "UTF-8"),
-    ByteString.copyFrom("6", "UTF-8")
+    BigInt(3),
+    BigInt(5),
+    BigInt(6)
   )
 
   private def testSaveSomeRings() = {
@@ -413,9 +411,9 @@ class EntryPointSpec_DatabaseQuery
       fills3,
       miner
     )
-    ringAndTradePersistActor ! e1
-    ringAndTradePersistActor ! e2
-    ringAndTradePersistActor ! e3
+    ringAndFillPersistActor ! e1
+    ringAndFillPersistActor ! e2
+    ringAndFillPersistActor ! e3
   }
 
 }

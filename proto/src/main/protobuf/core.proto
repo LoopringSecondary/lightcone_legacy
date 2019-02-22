@@ -181,24 +181,24 @@ message TokenMetadata {
 
 message MarketMetadata {
     enum Status {
-        TERMINATED  = 0;
-        ACTIVE   = 1;
-        READONLY  = 2;
+        TERMINATED                  = 0;
+        ACTIVE                      = 1;
+        READONLY                    = 2;
     }
 
-    Status          status                  = 1;
-    string          quote_token_symbol      = 2;
-    string          base_token_symbol       = 3;
-    int32           max_numbers_of_orders   = 4;
-    int32           price_decimals          = 5;
-    int32           orderbook_agg_levels    = 6;
-    int32           precision_for_amount    = 7;
-    int32           precision_for_total     = 8;
-    bool            browsable_in_wallet     = 9;
-    int64           updated_at              = 10;
+    Status status                               = 1;
+    string quote_token_symbol                   = 2;
+    string base_token_symbol                    = 3;
+    int32  max_numbers_of_orders                = 4;
+    int32  price_decimals                       = 5;
+    int32  orderbook_agg_levels                 = 6;
+    int32  precision_for_amount                 = 7;
+    int32  precision_for_total                  = 8;
+    bool   browsable_in_wallet                  = 9;
+    int64  updated_at                           = 10;
 
-    io.lightcone.core.MarketPair        market_pair               = 20; // computed
-    string          market_hash              = 21; // computed
+    io.lightcone.core.MarketPair market_pair    = 20; // computed
+    string          market_hash                 = 21; // computed
 }
 
 enum TokenStandard {
@@ -211,7 +211,6 @@ enum SigningAlgorithm {
     ALGO_EIP712     = 1;
     ALGO_NONE       = 255;
 }
-
 
 // use bytes to represent big-numbers and string for addresses
 message RawOrder  {
@@ -228,61 +227,65 @@ message RawOrder  {
     }
 
     message FeeParams {
-        string token_fee               = 1;
-        bytes  amount_fee              = 2;
-        int32  waive_fee_percentage    = 3;
-        int32  token_s_fee_percentage  = 4;
-        int32  token_b_fee_percentage  = 5;
-        string token_recipient         = 6;
-        int32  wallet_split_percentage = 7;
+        string token_fee                    = 1;
+        Amount amount_fee                   = 2;
+        int32  waive_fee_percentage         = 3;
+        int32  token_s_fee_percentage       = 4;
+        int32  token_b_fee_percentage       = 5;
+        string token_recipient              = 6;
+        int32  wallet_split_percentage      = 7;
     }
 
     message ERC1400Params {
-        TokenStandard token_standard_s    = 1;
-        TokenStandard token_standard_b    = 2;
-        TokenStandard token_standard_fee  = 3;
+        TokenStandard token_standard_s      = 1;
+        TokenStandard token_standard_b      = 2;
+        TokenStandard token_standard_fee    = 3;
 
-        string    tranche_s            = 4;
-        string    tranche_b            = 5;
-        string    transfer_data_s      = 6;
+        string    tranche_s                 = 4;
+        string    tranche_b                 = 5;
+        string    transfer_data_s           = 6;
     }
 
     // // The following fieds are not part of Loopring's order definition but
     // // will be provided as metadata
     message State {
-        int64 created_at              = 101;
-        int64 updated_at              = 102;
-        int64 matched_at              = 103;
-        int64 updated_at_block        = 104;
-        io.lightcone.core.OrderStatus status            = 105;
+        int64 created_at                    = 101;
+        int64 updated_at                    = 102;
+        int64 matched_at                    = 103;
+        int64 updated_at_block              = 104;
+        io.lightcone.core.OrderStatus status= 105;
 
-        bytes actual_amount_s         = 200;
-        bytes actual_amount_b         = 201;
-        bytes actual_amount_fee       = 202;
-        bytes outstanding_amount_s    = 203;
-        bytes outstanding_amount_b    = 204;
-        bytes outstanding_amount_fee  = 205;
+        Amount actual_amount_s              = 200;
+        Amount actual_amount_b              = 201;
+        Amount actual_amount_fee            = 202;
+        Amount outstanding_amount_s         = 203;
+        Amount outstanding_amount_b         = 204;
+        Amount outstanding_amount_fee       = 205;
     }
 
     // string  id          = 1; // order hash
-    string hash                       = 2;
-    int32  version                    = 3;
-    string owner                      = 4;
-    string token_s                    = 5;
-    string token_b                    = 6;
-    bytes  amount_s                   = 7;
-    bytes  amount_b                   = 8;
-    int32  valid_since                = 9; // in seconds
-    Params params                     = 10;
-    FeeParams fee_params              = 11;
-    ERC1400Params erc1400_params      = 12;
-    State state                       = 13;
-    int64  sequence_id                = 14;
-    int64  market_id                  = 15;
-    int64  account_entity_id          = 16;
-    int64  market_entity_id           = 17;
+    string hash                             = 2;
+    int32  version                          = 3;
+    string owner                            = 4;
+    string token_s                          = 5;
+    string token_b                          = 6;
+    Amount amount_s                         = 7;
+    Amount amount_b                         = 8;
+    int32  valid_since                      = 9; // in seconds
+    Params          params                  = 10;
+    FeeParams       fee_params              = 11;
+    ERC1400Params   erc1400_params          = 12;
+    State state                             = 13;
+    int64  sequence_id                      = 14;
+    int64  market_id                        = 15;
+    int64  account_entity_id                = 16;
+    int64  market_entity_id                 = 17;
 }
 
+message Amount {
+    bytes value     = 1;
+    int64 block_num = 2; // At which block this value is obtained. In many cases this field is not used.
+}
 
 message MarketStats {
     int32  num_buys             = 1;
