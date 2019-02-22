@@ -578,9 +578,9 @@ class MetadataManagerSpec
       tickers = tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
       fixGroup = tickers.grouped(20).toList
       _ <- Future.sequence(
-        fixGroup.map(dbModule.thirdPartyTickerDal.saveTickers)
+        fixGroup.map(dbModule.externalTickerDal.saveTickers)
       )
-      updateSucc <- dbModule.thirdPartyTickerDal.updateEffective(now)
+      updateSucc <- dbModule.externalTickerDal.updateEffective(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE) {
         log.error(s"CMC persist failed, code:$updateSucc")
