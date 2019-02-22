@@ -17,29 +17,11 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.relayer.socketio;
+package io.lightcone.relayer.data;
 
 import "core.proto";
+import "relayer_common.proto";
 
-message BalanceUpdate {
-    string address                      = 1;
-    string token                        = 2;
-    io.lightcone.core.Amount  balance               = 3;
-    io.lightcone.core.Amount  allowance              = 4;
-    io.lightcone.core.Amount  available_balance      = 5;
-    io.lightcone.core.Amount  available_alloawnce    = 6;
-    int32  nonce                        = 7;
-}
-
-message OrderUpdate {
-    string order_id                                 = 1;
-    io.lightcone.core.MarketPair   market_pair      = 2;
-    io.lightcone.core.OrderStatus  status           = 3;
-}
-
-message News {
-
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // socketio subscription
@@ -50,44 +32,49 @@ message SocketIOSubscription {
         string message                      = 2;
     }
 
-    // subscribe for message TxRecord defined in persistence.proto
-    message ParamsForTxRecord {
+    // subscribe for message Activity defined in persistence.proto
+    message ParamsForActivities {
+    }
+
+    // subscribe for message RawOrder defined in core.proto
+    message ParamsForOrders {
+    }
+
+    // subscribe for message Fill defined in persistene.proto
+    message ParamsForFills {
     }
 
     // subscribe for message Orderbook.Update defined in core.proto
-    message ParamsForOrderbookUpdate {
+    message ParamsForOrderbook {
     }
 
     // subscribe for message TokenMetadata defined in core.proto
-    message ParamsForTokenMetadata {
+    message ParamsForTokens {
     }
 
     // subscribe for message MarketMetadata defined in core.proto
-    message ParamsForMarketMetadata {
+    message ParamsForMarkets {
     }
 
-    // subscribe for message Ticker defined in persistence.proto
-    message ParamsForTicker {
+    // subscribe for message ExternalTicker defined in persistence.proto
+    message ParamsForTickers {
     }
 
-    // subscribe for message BalanceUpdate
-    message ParamsForBalanceUpdate {
+    // subscribe for message Accounts
+    message ParamsForAccounts {
     }
 
-    // subscribe for message OrderUpdate
-    message ParamsForOrderUpdate {
-    }
-
-    // subscribe for message News
+    // subscribe for message News defined in persistence.proto
     message ParamsForNews {
     }
 
-    ParamsForTxRecord           params_for_tx_record            = 1;
-    ParamsForOrderbookUpdate    params_for_orderbook_update     = 2;
-    ParamsForTokenMetadata      params_for_token_metadata       = 3;
-    ParamsForMarketMetadata     params_for_market_metadata      = 4;
-    ParamsForBalanceUpdate      params_for_balance_update       = 5;
-    ParamsForTicker             params_for_ticker               = 6;
-    ParamsForOrderUpdate        params_for_order_update         = 7;
-    ParamsForNews               params_for_news                 = 8;
+    ParamsForActivities         params_for_activities           = 1;
+    ParamsForOrders             params_for_orders               = 2;
+    ParamsForFills              params_for_fills                = 3;
+    ParamsForOrderbook          params_for_orderbook_           = 4;
+    ParamsForTokens             params_for_tokens               = 5;
+    ParamsForMarkets            params_for_markets              = 6;
+    ParamsForTickers            params_for_tickers              = 7;
+    ParamsForAccounts           params_for_accounts             = 8;
+    ParamsForNews               params_for_news                 = 9;
 }

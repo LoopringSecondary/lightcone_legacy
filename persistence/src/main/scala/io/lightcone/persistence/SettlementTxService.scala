@@ -19,6 +19,7 @@ package io.lightcone.persistence
 import io.lightcone.relayer.data._
 import scala.concurrent.Future
 
+// TODO(yongfeng): delete this?
 trait SettlementTxService {
 
   def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res]

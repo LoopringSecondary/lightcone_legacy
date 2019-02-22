@@ -38,7 +38,7 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
       transactionNotifier: SocketIONotifier[SubscribeTransaction],
       orderNotifier: SocketIONotifier[SubscribeOrder],
-      tradeNotifier: SocketIONotifier[SubscribeTrade],
+      tradeNotifier: SocketIONotifier[SubscribeFill],
       tickerNotifier: SocketIONotifier[SubscribeTicker],
       orderBook: SocketIONotifier[SubscribeOrderBook],
       transferNotifier: SocketIONotifier[SubscribeTransfer],
@@ -56,7 +56,7 @@ class SocketIONotificationActor @Inject()(
     val balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
     val transactionNotifier: SocketIONotifier[SubscribeTransaction],
     val orderNotifier: SocketIONotifier[SubscribeOrder],
-    val tradeNotifier: SocketIONotifier[SubscribeTrade],
+    val tradeNotifier: SocketIONotifier[SubscribeFill],
     val tickerNotifier: SocketIONotifier[SubscribeTicker],
     val orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
     val transferNotifier: SocketIONotifier[SubscribeTransfer])

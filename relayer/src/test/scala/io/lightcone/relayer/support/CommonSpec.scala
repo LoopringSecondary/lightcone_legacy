@@ -100,6 +100,6 @@ abstract class CommonSpec(configStr: String = "")
   OrderbookManagerActor.loadConfig()
   OrderPersistenceActor.loadConfig()
   OrderRecoverActor.loadConfig()
-  RingAndTradePersistenceActor.loadConfig()
+  RingAndFillPersistenceActor.loadConfig()
   TransactionRecordActor.loadConfig()
 }

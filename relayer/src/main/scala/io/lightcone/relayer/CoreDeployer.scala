@@ -35,11 +35,11 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
 import io.lightcone.relayer.ethereum.event._
+import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
 import io.lightcone.relayer.external._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent._
-import io.lightcone.relayer.socketio._
 
 class CoreDeployer @Inject()(
     implicit
@@ -67,7 +67,7 @@ class CoreDeployer @Inject()(
     balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
     transactionNotifier: SocketIONotifier[SubscribeTransaction],
     orderNotifier: SocketIONotifier[SubscribeOrder],
-    tradeNotifier: SocketIONotifier[SubscribeTrade],
+    tradeNotifier: SocketIONotifier[SubscribeFill],
     tickerNotifier: SocketIONotifier[SubscribeTicker],
     orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
     transferNotifier: SocketIONotifier[SubscribeTransfer],
@@ -204,10 +204,6 @@ class CoreDeployer @Inject()(
           RingSettlementManagerActor.start
         )
         .add(
-          ChainReorganizationManagerActor.name, //
-          ChainReorganizationManagerActor.start
-        )
-        .add(
           CMCCrawlerActor.name,
           CMCCrawlerActor.start
         )
@@ -223,8 +219,8 @@ class CoreDeployer @Inject()(
           DatabaseQueryActor.start
         )
         .add(
-          RingAndTradePersistenceActor.name,
-          RingAndTradePersistenceActor.start
+          RingAndFillPersistenceActor.name,
+          RingAndFillPersistenceActor.start
         )
         .add(
           GasPriceActor.name, //

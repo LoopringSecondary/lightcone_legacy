@@ -24,7 +24,7 @@ import scala.concurrent._
 class DatabaseModule @Inject()(
     val tokenMetadataDal: TokenMetadataDal,
     val orderDal: OrderDal,
-    val tradeDal: TradeDal,
+    val fillDal: FillDal,
     val ringDal: RingDal,
     val blockDal: BlockDal,
     val settlementTxDal: SettlementTxDal,
@@ -34,7 +34,7 @@ class DatabaseModule @Inject()(
     val externalTickerDal: ExternalTickerDal,
     val cmcTickerConfigDal: CMCTickerConfigDal,
     val orderService: OrderService,
-    val tradeService: TradeService,
+    val fillService: FillService,
     val ringService: RingService,
     val blockService: BlockService,
     val settlementTxService: SettlementTxService,
@@ -47,7 +47,7 @@ class DatabaseModule @Inject()(
   val tables = Seq(
     tokenMetadataDal,
     orderDal,
-    tradeDal,
+    fillDal,
     ringDal,
     blockDal,
     settlementTxDal,

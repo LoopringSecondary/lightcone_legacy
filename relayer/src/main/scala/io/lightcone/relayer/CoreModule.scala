@@ -88,7 +88,7 @@ class CoreModule(
 
     // --- bind dals ---------------------
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
-    bind[TradeDal].to[TradeDalImpl].asEagerSingleton
+    bind[FillDal].to[FillDalImpl].asEagerSingleton
     bind[RingDal].to[RingDalImpl].asEagerSingleton
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
@@ -102,7 +102,7 @@ class CoreModule(
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[TradeService].to[TradeServiceImpl].asEagerSingleton
+    bind[FillService].to[FillServiceImpl].asEagerSingleton
     bind[RingService].to[RingServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
@@ -136,7 +136,7 @@ class CoreModule(
       .to[TransactionNotifier]
       .asEagerSingleton
     bind[SocketIONotifier[SubscribeOrder]].to[OrderNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeTrade]].to[TradeNotifier].asEagerSingleton
+    bind[SocketIONotifier[SubscribeFill]].to[FillNotifier].asEagerSingleton
     bind[SocketIONotifier[SubscribeTicker]].to[TickerNotifier].asEagerSingleton
     bind[SocketIONotifier[SubscribeOrderBook]]
       .to[OrderBookNotifier]
@@ -167,7 +167,7 @@ class CoreModule(
       .register(
         classOf[RingMinedEvent],
         MarketManagerActor.name,
-        RingAndTradePersistenceActor.name
+        RingAndFillPersistenceActor.name
       )
       .register(
         classOf[CutoffEvent],

@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.persistence
 
-import io.lightcone.relayer.actors._
+import io.lightcone.core._
+import io.lightcone.relayer.data._
+import scala.concurrent.Future
 
-trait RingAndTradePersistenceSupport extends DatabaseModuleSupport {
-  me: CommonSpec =>
-
-  actors.add(
-    RingAndTradePersistenceActor.name,
-    RingAndTradePersistenceActor.start
-  )
+trait FillService {
+  def saveFill(fill: Fill): Future[ErrorCode]
+  def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
+  def getFills(request: GetFills.Req): Future[Seq[Fill]]
+  def countFills(request: GetFills.Req): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }
