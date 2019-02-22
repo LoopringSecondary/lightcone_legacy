@@ -103,6 +103,8 @@ class EntryPointActor(
     case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req =>
       Some(EthereumQueryMessageValidator.name)
 
+    case _: GetOHLCData.Req => Some(OHLCDataHandlerActor.name)
+
     case _ => None
   }
 
