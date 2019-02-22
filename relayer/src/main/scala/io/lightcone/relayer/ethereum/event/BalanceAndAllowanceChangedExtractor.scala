@@ -377,20 +377,23 @@ trait BalanceUpdatedSuppot {
           .map(
             resp =>
               resp.resps
-                .map(res => NumericConversion.toBigInt(res.result)) -> NumericConversion
-                .toBigInt(resp.blockNum)
-                .toLong
+                .map(
+                  res =>
+                    Amount(
+                      NumericConversion.toBigInt(res.result),
+                      resp.blockNum
+                    )
+                )
           )
       } else {
-        Future.successful(Seq.empty -> 0L)
+        Future.successful(Seq.empty)
       }
     } yield {
-      (allowanceAddresses zip tokenAllowances._1).map(item => {
+      (allowanceAddresses zip tokenAllowances).map(item => {
         event.AddressAllowanceUpdatedEvent(
           address = Address.normalize(item._1.address),
           token = Address.normalize(item._1.token),
-          allowance = item._2,
-          blockNum = tokenAllowances._2
+          allowance = Some(item._2)
         )
       })
     }
@@ -408,12 +411,16 @@ trait BalanceUpdatedSuppot {
           .map(
             resp =>
               resp.resps
-                .map(res => NumericConversion.toBigInt(res.result)) -> NumericConversion
-                .toBigInt(resp.blockNum)
-                .toLong
+                .map(
+                  res =>
+                    Amount(
+                      NumericConversion.toBigInt(res.result),
+                      resp.blockNum
+                    )
+                )
           )
       } else {
-        Future.successful(Seq.empty -> 0L)
+        Future.successful(Seq.empty)
       }
       ethBalances <- if (ethAddress.nonEmpty) {
         (ethereumAccessor ? BatchGetEthBalance
@@ -424,30 +431,32 @@ trait BalanceUpdatedSuppot {
           .map(
             resp =>
               resp.resps
-                .map(res => NumericConversion.toBigInt(res.result)) -> NumericConversion
-                .toBigInt(resp.blockNum)
-                .toLong
+                .map(
+                  res =>
+                    Amount(
+                      NumericConversion.toBigInt(res.result),
+                      resp.blockNum
+                    )
+                )
           )
       } else {
-        Future.successful(Seq.empty -> 0L)
+        Future.successful(Seq.empty)
       }
     } yield {
-      (tokenAddresses zip tokenBalances._1).map(
+      (tokenAddresses zip tokenBalances).map(
         item =>
           item._1.copy(
             address = Address.normalize(item._1.address),
             token = Address.normalize(item._1.token),
-            balance = item._2,
-            blockNum = tokenBalances._2
+            balance = Some(item._2)
           )
       ) ++
-        (ethAddress zip ethBalances._1).map(
+        (ethAddress zip ethBalances).map(
           item =>
             event.AddressBalanceUpdatedEvent(
               address = Address.normalize(item._1.address),
               token = Address.normalize(item._1.token),
-              balance = item._2,
-              blockNum = ethBalances._2
+              balance = Some(item._2)
             )
         )
     }

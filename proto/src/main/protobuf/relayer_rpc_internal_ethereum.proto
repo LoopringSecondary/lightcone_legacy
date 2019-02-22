@@ -100,7 +100,7 @@ message BatchGetEthBalance {
 
     message Res {
         repeated EthGetBalance.Res resps = 1;
-        string block_num = 2;
+        int64 block_num = 2;
     }
 }
 
@@ -241,7 +241,7 @@ message BatchCallContracts {
 
     message Res {
         repeated EthCall.Res resps = 1;
-        string block_num = 2;
+        int64 block_num = 2;
     }
 }
 

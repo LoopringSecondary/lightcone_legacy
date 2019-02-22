@@ -64,7 +64,6 @@ message BalanceAndAllowance {
     io.lightcone.core.Amount allowance                 = 2;
     io.lightcone.core.Amount available_balance         = 3;
     io.lightcone.core.Amount available_allowance       = 4;
-    int64 block_num = 5;
 }
 
 message EthereumProxySettings {

@@ -17,6 +17,7 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
+import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.core._
 import io.lightcone.relayer.base._
@@ -53,8 +54,7 @@ class RecoverAccountsActor(
                     address = address,
                     token = token,
                     balance = ba.balance,
-                    allowance = ba.allowance,
-                    blockNum = ba.blockNum
+                    allowance = ba.allowance
                   )
                 case _ =>
               }

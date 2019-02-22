@@ -32,7 +32,7 @@ import org.json4s.native.JsonMethods.parse
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors.KeepAliveActor
-import io.lightcone.lib.TimeProvider
+import io.lightcone.lib.{NumericConversion, TimeProvider}
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import scalapb.json4s.JsonFormat
@@ -325,7 +325,10 @@ class HttpConnector(
           JsonFormat.fromJsonString[EthCall.Res](respJson)
         })
         if (batchR.returnBlockNum)
-          BatchCallContracts.Res(callResps.drop(1), callResps.head.result)
+          BatchCallContracts.Res(
+            callResps.drop(1),
+            NumericConversion.toBigInt(callResps.head.result).toLong
+          )
         else
           BatchCallContracts.Res(resps = callResps)
       } sendTo sender
@@ -410,7 +413,10 @@ class HttpConnector(
           JsonFormat.fromJsonString[EthGetBalance.Res](respJson)
         })
         if (batchR.returnBlockNum)
-          BatchGetEthBalance.Res(txResps.drop(1), txResps.head.result)
+          BatchGetEthBalance.Res(
+            txResps.drop(1),
+            NumericConversion.toBigInt(txResps.head.result).toLong
+          )
         else
           BatchGetEthBalance.Res(txResps)
       } sendTo sender

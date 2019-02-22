@@ -84,15 +84,14 @@ class EthereumQueryActor(
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
-        blockNum = NumericConversion.toBigInt(batchRes.blockNum).toLong
         allowances = allowanceResps.map { res =>
-          NumericConversion.toBigInt(res.result)
+          Amount(NumericConversion.toBigInt(res.result), batchRes.blockNum)
         }
         balances = balanceResps.map { res =>
-          NumericConversion.toBigInt(res.result)
+          Amount(NumericConversion.toBigInt(res.result), batchRes.blockNum)
         }
         balanceAndAllowance = (balances zip allowances).map { ba =>
-          BalanceAndAllowance(ba._1, ba._2, blockNum = blockNum)
+          BalanceAndAllowance(Some(ba._1), Some(ba._2))
         }
         result = GetBalanceAndAllowances
           .Res(
@@ -118,9 +117,13 @@ class EthereumQueryActor(
           result.copy(
             balanceAndAllowanceMap = result.balanceAndAllowanceMap +
               (ethToken.head -> BalanceAndAllowance(
-                NumericConversion.toBigInt(ethRes.get.resps.head.result),
-                BigInt(0),
-                NumericConversion.toBigInt(ethRes.get.blockNum)
+                Some(
+                  Amount(
+                    NumericConversion.toBigInt(ethRes.get.resps.head.result),
+                    ethRes.get.blockNum
+                  )
+                ),
+                Some(Amount(BigInt(0), ethRes.get.blockNum))
               ))
           )
         } else {
@@ -134,9 +137,8 @@ class EthereumQueryActor(
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
-        blockNum = NumericConversion.toBigInt(batchRes.blockNum).toLong
         balances = batchRes.resps.map { res =>
-          AmountAtBlock(NumericConversion.toBigInt(res.result), blockNum)
+          Amount(NumericConversion.toBigInt(res.result), batchRes.blockNum)
         }
         result = GetBalance.Res(
           owner,
@@ -161,9 +163,9 @@ class EthereumQueryActor(
           result.copy(
             balanceMap = result.balanceMap +
               (Address.ZERO.toString ->
-                AmountAtBlock(
+                Amount(
                   NumericConversion.toBigInt(ethRes.get.resps.head.result),
-                  NumericConversion.toBigInt(ethRes.get.blockNum).toLong
+                  ethRes.get.blockNum
                 ))
           )
         } else {
@@ -175,9 +177,9 @@ class EthereumQueryActor(
       batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
         resp =>
           val allowances = resp.resps.map { res =>
-            AmountAtBlock(
+            Amount(
               NumericConversion.toBigInt(res.result),
-              NumericConversion.toBigInt(resp.blockNum).toLong
+              resp.blockNum
             )
           }
           GetAllowance.Res(
@@ -196,9 +198,9 @@ class EthereumQueryActor(
           (orderIds zip result.resps
             .map(
               res =>
-                AmountAtBlock(
+                Amount(
                   NumericConversion.toBigInt(res.result),
-                  NumericConversion.toBigInt(result.blockNum).toLong
+                  result.blockNum
                 )
             )).toMap
         )
@@ -209,7 +211,7 @@ class EthereumQueryActor(
         result =>
           GetOrderCancellation.Res(
             NumericConversion.toBigInt(result.resps.head.result).intValue == 1,
-            blockNum = NumericConversion.toBigInt(result.blockNum).toLong
+            result.blockNum
           )
       }
 
@@ -220,8 +222,12 @@ class EthereumQueryActor(
             req.broker,
             req.owner,
             req.marketHash,
-            NumericConversion.toBigInt(result.resps.head.result),
-            NumericConversion.toBigInt(result.blockNum).toLong
+            cutoff = Some(
+              Amount(
+                NumericConversion.toBigInt(result.resps.head.result),
+                result.blockNum
+              )
+            )
           )
       }
     case req: BatchGetCutoffs.Req =>
@@ -233,8 +239,12 @@ class EthereumQueryActor(
                 cutoffReq.broker,
                 cutoffReq.owner,
                 cutoffReq.marketHash,
-                NumericConversion.toBigInt(res.result),
-                blockNum = NumericConversion.toBigInt(result.blockNum).toLong
+                Some(
+                  Amount(
+                    NumericConversion.toBigInt(res.result),
+                    blockNum = result.blockNum
+                  )
+                )
               )
           })
       }
@@ -254,7 +264,7 @@ class EthereumQueryActor(
               GetBurnRate.Res(
                 forMarket = marketRate,
                 forP2P = p2pRate,
-                blockNum = NumericConversion.toBigInt(result.blockNum).toLong
+                blockNum = result.blockNum
               )
             } else {
               throw ErrorException(
