@@ -61,6 +61,10 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetMetadatas.Req]
     .replies[GetMetadatas.Res]
 
+  method("get_market_history")
+    .accepts[GetMarketHistory.Req]
+    .replies[GetMarketHistory.Res]
+
   //Ethereum Query
   method("get_account")
     .accepts[GetAccount.Req]

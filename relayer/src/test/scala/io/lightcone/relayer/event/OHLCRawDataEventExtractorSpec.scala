@@ -18,7 +18,7 @@ package io.lightcone.relayer.event
 
 import akka.pattern._
 import io.lightcone.core._
-import io.lightcone.relayer.actors.OHLCDataHandlerActor
+import io.lightcone.relayer.actors.MarketHistoryActor
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
@@ -33,7 +33,7 @@ class OHLCRawDataEventExtractorSpec
   "ethereum event extractor actor test" must {
     "correctly extract all OHLC raw data from ethereum blocks" in {
 
-      def oHLCDataHandlerActor = actors.get(OHLCDataHandlerActor.name)
+      def oHLCDataHandlerActor = actors.get(MarketHistoryActor.name)
 
       val getBaMethod = "get_account"
       val submit_order = "submit_order"
@@ -152,16 +152,16 @@ class OHLCRawDataEventExtractorSpec
       )
       val marketHash =
         MarketHash(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)).toString
-      val oHLCDatas = Await.result(
-        (oHLCDataHandlerActor ? GetOHLCData.Req(
+      val res = Await.result(
+        (oHLCDataHandlerActor ? GetMarketHistory.Req(
           marketHash,
-          GetOHLCData.Interval.OHLC_INTERVAL_ONE_MINUTES,
+          GetMarketHistory.Interval.OHLC_INTERVAL_ONE_MINUTES,
           timeProvider.getTimeSeconds() - 600,
           timeProvider.getTimeSeconds()
-        )).mapAs[GetOHLCData.Res],
+        )).mapAs[GetMarketHistory.Res],
         timeout.duration
       )
-      oHLCDatas.ohlcData.nonEmpty should be(true)
+      res.data.nonEmpty should be(true)
     }
   }
 }

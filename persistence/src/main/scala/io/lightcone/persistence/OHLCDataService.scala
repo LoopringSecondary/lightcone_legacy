@@ -25,5 +25,5 @@ trait OHLCDataService {
 
   def saveData(record: PersistOHLCData.Req): Future[PersistOHLCData.Res]
 
-  def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res]
+  def getOHLCData(request: GetMarketHistory.Req): Future[GetMarketHistory.Res]
 }

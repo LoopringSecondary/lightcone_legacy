@@ -92,6 +92,8 @@ class EntryPointActor(
     case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
       Some(TransactionRecordMessageValidator.name)
 
+    case _: GetMarketHistory.Req => Some(MarketHistoryActor.name)
+
     case _ => None
   }
 
