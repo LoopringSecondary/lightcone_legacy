@@ -229,8 +229,8 @@ class CoreDeployer @Inject()(
           DatabaseQueryActor.start
         )
         .add(
-          RingAndTradePersistenceActor.name,
-          RingAndTradePersistenceActor.start
+          RingAndFillPersistenceActor.name,
+          RingAndFillPersistenceActor.start
         )
         .add(
           GasPriceActor.name, //

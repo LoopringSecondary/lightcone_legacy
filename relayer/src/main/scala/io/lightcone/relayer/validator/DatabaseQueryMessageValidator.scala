@@ -43,7 +43,7 @@ final class DatabaseQueryMessageValidator(
   val maxItemsPerPage = config.getInt("max-items-per-page")
 
   def validate = {
-    case req: GetOrdersForUser.Req =>
+    case req: GetOrders.Req =>
       Future {
         val owner =
           if (req.owner.isEmpty)
@@ -56,7 +56,7 @@ final class DatabaseQueryMessageValidator(
           case Some(m) =>
             val tokenS = normalizeAddress(m.tokenS)
             val tokenB = normalizeAddress(m.tokenB)
-            Some(GetOrdersForUser.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+            Some(GetOrders.Req.Market(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
         req.copy(
@@ -66,7 +66,7 @@ final class DatabaseQueryMessageValidator(
         )
       }
 
-    case req: GetTrades.Req =>
+    case req: GetFills.Req =>
       Future {
         val owner = normalizeAddress(req.owner)
         val ringOpt = req.ring match {
@@ -87,17 +87,17 @@ final class DatabaseQueryMessageValidator(
                   s"invalid fillIndex:${r.fillIndex}"
                 )
               else r.fillIndex
-            Some(GetTrades.Req.Ring(ringHash, ringIndex, fillIndex))
+            Some(GetFills.Req.Ring2(ringHash, ringIndex, fillIndex))
           case _ => None
         }
         val marketOpt = req.market match {
           case Some(m) =>
             val tokenS = normalizeAddress(m.tokenS)
             val tokenB = normalizeAddress(m.tokenB)
-            Some(GetTrades.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+            Some(GetFills.Req.Market(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
-        GetTrades.Req(
+        GetFills.Req(
           owner,
           normalizeHash(req.txHash),
           normalizeHash(req.orderHash),

@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.dals
+package io.lightcone.core
 
-import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
-import slick.jdbc.MySQLProfile.api._
+import com.google.protobuf.ByteString
 
-class OrderStatusMonitorTable(tag: Tag)
-    extends BaseTable[OrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
-
-  def id = monitoringType
-  def processTime = column[Long]("process_time")
-  def monitoringType = column[String]("monitoring_type", O.PrimaryKey, O.Unique)
-
-  def * =
-    (monitoringType, processTime) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
-
+private[core] class RichInt(int: Int) {
+  def toAmount() = Amount(ByteString.copyFrom(BigInt(int).toByteArray))
 }

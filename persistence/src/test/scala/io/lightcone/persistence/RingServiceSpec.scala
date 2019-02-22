@@ -16,11 +16,9 @@
 
 package io.lightcone.persistence
 
-import com.google.protobuf.ByteString
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data.GetRings._
 import io.lightcone.core._
-import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -47,11 +45,11 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query rings: by ringHash and ringIndex")
-    val q3 = Req(ring = Some(Req.Ring(Req.Ring.Filter.RingHash(hash2))))
+    val q3 = Req(ring = Some(Req.Ring2(Req.Ring2.Filter.RingHash(hash2))))
     val r3 = Await.result(service.getRings(q3).mapTo[Seq[Ring]], 5.second)
     val c3 = Await.result(service.countRings(q3).mapTo[Int], 5.second)
     assert(r3.length == 1 && c3 == 1)
-    val q4 = Req(ring = Some(Req.Ring(Req.Ring.Filter.RingIndex(11))))
+    val q4 = Req(ring = Some(Req.Ring2(Req.Ring2.Filter.RingIndex(11))))
     val r4 = Await.result(service.getRings(q4).mapTo[Seq[Ring]], 5.second)
     val c4 = Await.result(service.countRings(q4).mapTo[Int], 5.second)
     assert(r4.length == 1 && c4 == 1)
@@ -60,9 +58,9 @@ class RingServiceSpec extends ServiceSpec[RingService] {
       case Some(f) =>
         assert(f.fees.length == 2)
         f.fees foreach {
-          case fee: Trade.Fee if fee == fee1 => assert(true)
-          case fee: Trade.Fee if fee == fee2 => assert(true)
-          case _                             => assert(false)
+          case fee: Fill.Fee if fee == fee1 => assert(true)
+          case fee: Fill.Fee if fee == fee2 => assert(true)
+          case _                            => assert(false)
         }
       case None => assert(false)
     }
@@ -100,21 +98,21 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     "0x30f3c30128432ef6b0bbf3d89002a6af96768f74390ff3061a4f548848e669dc"
   val miner = "0x624d520bab2e4ad83935fa503fb130614374e850"
 
-  val fee1 = Trade.Fee(
+  val fee1 = Fill.Fee(
     tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    amountFee = ByteString.copyFrom("10", "UTF-8"),
-    feeAmountS = ByteString.copyFrom("11", "UTF-8"),
-    feeAmountB = ByteString.copyFrom("12", "UTF-8"),
+    amountFee = BigInt(10),
+    feeAmountS = BigInt(11),
+    feeAmountB = BigInt(12),
     feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
     waiveFeePercentage = 10,
     walletSplitPercentage = 5
   )
 
-  val fee2 = Trade.Fee(
+  val fee2 = Fill.Fee(
     tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
-    amountFee = ByteString.copyFrom("20", "UTF-8"),
-    feeAmountS = ByteString.copyFrom("21", "UTF-8"),
-    feeAmountB = ByteString.copyFrom("22", "UTF-8"),
+    amountFee = BigInt(20),
+    feeAmountS = BigInt(21),
+    feeAmountB = BigInt(22),
     feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
     waiveFeePercentage = 8,
     walletSplitPercentage = 2

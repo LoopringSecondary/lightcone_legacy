@@ -29,6 +29,8 @@ import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import io.lightcone.relayer.data._
 
+// TODO(yongfeng): delete this?
+
 class TokenBalanceTable(tag: Tag)
     extends BaseTable[TokenBalance](tag, "T_TOKEN_BALANCES") {
 

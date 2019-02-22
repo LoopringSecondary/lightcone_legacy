@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.relayer.rpc;
+package io.lightcone.relayer.data.ext;
 
 import "core.proto";
 import "relayer_external.proto";

@@ -19,7 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.persistence;
 
-// import "core.proto";
+import "core.proto";
 // import "ethereum.proto";
 
 enum SortingType {
@@ -39,28 +39,87 @@ message CursorPaging {
 
 
 message BlockData {
-    string hash                 = 1;
-    int64  height               = 2;
-    int64  timestamp            = 3;
-    int32  num_tx               = 4;
-    string parent_hash          = 5;
-    string sha3_uncles          = 6;
-    string mined_by             = 7;
-    bytes  difficulty           = 8;
-    bytes  total_difficulty     = 9;
-    int64  size                 = 10;
-    bytes  gas_used             = 11;
-    bytes  gas_limit            = 12;
-    int64  avg_gas_price        = 13;
-    int64  nonce                = 14;
-    bytes  block_reward         = 15;
-    bytes  uncle_reward         = 16;
-    bytes  extra_data           = 17;
+    string hash                                 = 1;
+    int64  height                               = 2;
+    int64  timestamp                            = 3;
+    int32  num_tx                               = 4;
+    string parent_hash                          = 5;
+    string sha3_uncles                          = 6;
+    string mined_by                             = 7;
+    io.lightcone.core.Amount difficulty         = 8;
+    io.lightcone.core.Amount total_difficulty   = 9;
+    int64  size                                 = 10;
+    io.lightcone.core.Amount gas_used           = 11;
+    io.lightcone.core.Amount gas_limit          = 12;
+    int64  avg_gas_price                        = 13;
+    int64  nonce                                = 14;
+    io.lightcone.core.Amount block_reward       = 15;
+    io.lightcone.core.Amount uncle_reward       = 16;
+    bytes  extra_data                           = 17;
 }
 
-message TxRecord {
 
-    enum TxType {
+// TODO(yongfeng): simply this.
+// For the fontend, we only need to display:
+// time, base-amount, quote-amount
+// we may also want to give back order-id and market-pair,
+// and tx-id.
+message Fill {
+    message Fee {
+        // for market
+        string token_fee                        = 1;
+        io.lightcone.core.Amount amount_fee     = 2;
+        // for p2p
+        io.lightcone.core.Amount fee_amount_s   = 3;
+        io.lightcone.core.Amount fee_amount_b   = 4;
+
+        string fee_recipient                    = 5;
+        int32  waive_fee_percentage             = 6; // miner waive
+        int32  wallet_split_percentage          = 7;
+    }
+
+    string owner                                = 1;
+    string order_hash                           = 2;
+    string ring_hash                            = 3;
+    int64  ring_index                           = 4;
+    int32  fill_index                           = 5;
+    string tx_hash                              = 6;
+    io.lightcone.core.Amount amount_s           = 7;
+    io.lightcone.core.Amount amount_b           = 8;
+    string token_s                              = 9;
+    string token_b                              = 10;
+    int64  market_id                            = 11;
+    io.lightcone.core.Amount split              = 12; // tokenS
+    Fee    fee                                  = 13;
+    string wallet                               = 14;
+    string miner                                = 15;
+    int64  block_height                         = 16;
+    int64  block_timestamp                      = 17;
+}
+
+
+message Ring {
+    message Fees {
+        repeated Fill.Fee fees = 1;
+    }
+    string   ring_hash         = 1;
+    int64    ring_index        = 2;
+    int32    fills_amount      = 3;
+    string   miner             = 4;
+    string   tx_hash           = 5;
+    Fees     fees              = 6;
+    int64    block_height      = 7;
+    int64    block_timestamp   = 8;
+}
+
+
+message News {
+
+}
+
+message Activity {
+
+    enum ActivityType {
         ETHER_TRANSFER_OUT           = 0;
         ETHER_TRANSFER_IN            = 1;
         ETHER_WRAP                   = 2;
@@ -68,54 +127,53 @@ message TxRecord {
         TOKEN_TRANSFER_OUT           = 4;
         TOKEN_TRANSFER_IN            = 5;
         TOKEN_AUTH                   = 6;
-        LOOPRING_TRADE_SELL          = 7;
-        LOOPRING_TRADE_BUY           = 8;
-        LOOPRING_CANCEL              = 9;
+        TRADE_SELL                   = 7;
+        TRADE_BUY                    = 8;
+        ORDER_CANCEL                 = 9;
+        ORDER_SUBMIT                 = 10; // order submission onchain
     }
 
     message EtherTransfer {
-        string  address         = 1;  // 'to' or 'from'
-        bytes   amount_bytes    = 2;  // can be 0
-        string  amount          = 3;  // used for frontend display, not persistence
+        string  address                 = 1;  // 'to' or 'from'
+        io.lightcone.core.Amount amount = 2;  // can be 0
     }
 
     message EtherConversion {
-        bytes   amount_bytes    = 1;  // can be 0
-        string  amount          = 2;  // used for frontend display, not persistence
+        io.lightcone.core.Amount amount = 1;  // can be 0
     }
 
     message TokenTransfer {
-        string  address         = 1;  // 'to' or 'from'
-        string  token           = 2;  // symbol (if we know)or) or address (otherwise)
-        bytes   amount_bytes    = 3;  // can be 0
-        string  amount          = 4;  // used for frontend display, not persistence
+        string  address                 = 1;  // 'to' or 'from'
+        string  token                   = 2;  // symbol (if we know)or) or address (otherwise)
+        io.lightcone.core.Amount amount = 3;  // can be 0
     }
 
     message TokenAuth {
-        string  token           = 1;  // symbol (if we know)or) or address (otherwise)
-        string  target          = 2;
-        bytes   amount_bytes    = 3;
-        string  amount          = 4;  // used for frontend display, not persistence
+        string  token                   = 1;  // symbol (if we know)or) or address (otherwise)
+        string  target                  = 2;
+        io.lightcone.core.Amount amount = 3;
     }
 
 
     // If the txType is TRADE_BUY:
-    message LoopringTrade {
-        string  address                 = 1;
-        string  token_base              = 2;  // symbol (if we know)or) or address (otherwise)
-        string  token_quote             = 3;  // symbol (if we know)or) or address (otherwise)
-        string  price                   = 4;  // == _amountquote / _amountbase
-        bytes   amount_base_bytes       = 5;
-        bytes   amount_quote_bytes      = 6;
-        string  amount_base             = 7;  // used for frontend display, not persistence
-        string  amount_quote            = 8;  // used for frontend display, not persistence
+    message Trade {
+        string  address                         = 1;
+        string  token_base                      = 2;  // symbol (if we know)or) or address (otherwise)
+        string  token_quote                     = 3;  // symbol (if we know)or) or address (otherwise)
+        string  price                           = 4;  // == _amountquote / _amountbase
+        io.lightcone.core.Amount amount_base    = 5;
+        io.lightcone.core.Amount amount_quote   = 6;
     }
 
-    message LoopringCancel {
+    message OrderCancellation {
         string order_id         = 1;
         int64  cutoff           = 2; // if order_id is not "", this must be not 0.
         string market_pair      = 3; // dispaly as "LRC/ETH", if missing, means all markets.
         string broker           = 4; // optional
+    }
+
+    message OrderSubmission {
+        // Support in the future
     }
 
 
@@ -126,16 +184,17 @@ message TxRecord {
     int64  tx_hash              = 3; // (indexed) the transaction hash, multiple Tx record may
                                      // share the same tx hash, the wallet may choose to group
                                      // those records to display.
-    TxType tx_type              = 4; //  (indexed)
+    ActivityType activity_type  = 4; //  (indexed)
     int64  timestamp            = 5; //  (indexed) may not be unique, used in sorting
     double fiat_value           = 6;
 
     oneof detail {
-        EtherTransfer   ether_transfer          = 21;
-        EtherConversion ether_conversion        = 22;
-        TokenTransfer   token_transfer          = 23;
-        TokenAuth       token_auth              = 24;
-        LoopringTrade   loopring_trade          = 25;
-        LoopringCancel  loopring_cancel         = 26;
+        EtherTransfer       ether_transfer      = 21;
+        EtherConversion     ether_conversion    = 22;
+        TokenTransfer       token_transfer      = 23;
+        TokenAuth           token_auth          = 24;
+        Trade               trade               = 25;
+        OrderCancellation   order_concellation  = 26;
+        OrderSubmission     order_submission    = 27;
     }
 }

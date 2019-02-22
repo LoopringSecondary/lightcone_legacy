@@ -22,22 +22,22 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 
-class TradeServiceImpl @Inject()(
+class FillServiceImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    tradeDal: TradeDal)
-    extends TradeService {
+    fillDal: FillDal)
+    extends FillService {
 
-  def saveTrade(trade: Trade): Future[ErrorCode] =
-    tradeDal.saveTrade(trade)
+  def saveFill(fill: Fill): Future[ErrorCode] =
+    fillDal.saveFill(fill)
 
-  def saveTrades(trades: Seq[Trade]) = tradeDal.saveTrades(trades)
+  def saveFills(fills: Seq[Fill]) = fillDal.saveFills(fills)
 
-  def getTrades(request: GetTrades.Req): Future[Seq[Trade]] =
-    tradeDal.getTrades(request)
+  def getFills(request: GetFills.Req): Future[Seq[Fill]] =
+    fillDal.getFills(request)
 
-  def countTrades(request: GetTrades.Req): Future[Int] =
-    tradeDal.countTrades(request)
+  def countFills(request: GetFills.Req): Future[Int] =
+    fillDal.countFills(request)
 
-  def obsolete(height: Long): Future[Unit] = tradeDal.obsolete(height)
+  def obsolete(height: Long): Future[Unit] = fillDal.obsolete(height)
 }
