@@ -28,20 +28,20 @@ import io.lightcone.relayer.actors.CMCCrawlerActor
 import org.slf4s.Logging
 import scala.concurrent.{ExecutionContext, Future}
 
-class SinaCurrencyManagerImpl @Inject()(
+class SinaFiatExchangeRateFetcher @Inject()(
     implicit
     val config: Config,
     val system: ActorSystem,
     val ec: ExecutionContext,
     val materializer: ActorMaterializer)
-    extends CurrencyManager
+    extends FiatExchangeRateFetcher
     with Logging {
 
   val currencyConfig = config.getConfig(CMCCrawlerActor.name)
 
   val uri = currencyConfig.getString("sina.uri")
 
-  def getUsdCnyCurrency(): Future[Double] =
+  def fetchExchangeRates(): Future[Double] =
     for {
       response <- Http().singleRequest(
         HttpRequest(

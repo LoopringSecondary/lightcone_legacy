@@ -26,17 +26,17 @@ import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-class ThirdPartyTokenPriceDalImpl @Inject()(
+class ExternalTickerDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-third-party-token-price") val dbConfig: DatabaseConfig[
+    @Named("dbconfig-external-ticker") val dbConfig: DatabaseConfig[
       JdbcProfile
     ])
-    extends ThirdPartyTokenPriceDal {
+    extends ExternalTickerDal {
 
-  val query = TableQuery[ThirdPartyTokenPriceTable]
+  val query = TableQuery[ExternalTickerTable]
 
-  def saveTickers(tickers: Seq[ThirdPartyTokenPrice]) =
+  def saveTickers(tickers: Seq[ExternalTicker]) =
     db.run((query ++= tickers).asTry).map {
       case Failure(ex) => {
         logger.error(s"save tickers error : ${ex.getMessage}")
@@ -46,34 +46,32 @@ class ThirdPartyTokenPriceDalImpl @Inject()(
         ERR_NONE
     }
 
-  def getLatestEffectiveRequest() = {
-    db.run(query.filter(_.isEffective === true).map(_.requestTime).max.result)
+  def getLastTimestamp() = {
+    db.run(query.filter(_.isEffective === true).map(_.timestamp).max.result)
   }
 
-  def getTickersByRequestTime(
-      requestTime: Long
-    ): Future[Seq[ThirdPartyTokenPrice]] =
-    db.run(query.filter(_.requestTime === requestTime).result)
+  def getTickers(timestamp: Long): Future[Seq[ExternalTicker]] =
+    db.run(query.filter(_.timestamp === timestamp).result)
 
-  def countTickersByRequestTime(requestTime: Long) =
-    db.run(query.filter(_.requestTime === requestTime).size.result)
+  def countTickers(timestamp: Long) =
+    db.run(query.filter(_.timestamp === timestamp).size.result)
 
   def getTickers(
-      requestTime: Long,
+      timestamp: Long,
       tokenSlugs: Seq[String]
-    ): Future[Seq[ThirdPartyTokenPrice]] =
+    ): Future[Seq[ExternalTicker]] =
     db.run(
       query
-        .filter(_.requestTime === requestTime)
+        .filter(_.timestamp === timestamp)
         .filter(_.slug inSet tokenSlugs)
         .result
     )
 
-  def updateEffective(requestTime: Long) =
+  def updateEffective(timestamp: Long) =
     for {
       result <- db.run(
         query
-          .filter(_.requestTime === requestTime)
+          .filter(_.timestamp === timestamp)
           .map(_.isEffective)
           .update(true)
       )

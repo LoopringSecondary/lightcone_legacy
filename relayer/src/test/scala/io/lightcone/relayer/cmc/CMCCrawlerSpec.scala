@@ -19,7 +19,7 @@ package io.lightcone.relayer.cmc
 import io.lightcone.core._
 import io.lightcone.persistence._
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.data._
+import io.lightcone.relayer.data.cmc._
 import io.lightcone.relayer.external._
 import io.lightcone.relayer.support._
 import scala.concurrent.{Await, Future}
@@ -37,8 +37,10 @@ class CMCCrawlerSpec
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
 
-  var tickers: Seq[ThirdPartyTokenPrice] = Seq.empty[ThirdPartyTokenPrice]
-  var slugSymbols: Seq[CMCTokenSlug] = Seq.empty[CMCTokenSlug] // slug -> symbol
+  var tickers: Seq[ExternalTicker] = Seq.empty[ExternalTicker]
+
+  var slugSymbols
+    : Seq[CMCTickerConfig] = Seq.empty[CMCTickerConfig] // slug -> symbol
 
   private val tokens = metadataManager.getTokens
   private val marketQuoteTokens =
@@ -50,9 +52,11 @@ class CMCCrawlerSpec
 
   "cmc crawler" must {
     "sina currency rate" in {
-      val manager: CurrencyManager = new SinaCurrencyManagerImpl()
       val r =
-        Await.result(manager.getUsdCnyCurrency().mapTo[Double], 5.second)
+        Await.result(
+          fiatExchangeRateFetcher.fetchExchangeRates().mapTo[Double],
+          5.second
+        )
       r > 0 should be(true)
     }
 
@@ -62,7 +66,7 @@ class CMCCrawlerSpec
       }
       val f = for {
         cmcResponse <- getMockedCMCTickers()
-        rateResponse <- currencyManager.getUsdCnyCurrency()
+        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
         slugSymbols_ <- dbModule.cmcTokenSlugDal.getAll()
         tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
           for {
@@ -74,8 +78,8 @@ class CMCCrawlerSpec
           Future.successful(Seq.empty)
         }
         // verify result
-        tickers_ <- dbModule.thirdPartyTokenPriceDal.countTickersByRequestTime(
-          tickersToPersist.head.syncTime
+        tickers_ <- dbModule.thirdPartyTickerDal.countTickers(
+          tickersToPersist.head.timestamp
         )
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield (cmcResponse, tickersToPersist, tickers_, tokens_, slugSymbols_)
@@ -83,10 +87,10 @@ class CMCCrawlerSpec
         f.mapTo[
           (
               TickerDataInfo,
-              Seq[ThirdPartyTokenPrice],
+              Seq[ExternalTicker],
               Int,
               Seq[TokenMetadata],
-              Seq[CMCTokenSlug]
+              Seq[CMCTickerConfig]
           )
         ],
         50.second
@@ -95,10 +99,13 @@ class CMCCrawlerSpec
       q1._2.length should be(2073) // RMB added
       q1._5.nonEmpty should be(true)
       tickers = q1._2
-      slugSymbols = q1._5 ++ q1._1.data.map(t => CMCTokenSlug(t.symbol, t.slug))
+      log.info(s"---1 ${tickers}")
+      slugSymbols = q1._5 ++ q1._1.data
+        .map(t => CMCTickerConfig(t.symbol, t.slug))
       q1._3 should be(2073)
       q1._4.exists(_.externalData.get.usdPrice != 1000) should be(true)
     }
+
     "convert USD tickers to all quote markets (ExternalDataRefresher)" in {
       val (allTickersInUSD, allTickersInCNY, effectiveTickers) =
         refreshTickers()
@@ -122,7 +129,7 @@ class CMCCrawlerSpec
         tickers.find(_.slug == "rmb")
       tickerInUsd.symbol should equal(tickerInCny.symbol)
       val cnyTickerVerify =
-        tickerManager.convertUsdTickersToCny(
+        CMCExternalTickerFetcher.convertUsdTickersToCny(
           Seq(tickerInUsd),
           cnyTousd
         )
@@ -153,7 +160,7 @@ class CMCCrawlerSpec
 
   private def updateTokenPrice(
       usdTickers: Seq[CMCTickerData],
-      slugSymbols: Seq[CMCTokenSlug],
+      slugSymbols: Seq[CMCTickerConfig],
       tokens: Seq[TokenMetadata]
     ) = {
     var changedTokens = Seq.empty[TokenMetadata]
@@ -200,26 +207,27 @@ class CMCCrawlerSpec
     ) =
     for {
       _ <- Future.unit
-      tickersToPersist = tickerManager.convertCMCResponseToPersistence(
-        tickers_
-      )
-      cnyTicker = ThirdPartyTokenPrice(
+      tickersToPersist = CMCExternalTickerFetcher
+        .convertCMCResponseToPersistence(
+          tickers_
+        )
+      cnyTicker = ExternalTicker(
         "rmb",
         Some(
-          ThirdPartyTokenPrice.Ticker(
-            price = tickerManager
+          ExternalTicker.Ticker(
+            price = CMCExternalTickerFetcher
               .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
           )
         )
       )
       now = timeProvider.getTimeSeconds()
       _ = tickers =
-        tickersToPersist.+:(cnyTicker).map(t => t.copy(syncTime = now))
+        tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
       fixGroup = tickers.grouped(20).toList
       _ <- Future.sequence(
-        fixGroup.map(dbModule.thirdPartyTokenPriceDal.saveTickers)
+        fixGroup.map(dbModule.thirdPartyTickerDal.saveTickers)
       )
-      updateSucc <- dbModule.thirdPartyTokenPriceDal.updateEffective(now)
+      updateSucc <- dbModule.thirdPartyTickerDal.updateEffective(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE) {
         log.error(s"CMC persist failed, code:$updateSucc")
@@ -231,36 +239,51 @@ class CMCCrawlerSpec
 
   private def refreshTickers() = {
     assert(tickers.nonEmpty)
-    val withoutRMB = tickers.filter(_.slug != "rmb")
+    val tickers_ = tickers
+      .filter(_.slug != "rmb")
+      .filter(isEffectiveToken)
     val allTickersInUSD =
-      withoutRMB.map(tickerManager.convertPersistToExternal(_, slugSymbols))
+      tickers_
+        .filter(isEffectiveToken)
+        .map(CMCExternalTickerFetcher.convertPersistToExternal(_, slugSymbols))
     val cnyToUsd =
       tickers.find(_.slug == "rmb")
     assert(cnyToUsd.nonEmpty)
     assert(cnyToUsd.get.usdQuote.nonEmpty)
-    val allTickersInCNY = withoutRMB.map { t =>
-      val t_ = tickerManager.convertPersistToExternal(t, slugSymbols)
+    val allTickersInCNY = tickers_.filter(isEffectiveToken).map { t =>
+      val t_ = CMCExternalTickerFetcher.convertPersistToExternal(t, slugSymbols)
       assert(t.usdQuote.nonEmpty)
       t_.copy(
-        price = tickerManager.toDouble(
-          BigDecimal(t.usdQuote.get.price) * BigDecimal(
+        price = CMCExternalTickerFetcher.toDouble(
+          BigDecimal(t.usdQuote.get.price) / BigDecimal(
             cnyToUsd.get.usdQuote.get.price
           )
         )
       )
     }
-    val effectiveTickers = tickerManager
+    val effectiveMarketTickers = CMCExternalTickerFetcher
       .convertPersistenceToAllQuoteMarkets(
-        withoutRMB,
+        tickers_,
         slugSymbols,
         marketQuoteTokens
       )
       .filter(isEffectiveMarket)
-    (allTickersInUSD, allTickersInCNY, effectiveTickers)
+    (allTickersInUSD, allTickersInCNY, effectiveMarketTickers)
   }
 
-  private def isEffectiveMarket(ticker: ExternalTickerInfo): Boolean = {
-    effectiveMarketSymbols.contains((ticker.symbol, ticker.market))
+  private def isEffectiveToken(ticker: ExternalTicker): Boolean = {
+    val slugSymbol = slugSymbols
+      .find(_.slug == ticker.slug)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found slug: ${ticker.slug} to symbol config"
+        )
+      )
+    tokens.map(_.meta.symbol).contains(slugSymbol.symbol)
   }
+
+  private def isEffectiveMarket(ticker: ExternalMarketTickerInfo): Boolean =
+    effectiveMarketSymbols.contains((ticker.symbol, ticker.market))
 
 }

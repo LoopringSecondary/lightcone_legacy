@@ -17,13 +17,13 @@
 package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
-import io.lightcone.relayer.data._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import scala.concurrent.Await
 import io.lightcone.relayer.actors._
 import akka.pattern._
+import io.lightcone.relayer.data.cmc.GetExternalTokenTickers
 
 trait ExternalSupport extends DatabaseModuleSupport {
   me: CommonSpec =>
@@ -34,8 +34,8 @@ trait ExternalSupport extends DatabaseModuleSupport {
     10,
     TimeUnit.SECONDS,
     () => {
-      val f = (actors.get(CMCCrawlerActor.name) ? GetTickers.Req())
-        .mapTo[GetTickers.Res]
+      val f = (actors.get(CMCCrawlerActor.name) ? GetExternalTokenTickers.Req())
+        .mapTo[GetExternalTokenTickers.Res]
       val res = Await.result(f, timeout.duration)
       res.tickers.nonEmpty && res.tickers.nonEmpty
     }
@@ -46,6 +46,4 @@ trait ExternalSupport extends DatabaseModuleSupport {
         "Timed out waiting for CMCCrawlerActor init.)"
       )
   }
-
-  actors.add(ExternalDataRefresher.name, ExternalDataRefresher.start)
 }

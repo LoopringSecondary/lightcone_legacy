@@ -18,19 +18,12 @@ package io.lightcone.core
 
 import io.lightcone.ethereum.event.TokenBurnRateChangedEvent.BurnRate
 import io.lightcone.lib._
-import io.lightcone.relayer.data.SaveTokenMetadata
 
 object MetadataManager {
 
   import ErrorCode._
 
   def normalize(token: TokenMetadata): TokenMetadata =
-    token.copy(
-      address = Address(token.address).toString.toLowerCase,
-      symbol = token.symbol.toUpperCase
-    )
-
-  def normalize(token: SaveTokenMetadata): SaveTokenMetadata =
     token.copy(
       address = Address(token.address).toString.toLowerCase,
       symbol = token.symbol.toUpperCase

@@ -27,7 +27,9 @@ import io.lightcone.relayer.data._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
-import io.lightcone.persistence.ThirdPartyTokenPrice
+import io.lightcone.persistence.ExternalTicker
+import io.lightcone.relayer.data.cmc._
+import io.lightcone.relayer.external.CMCExternalTickerFetcher
 import scalapb.json4s.Parser
 
 class MetadataManagerSpec
@@ -50,7 +52,7 @@ class MetadataManagerSpec
     "initialize tickers" in {
       val f = for {
         cmcResponse <- getMockedCMCTickers()
-        rateResponse <- currencyManager.getUsdCnyCurrency()
+        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
         tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
           persistTickers(rateResponse, cmcResponse.data)
         } else {
@@ -59,6 +61,7 @@ class MetadataManagerSpec
       } yield {}
       Await.result(f.mapTo[Unit], 30.second)
     }
+
     "initialized metadataManager completely" in {
       info("check tokens: address at lower and upper case")
       assert(metadataManager.getTokens.length >= TOKENS.length) // in case added some tokens after initialized (metadataManager.addToken(token))
@@ -558,25 +561,26 @@ class MetadataManagerSpec
     ) =
     for {
       _ <- Future.unit
-      tickersToPersist = tickerManager.convertCMCResponseToPersistence(
-        tickers_
-      )
-      cnyTicker = ThirdPartyTokenPrice(
+      tickersToPersist = CMCExternalTickerFetcher
+        .convertCMCResponseToPersistence(
+          tickers_
+        )
+      cnyTicker = ExternalTicker(
         "rmb",
         Some(
-          ThirdPartyTokenPrice.Ticker(
-            price = tickerManager
+          ExternalTicker.Ticker(
+            price = CMCExternalTickerFetcher
               .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
           )
         )
       )
       now = timeProvider.getTimeSeconds()
-      tickers = tickersToPersist.+:(cnyTicker).map(t => t.copy(syncTime = now))
+      tickers = tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
       fixGroup = tickers.grouped(20).toList
       _ <- Future.sequence(
-        fixGroup.map(dbModule.thirdPartyTokenPriceDal.saveTickers)
+        fixGroup.map(dbModule.thirdPartyTickerDal.saveTickers)
       )
-      updateSucc <- dbModule.thirdPartyTokenPriceDal.updateEffective(now)
+      updateSucc <- dbModule.thirdPartyTickerDal.updateEffective(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE) {
         log.error(s"CMC persist failed, code:$updateSucc")

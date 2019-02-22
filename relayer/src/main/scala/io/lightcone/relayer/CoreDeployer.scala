@@ -35,7 +35,6 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.Notify
 import io.lightcone.relayer.ethereum.event._
-import io.lightcone.relayer.external.{CurrencyManager, TickerManager}
 import org.slf4s.Logging
 import io.lightcone.relayer.external._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -73,8 +72,8 @@ class CoreDeployer @Inject()(
     orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
     transferNotifier: SocketIONotifier[SubscribeTransfer],
     system: ActorSystem,
-    tickerManager: TickerManager,
-    currencyManager: CurrencyManager)
+    externalTickerFetcher: ExternalTickerFetcher,
+    fiatExchangeRateFetcher: FiatExchangeRateFetcher)
     extends Object
     with Logging {
 
@@ -273,10 +272,6 @@ class CoreDeployer @Inject()(
         .add(
           KeepAliveActor.name, //
           KeepAliveActor.start
-        )
-        .add(
-          ExternalDataRefresher.name,
-          ExternalDataRefresher.start
         )
 
       //-----------deploy JSONRPC service-----------

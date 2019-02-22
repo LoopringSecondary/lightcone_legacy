@@ -134,7 +134,7 @@ message TxRecord {
     }
 }
 
-message ThirdPartyTokenPrice {
+message ExternalTicker {
     message Ticker {
         double price = 1;
         double volume_24h = 2;
@@ -145,11 +145,11 @@ message ThirdPartyTokenPrice {
     }
     string slug = 1;
     Ticker usd_quote = 2;
-    int64 sync_time = 3;
+    int64 timestamp = 3;
     bool  is_effective = 4;
 }
 
-message CMCTokenSlug {
+message CMCTickerConfig {
     string symbol = 1;
     string slug   = 2;
 }

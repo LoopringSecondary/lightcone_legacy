@@ -20,61 +20,61 @@ import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 
-class ThirdPartyTokenPriceTable(tag: Tag)
-    extends BaseTable[ThirdPartyTokenPrice](tag, "T_THRID_PARTY_TOKEN_PRICE") {
+class ExternalTickerTable(tag: Tag)
+    extends BaseTable[ExternalTicker](tag, "T_EXTERNAL_TICKER") {
 
   def id = slug
   def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
 
   // usd_quote
-  def price = column[Double]("price")
+  def priceUsd = column[Double]("price_usd")
   def volume24H = column[Double]("volume_24h")
   def percentChange1H = column[Double]("percent_change_1h")
   def percentChange24H = column[Double]("percent_change_24h")
   def percentChange7D = column[Double]("percent_change_7d")
-  def marketCap = column[Double]("market_cap")
+  def marketCapUsd = column[Double]("market_cap_usd")
 
-  def requestTime = column[Long]("request_time")
+  def timestamp = column[Long]("timestamp")
   def isEffective = column[Boolean]("is_effective")
 
   // indexes
   def idx_request_time =
     index(
       "idx_request_time",
-      (requestTime),
+      (timestamp),
       unique = false
     )
 
   def idx_request_time_effective =
     index(
       "idx_request_time_effective",
-      (requestTime, isEffective),
+      (timestamp, isEffective),
       unique = false
     )
 
   def pk_request_time_slug =
-    primaryKey("pk_request_time_slug", (requestTime, slug))
+    primaryKey("pk_request_time_slug", (timestamp, slug))
 
   def quoteProjection =
     (
-      price,
+      priceUsd,
       volume24H,
       percentChange1H,
       percentChange24H,
       percentChange7D,
-      marketCap
+      marketCapUsd
     ) <> ({ tuple =>
-      Option((ThirdPartyTokenPrice.Ticker.apply _).tupled(tuple))
-    }, { paramsOpt: Option[ThirdPartyTokenPrice.Ticker] =>
-      val params = paramsOpt.getOrElse(ThirdPartyTokenPrice.Ticker())
-      ThirdPartyTokenPrice.Ticker.unapply(params)
+      Option((ExternalTicker.Ticker.apply _).tupled(tuple))
+    }, { paramsOpt: Option[ExternalTicker.Ticker] =>
+      val params = paramsOpt.getOrElse(ExternalTicker.Ticker())
+      ExternalTicker.Ticker.unapply(params)
     })
 
   def * =
     (
       slug,
       quoteProjection,
-      requestTime,
+      timestamp,
       isEffective
-    ) <> ((ThirdPartyTokenPrice.apply _).tupled, ThirdPartyTokenPrice.unapply)
+    ) <> ((ExternalTicker.apply _).tupled, ExternalTicker.unapply)
 }

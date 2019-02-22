@@ -31,8 +31,8 @@ class DatabaseModule @Inject()(
     val marketMetadataDal: MarketMetadataDal,
     val missingBlocksRecordDal: MissingBlocksRecordDal,
     val ohlcDataDal: OHLCDataDal,
-    val thirdPartyTokenPriceDal: ThirdPartyTokenPriceDal,
-    val cmcTokenSlugDal: CMCTokenSlugDal,
+    val thirdPartyTickerDal: ExternalTickerDal,
+    val cmcTokenSlugDal: CMCTickerConfigDal,
     val orderService: OrderService,
     val tradeService: TradeService,
     val ringService: RingService,
@@ -54,7 +54,7 @@ class DatabaseModule @Inject()(
     marketMetadataDal,
     missingBlocksRecordDal,
     ohlcDataDal,
-    thirdPartyTokenPriceDal,
+    thirdPartyTickerDal,
     cmcTokenSlugDal
   )
 

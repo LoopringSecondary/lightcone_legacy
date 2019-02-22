@@ -130,14 +130,14 @@ class MetadataManagerActor(
 
     case req: SaveTokenMetadatas.Req =>
       (for {
-        latestEffectiveRequest <- dbModule.thirdPartyTokenPriceDal
-          .getLatestEffectiveRequest()
+        latestEffectiveRequest <- dbModule.thirdPartyTickerDal
+          .getLastTimestamp()
+        tokenSlugSymbols = req.tokens.map { t =>
+          (t.slug, t.symbol)
+        }.toMap
         modifiedTokens <- if (latestEffectiveRequest.nonEmpty) {
-          val tokenSlugSymbols = req.tokens.map { t =>
-            (t.slug, t.symbol)
-          }.toMap
           for {
-            tickers_ <- dbModule.thirdPartyTokenPriceDal
+            tickers_ <- dbModule.thirdPartyTickerDal
               .getTickers(
                 latestEffectiveRequest.get,
                 tokenSlugSymbols.keys.toSeq
@@ -305,7 +305,7 @@ class MetadataManagerActor(
 
   private def convertTokenToPersist(
       token: SaveTokenMetadata,
-      tickersMap: Map[String, ThirdPartyTokenPrice]
+      tickersMap: Map[String, ExternalTicker]
     ) = {
     val usdTicker = tickersMap.getOrElse(
       token.symbol,

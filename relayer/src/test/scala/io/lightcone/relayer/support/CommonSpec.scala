@@ -75,8 +75,8 @@ abstract class CommonSpec(configStr: String = "")
   implicit val rie: RingIncomeEvaluator =
     new RingIncomeEvaluatorImpl()
 
-  implicit val tickerManager = new CMCTickerManagerImpl()
-  implicit val currencyManager = new SinaCurrencyManagerImpl()
+  implicit val externalTickerFetcher = new CMCExternalTickerFetcher()
+  implicit val fiatExchangeRateFetcher = new SinaFiatExchangeRateFetcher()
 
   //actors
   //  val refresher = system.actorOf(

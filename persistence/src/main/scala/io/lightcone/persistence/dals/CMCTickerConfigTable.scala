@@ -14,14 +14,25 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.persistence.dals
 
-import java.text.SimpleDateFormat
-import scala.concurrent.Future
+import io.lightcone.persistence._
+import io.lightcone.persistence.base._
+import slick.jdbc.MySQLProfile.api._
 
-trait CurrencyManager {
+class CMCTickerConfigTable(tag: Tag)
+    extends BaseTable[CMCTickerConfig](tag, "T_CMC_TICKER_CONFIG") {
 
-  val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+  def id = slug
+  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"), O.PrimaryKey)
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(50)"))
 
-  def getUsdCnyCurrency(): Future[Double]
+  // indexes
+  def idx_symbol = index("idx_symbol", (symbol), unique = true)
+
+  def * =
+    (
+      slug,
+      symbol
+    ) <> ((CMCTickerConfig.apply _).tupled, CMCTickerConfig.unapply)
 }

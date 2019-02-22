@@ -21,23 +21,16 @@ import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import scala.concurrent._
 
-trait ThirdPartyTokenPriceDal
-    extends BaseDalImpl[ThirdPartyTokenPriceTable, ThirdPartyTokenPrice] {
+trait CMCTickerConfigDal
+    extends BaseDalImpl[CMCTickerConfigTable, CMCTickerConfig] {
 
-  def saveTickers(tickers: Seq[ThirdPartyTokenPrice]): Future[ErrorCode]
+  def saveSlugs(slugs: Seq[CMCTickerConfig]): Future[ErrorCode]
 
-  def getLatestEffectiveRequest(): Future[Option[Long]]
+  def getAll(): Future[Seq[CMCTickerConfig]]
 
-  def getTickersByRequestTime(
-      requestTime: Long
-    ): Future[Seq[ThirdPartyTokenPrice]]
+  def getBySlugs(slugs: Seq[String]): Future[Seq[CMCTickerConfig]]
 
-  def countTickersByRequestTime(requestTime: Long): Future[Int]
+  def update(ticker: CMCTickerConfig): Future[ErrorCode]
 
-  def getTickers(
-      requestTime: Long,
-      tokenSlugs: Seq[String]
-    ): Future[Seq[ThirdPartyTokenPrice]]
-
-  def updateEffective(requestTime: Long): Future[ErrorCode]
+  def deleteBySymbol(symbol: String): Future[Boolean]
 }

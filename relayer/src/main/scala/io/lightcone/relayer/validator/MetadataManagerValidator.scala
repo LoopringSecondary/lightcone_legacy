@@ -19,11 +19,18 @@ package io.lightcone.relayer.validator
 import com.typesafe.config.Config
 import io.lightcone.core.MetadataManager
 import io.lightcone.core._
+import io.lightcone.lib.Address
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 
 object MetadataManagerValidator {
   val name = "metadata_manager_validator"
+
+  def normalize(token: SaveTokenMetadata): SaveTokenMetadata =
+    token.copy(
+      address = Address(token.address).toString.toLowerCase,
+      symbol = token.symbol.toUpperCase
+    )
 }
 
 final class MetadataManagerValidator(
@@ -44,7 +51,7 @@ final class MetadataManagerValidator(
             "Parameter tokens could not be empty"
           )
         // address toLowerCase, symbol toUpperCase
-        val tokens = req.tokens.map(MetadataManager.normalize)
+        val tokens = req.tokens.map(MetadataManagerValidator.normalize)
         req.copy(tokens = tokens)
       }
 

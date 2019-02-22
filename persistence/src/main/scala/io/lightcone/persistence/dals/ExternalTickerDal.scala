@@ -16,20 +16,26 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.core.ErrorCode
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
-import slick.jdbc.MySQLProfile.api._
+import scala.concurrent._
 
-class CMCTokenSlugTable(tag: Tag)
-    extends BaseTable[CMCTokenSlug](tag, "T_CMC_TOKEN_SLUG") {
+trait ExternalTickerDal
+    extends BaseDalImpl[ExternalTickerTable, ExternalTicker] {
 
-  def id = slug
-  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"), O.PrimaryKey)
-  def symbol = column[String]("symbol", O.SqlType("VARCHAR(50)"))
+  def saveTickers(tickers: Seq[ExternalTicker]): Future[ErrorCode]
 
-  def * =
-    (
-      slug,
-      symbol
-    ) <> ((CMCTokenSlug.apply _).tupled, CMCTokenSlug.unapply)
+  def getLastTimestamp(): Future[Option[Long]]
+
+  def getTickers(timestamp: Long): Future[Seq[ExternalTicker]]
+
+  def countTickers(timestamp: Long): Future[Int]
+
+  def getTickers(
+      timestamp: Long,
+      tokenSlugs: Seq[String]
+    ): Future[Seq[ExternalTicker]]
+
+  def updateEffective(timestamp: Long): Future[ErrorCode]
 }

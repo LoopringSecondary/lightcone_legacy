@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.dals
+package io.lightcone.relayer.external
 
-import io.lightcone.core.ErrorCode
-import io.lightcone.persistence._
-import io.lightcone.persistence.base._
-import scala.concurrent._
+import io.lightcone.relayer.data.cmc.TickerDataInfo
+import scala.concurrent.Future
 
-trait CMCTokenSlugDal extends BaseDalImpl[CMCTokenSlugTable, CMCTokenSlug] {
+trait ExternalTickerFetcher {
 
-  def saveSlugs(slugs: Seq[CMCTokenSlug]): Future[ErrorCode]
-
-  def getAll(): Future[Seq[CMCTokenSlug]]
-
-  def getBySlugs(slugs: Seq[String]): Future[Seq[CMCTokenSlug]]
-
-  def update(
-      fromSlug: String,
-      to: CMCTokenSlug
-    ): Future[ErrorCode]
+  def fetchExternalTickers(): Future[TickerDataInfo]
 }

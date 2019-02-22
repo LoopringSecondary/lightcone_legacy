@@ -95,8 +95,8 @@ class CoreModule(
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
-    bind[ThirdPartyTokenPriceDal]
-      .to[ThirdPartyTokenPriceDalImpl]
+    bind[ExternalTickerDal]
+      .to[ExternalTickerDalImpl]
       .asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
 
@@ -117,8 +117,10 @@ class CoreModule(
     bind[TimeProvider].to[SystemTimeProvider]
     bind[EthereumCallRequestBuilder]
     bind[EthereumBatchCallRequestBuilder]
-    bind[TickerManager].to[CMCTickerManagerImpl].asEagerSingleton()
-    bind[CurrencyManager].to[SinaCurrencyManagerImpl].asEagerSingleton()
+    bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].asEagerSingleton()
+    bind[FiatExchangeRateFetcher]
+      .to[SinaFiatExchangeRateFetcher]
+      .asEagerSingleton()
 
     bind[TokenValueEvaluator]
     bind[DustOrderEvaluator]

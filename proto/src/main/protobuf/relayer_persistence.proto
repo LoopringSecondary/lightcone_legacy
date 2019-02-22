@@ -314,7 +314,7 @@ message SaveTokenMetadata {
     int32    precision              = 10;
     double   burn_rate_for_market   = 11;
     double   burn_rate_for_p2p      = 12;
-    io.lightcone.core.TokenMetadata.ExternalData external_data      = 13;
+    io.lightcone.core.TokenMetadata.ExternalData external_data = 13;
 }
 
 message SaveTokenMetadatas {
@@ -410,11 +410,3 @@ message LoadMarketMetadata {
 message ReloadMetadataFromDb {}
 
 message TokenTickerChanged {}
-
-message GetTickers {
-    message Req {}
-
-    message Res {
-        repeated io.lightcone.persistence.ThirdPartyTokenPrice tickers = 1;
-    }
-}
