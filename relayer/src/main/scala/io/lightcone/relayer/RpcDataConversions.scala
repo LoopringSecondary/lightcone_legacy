@@ -19,13 +19,13 @@ package io.lightcone.relayer
 import io.lightcone.relayer.data._
 
 object RpcDataConversions {
-  implicit def convertGetOrderbookReq(
-      r: ext.GetOrderbook.Req
-    ): GetOrderbook.Req =
-    null
-
-  implicit def convertGetOrderbookRes(
-      r: GetOrderbook.Res
-    ): ext.GetOrderbook.Res =
-    null
+//  implicit def convertGetOrderbookReq(
+//      r: ext.GetOrderbook.Req
+//    ): GetOrderbook.Req =
+//    null
+//
+//  implicit def convertGetOrderbookRes(
+//      r: GetOrderbook.Res
+//    ): ext.GetOrderbook.Res =
+//    null
 }

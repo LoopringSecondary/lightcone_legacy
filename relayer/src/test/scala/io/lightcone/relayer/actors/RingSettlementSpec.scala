@@ -59,7 +59,7 @@ class RingSettlementSpec
 
       val account0 = accounts(0)
 
-      val getBaMethod = "get_balance_and_allowance"
+      val getBaMethod = "get_account"
       val submit_order = "submit_order"
       val getOrderBook1 = GetOrderbook.Req(
         0,
@@ -112,19 +112,19 @@ class RingSettlementSpec
       Thread.sleep(1000) //必须等待才能获取正确的余额，？？？
       info("the weth balance of account0 must be changed.")
       val resOpt = expectBalanceRes(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           account1.getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        (res: GetBalanceAndAllowances.Res) => {
+        (res: GetAccount.Res) => {
           val wethBalance: BigInt =
-            res.balanceAndAllowanceMap(WETH_TOKEN.address).balance
+            res.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address).balance
           wethBalance > 0
         }
       )
       info(s"balance of account0 : ${resOpt.get}")
       val wethBalance: BigInt =
-        resOpt.get.balanceAndAllowanceMap(WETH_TOKEN.address).balance
+        resOpt.get.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address).balance
       assert(wethBalance == NumericConversion.toBigInt(order1.amountB))
 
     }

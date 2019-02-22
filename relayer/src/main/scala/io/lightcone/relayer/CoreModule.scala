@@ -194,7 +194,7 @@ class CoreModule(
       )
       .register(
         classOf[OHLCRawDataEvent], //
-        OHLCDataHandlerActor.name
+        MarketHistoryActor.name
       )
       .register(
         classOf[BlockGasPricesExtractedEvent], //
