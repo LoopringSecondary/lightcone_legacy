@@ -4,42 +4,19 @@ option java_multiple_files = true;
 package io.lightcone.relayer.data.ext;
 
 import "core.proto";
-import "relayer_external.proto";
-
-message GetOrderbook{
-    message Req{
-
-    }
-    message Res {
-
-    }
-}
-
-message BalanceAndAllowance{
-    string token = 1;
-    string balance = 2;
-    string allowance = 3;
-    string available_balance = 4;
-    string available_allowance = 5;
-}
-
-message AddressBalanceAndAllowance{
-    string address = 1;
-    BalanceAndAllowance balance_and_allowance = 2;
-}
+import "persistence.proto";
+import "relayer_common.proto";
 
 message GetBalances{
     message Params{
         repeated string addresses  = 1;
         repeated string tokens = 2;
     }
-    message Result{
-        repeated AddressBalanceAndAllowance balances = 1;
-    }
+    //Result ==> io.lightcone.relayer.data.AccountBalance
 }
 
 message SubmitOrder{
-    //params 应该是relayer.rpc.external中RawOrder结构
+    //params 应该是io.lightcone.core.RawOrder结构
     message Result {
         string order_hash = 1;
     }
@@ -47,75 +24,77 @@ message SubmitOrder{
 
 message GetOrders{
     message Params {
-        string owner = 1;
+        string address = 1;
         io.lightcone.core.MarketPair market = 2;
-        repeated string statuses = 3;
-        string sort = 4;
+        repeated io.lightcone.core.OrderStatus statuses = 3;
+        io.lightcone.persistence.SortingType sort = 4;
         int32 page_num = 5;
         int32 page_size = 6;
     }
 
     message Result{
-        string owner = 1;
-        int32 page_num = 2;
-        int32 page_size = 3;
-        int32 total = 4;
-        repeated io.lightcone.relayer.external.RawOrder orders = 5;
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total = 3;
+        repeated io.lightcone.core.RawOrder orders = 4;
     }
-
 }
 
-message GetTrades{
+message GetOrderByHash {
     message Params {
-        string owner = 1;
+        string order_hash = 1;
+    }
+    // Result => io.lightcone.core.RawOrder
+}
+
+//order book 可以使用 relayer_rpc_internal_core 中的GetOrderbook
+
+message GetFills{
+    message Params {
+        string address = 1;                    //未定义则查询全部成交
         io.lightcone.core.MarketPair market = 2;
-        string sort = 3;
-        int32 page_num = 4;
-        int32 page_size = 5;
+        int32 page_num = 3;
+        int32 page_size = 4;
     }
     message Result {
-        string owner = 1;
-        int32 page_num = 2;
-        int32 page_size = 3;
-        int32 total = 4;
-        repeated io.lightcone.relayer.external.Trade trades = 5;
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total = 3;
+        repeated io.lightcone.persistence.Fill fills = 4;
+    }
+}
+
+message GetActivities{
+    message Params {
+        string address = 1;
+        string token = 2;
+        int32 page_num = 3;
+        int32 page_size = 4;
+    }
+
+    message Result {
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total = 3;
+        repeated io.lightcone.persistence.Activity activities = 4;
     }
 }
 
 message GetRings{
     message Params {
-        string ringHash = 1;
-        string ringIndex = 2;
-        string sort = 3;
-        int32 page_num = 4;
-        int32 page_size = 5;
+        io.lightcone.persistence.SortingType sort = 1;
+        int32 page_num = 2;
+        int32 page_size = 3;
     }
 
     message Result {
         int32 page_num = 1;
         int32 page_size = 2;
         int32 total  = 3;
-        repeated io.lightcone.relayer.external.Ring rings = 4;
+        repeated io.lightcone.persistence.Ring rings = 4;
     }
 }
 
-message GetTransactions{
-    message Params {
-        string owner = 1;
-        string type = 2;
-        string sort = 3;
-        int32 page_num = 4;
-        int32 page_size = 5;
-    }
-
-    //TODO定义Transaction的前端结构
-    message Result {
-        string owner = 1;
-        int32 page_num = 2;
-        int32 page_size = 3;
-        int32 total = 4;
-    }
-}
 
 message GetTokens{
     message Params{
@@ -134,5 +113,3 @@ message GetMarkets{
         repeated io.lightcone.core.MarketMetadata markets  =1;
     }
 }
-
-//order book 可以使用 relayer_rpc_internal_core 中的GetOrderbook

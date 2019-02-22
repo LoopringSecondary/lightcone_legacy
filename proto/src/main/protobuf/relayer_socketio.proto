@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.relayer.socketio;
+package io.lightcone.relayer.data;
 
 import "core.proto";
 import "relayer_common.proto";
@@ -80,13 +80,19 @@ message SocketIOSubscription {
     }
 
     // subscribe for message Activity defined in persistence.proto
-    message ParamsForParamsForActivities {
+    message ParamsForActivities {
         repeated string addresses = 1;
         repeated string tx_types = 2;
     }
 
-    // subscribe for message RawOrder defined in core.proto
-    message ParamsForOrderbookUpdate {
+    // subscribe for message OrderUpdate
+    message ParamsForOrders {
+        repeated string addresses  = 1;
+        io.lightcone.core.MarketPair market = 2;
+    }
+
+    // subscribe for message Orderbook.Update defined in core.proto
+    message ParamsForOrderbook {
         int32 level = 1;
         io.lightcone.core.MarketPair market = 2;
     }
@@ -116,22 +122,8 @@ message SocketIOSubscription {
         repeated string tokens = 2;
     }
 
-    // subscribe for message OrderUpdate
-    message ParamsForOrderUpdate {
-        repeated string addresses  = 1;
-        io.lightcone.core.MarketPair market = 2;
-    }
 
     // subscribe for message News
     message ParamsForNews {
     }
-
-    ParamsForTxRecord           params_for_tx_record            = 1;
-    ParamsForOrderbookUpdate    params_for_orderbook_update     = 2;
-    ParamsForTokenMetadata      params_for_token_metadata       = 3;
-    ParamsForMarketMetadata     params_for_market_metadata      = 4;
-    ParamsForBalanceUpdate      params_for_balance_update       = 5;
-    ParamsForTicker             params_for_ticker               = 6;
-    ParamsForOrderUpdate        params_for_order_update         = 7;
-    ParamsForNews               params_for_news                 = 8;
 }
