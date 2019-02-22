@@ -37,7 +37,7 @@ class EthereumBatchCallRequestBuilder {
 
     BatchCallContracts.Req(
       allowanceCallReqs ++ balanceCallReqs,
-      returnBlockNum(req.tag)
+      shouldReturnBlockNumber(req.tag)
     )
   }
 
@@ -47,7 +47,7 @@ class EthereumBatchCallRequestBuilder {
     val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, req.tag)
     BatchCallContracts.Req(
       balanceCallReqs,
-      returnBlockNum(req.tag)
+      shouldReturnBlockNumber(req.tag)
     )
   }
 
@@ -61,7 +61,7 @@ class EthereumBatchCallRequestBuilder {
       buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, req.tag)
     BatchCallContracts.Req(
       allowanceCallReqs,
-      returnBlockNum(req.tag)
+      shouldReturnBlockNumber(req.tag)
     )
   }
 
@@ -73,7 +73,7 @@ class EthereumBatchCallRequestBuilder {
       buildBatchFilledAmountReq(tradeHistoryAddress, req.orderIds, req.tag)
     BatchCallContracts.Req(
       batchFilledAmountReqs,
-      returnBlockNum(req.tag)
+      shouldReturnBlockNumber(req.tag)
     )
   }
 
@@ -91,7 +91,7 @@ class EthereumBatchCallRequestBuilder {
     }
     BatchCallContracts.Req(
       balanceCallReqs,
-      returnBlockNum(tag)
+      shouldReturnBlockNumber(tag)
     )
   }
 
@@ -113,7 +113,7 @@ class EthereumBatchCallRequestBuilder {
     }
     BatchCallContracts.Req(
       balanceCallReqs,
-      returnBlockNum(tag)
+      shouldReturnBlockNumber(tag)
     )
   }
 
@@ -127,7 +127,7 @@ class EthereumBatchCallRequestBuilder {
     val cutoffCallReqs = req.reqs.map { cutoffReq =>
       rb.buildRequest(cutoffReq, tradeHistoryAddress).reqs.head
     }
-    BatchCallContracts.Req(cutoffCallReqs, returnBlockNum(req.tag))
+    BatchCallContracts.Req(cutoffCallReqs, shouldReturnBlockNumber(req.tag))
   }
 
   private def buildBatchErc20AllowanceReq(
@@ -174,5 +174,6 @@ class EthereumBatchCallRequestBuilder {
     }
   }
 
-  @inline def returnBlockNum(tag: String) = tag.isEmpty || tag == "latest"
+  @inline def shouldReturnBlockNumber(tag: String) =
+    tag.isEmpty || tag == "latest"
 }

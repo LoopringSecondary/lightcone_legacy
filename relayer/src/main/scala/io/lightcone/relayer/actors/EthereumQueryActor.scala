@@ -108,23 +108,23 @@ class EthereumQueryActor(
                   tag
                 )
               ),
-              returnBlockNum = brb.returnBlockNum(tag)
+              returnBlockNum = brb.shouldReturnBlockNumber(tag)
             )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
         finalResult = if (ethRes.isDefined) {
+          val ethResult = ethToken.head -> BalanceAndAllowance(
+            balance = Some(
+              Amount(
+                NumericConversion.toBigInt(ethRes.get.resps.head.result),
+                ethRes.get.blockNum
+              )
+            ),
+            allowance = Some(Amount(BigInt(0), ethRes.get.blockNum))
+          )
           result.copy(
-            balanceAndAllowanceMap = result.balanceAndAllowanceMap +
-              (ethToken.head -> BalanceAndAllowance(
-                Some(
-                  Amount(
-                    NumericConversion.toBigInt(ethRes.get.resps.head.result),
-                    ethRes.get.blockNum
-                  )
-                ),
-                Some(Amount(BigInt(0), ethRes.get.blockNum))
-              ))
+            balanceAndAllowanceMap = result.balanceAndAllowanceMap + ethResult
           )
         } else {
           result
@@ -140,10 +140,7 @@ class EthereumQueryActor(
         balances = batchRes.resps.map { res =>
           Amount(NumericConversion.toBigInt(res.result), batchRes.blockNum)
         }
-        result = GetBalance.Res(
-          owner,
-          (erc20Tokens zip balances).toMap
-        )
+        result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
 
         ethRes <- ethToken match {
           case head :: tail =>
@@ -154,20 +151,18 @@ class EthereumQueryActor(
                   tag
                 )
               ),
-              returnBlockNum = brb.returnBlockNum(tag)
+              returnBlockNum = brb.shouldReturnBlockNumber(tag)
             )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
         finalResult = if (ethRes.isDefined) {
-          result.copy(
-            balanceMap = result.balanceMap +
-              (Address.ZERO.toString ->
-                Amount(
-                  NumericConversion.toBigInt(ethRes.get.resps.head.result),
-                  ethRes.get.blockNum
-                ))
-          )
+          val ethResult = Address.ZERO.toString ->
+            Amount(
+              NumericConversion.toBigInt(ethRes.get.resps.head.result),
+              ethRes.get.blockNum
+            )
+          result.copy(balanceMap = result.balanceMap + ethResult)
         } else {
           result
         }
@@ -182,10 +177,7 @@ class EthereumQueryActor(
               resp.blockNum
             )
           }
-          GetAllowance.Res(
-            owner,
-            (tokens zip allowances).toMap
-          )
+          GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
 
     case req @ GetFilledAmount.Req(orderIds, _) =>
@@ -194,16 +186,15 @@ class EthereumQueryActor(
         brb
           .buildRequest(tradeHistoryAddress, req)
       ) { result =>
-        GetFilledAmount.Res(
-          (orderIds zip result.resps
-            .map(
-              res =>
-                Amount(
-                  NumericConversion.toBigInt(res.result),
-                  result.blockNum
-                )
-            )).toMap
-        )
+        val fills = (orderIds zip result.resps
+          .map(
+            res =>
+              Amount(
+                NumericConversion.toBigInt(res.result),
+                result.blockNum
+              )
+          )).toMap
+        GetFilledAmount.Res(fills)
       }
 
     case req: GetOrderCancellation.Req =>
@@ -235,16 +226,15 @@ class EthereumQueryActor(
         result =>
           BatchGetCutoffs.Res((req.reqs zip result.resps).map {
             case (cutoffReq, res) =>
+              val cutoff = Amount(
+                NumericConversion.toBigInt(res.result),
+                blockNum = result.blockNum
+              )
               GetCutoff.Res(
                 cutoffReq.broker,
                 cutoffReq.owner,
                 cutoffReq.marketHash,
-                Some(
-                  Amount(
-                    NumericConversion.toBigInt(res.result),
-                    blockNum = result.blockNum
-                  )
-                )
+                Some(cutoff)
               )
           })
       }

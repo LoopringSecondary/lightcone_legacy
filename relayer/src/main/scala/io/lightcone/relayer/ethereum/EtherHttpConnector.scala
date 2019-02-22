@@ -309,13 +309,11 @@ class HttpConnector(
         }
       }
       if (batchR.returnBlockNum) {
-        batchReqs = batchReqs.+:(
-          BatchMethod(
-            id = randInt(),
-            method = "eth_blockNumber",
-            params = Seq.empty
-          )
-        )
+        batchReqs = BatchMethod(
+          id = randInt(),
+          method = "eth_blockNumber",
+          params = Seq.empty
+        ) +: batchReqs
       }
       //这里无法直接解析成BatchCallContracts.Res
       batchSendMessages(batchReqs) map { json =>
@@ -398,13 +396,11 @@ class HttpConnector(
         }
       }
       if (batchR.returnBlockNum) {
-        batchReqs = batchReqs.+:(
-          BatchMethod(
-            id = randInt(),
-            method = "eth_blockNumber",
-            params = Seq.empty
-          )
-        )
+        batchReqs = BatchMethod(
+          id = randInt(),
+          method = "eth_blockNumber",
+          params = Seq.empty
+        ) +: batchReqs
       }
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]

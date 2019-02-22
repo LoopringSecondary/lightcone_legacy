@@ -35,7 +35,7 @@ class EthereumCallRequestBuilder {
     val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
     BatchCallContracts.Req(
       reqs,
-      returnBlockNum(req.tag)
+      shouldReturnBlockNumber(req.tag)
     )
   }
 
@@ -53,7 +53,7 @@ class EthereumCallRequestBuilder {
     val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
     BatchCallContracts.Req(
       reqs,
-      returnBlockNum(req.tag)
+      shouldReturnBlockNumber(req.tag)
     )
   }
 
@@ -89,9 +89,10 @@ class EthereumCallRequestBuilder {
     val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
     BatchCallContracts.Req(
       reqs,
-      returnBlockNum(req.tag)
+      shouldReturnBlockNumber(req.tag)
     )
   }
 
-  @inline def returnBlockNum(tag: String) = tag.isEmpty || tag == "latest"
+  @inline def shouldReturnBlockNumber(tag: String) =
+    tag.isEmpty || tag == "latest"
 }
