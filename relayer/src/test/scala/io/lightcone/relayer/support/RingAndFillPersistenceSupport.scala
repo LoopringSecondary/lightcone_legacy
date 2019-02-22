@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.dals
+package io.lightcone.relayer.support
 
-import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
-import io.lightcone.core._
-import scala.concurrent._
+import io.lightcone.relayer.actors._
 
-trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
-  def saveTrade(trade: Trade): Future[ErrorCode]
-  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]]
-  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
-  def countTrades(request: GetTrades.Req): Future[Int]
-  def obsolete(height: Long): Future[Unit]
+trait RingAndFillPersistenceSupport extends DatabaseModuleSupport {
+  me: CommonSpec =>
+
+  actors.add(
+    RingAndFillPersistenceActor.name,
+    RingAndFillPersistenceActor.start
+  )
 }

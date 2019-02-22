@@ -39,8 +39,30 @@ private object ProtoSerializerMacro {
 
     c.Expr[Option[JValue]](q"""
           {
-            import scalapb.json4s.JsonFormat
-            scala.util.Try(JsonFormat.toJson($value)).toOption
+            import scalapb.json4s._
+            import com.google.protobuf.ByteString
+            import io.lightcone.core.Amount
+            import org.json4s.JsonAST.{JString, JValue}
+            import scalapb.json4s.{JsonFormat, JsonFormatException}
+
+             val formatRegistry =
+                  JsonFormat.DefaultRegistry
+                    .registerWriter[Amount](
+                      (amount: Amount) =>
+                        JString(
+                          NumericConversion.toHexString(BigInt(amount.value.toByteArray))
+                        ), {
+                        case JString(str) =>
+                          Amount(
+                            value = ByteString
+                              .copyFrom(NumericConversion.toBigInt(str).toByteArray)
+                          )
+                        case _ => throw new JsonFormatException("Expected a string.")
+                      }
+                    )
+            scala.util.Try(new Printer(formatRegistry = formatRegistry)
+            .toJson($value))
+            .toOption
           }""")
   }
 
@@ -54,8 +76,30 @@ private object ProtoSerializerMacro {
 
     c.Expr[Option[T]](q"""
           {
-            import scalapb.json4s.JsonFormat
-            scala.util.Try(JsonFormat.fromJson[$deserializeType]($json)).toOption
+            import scalapb.json4s._
+            import com.google.protobuf.ByteString
+            import io.lightcone.core.Amount
+            import org.json4s.JsonAST.{JString, JValue}
+            import scalapb.json4s.{JsonFormat, JsonFormatException}
+
+            val formatRegistry =
+                 JsonFormat.DefaultRegistry
+                   .registerWriter[Amount](
+                     (amount: Amount) =>
+                       JString(
+                         NumericConversion.toHexString(BigInt(amount.value.toByteArray))
+                       ), {
+                       case JString(str) =>
+                         Amount(
+                           value = ByteString
+                             .copyFrom(NumericConversion.toBigInt(str).toByteArray)
+                         )
+                       case _ => throw new JsonFormatException("Expected a string.")
+                     }
+                   )
+            scala.util.Try(new Parser(formatRegistry = formatRegistry)
+              .fromJson[$deserializeType]($json))
+              .toOption
           }""")
   }
 }

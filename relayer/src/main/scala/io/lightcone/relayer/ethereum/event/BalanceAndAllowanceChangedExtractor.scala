@@ -50,7 +50,7 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
-  val wethAddress = Address(
+  def wethAddress = Address(
     metadataManager.getTokenWithSymbol("weth").get.meta.address
   )
   @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)

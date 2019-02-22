@@ -19,16 +19,10 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
-import com.typesafe.config.Config
-import javax.inject.Inject
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
-import io.lightcone.lib._
-import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent._
-import akka.event.LoggingReceive
 import org.slf4s.Logging
 
 class RecoverOrdersActor(

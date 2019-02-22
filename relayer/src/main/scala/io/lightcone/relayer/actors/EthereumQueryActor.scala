@@ -132,10 +132,10 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
 
         balances = batchRes.resps.map { res =>
-          bigInt2ByteString(BigInt(Numeric.toBigInt(res.result)))
+          NumericConversion.toAmount(res.result)
         }
         // TODO(yadong): implement this.
-        val blockNumber: Long = 0
+        blockNumber: Long = 0
         result = GetBalance
           .Res(owner, (erc20Tokens zip balances).toMap, blockNumber)
 
@@ -163,7 +163,7 @@ class EthereumQueryActor(
       batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
         result =>
           val allowances = result.map { res =>
-            bigInt2ByteString(NumericConversion.toBigInt(res))
+            NumericConversion.toAmount(res)
           }
 
           // TODO(yadong): implement this.
@@ -180,7 +180,7 @@ class EthereumQueryActor(
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result
-            .map(res => bigInt2ByteString(NumericConversion.toBigInt(res)))).toMap
+            .map(res => NumericConversion.toAmount(res))).toMap
         )
       }
 

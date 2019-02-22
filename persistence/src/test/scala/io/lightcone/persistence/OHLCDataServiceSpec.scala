@@ -37,7 +37,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     new OHLCDataDalImpl().createTable()
   }
 
-  "saveTrade" must "save a trade with hash" in {
+  "saveFill" must "save a trade with hash" in {
     val record0 = PersistOHLCData.Req(
       data = Option(
         OHLCRawDataEvent(

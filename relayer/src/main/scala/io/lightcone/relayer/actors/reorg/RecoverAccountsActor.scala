@@ -17,14 +17,10 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.core._
-import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum.event._
-import io.lightcone.lib._
 import io.lightcone.core._
 import org.slf4s.Logging
 import scala.concurrent._
