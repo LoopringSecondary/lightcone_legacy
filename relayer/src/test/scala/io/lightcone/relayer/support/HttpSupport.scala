@@ -21,14 +21,12 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.relayer.RpcBinding
 import io.lightcone.relayer.jsonrpc._
 import io.lightcone.relayer.data.{GetTransactionRecords, _}
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
-import org.json4s.JsonAST.JString
+import io.lightcone.lib.ProtoSerializer
 import org.slf4s.Logging
 import scalapb.GeneratedMessage
 import scalapb.json4s._
@@ -42,21 +40,7 @@ trait HttpSupport extends RpcBinding with Logging {
   // TODO:for test, not need it
   override val requestHandler: ActorRef = ActorRef.noSender
 
-  val formatRegistry =
-    JsonFormat.DefaultRegistry
-      .registerWriter[Amount](
-        (amount: Amount) =>
-          JString(
-            NumericConversion.toHexString(BigInt(amount.value.toByteArray))
-          ), {
-          case JString(str) =>
-            Amount(
-              value = ByteString
-                .copyFrom(NumericConversion.toBigInt(str).toByteArray)
-            )
-          case _ => throw new JsonFormatException("Expected a string.")
-        }
-      )
+  val ps = new ProtoSerializer
 
   def singleRequest[T <: GeneratedMessage](
       req: T,
@@ -68,9 +52,9 @@ trait HttpSupport extends RpcBinding with Logging {
     ) = {
     val json = req match {
       case m: scalapb.GeneratedMessage =>
-        new Printer(formatRegistry = formatRegistry).toJson(req)
+        ps.serialize(m)
     }
-    val reqJson = JsonRpcRequest("2.0", method, Some(json), Some("1"))
+    val reqJson = JsonRpcRequest("2.0", method, json, Some("1"))
     for {
       response <- Http().singleRequest(
         HttpRequest(
