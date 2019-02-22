@@ -96,10 +96,10 @@ message Trade {
     message Fee {
         // for market
         string token_fee               = 1;
-        io.lightcone.core.Amount  amount_fee              = 2;
+        io.lightcone.core.Amount amount_fee              = 2;
         // for p2p
-        io.lightcone.core.Amount  fee_amount_s            = 3;
-        io.lightcone.core.Amount  fee_amount_b            = 4;
+        io.lightcone.core.Amount fee_amount_s            = 3;
+        io.lightcone.core.Amount fee_amount_b            = 4;
 
         string fee_recipient           = 5;
         int32  waive_fee_percentage    = 6; // miner waive
@@ -112,12 +112,12 @@ message Trade {
     int64  ring_index        = 4;
     int32  fill_index        = 5;
     string tx_hash           = 6;
-    io.lightcone.core.Amount  amount_s          = 7;
-    io.lightcone.core.Amount  amount_b          = 8;
+    io.lightcone.core.Amount amount_s          = 7;
+    io.lightcone.core.Amount amount_b          = 8;
     string token_s           = 9;
     string token_b           = 10;
     int64  market_id         = 11;
-    io.lightcone.core.Amount  split             = 12; // tokenS
+    io.lightcone.core.Amount split             = 12; // tokenS
     Fee    fee               = 13;
     string wallet            = 14;
     string miner             = 15;
