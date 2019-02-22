@@ -22,7 +22,7 @@ import org.json4s.native.JsonMethods._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.Hash
 import org.web3j.abi.TypeEncoder
-import org.web3j.abi.datatypes.{Address => Web3jAddress, Uint, Int}
+import org.web3j.abi.datatypes.{Address => Web3jAddress, Uint, Int, Bool}
 import org.web3j.abi.datatypes.generated.Bytes32
 import io.lightcone.core._
 
@@ -49,7 +49,7 @@ class DefaultEIP712Support extends EIP712Support {
 
   implicit val formats = DefaultFormats
 
-  val EIP191Header = "\u0019\u0001"
+  val EIP191HeaderHex = "1901"
 
   /* TYPED_MESSAGE_SCHEMA:
    * """
@@ -89,7 +89,6 @@ class DefaultEIP712Support extends EIP712Support {
       val message = (root \ "message").asInstanceOf[JObject].values
 
       val typedData = EIP712TypedData(types, primaryType, domain, message)
-      println(s"typedData: $typedData")
       Right(typedData)
     } catch {
       case e: Throwable =>
@@ -100,15 +99,14 @@ class DefaultEIP712Support extends EIP712Support {
   def getEIP712Message(typedData: EIP712TypedData): String = {
     val domainHash =
       hashStruct("EIP712Domain", typedData.domain, typedData.types)
+
     val messageHash =
       hashStruct(typedData.primaryType, typedData.message, typedData.types)
+    val source = List[String](EIP191HeaderHex, domainHash, messageHash)
+      .map(s => Numeric.cleanHexPrefix(s))
+      .mkString
 
-    val messageBuilder = new StringBuilder
-    messageBuilder ++= EIP191Header
-    messageBuilder ++= domainHash
-    messageBuilder ++= messageHash
-
-    Numeric.toHexString(Hash.sha3(messageBuilder.map(_.toByte).toArray))
+    Hash.sha3(source)
   }
 
   private def hashStruct(
@@ -117,7 +115,7 @@ class DefaultEIP712Support extends EIP712Support {
       typeDefs: Types
     ): String = {
     val encodedString = encodeData(primaryType, data, typeDefs)
-    Numeric.toHexString(Hash.sha3(encodedString.getBytes))
+    Hash.sha3(encodedString)
   }
 
   private def encodeData(
@@ -125,29 +123,32 @@ class DefaultEIP712Support extends EIP712Support {
       data: Map[String, Any],
       typeDefs: Types
     ): String = {
-    val dataTypeHashBytes = hashType(dataType, typeDefs)
-    var encodedValues = List[String](Numeric.toHexString(dataTypeHashBytes))
+    val dataTypeHash = Numeric.toHexString(hashType(dataType, typeDefs))
+
+    var encodedValues = List[String](dataTypeHash)
 
     val dataTypeItems = typeDefs.types(dataType).typeItems
     dataTypeItems.foreach(typeItem => {
       data.get(typeItem.name) match {
         case Some(value) =>
           val stringValue = value match {
-            case js: JString => js.values
-            case _           => "0x0"
+            case s: String => if (s.length > 0) s else "0x0"
+            case _         => "0x0"
           }
-
           typeItem.`type` match {
-            case "string" | "bytes" =>
+            case "string" =>
               val valueHash =
                 Numeric.toHexString(Hash.sha3(stringValue.getBytes))
               encodedValues = valueHash :: encodedValues
-            case bytesn if (bytesn.startsWith("bytes")) =>
-              val bytesData = new Bytes32(stringValue.getBytes)
+            case "bytes" =>
+              encodedValues = Hash.sha3(stringValue) :: encodedValues
+            case bytesn if (bytesn.startsWith("bytes") && bytesn.length > 5) =>
+              val valueBigInt = Numeric.toBigInt(stringValue)
+              val valueBytes32 = Numeric.toBytesPadded(valueBigInt, 32)
+              val bytesData = new Bytes32(valueBytes32)
               val encodedValue = TypeEncoder.encode(bytesData)
               encodedValues = encodedValue :: encodedValues
-            case uintType
-                if (uintType.startsWith("uint") || "bool" == uintType) =>
+            case uintType if (uintType.startsWith("uint")) =>
               val bigIntValue = Numeric.toBigInt(stringValue)
               val uintData = new Uint(bigIntValue)
               val encodedValue = TypeEncoder.encode(uintData)
@@ -160,6 +161,10 @@ class DefaultEIP712Support extends EIP712Support {
             case "address" =>
               val addressData = new Web3jAddress(stringValue)
               encodedValues = TypeEncoder.encode(addressData) :: encodedValues
+            case "bool" =>
+              val boolValue = value.asInstanceOf[Boolean]
+              val boolData = new Bool(boolValue)
+              encodedValues = TypeEncoder.encode(boolData) :: encodedValues
             case structType if (typeDefs.types.contains(structType)) =>
               val jValue = value.asInstanceOf[JObject]
               val typeValueEncoded =
@@ -176,8 +181,7 @@ class DefaultEIP712Support extends EIP712Support {
           )
       }
     })
-
-    encodedValues.reverse.mkString
+    encodedValues.reverse.map(s => Numeric.cleanHexPrefix(s)).mkString
   }
 
   private def hashType(
@@ -197,11 +201,11 @@ class DefaultEIP712Support extends EIP712Support {
 
     depsSorted
       .map(t => {
-        t.name + t.typeItems
+        t.name + "(" + t.typeItems
           .map(item => {
             item.`type` + " " + item.name
           })
-          .mkString(",")
+          .mkString(",") + ")"
       })
       .mkString
   }
