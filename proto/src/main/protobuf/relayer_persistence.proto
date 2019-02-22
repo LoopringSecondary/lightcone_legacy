@@ -144,27 +144,28 @@ message GetFillss {
     }
 
     message Res {
-        repeated Fill fills   = 1;
+        repeated io.lightcone.persistence.Fill fills   = 1;
         int32   total  = 2;
     }
 }
 
 message GetRings {
     message Req {
-        message Ring {
+        // TODO(yongfeng): remove this Ring2 definition and use the oneof directly
+        message Ring2 {
             oneof filter {
                 string ring_hash  = 1;
                 int64  ring_index = 2;
             }
         }
-        Ring        ring  = 1;
-        io.lightcone.persistence.SortingType sort  = 2;
-        io.lightcone.persistence.Paging      skip  = 3;
+        Ring2 ring              = 1;
+        io.lightcone.persistence.SortingType sort       = 2;
+        io.lightcone.persistence.Paging skip            = 3;
     }
 
     message Res {
-        repeated Ring rings = 1;
-        int32         total = 2;
+        repeated io.lightcone.persistence.Ring rings    = 1;
+        int32 total                                     = 2;
     }
 }
 

@@ -18,7 +18,7 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
-import io.lightcone.relayer.data._
+import io.lightcone.persistence._
 
 class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_TRADES") {
 

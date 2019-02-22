@@ -17,7 +17,7 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
+import io.lightcone.persistence._
 import slick.jdbc.MySQLProfile.api._
 
 class RingTable(tag: Tag) extends BaseTable[Ring](tag, "T_RINGS") {

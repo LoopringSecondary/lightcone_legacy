@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.support
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
@@ -25,7 +25,7 @@ import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.relayer.RpcBinding
 import io.lightcone.relayer.jsonrpc._
-import io.lightcone.relayer.data.{GetTransactionRecords, _}
+import io.lightcone.relayer.data.{ GetTransactionRecords, _ }
 import io.lightcone.core._
 import io.lightcone.lib.NumericConversion
 import org.json4s.JsonAST.JString
@@ -33,7 +33,7 @@ import org.slf4s.Logging
 import scalapb.GeneratedMessage
 import scalapb.json4s._
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{ Await, ExecutionContext }
 
 trait HttpSupport extends RpcBinding with Logging {
   val config: Config
@@ -47,25 +47,19 @@ trait HttpSupport extends RpcBinding with Logging {
       .registerWriter[Amount](
         (amount: Amount) =>
           JString(
-            NumericConversion.toHexString(BigInt(amount.value.toByteArray))
-          ), {
+            NumericConversion.toHexString(BigInt(amount.value.toByteArray))), {
           case JString(str) =>
             Amount(
               value = ByteString
-                .copyFrom(NumericConversion.toBigInt(str).toByteArray)
-            )
+                .copyFrom(NumericConversion.toBigInt(str).toByteArray))
           case _ => throw new JsonFormatException("Expected a string.")
-        }
-      )
+        })
 
   def singleRequest[T <: GeneratedMessage](
-      req: T,
-      method: String
-    )(
-      implicit
-      system: ActorSystem,
-      ec: ExecutionContext
-    ) = {
+    req: T,
+    method: String)(
+      implicit system: ActorSystem,
+      ec: ExecutionContext) = {
     val json = req match {
       case m: scalapb.GeneratedMessage =>
         new Printer(formatRegistry = formatRegistry).toJson(req)
@@ -77,14 +71,10 @@ trait HttpSupport extends RpcBinding with Logging {
           method = HttpMethods.POST,
           entity = HttpEntity(
             ContentTypes.`application/json`,
-            serialization.write(reqJson)
-          ),
+            serialization.write(reqJson)),
           uri = Uri(
             s"http://127.0.0.1:${config.getString("jsonrpc.http.port")}/" +
-              s"${config.getString("jsonrpc.endpoint")}/${config.getString("jsonrpc.loopring")}"
-          )
-        )
-      )
+              s"${config.getString("jsonrpc.endpoint")}/${config.getString("jsonrpc.loopring")}")))
       res <- response.status match {
         case StatusCodes.OK =>
           response.entity.toStrict(timeout.duration).map { r =>
@@ -99,35 +89,31 @@ trait HttpSupport extends RpcBinding with Logging {
                   case Some(err) =>
                     throw ErrorException(
                       ErrorCode.ERR_INTERNAL_UNKNOWN,
-                      s"msg:${err}"
-                    )
+                      s"msg:${err}")
                   case None =>
                     throw ErrorException(
                       ErrorCode.ERR_INTERNAL_UNKNOWN,
-                      s"res:${response}"
-                    )
+                      s"res:${response}")
                 }
             }
           }
         case _ =>
           throw ErrorException(
             ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"res:${response}"
-          )
+            s"res:${response}")
       }
     } yield res
   }
 
   def expectOrderbookRes(
-      req: GetOrderbook.Req,
-      assertFun: Orderbook => Boolean,
-      expectTimeout: Option[Timeout] = None
-    ) = {
+    req: GetOrderbook.Req,
+    assertFun: Orderbook => Boolean,
+    expectTimeout: Option[Timeout] = None) = {
     var resOpt: Option[Orderbook] = None
     val timeout1 = if (expectTimeout.isEmpty) timeout else expectTimeout.get
     val lastTime = System.currentTimeMillis() + timeout1.duration.toMillis
     while (resOpt.isEmpty &&
-           System.currentTimeMillis() <= lastTime) {
+      System.currentTimeMillis() <= lastTime) {
       val orderbookF = singleRequest(req, "get_orderbook")
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
@@ -149,22 +135,20 @@ trait HttpSupport extends RpcBinding with Logging {
   }
 
   def expectBalanceRes(
-      req: GetBalanceAndAllowances.Req,
-      assertFun: GetBalanceAndAllowances.Res => Boolean,
-      expectTimeout: Timeout = timeout
-    ) = {
+    req: GetBalanceAndAllowances.Req,
+    assertFun: GetBalanceAndAllowances.Res => Boolean,
+    expectTimeout: Timeout = timeout) = {
     var resOpt: Option[GetBalanceAndAllowances.Res] = None
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
     while (resOpt.isEmpty &&
-           System.currentTimeMillis() <= lastTime) {
+      System.currentTimeMillis() <= lastTime) {
       val getBalanceResF =
         singleRequest(req, "get_balance_and_allowance")
       val res = Await.result(
         getBalanceResF.mapTo[GetBalanceAndAllowances.Res],
-        timeout.duration
-      )
+        timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {
@@ -173,23 +157,21 @@ trait HttpSupport extends RpcBinding with Logging {
     }
     if (resOpt.isEmpty) {
       throw new Exception(
-        s"Timed out waiting for expectBalanceRes of req:${req} "
-      )
+        s"Timed out waiting for expectBalanceRes of req:${req} ")
     }
     resOpt
   }
 
   def expectTransfersRes(
-      req: GetTransactionRecords.Req,
-      assertFun: GetTransactionRecords.Res => Boolean,
-      expectTimeout: Timeout = timeout
-    ) = {
+    req: GetTransactionRecords.Req,
+    assertFun: GetTransactionRecords.Res => Boolean,
+    expectTimeout: Timeout = timeout) = {
     var resOpt: Option[GetTransactionRecords.Res] = None
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
     while (resOpt.isEmpty &&
-           System.currentTimeMillis() <= lastTime) {
+      System.currentTimeMillis() <= lastTime) {
       val getTransferRecordsF =
         singleRequest(req, "get_transactions").mapTo[GetTransactionRecords.Res]
       val res = Await.result(getTransferRecordsF, timeout.duration)
@@ -201,23 +183,21 @@ trait HttpSupport extends RpcBinding with Logging {
     }
     if (resOpt.isEmpty) {
       throw new Exception(
-        s"Timed out waiting for expectBalanceRes of req:${req} "
-      )
+        s"Timed out waiting for expectBalanceRes of req:${req} ")
     }
     resOpt
   }
 
   def expectTradeRes(
-      req: GetFillss.Req,
-      assertFun: GetFillss.Res => Boolean,
-      expectTimeout: Timeout = timeout
-    ) = {
+    req: GetFillss.Req,
+    assertFun: GetFillss.Res => Boolean,
+    expectTimeout: Timeout = timeout) = {
     var resOpt: Option[GetFillss.Res] = None
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
     while (resOpt.isEmpty &&
-           System.currentTimeMillis() <= lastTime) {
+      System.currentTimeMillis() <= lastTime) {
       val getFillsF =
         singleRequest(req, "get_trades").mapTo[GetFillss.Res]
       val res = Await.result(getFillsF, timeout.duration)
@@ -229,8 +209,7 @@ trait HttpSupport extends RpcBinding with Logging {
     }
     if (resOpt.isEmpty) {
       throw new Exception(
-        s"Timed out waiting for expectBalanceRes of req:${req} "
-      )
+        s"Timed out waiting for expectBalanceRes of req:${req} ")
     }
     resOpt
   }

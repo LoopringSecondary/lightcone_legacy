@@ -25,7 +25,6 @@ import io.lightcone.relayer.base._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data._
 import scala.concurrent._
 
 // Owner: Yongfeng
