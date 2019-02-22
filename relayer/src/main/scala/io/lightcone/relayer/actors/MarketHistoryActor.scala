@@ -28,8 +28,8 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent.ExecutionContext
 
-object OHLCDataHandlerActor extends DeployedAsSingleton {
-  val name = "ohlc_data_handler"
+object MarketHistoryActor extends DeployedAsSingleton {
+  val name = "market_history"
 
   def start(
       implicit
@@ -42,11 +42,11 @@ object OHLCDataHandlerActor extends DeployedAsSingleton {
       dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    startSingleton(Props(new OHLCDataHandlerActor()))
+    startSingleton(Props(new MarketHistoryActor()))
   }
 }
 
-class OHLCDataHandlerActor(
+class MarketHistoryActor(
   )(
     implicit
     val config: Config,
@@ -56,7 +56,7 @@ class OHLCDataHandlerActor(
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
     extends InitializationRetryActor {
-  val selfConfig = config.getConfig(OHLCDataHandlerActor.name)
+  val selfConfig = config.getConfig(MarketHistoryActor.name)
 
   def ready: Receive = {
     case data: OHLCRawDataEvent =>
@@ -74,7 +74,7 @@ class OHLCDataHandlerActor(
         }
       }) sendTo sender
 
-    case req: GetOHLCData.Req =>
+    case req: GetMarketHistory.Req =>
       dbModule.ohlcDataService.getOHLCData(req).sendTo(sender)
   }
 }

@@ -61,9 +61,9 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetMetadatas.Req]
     .replies[GetMetadatas.Res]
 
-  method("get_ohlc_datas")
-    .accepts[GetOHLCData.Req]
-    .replies[GetOHLCData.Res]
+  method("get_market_history")
+    .accepts[GetMarketHistory.Req]
+    .replies[GetMarketHistory.Res]
 
   //Ethereum Query
   method("get_allowance")
