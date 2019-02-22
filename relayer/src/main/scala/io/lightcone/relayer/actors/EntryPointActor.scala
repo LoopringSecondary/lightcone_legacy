@@ -91,6 +91,8 @@ class EntryPointActor(
 
     case _: GetMetadatas.Req => Some(MetadataRefresher.name)
 
+    case _: GetOHLCData.Req => Some(OHLCDataHandlerActor.name)
+
     case _ => None
   }
 
