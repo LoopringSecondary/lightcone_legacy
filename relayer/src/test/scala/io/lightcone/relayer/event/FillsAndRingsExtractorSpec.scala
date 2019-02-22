@@ -23,7 +23,7 @@ import io.lightcone.relayer.support._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class TradesAndRingsExtractorSpec
+class FillsAndRingsExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport
     with OrderGenerateSupport {
@@ -61,13 +61,16 @@ class TradesAndRingsExtractorSpec
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
       expectBalanceRes(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           account2.getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        (res: GetBalanceAndAllowances.Res) => {
+        (res: GetAccount.Res) => {
           BigInt(
-            res.balanceAndAllowanceMap(WETH_TOKEN.address).allowance.toByteArray
+            res.getAccountBalance
+              .tokenBalanceMap(WETH_TOKEN.address)
+              .allowance
+              .toByteArray
           ) > 0
         },
         timeout
@@ -91,24 +94,24 @@ class TradesAndRingsExtractorSpec
         timeout.duration
       )
       expectTradeRes(
-        GetTrades.Req(owner = account1.getAddress),
-        (res: GetTrades.Res) => {
-          res.trades.length == 1
+        GetFills.Req(owner = account1.getAddress),
+        (res: GetFills.Res) => {
+          res.fills.length == 1
         }
       )
       info("query trades: by owner")
       val tres1 = Await.result(
-        singleRequest(GetTrades.Req(owner = account1.getAddress), "get_trades")
-          .mapTo[GetTrades.Res],
+        singleRequest(GetFills.Req(owner = account1.getAddress), "get_fills")
+          .mapTo[GetFills.Res],
         5.second
       )
-      tres1.trades.length should be(1)
+      tres1.fills.length should be(1)
       val tres2 = Await.result(
-        singleRequest(GetTrades.Req(owner = account2.getAddress), "get_trades")
-          .mapTo[GetTrades.Res],
+        singleRequest(GetFills.Req(owner = account2.getAddress), "get_fills")
+          .mapTo[GetFills.Res],
         5.second
       )
-      tres2.trades.length should be(1)
+      tres2.fills.length should be(1)
       val req = GetRings.Req()
       val res = Await.result(
         singleRequest(req, "get_rings").mapTo[GetRings.Res],

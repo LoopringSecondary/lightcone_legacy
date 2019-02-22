@@ -18,7 +18,7 @@ package io.lightcone.persistence
 
 import io.lightcone.persistence.dals._
 import io.lightcone.ethereum.event._
-import io.lightcone.relayer.data.GetOHLCData.Interval
+import io.lightcone.relayer.data.GetMarketHistory.Interval
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent.Await
@@ -37,7 +37,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     new OHLCDataDalImpl().createTable()
   }
 
-  "saveTrade" must "save a trade with hash" in {
+  "saveFill" must "save a trade with hash" in {
     val record0 = PersistOHLCData.Req(
       data = Option(
         OHLCRawDataEvent(
@@ -88,15 +88,15 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     )
     val result2 = service.saveData(record2)
 
-    val request = GetOHLCData.Req(
+    val request = GetMarketHistory.Req(
       marketHash = "111222",
       interval = Interval.OHLC_INTERVAL_ONE_MINUTES,
       beginTime = 1547682050,
       endTime = 1547682850
     )
     val resResult = service.getOHLCData(request)
-    val res = Await.result(resResult.mapTo[GetOHLCData.Res], 5.second)
-    val singleData = res.ohlcData(1).data
+    val res = Await.result(resResult.mapTo[GetMarketHistory.Res], 5.second)
+    val singleData = res.data(1).data
     assert(
       singleData(0).toLong == 1547682600 &&
         singleData(1) == 60 &&

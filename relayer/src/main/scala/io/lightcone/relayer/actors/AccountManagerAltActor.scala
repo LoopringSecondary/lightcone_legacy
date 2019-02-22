@@ -217,25 +217,27 @@ class AccountManagerAltActor(
 
         f1.sendTo(sender)
       }
-
-    case GetBalanceAndAllowances.Req(addr, tokens, _) =>
-      count.refine("label" -> "get_balance_allowance").increment()
-      blocking(timer, "get_balance_allowance") {
+    case GetAccount.Req(addr, tokens) =>
+      count.refine("label" -> "get_account").increment()
+      blocking(timer, "get_account") {
         (for {
+          _ <- Future { assert(addr == owner) }
           accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
           _ = assert(tokens.size == accountInfos.size)
-          balanceAndAllowanceMap = accountInfos.map { i =>
+          tokenBalances = accountInfos.map { i =>
             i.token -> i
           }.toMap.map {
             case (token, ai) =>
-              token -> BalanceAndAllowance(
+              token -> AccountBalance.TokenBalance(
+                token,
                 ai.balance,
                 ai.allowance,
                 ai.availableBalance,
                 ai.availableAllowance
               )
           }
-          result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
+          //TODO(HONGYU):确认nonce的更新以及使用方式
+          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances, 0)))
         } yield result).sendTo(sender)
       }
 
@@ -301,9 +303,19 @@ class AccountManagerAltActor(
 
       blocking {
         assert(req.address == owner)
-        manager
-          .setAllowance(req.token, BigInt(req.allowance.toByteArray))
+        manager.setAllowance(req.token, BigInt(req.allowance.toByteArray))
+      }
 
+    case req: AddressBalanceAllowanceUpdatedEvent =>
+      count.refine("label" -> "balance_allowance_updated").increment()
+      blocking {
+        assert(req.address == owner)
+
+        manager.setBalanceAndAllowance(
+          req.token,
+          BigInt(req.balance.toByteArray),
+          BigInt(req.allowance.toByteArray)
+        )
       }
 
     // ownerCutoff
@@ -415,7 +427,7 @@ class AccountManagerAltActor(
       )).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap
-        .getOrElse(orderId, ByteString.copyFrom("0".getBytes))
+        .getOrElse(orderId, Amount(ByteString.copyFrom("0".getBytes)))
 
       adjusted = matchable.withFilledAmountS(filledAmountS)
       (successful, updatedOrders) <- manager.resubmitOrder(adjusted)

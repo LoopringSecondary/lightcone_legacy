@@ -14,17 +14,25 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.dals
+syntax = "proto3";
 
-import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
-import io.lightcone.core._
-import scala.concurrent._
+option java_multiple_files = true;
+package io.lightcone.relayer.data.reorg;
 
-trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
-  def saveTrade(trade: Trade): Future[ErrorCode]
-  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]]
-  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
-  def countTrades(request: GetTrades.Req): Future[Int]
-  def obsolete(height: Long): Future[Unit]
+import "core.proto";
+
+
+message RecordOrderUpdateReq {
+    int64 block                 = 1;
+    repeated string order_ids   = 2;
+}
+
+message RecordAccountUpdateReq {
+    int64 block                 = 1;
+    string address              = 2;
+    string token_address        = 3;
+}
+
+message NotifyChainReorganization {
+    int64 block                 = 1;
 }

@@ -42,9 +42,9 @@ class BalanceSpec
 
   "send an query balance request" must {
     "receive a response with balance" in {
-      val method = "get_balance_and_allowance"
+      val method = "get_account"
       val getBalanceReq =
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           accounts(0).getAddress,
           tokens = Seq(LRC_TOKEN.name, WETH_TOKEN.address)
         )
@@ -61,11 +61,15 @@ class BalanceSpec
       } yield (firstQuery, secondQuery)
       val res = Await.result(r, timeout.duration)
       res match {
-        case (f: GetBalanceAndAllowances.Res, s: GetBalanceAndAllowances.Res) =>
+        case (f: GetAccount.Res, s: GetAccount.Res) =>
           val bf: BigInt =
-            f.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
+            f.getAccountBalance
+              .tokenBalanceMap(LRC_TOKEN.address)
+              .availableBalance
           val bs: BigInt =
-            s.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
+            s.getAccountBalance
+              .tokenBalanceMap(LRC_TOKEN.address)
+              .availableBalance
           val sold: BigInt = maker.amountS
           val fee: BigInt = maker.toOrder.amountFee
           info(s"matcheAmount: ${bf - bs}, expectAmount ${sold + fee}")

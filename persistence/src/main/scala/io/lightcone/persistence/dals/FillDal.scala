@@ -18,27 +18,14 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import io.lightcone.persistence._
-import scala.concurrent._
 import io.lightcone.relayer.data._
+import io.lightcone.core._
+import scala.concurrent._
 
-// TODO(yongfeng): delete this?
-
-trait TransactionRecordDal
-    extends BaseDalImpl[TransactionRecordTable, TransactionRecord] {
-
-  def saveRecord(
-      record: TransactionRecord
-    ): Future[PersistTransactionRecord.Res]
-
-  def getRecordsByOwner(
-      owner: String,
-      queryType: Option[GetTransactionRecords.QueryType],
-      sort: SortingType,
-      paging: CursorPaging
-    ): Future[Seq[TransactionRecord]]
-
-  def getRecordsCountByOwner(
-      owner: String,
-      queryType: Option[GetTransactionRecords.QueryType]
-    ): Future[Int]
+trait FillDal extends BaseDalImpl[FillTable, Fill] {
+  def saveFill(fill: Fill): Future[ErrorCode]
+  def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
+  def getFills(request: GetFills.Req): Future[Seq[Fill]]
+  def countFills(request: GetFills.Req): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }

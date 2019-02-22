@@ -18,7 +18,7 @@ package io.lightcone.ethereum
 
 import org.scalatest._
 
-class EIP712SupportSpec extends FlatSpec with Matchers {
+class EIP712SupportImplSpec extends FlatSpec with Matchers {
   val eip712Support: EIP712Support = new DefaultEIP712Support
 
   "jsonToTypedData" should "be able to convert a valid json to EIP712TypedData object" in {
@@ -69,12 +69,12 @@ class EIP712SupportSpec extends FlatSpec with Matchers {
         |}
     """.stripMargin
 
-    val typedDataEth = eip712Support.jsonToTypedData(typedDataJson1)
-    assert(typedDataEth.isRight, "convert json to TypedData failed.")
+    val res = eip712Support.jsonToTypedData(typedDataJson1)
+    // TODO(kongliang): verify the result is correct
   }
 
   /**
-    all numbers must be represented as a hex string.
+    * all numbers must be represented as a hex string.
     */
   "getEIP712Message" should "be able to calculate eip712 hash for an EIP712TypedData object" in {
     val hashExpected1 =
@@ -226,14 +226,8 @@ class EIP712SupportSpec extends FlatSpec with Matchers {
       }
       """.stripMargin
 
-    val typedDataEth = eip712Support.jsonToTypedData(orderTypedDataJson1)
-    typedDataEth match {
-      case Left(errorCode) =>
-        assert(false, "jsonToTypedData error, code:" + errorCode)
-      case Right(typedData) =>
-        val hash = eip712Support.getEIP712Message(typedData)
-        assert(hash == hashExpected1, "hash not match")
-    }
+    val res = eip712Support.jsonToTypedData(orderTypedDataJson1)
+    eip712Support.getEIP712Message(res) should be(hashExpected1)
   }
 
 }

@@ -17,7 +17,6 @@
 package io.lightcone.ethereum
 
 import org.scalatest._
-import com.google.protobuf.ByteString
 import io.lightcone.core._
 
 class RawOrderValidatorSpec extends FlatSpec with Matchers {
@@ -39,7 +38,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
 
     val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
+      .withAmountFee(BigInt("1" + "0" * 18))
       .withWalletSplitPercentage(10)
 
     val order1 = (new RawOrder)
@@ -47,8 +46,8 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withOwner(order1Owner)
       .withTokenS(wethAddress)
       .withTokenB(lrcAddress)
-      .withAmountS(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
-      .withAmountB(ByteString.copyFrom(BigInt("1" + "0" * 21).toByteArray))
+      .withAmountS(BigInt("1" + "0" * 18))
+      .withAmountB(BigInt("1" + "0" * 21))
       .withValidSince(validSince)
       .withParams(params1)
       .withFeeParams(feeParams1)
@@ -76,7 +75,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
 
     val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
+      .withAmountFee(BigInt("1" + "0" * 18))
       .withTokenRecipient(order1Owner)
       .withWalletSplitPercentage(10)
 
@@ -85,8 +84,8 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withOwner(order1Owner)
       .withTokenS(wethAddress)
       .withTokenB(lrcAddress)
-      .withAmountS(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
-      .withAmountB(ByteString.copyFrom(BigInt("1" + "0" * 21).toByteArray))
+      .withAmountS(BigInt("1" + "0" * 18))
+      .withAmountB(BigInt("1" + "0" * 21))
       .withValidSince(validSince)
       .withParams(params1)
       .withFeeParams(feeParams1)
@@ -131,7 +130,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
 
     val feeParams2 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
+      .withAmountFee(BigInt("1" + "0" * 18))
       .withTokenRecipient(order2Owner)
       .withWalletSplitPercentage(20)
 
@@ -140,8 +139,8 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withOwner(order2Owner)
       .withTokenS(lrcAddress)
       .withTokenB(wethAddress)
-      .withAmountS(ByteString.copyFrom(BigInt("1" + "0" * 21).toByteArray))
-      .withAmountB(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
+      .withAmountS(BigInt("1" + "0" * 21))
+      .withAmountB(BigInt("1" + "0" * 18))
       .withValidSince(1545813653)
       .withParams(params2)
       .withFeeParams(feeParams2)

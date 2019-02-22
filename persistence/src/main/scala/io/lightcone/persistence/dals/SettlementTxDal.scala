@@ -20,6 +20,7 @@ import io.lightcone.persistence.base._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
+// TODO(yongfeng): delete this?
 trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
   def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res]
   // get all pending txs with given owner

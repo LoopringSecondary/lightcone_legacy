@@ -21,7 +21,7 @@ import io.lightcone.relayer.base._
 import org.slf4s.Logging
 
 trait EventDispatcher {
-  def dispatch(evt: AnyRef)
+  def dispatch(evt: AnyRef): Unit
 }
 
 class EventDispatcherImpl(actors: Lookup[ActorRef])

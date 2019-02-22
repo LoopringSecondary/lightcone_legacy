@@ -45,8 +45,8 @@ message TriggerRematch {
 
 message SettleRings {
     repeated OrderRing rings = 1;
-    bytes gas_limit = 2;
-    bytes gas_price = 3;
+    io.lightcone.core.Amount gas_limit = 2;
+    io.lightcone.core.Amount gas_price = 3;
 }
 
 
@@ -117,54 +117,37 @@ message GetOrderFilledAmount {
 
     message Res {
         string order_id = 1;
-        bytes filled_amount_s = 2;
+        io.lightcone.core.Amount filled_amount_s = 2;
     }
 }
 
-message GetBalanceAndAllowances {
+message GetAccount {
     message Req {
         string address = 1;
         repeated string tokens = 2;
-        string tag = 3;
     }
 
     message Res {
-        string address = 1;
-        map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-        io.lightcone.core.Error error = 3;
+        AccountBalance account_balance    = 1;
     }
 }
 
-message GetBalance {
-    message Req{
-        string address = 1;
-        repeated string tokens = 2;
-        string tag = 3;
+// TODO(hongyu): support this (waiting for dals finished by yongfeng)
+message GetAccountActivities {
+    message Req {
     }
+
     message Res {
-        string address = 1;
-        map<string, bytes> balance_map = 2;
-        io.lightcone.core.Error error = 3;
+        repeated io.lightcone.persistence.Activity activities = 1;
+        int32 total = 2;
     }
 }
 
-message GetAllowance {
-    message Req{
-        string address = 1;
-        repeated string tokens = 2;
-        string tag = 3;
-    }
-    message Res {
-        string address = 1;
-        map<string, bytes> allowance_map = 2;
-        io.lightcone.core.Error error = 3;
-    }
-}
 
 message UpdateFilledAmount {
     message Req {
         string id = 1;
-        bytes order_filled_amount_s = 2;
+        io.lightcone.core.Amount order_filled_amount_s = 2;
     }
 
     message Res {
@@ -179,7 +162,7 @@ message GetFilledAmount {
     }
 
     message Res {
-        map<string, bytes> filled_amount_s_map = 1;
+        map<string, io.lightcone.core.Amount> filled_amount_s_map = 1;
     }
 }
 
@@ -206,7 +189,7 @@ message GetCutoff {
         string broker = 1;
         string owner = 2;
         string market_hash = 3;
-        bytes cutoff = 4;
+        io.lightcone.core.Amount cutoff = 4;
     }
 }
 
@@ -231,19 +214,6 @@ message GetBurnRate {
     }
 }
 
-message UpdateBalanceAndAllowance {
-    message Req {
-        string address = 1;
-        string token = 2;
-        BalanceAndAllowance balance_and_allowance = 3;
-    }
-
-    message Res {
-        io.lightcone.core.ErrorCode error = 1;
-        BalanceAndAllowance balance_and_allowance = 2;
-    }
-}
-
 message SendRawTx {
     message Req {
         bytes data = 1;
@@ -262,17 +232,17 @@ message GetGasPrice {
     message Req {}
 
     message Res {
-        bytes gas_price = 1;
+        io.lightcone.core.Amount gas_price = 1;
     }
 }
 
 message SetGasPrice {
     message Req {
-        bytes gas_price = 1;
+        io.lightcone.core.Amount gas_price = 1;
     }
 
     message Res {
-        bytes gas_price = 1;
+        io.lightcone.core.Amount gas_price = 1;
     }
 }
 
