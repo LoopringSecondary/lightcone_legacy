@@ -23,8 +23,8 @@ import io.lightcone.relayer.data._
 trait RpcBinding extends JsonRpcModule {
 
   method("get_orderbook")
-  // .accepts[rpcdata.GetOrderbook.Req, GetOrderbook.Req]
-  // .replies[GetOrderbook.Res, rpcdata.GetOrderbook.Res]
+  // .accepts[ext.GetOrderbook.Req, GetOrderbook.Req]
+  // .replies[GetOrderbook.Res, ext.GetOrderbook.Res]
     .accepts[GetOrderbook.Req]
     .replies[GetOrderbook.Res]
 
@@ -38,12 +38,12 @@ trait RpcBinding extends JsonRpcModule {
 
   // // db query
   method("get_orders")
-    .accepts[GetOrdersForUser.Req]
-    .replies[GetOrdersForUser.Res]
+    .accepts[GetOrders.Req]
+    .replies[GetOrders.Res]
 
-  method("get_trades")
-    .accepts[GetTrades.Req]
-    .replies[GetTrades.Res]
+  method("get_fills")
+    .accepts[GetFills.Req]
+    .replies[GetFills.Res]
 
   method("get_rings")
     .accepts[GetRings.Req]

@@ -121,6 +121,7 @@ message GetOrderFilledAmount {
     }
 }
 
+// TODO(hongyu): remove this
 message GetBalanceAndAllowances {
     message Req {
         string address = 1;
@@ -135,6 +136,7 @@ message GetBalanceAndAllowances {
     }
 }
 
+// TODO(hongyu): remove this
 message GetBalance {
     message Req{
         string address = 1;
@@ -148,6 +150,7 @@ message GetBalance {
     }
 }
 
+// TODO(hongyu): remove this
 message GetAllowance {
     message Req{
         string address = 1;
@@ -160,6 +163,29 @@ message GetAllowance {
         io.lightcone.core.Error error = 3;
     }
 }
+
+
+// TODO(hongyu): support this
+message GetAccounts {
+    message Req {
+    }
+
+    message Res {
+        repeated AccountBalance account_balances    = 1;
+    }
+}
+
+// TODO(hongyu): support this
+message GetAccountActivities {
+    message Req {
+    }
+
+    message Res {
+        repeated io.lightcone.persistence.Activity activities = 1;
+        int32 total = 2;
+    }
+}
+
 
 message UpdateFilledAmount {
     message Req {

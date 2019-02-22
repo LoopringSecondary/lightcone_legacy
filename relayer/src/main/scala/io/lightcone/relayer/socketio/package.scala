@@ -34,7 +34,7 @@ package object socketio {
       addresses: Seq[String],
       market: Market = null)
 
-  case class SubscribeTrade(
+  case class SubscribeFill(
       addresses: Seq[String],
       market: Market = null)
 
