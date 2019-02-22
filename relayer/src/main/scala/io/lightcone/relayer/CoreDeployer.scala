@@ -67,7 +67,7 @@ class CoreDeployer @Inject()(
     balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
     transactionNotifier: SocketIONotifier[SubscribeTransaction],
     orderNotifier: SocketIONotifier[SubscribeOrder],
-    tradeNotifier: SocketIONotifier[SubscribeTrade],
+    tradeNotifier: SocketIONotifier[SubscribeFill],
     tickerNotifier: SocketIONotifier[SubscribeTicker],
     orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
     transferNotifier: SocketIONotifier[SubscribeTransfer],

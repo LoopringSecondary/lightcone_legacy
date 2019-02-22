@@ -33,10 +33,10 @@ class FillServiceImpl @Inject()(
 
   def saveFills(fills: Seq[Fill]) = fillDal.saveFills(fills)
 
-  def getFills(request: GetFillss.Req): Future[Seq[Fill]] =
+  def getFills(request: GetFills.Req): Future[Seq[Fill]] =
     fillDal.getFills(request)
 
-  def countFills(request: GetFillss.Req): Future[Int] =
+  def countFills(request: GetFills.Req): Future[Int] =
     fillDal.countFills(request)
 
   def obsolete(height: Long): Future[Unit] = fillDal.obsolete(height)

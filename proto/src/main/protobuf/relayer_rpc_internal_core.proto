@@ -182,6 +182,7 @@ message GetAccountActivities {
 
     message Res {
         repeated io.lightcone.persistence.Activity activities = 1;
+        int32 total = 2;
     }
 }
 

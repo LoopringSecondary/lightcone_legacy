@@ -107,7 +107,7 @@ message BlockGasPricesExtractedEvent {
     repeated int64 gas_prices = 2;
 }
 
-
+// TODO(yangli): rename to SpotPrice???
 message OHLCRawDataEvent {
     int64      ring_index     = 1;
     string     tx_hash        = 2;

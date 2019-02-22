@@ -47,107 +47,107 @@ class EntryPointSpec_DatabaseQuery
 
     "get fills" in {
       info("query fills: by owner")
-      val q3 = GetFillss.Req(owner = owner1)
+      val q3 = GetFills.Req(owner = owner1)
       val r3 = Await.result(
-        singleRequest(q3, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q3, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r3.fills.length == 4 && r3.total == 4)
 
       info("query fills: sort")
-      val q3_2 = GetFillss.Req(owner = owner1, sort = SortingType.DESC)
+      val q3_2 = GetFills.Req(owner = owner1, sort = SortingType.DESC)
       val r3_2 = Await.result(
-        singleRequest(q3_2, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q3_2, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r3_2.fills.length == 4 && r3_2.total == 4)
       assert(r3.fills.head == r3_2.fills.last)
 
       info("query fills: skip")
-      val q3_3 = GetFillss.Req(skip = Some(Paging(skip = 1, size = 10)))
+      val q3_3 = GetFills.Req(skip = Some(Paging(skip = 1, size = 10)))
       val r3_3 = Await.result(
-        singleRequest(q3_3, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q3_3, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r3_3.fills.length == 5 && r3_3.total == 6)
 
       info("query fills: by owner and market")
-      val q4 = GetFillss.Req(
+      val q4 = GetFills.Req(
         owner = owner1,
-        market = Some(GetFillss.Req.Market(tokenS1, tokenB1))
+        market = Some(GetFills.Req.Market(tokenS1, tokenB1))
       )
       val r4 = Await.result(
-        singleRequest(q4, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q4, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r4.fills.length == 1 && r4.total == 1)
       val q5 =
-        GetFillss.Req(
+        GetFills.Req(
           owner = owner1,
-          market = Some(GetFillss.Req.Market(tokenS1, tokenB1, true))
+          market = Some(GetFills.Req.Market(tokenS1, tokenB1, true))
         )
       val r5 = Await.result(
-        singleRequest(q5, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q5, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r5.fills.length == 2 && r5.total == 2)
 
       info("query fills: by ring")
-      val q6 = GetFillss.Req(ring = Some(GetFillss.Req.Ring(hash2)))
+      val q6 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2)))
       val r6 = Await.result(
-        singleRequest(q6, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q6, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r6.fills.length == 2 && r6.total == 2)
-      val q7 = GetFillss.Req(ring = Some(GetFillss.Req.Ring(hash2, "11", "1")))
+      val q7 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "11", "1")))
       val r7 = Await.result(
-        singleRequest(q7, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q7, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r7.fills.length == 1 && r7.total == 1)
-      val q8 = GetFillss.Req(ring = Some(GetFillss.Req.Ring(hash2, "11", "2")))
+      val q8 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "11", "2")))
       val r8 = Await.result(
-        singleRequest(q8, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q8, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r8.fills.isEmpty && r8.total == 0)
 
       info("query fills: full parameters")
-      val q9 = GetFillss.Req(
+      val q9 = GetFills.Req(
         owner = owner1,
         txHash = hash1,
         orderHash = hash1,
-        market = Some(GetFillss.Req.Market(tokenS1, tokenB1)),
-        ring = Some(GetFillss.Req.Ring(hash1, "10", "0")),
+        market = Some(GetFills.Req.Market(tokenS1, tokenB1)),
+        ring = Some(GetFills.Req.Ring2(hash1, "10", "0")),
         wallet = wallet,
         miner = miner
       )
       val r9 = Await.result(
-        singleRequest(q9, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q9, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r9.fills.length == 1 && r9.total == 1)
-      val q10 = GetFillss.Req(
+      val q10 = GetFills.Req(
         owner = owner2,
         txHash = hash1,
         orderHash = hash1,
-        market = Some(GetFillss.Req.Market(tokenS1, tokenB1)),
-        ring = Some(GetFillss.Req.Ring(hash1, "1", "0")),
+        market = Some(GetFills.Req.Market(tokenS1, tokenB1)),
+        ring = Some(GetFills.Req.Ring2(hash1, "1", "0")),
         wallet = wallet,
         miner = miner
       )
       val r10 = Await.result(
-        singleRequest(q10, "get_fills").mapTo[GetFillss.Res],
+        singleRequest(q10, "get_fills").mapTo[GetFills.Res],
         5.second
       )
       assert(r10.fills.isEmpty && r10.total == 0)
 
       info("invalid ringIndex")
       val q11 =
-        GetFillss.Req(ring = Some(GetFillss.Req.Ring(hash2, "invalidIndex")))
+        GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "invalidIndex")))
       try {
         Await.result(
-          singleRequest(q11, "get_fills").mapTo[GetFillss.Res],
+          singleRequest(q11, "get_fills").mapTo[GetFills.Res],
           5.second
         )
         assert(false)
@@ -159,12 +159,12 @@ class EntryPointSpec_DatabaseQuery
 
       info("invalid fillIndex")
       val q12 =
-        GetFillss.Req(
-          ring = Some(GetFillss.Req.Ring(hash2, "2", "invalidIndex"))
+        GetFills.Req(
+          ring = Some(GetFills.Req.Ring2(hash2, "2", "invalidIndex"))
         )
       try {
         Await.result(
-          singleRequest(q12, "get_fills").mapTo[GetFillss.Res],
+          singleRequest(q12, "get_fills").mapTo[GetFills.Res],
           5.second
         )
         assert(false)
@@ -178,7 +178,8 @@ class EntryPointSpec_DatabaseQuery
     "get rings" in {
       info("query rings: by ringHash and ringIndex")
       val q3 = GetRings.Req(
-        ring = Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingHash(hash2)))
+        ring =
+          Some(GetRings.Req.Ring2(GetRings.Req.Ring2.Filter.RingHash(hash2)))
       )
       val r3 = Await.result(
         singleRequest(q3, "get_rings").mapTo[GetRings.Res],
@@ -187,7 +188,7 @@ class EntryPointSpec_DatabaseQuery
       assert(r3.rings.length == 1 && r3.total == 1)
       val q4 = GetRings.Req(
         ring =
-          Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingIndex(height2)))
+          Some(GetRings.Req.Ring2(GetRings.Req.Ring2.Filter.RingIndex(height2)))
       )
       val r4 = Await.result(
         singleRequest(q4, "get_rings").mapTo[GetRings.Res],

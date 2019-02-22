@@ -25,7 +25,7 @@ import io.lightcone.relayer.base._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.data.GetOrdersForUser._
+import io.lightcone.relayer.data.GetOrders._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
@@ -61,7 +61,7 @@ class DatabaseQueryActor(
   val selfConfig = config.getConfig(DatabaseQueryActor.name)
 
   def ready: Receive = LoggingReceive {
-    case req: GetOrdersForUser.Req =>
+    case req: GetOrders.Req =>
       val (tokensOpt, tokenbOpt, marketIdOpt) =
         getMarketQueryParameters(req.market)
       (for {
@@ -96,14 +96,14 @@ class DatabaseQueryActor(
             marketEntityId = 0
           )
         }
-        GetOrdersForUser.Res(respOrder, total)
+        GetOrders.Res(respOrder, total)
       }) sendTo sender
 
-    case req: GetFillss.Req =>
+    case req: GetFills.Req =>
       (for {
         result <- dbModule.fillService.getFills(req)
         total <- dbModule.fillService.countFills(req)
-      } yield GetFillss.Res(result, total)) sendTo sender
+      } yield GetFills.Res(result, total)) sendTo sender
 
     case req: GetRings.Req =>
       (for {

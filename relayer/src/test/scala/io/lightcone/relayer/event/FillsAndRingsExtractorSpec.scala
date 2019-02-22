@@ -23,7 +23,7 @@ import io.lightcone.relayer.support._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class TradesAndRingsExtractorSpec
+class FillsAndRingsExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport
     with OrderGenerateSupport {
@@ -91,21 +91,21 @@ class TradesAndRingsExtractorSpec
         timeout.duration
       )
       expectTradeRes(
-        GetFillss.Req(owner = account1.getAddress),
-        (res: GetFillss.Res) => {
+        GetFills.Req(owner = account1.getAddress),
+        (res: GetFills.Res) => {
           res.fills.length == 1
         }
       )
       info("query trades: by owner")
       val tres1 = Await.result(
-        singleRequest(GetFillss.Req(owner = account1.getAddress), "get_trades")
-          .mapTo[GetFillss.Res],
+        singleRequest(GetFills.Req(owner = account1.getAddress), "get_trades")
+          .mapTo[GetFills.Res],
         5.second
       )
       tres1.fills.length should be(1)
       val tres2 = Await.result(
-        singleRequest(GetFillss.Req(owner = account2.getAddress), "get_trades")
-          .mapTo[GetFillss.Res],
+        singleRequest(GetFills.Req(owner = account2.getAddress), "get_trades")
+          .mapTo[GetFills.Res],
         5.second
       )
       tres2.fills.length should be(1)

@@ -85,7 +85,7 @@ message GetOrderByHash {
 }
 
 
-message GetOrdersForUser {
+message GetOrders {
     message Req {
         message Market {
             string token_s = 1;
@@ -120,14 +120,14 @@ message UserCancelOrder {
     }
 }
 
-message GetFillss {
+message GetFills {
     message Req {
         message Market {
             string token_s = 1;
             string token_b = 2;
             bool   is_query_both_side = 3; // 是否查询两个方向的订单
         }
-        message Ring {
+        message Ring2 {  // TODO(yongfeng): rename this class
             string  ring_hash         = 3;
             string  ring_index        = 4; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
             string  fill_index        = 5;
@@ -135,7 +135,7 @@ message GetFillss {
         string      owner      = 1;
         string      tx_hash    = 2;
         string      order_hash = 3;
-        Ring        ring       = 4;
+        Ring2       ring       = 4;
         Market      market     = 5;
         string      wallet     = 6;
         string      miner      = 7;

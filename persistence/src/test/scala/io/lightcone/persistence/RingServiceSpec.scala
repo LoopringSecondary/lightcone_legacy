@@ -46,11 +46,11 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query rings: by ringHash and ringIndex")
-    val q3 = Req(ring = Some(Req.Ring(Req.Ring.Filter.RingHash(hash2))))
+    val q3 = Req(ring = Some(Req.Ring2(Req.Ring2.Filter.RingHash(hash2))))
     val r3 = Await.result(service.getRings(q3).mapTo[Seq[Ring]], 5.second)
     val c3 = Await.result(service.countRings(q3).mapTo[Int], 5.second)
     assert(r3.length == 1 && c3 == 1)
-    val q4 = Req(ring = Some(Req.Ring(Req.Ring.Filter.RingIndex(11))))
+    val q4 = Req(ring = Some(Req.Ring2(Req.Ring2.Filter.RingIndex(11))))
     val r4 = Await.result(service.getRings(q4).mapTo[Seq[Ring]], 5.second)
     val c4 = Await.result(service.countRings(q4).mapTo[Int], 5.second)
     assert(r4.length == 1 && c4 == 1)

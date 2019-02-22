@@ -37,8 +37,6 @@ class FillDalImpl @Inject()(
     timeProvider: TimeProvider)
     extends FillDal {
 
-  import GetFillss._
-
   val query = TableQuery[FillTable]
 
   def saveFill(fill: Fill): Future[ErrorCode] = {
@@ -61,7 +59,7 @@ class FillDalImpl @Inject()(
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]] =
     Future.sequence(fills.map(saveFill))
 
-  def getFills(request: Req): Future[Seq[Fill]] = {
+  def getFills(request: GetFills.Req): Future[Seq[Fill]] = {
     val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
       request.market
     )
@@ -86,7 +84,7 @@ class FillDalImpl @Inject()(
     db.run(filters.result)
   }
 
-  def countFills(request: Req): Future[Int] = {
+  def countFills(request: GetFills.Req): Future[Int] = {
     val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
       request.market
     )
@@ -162,7 +160,9 @@ class FillDalImpl @Inject()(
     filters
   }
 
-  private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {
+  private def getMarketQueryParameters(
+      marketOpt: Option[GetFills.Req.Market]
+    ) = {
     marketOpt match {
       case Some(m)
           if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
@@ -177,7 +177,7 @@ class FillDalImpl @Inject()(
     }
   }
 
-  private def getRingQueryParameters(ringOpt: Option[Req.Ring]) = {
+  private def getRingQueryParameters(ringOpt: Option[GetFills.Req.Ring2]) = {
     ringOpt match {
       case Some(r) =>
         val ringHash = getOptString(r.ringHash)

@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 
 class FillServiceSpec extends ServiceSpec[FillService] {
 
-  import GetFillss._
+  import GetFills._
 
   implicit var dal: FillDal = _
 
@@ -74,15 +74,15 @@ class FillServiceSpec extends ServiceSpec[FillService] {
     assert(r5.length == 2 && c5 == 2)
 
     info("query fills: by ring")
-    val q6 = Req(ring = Some(Req.Ring(hash2)))
+    val q6 = Req(ring = Some(Req.Ring2(hash2)))
     val r6 = Await.result(service.getFills(q6).mapTo[Seq[Fill]], 5.second)
     val c6 = Await.result(service.countFills(q6).mapTo[Int], 5.second)
     assert(r6.length == 2 && c6 == 2)
-    val q7 = Req(ring = Some(Req.Ring(hash2, "2", "1")))
+    val q7 = Req(ring = Some(Req.Ring2(hash2, "2", "1")))
     val r7 = Await.result(service.getFills(q7).mapTo[Seq[Fill]], 5.second)
     val c7 = Await.result(service.countFills(q7).mapTo[Int], 5.second)
     assert(r7.length == 1 && c7 == 1)
-    val q8 = Req(ring = Some(Req.Ring(hash2, "2", "2")))
+    val q8 = Req(ring = Some(Req.Ring2(hash2, "2", "2")))
     val r8 = Await.result(service.getFills(q8).mapTo[Seq[Fill]], 5.second)
     val c8 = Await.result(service.countFills(q8).mapTo[Int], 5.second)
     assert(r8.isEmpty && c8 == 0)
@@ -93,7 +93,7 @@ class FillServiceSpec extends ServiceSpec[FillService] {
       txHash = hash1,
       orderHash = hash1,
       market = Some(Req.Market(tokenS1, tokenB1)),
-      ring = Some(Req.Ring(hash1, "1", "0")),
+      ring = Some(Req.Ring2(hash1, "1", "0")),
       wallet = wallet,
       miner = miner
     )
@@ -105,7 +105,7 @@ class FillServiceSpec extends ServiceSpec[FillService] {
       txHash = hash1,
       orderHash = hash1,
       market = Some(Req.Market(tokenS1, tokenB1)),
-      ring = Some(Req.Ring(hash1, "1", "0")),
+      ring = Some(Req.Ring2(hash1, "1", "0")),
       wallet = wallet,
       miner = miner
     )

@@ -23,7 +23,7 @@ import scala.concurrent.Future
 trait FillService {
   def saveFill(fill: Fill): Future[ErrorCode]
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
-  def getFills(request: GetFillss.Req): Future[Seq[Fill]]
-  def countFills(request: GetFillss.Req): Future[Int]
+  def getFills(request: GetFills.Req): Future[Seq[Fill]]
+  def countFills(request: GetFills.Req): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }

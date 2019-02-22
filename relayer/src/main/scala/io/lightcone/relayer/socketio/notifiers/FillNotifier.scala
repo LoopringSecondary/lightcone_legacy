@@ -22,15 +22,15 @@ import io.lightcone.core.{MarketHash, MarketPair}
 import io.lightcone.lib.Address
 import io.lightcone.relayer.socketio._
 
-class TradeNotifier @Inject() extends SocketIONotifier[SubscribeTrade] {
+class FillNotifier @Inject() extends SocketIONotifier[SubscribeFill] {
 
   val eventName: String = "trades"
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SubscribeTrade
-    ): SocketIOSubscriber[SubscribeTrade] =
-    new SocketIOSubscriber[SubscribeTrade](
+      subscription: SubscribeFill
+    ): SocketIOSubscriber[SubscribeFill] =
+    new SocketIOSubscriber[SubscribeFill](
       client,
       subscription = subscription.copy(
         addresses = subscription.addresses.map(Address.normalize),
@@ -42,7 +42,7 @@ class TradeNotifier @Inject() extends SocketIONotifier[SubscribeTrade] {
     )
 
   def shouldNotifyClient(
-      subscription: SubscribeTrade,
+      subscription: SubscribeFill,
       event: AnyRef
     ): Boolean = {
 

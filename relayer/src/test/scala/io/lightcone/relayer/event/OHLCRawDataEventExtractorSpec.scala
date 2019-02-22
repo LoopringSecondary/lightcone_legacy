@@ -142,8 +142,8 @@ class OHLCRawDataEventExtractorSpec
         timeout.duration
       )
       expectTradeRes(
-        GetFillss.Req(owner = account3.getAddress),
-        (res: GetFillss.Res) => {
+        GetFills.Req(owner = account3.getAddress),
+        (res: GetFills.Res) => {
           res.fills.length == 1
         }
       )

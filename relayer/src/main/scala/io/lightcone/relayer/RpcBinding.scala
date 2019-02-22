@@ -38,12 +38,12 @@ trait RpcBinding extends JsonRpcModule {
 
   // // db query
   method("get_orders")
-    .accepts[GetOrdersForUser.Req]
-    .replies[GetOrdersForUser.Res]
+    .accepts[GetOrders.Req]
+    .replies[GetOrders.Res]
 
   method("get_trades")
-    .accepts[GetFillss.Req]
-    .replies[GetFillss.Res]
+    .accepts[GetFills.Req]
+    .replies[GetFills.Res]
 
   method("get_rings")
     .accepts[GetRings.Req]
