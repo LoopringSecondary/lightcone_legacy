@@ -33,7 +33,7 @@ import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.data.Notify
+import io.lightcone.relayer.data.{Notify, SocketIOSubscription}
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
@@ -64,24 +64,24 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
-    balanceNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForBalanceUpdate
+    accountNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForAccounts
     ],
-    transactionNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForTxRecord
+    activityNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForActivities
     ],
     orderNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrderUpdate
+      SocketIOSubscription.ParamsForOrders
     ],
     tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTicker],
     orderBookNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrderbookUpdate
+      SocketIOSubscription.ParamsForOrderbook
     ],
     tokenMetadataNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForTokenMetadata
+      SocketIOSubscription.ParamsForTokens
     ],
     marketMetadataNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForMarketMetadata
+      SocketIOSubscription.ParamsForMarkets
     ],
     system: ActorSystem)
     extends Object

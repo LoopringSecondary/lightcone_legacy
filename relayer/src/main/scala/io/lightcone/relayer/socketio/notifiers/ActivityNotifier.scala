@@ -20,15 +20,17 @@ import com.corundumstudio.socketio._
 import io.lightcone.relayer.socketio._
 import com.google.inject.Inject
 import io.lightcone.lib._
+import io.lightcone.persistence.Activity
+import io.lightcone.relayer.data.SocketIOSubscription
 
-class TransactionNotifier @Inject()
-    extends SocketIONotifier[SocketIOSubscription.ParamsForTxRecord] {
+class ActivityNotifier @Inject()
+    extends SocketIONotifier[SocketIOSubscription.ParamsForActivities] {
 
   val eventName = "transactions"
 
   def wrapClient(
       client: SocketIOClient,
-      req: SocketIOSubscription.ParamsForTxRecord
+      req: SocketIOSubscription.ParamsForActivities
     ) =
     new SocketIOSubscriber(
       client,
@@ -36,24 +38,13 @@ class TransactionNotifier @Inject()
     )
 
   def extractNotifyData(
-      subscription: SocketIOSubscription.ParamsForTxRecord,
+      subscription: SocketIOSubscription.ParamsForActivities,
       event: AnyRef
     ): Option[AnyRef] =
     event match {
-      case e: TxRecordUpdate =>
-        if (subscription.addresses.contains(e.owner) &&
-            (subscription.txTypes.isEmpty || subscription.txTypes.contains(
-              e.txType
-            ))) {
-          Some(
-            Transaction(
-              gasUsed = e.gasUsed,
-              hash = e.txHash,
-              blockNum = e.blockNum,
-              time = e.time,
-              status = e.status
-            )
-          )
+      case e: Activity =>
+        if (subscription.addresses.contains(e.owner)) {
+          Some()
         } else None
       case _ => None
     }

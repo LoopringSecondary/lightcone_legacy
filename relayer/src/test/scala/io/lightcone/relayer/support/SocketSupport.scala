@@ -21,8 +21,8 @@ import io.lightcone.relayer.socketio.notifiers._
 
 trait SocketSupport {
   com: CommonSpec =>
-  implicit val balancelistener = new BalanceNotifier()
-  implicit val transactionNotifier = new TransactionNotifier()
+  implicit val balancelistener = new AccountNotifier()
+  implicit val transactionNotifier = new ActivityNotifier()
   implicit val orderNotifier = new OrderNotifier()
   implicit val orderBookNotifier = new OrderBookNotifier()
   implicit val tickerNotifier = new TickerNotifier()

@@ -32,9 +32,9 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
   def wrapClient(
       client: SocketIOClient,
       subscription: R
-    ): SocketIOSubscriber[R]
+    ): SocketIOSubscriber
 
-  private var clients = Seq.empty[SocketIOSubscriber[R]]
+  private var clients = Seq.empty[SocketIOSubscriber]
 
   def notifyEvent(event: AnyRef): Unit = {
     clients = clients.filter(_.client.isChannelOpen)

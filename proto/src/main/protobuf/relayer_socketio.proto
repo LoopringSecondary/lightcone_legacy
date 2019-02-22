@@ -22,7 +22,7 @@ package io.lightcone.relayer.data;
 import "core.proto";
 import "relayer_common.proto";
 
-message BalanceUpdate {
+message AccountUpdate {
     string address                      = 1;
     io.lightcone.relayer.data.AccountBalance.TokenBalance  token_balance = 2;
     int32  nonce                        = 3;
@@ -36,15 +36,6 @@ message OrderUpdate {
     io.lightcone.relayer.data.OrderState state      = 5;
 }
 
-message TxRecordUpdate{
-    string tx_hash = 1;
-    string status = 2;
-    string gasUsed = 3;
-    string block_num = 4;
-    string time = 5;
-    string owner = 6;
-    string tx_type = 7;
-}
 
 message TokenMetadataUpdate{
     string   status                 = 1;
@@ -73,7 +64,6 @@ message SocketIOSubscription {
     // subscribe for message Activity defined in persistence.proto
     message ParamsForActivities {
         repeated string addresses = 1;
-        repeated string tx_types = 2;
     }
 
     // subscribe for message OrderUpdate

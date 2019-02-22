@@ -33,10 +33,11 @@ import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.ethereum.event._
-
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.socketio.notifiers._
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -120,23 +121,22 @@ class CoreModule(
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
     //bind socket listener
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForBalanceUpdate]]
-      .to[BalanceNotifier]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForAccounts]]
+      .to[AccountNotifier]
       .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForTxRecord]]
-      .to[TransactionNotifier]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForActivities]]
+      .to[ActivityNotifier]
       .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrderUpdate]]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrders]]
       .to[OrderNotifier]
       .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForTicker]]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForTickers]]
       .to[TickerNotifier]
       .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrderbookUpdate]]
-    bind[SocketIONotifier[SubscribeOrder]].to[OrderNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeFill]].to[FillNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeTicker]].to[TickerNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeOrderBook]]
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForFills]]
+      .to[FillNotifier]
+      .asEagerSingleton
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrderbook]]
       .to[OrderBookNotifier]
       .asEagerSingleton
 

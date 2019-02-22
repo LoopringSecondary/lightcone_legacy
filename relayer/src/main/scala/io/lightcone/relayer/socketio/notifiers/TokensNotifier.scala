@@ -27,7 +27,7 @@ import io.lightcone.relayer.socketio.{
   TokenMetadataUpdate
 }
 
-class TokenMetaDataNotifier @Inject()
+class TokensNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForTokenMetadata] {
 
   val eventName: String = "token_metadata"

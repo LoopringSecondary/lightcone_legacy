@@ -23,11 +23,17 @@ package object socketio {
       quoteToken: String)
 
   case class TokenBalanceAndAllowance(
-      address: String,
+      token: String,
       balance: String,
       allowance: String,
       availableBalance: String,
-      availableAllowance: String)
+      availableAllowance: String
+  )
+
+  case class AccountInfo(
+      address: String,
+      nonce: Int,
+      tokenBalance: Option[TokenBalanceAndAllowance])
 
   case class Transaction(
       gasUsed: String = "0x0",

@@ -19,19 +19,20 @@ package io.lightcone.relayer.socketio.notifiers
 import com.corundumstudio.socketio._
 import com.google.inject.Inject
 import io.lightcone.lib.Address
-import io.lightcone.relayer.data.{BalanceUpdate, SocketIOSubscription}
+import io.lightcone.relayer.data.{AccountUpdate, SocketIOSubscription}
 import io.lightcone.relayer.socketio._
+import io.lightcone.core._
 
-class BalanceNotifier @Inject()
+class AccountNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForAccounts] {
 
-  val eventName = "balances"
+  val eventName = "accounts"
 
   def wrapClient(
       client: SocketIOClient,
-      req: SocketIOSubscription.ParamsForBalanceUpdate
+      req: SocketIOSubscription.ParamsForAccounts
     ) =
-    new SocketIOSubscriber[SocketIOSubscription.ParamsForBalanceUpdate](
+    new SocketIOSubscriber(
       client,
       req.copy(
         addresses = req.addresses.map(Address.normalize),
@@ -40,22 +41,30 @@ class BalanceNotifier @Inject()
     )
 
   def extractNotifyData(
-      subscription: SocketIOSubscription.ParamsForBalanceUpdate,
+      subscription: SocketIOSubscription.ParamsForAccounts,
       event: AnyRef
     ): Option[AnyRef] = {
     event match {
-      case e: BalanceUpdate =>
+      case e: AccountUpdate =>
         if (subscription.addresses.contains(e.address)
-            && (subscription.tokens.isEmpty || subscription.tokens.contains(
-              e.token
-            ))) {
+            && (subscription.tokens.isEmpty || e.tokenBalance.isEmpty || subscription.tokens
+              .contains(
+                e.getTokenBalance.token
+              ))) {
           Some(
-            TokenBalanceAndAllowance(
-              address = e.token,
-              balance = e.balance,
-              allowance = e.allowance,
-              availableBalance = e.availableBalance,
-              availableAllowance = e.allowance
+            AccountInfo(
+              address = e.address,
+              nonce = e.nonce,
+              tokenBalance = e.tokenBalance.map(
+                tb =>
+                  TokenBalanceAndAllowance(
+                    token = tb.token,
+                    balance = tb.getBalance,
+                    allowance = tb.getAllowance,
+                    availableBalance = tb.getAvailableBalance,
+                    availableAllowance = tb.availableAlloawnce
+                  )
+              )
             )
           )
         } else None
