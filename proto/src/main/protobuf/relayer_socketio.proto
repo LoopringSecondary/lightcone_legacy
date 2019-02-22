@@ -79,35 +79,39 @@ message SocketIOSubscription {
         string message                      = 2;
     }
 
-    // subscribe for message TxRecord defined in persistence.proto
-    message ParamsForTxRecord {
+    // subscribe for message Activity defined in persistence.proto
+    message ParamsForParamsForActivities {
         repeated string addresses = 1;
         repeated string tx_types = 2;
     }
 
-    // subscribe for message Orderbook.Update defined in core.proto
+    // subscribe for message RawOrder defined in core.proto
     message ParamsForOrderbookUpdate {
         int32 level = 1;
         io.lightcone.core.MarketPair market = 2;
     }
 
+    // subscribe for message Fill defined in persistene.proto
+    message ParamsForFills {
+        string address = 1;
+        io.lightcone.core.MarketPair market = 2;
+    }
+
     // subscribe for message TokenMetadata defined in core.proto
-    message ParamsForTokenMetadata {
-        repeated string tokens = 1;
+    message ParamsForTokens {
     }
 
     // subscribe for message MarketMetadata defined in core.proto
-    message ParamsForMarketMetadata {
-        repeated io.lightcone.core.MarketPair markets = 1;
+    message ParamsForMarkets {
     }
 
-    // subscribe for message Ticker defined in persistence.proto
-    message ParamsForTicker {
+    // subscribe for message ExternalTicker defined in persistence.proto
+    message ParamsForTickers {
         io.lightcone.core.MarketPair market = 1;
     }
 
-    // subscribe for message BalanceUpdate
-    message ParamsForBalanceUpdate {
+    // subscribe for message Accounts
+    message ParamsForAccounts {
         repeated string addresses  = 1;
         repeated string tokens = 2;
     }
