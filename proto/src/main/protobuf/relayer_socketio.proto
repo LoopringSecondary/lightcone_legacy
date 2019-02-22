@@ -33,19 +33,21 @@ message SocketIOSubscription {
     }
 
     // subscribe for message Activity defined in persistence.proto
-    message ParamsForActivities {
+    message ParamsForParamsForActivities {
+        repeated string addresses = 1;
+        repeated string tx_types = 2;
     }
 
     // subscribe for message RawOrder defined in core.proto
-    message ParamsForOrders {
+    message ParamsForOrderbookUpdate {
+        int32 level = 1;
+        io.lightcone.core.MarketPair market = 2;
     }
 
     // subscribe for message Fill defined in persistene.proto
     message ParamsForFills {
-    }
-
-    // subscribe for message Orderbook.Update defined in core.proto
-    message ParamsForOrderbook {
+        string address = 1;
+        io.lightcone.core.MarketPair market = 2;
     }
 
     // subscribe for message TokenMetadata defined in core.proto
@@ -58,23 +60,22 @@ message SocketIOSubscription {
 
     // subscribe for message ExternalTicker defined in persistence.proto
     message ParamsForTickers {
+        io.lightcone.core.MarketPair market = 1;
     }
 
     // subscribe for message Accounts
     message ParamsForAccounts {
+        repeated string addresses  = 1;
+        repeated string tokens = 2;
     }
 
-    // subscribe for message News defined in persistence.proto
+    // subscribe for message OrderUpdate
+    message ParamsForOrderUpdate {
+        repeated string addresses  = 1;
+        io.lightcone.core.MarketPair market = 2;
+    }
+
+    // subscribe for message News
     message ParamsForNews {
     }
-
-    ParamsForActivities         params_for_activities           = 1;
-    ParamsForOrders             params_for_orders               = 2;
-    ParamsForFills              params_for_fills                = 3;
-    ParamsForOrderbook          params_for_orderbook_           = 4;
-    ParamsForTokens             params_for_tokens               = 5;
-    ParamsForMarkets            params_for_markets              = 6;
-    ParamsForTickers            params_for_tickers              = 7;
-    ParamsForAccounts           params_for_accounts             = 8;
-    ParamsForNews               params_for_news                 = 9;
 }
