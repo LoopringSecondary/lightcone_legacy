@@ -31,8 +31,8 @@ class DatabaseModule @Inject()(
     val marketMetadataDal: MarketMetadataDal,
     val missingBlocksRecordDal: MissingBlocksRecordDal,
     val ohlcDataDal: OHLCDataDal,
-    val thirdPartyTickerDal: ExternalTickerDal,
-    val cmcTokenSlugDal: CMCTickerConfigDal,
+    val externalTickerDal: ExternalTickerDal,
+    val cmcTickerConfigDal: CMCTickerConfigDal,
     val orderService: OrderService,
     val tradeService: TradeService,
     val ringService: RingService,
@@ -54,8 +54,8 @@ class DatabaseModule @Inject()(
     marketMetadataDal,
     missingBlocksRecordDal,
     ohlcDataDal,
-    thirdPartyTickerDal,
-    cmcTokenSlugDal
+    externalTickerDal,
+    cmcTickerConfigDal
   )
 
   createTables()

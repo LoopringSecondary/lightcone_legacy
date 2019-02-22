@@ -67,7 +67,7 @@ class CMCCrawlerSpec
       val f = for {
         cmcResponse <- getMockedCMCTickers()
         rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
-        slugSymbols_ <- dbModule.cmcTokenSlugDal.getAll()
+        slugSymbols_ <- dbModule.cmcTickerConfigDal.getAll()
         tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
           for {
             t <- persistTickers(rateResponse, cmcResponse.data)
@@ -78,7 +78,7 @@ class CMCCrawlerSpec
           Future.successful(Seq.empty)
         }
         // verify result
-        tickers_ <- dbModule.thirdPartyTickerDal.countTickers(
+        tickers_ <- dbModule.externalTickerDal.countTickers(
           tickersToPersist.head.timestamp
         )
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
@@ -225,9 +225,9 @@ class CMCCrawlerSpec
         tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
       fixGroup = tickers.grouped(20).toList
       _ <- Future.sequence(
-        fixGroup.map(dbModule.thirdPartyTickerDal.saveTickers)
+        fixGroup.map(dbModule.externalTickerDal.saveTickers)
       )
-      updateSucc <- dbModule.thirdPartyTickerDal.updateEffective(now)
+      updateSucc <- dbModule.externalTickerDal.updateEffective(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE) {
         log.error(s"CMC persist failed, code:$updateSucc")

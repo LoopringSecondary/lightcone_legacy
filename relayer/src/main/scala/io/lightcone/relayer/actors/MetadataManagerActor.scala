@@ -130,14 +130,14 @@ class MetadataManagerActor(
 
     case req: SaveTokenMetadatas.Req =>
       (for {
-        latestEffectiveRequest <- dbModule.thirdPartyTickerDal
+        latestEffectiveRequest <- dbModule.externalTickerDal
           .getLastTimestamp()
         tokenSlugSymbols = req.tokens.map { t =>
           (t.slug, t.symbol)
         }.toMap
         modifiedTokens <- if (latestEffectiveRequest.nonEmpty) {
           for {
-            tickers_ <- dbModule.thirdPartyTickerDal
+            tickers_ <- dbModule.externalTickerDal
               .getTickers(
                 latestEffectiveRequest.get,
                 tokenSlugSymbols.keys.toSeq

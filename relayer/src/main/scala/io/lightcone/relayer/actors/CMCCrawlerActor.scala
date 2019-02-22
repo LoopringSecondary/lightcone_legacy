@@ -109,10 +109,10 @@ class CMCCrawlerActor(
 
   override def initialize() = {
     val f = for {
-      latestEffectiveRequest <- dbModule.thirdPartyTickerDal
+      latestEffectiveRequest <- dbModule.externalTickerDal
         .getLastTimestamp()
       tickers_ <- if (latestEffectiveRequest.nonEmpty) {
-        dbModule.thirdPartyTickerDal.getTickers(
+        dbModule.externalTickerDal.getTickers(
           latestEffectiveRequest.get
         )
       } else {
@@ -142,7 +142,7 @@ class CMCCrawlerActor(
     for {
       cmcResponse <- externalTickerFetcher.fetchExternalTickers()
       rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
-      slugSymbols_ <- dbModule.cmcTokenSlugDal.getAll()
+      slugSymbols_ <- dbModule.cmcTickerConfigDal.getAll()
       (persistTickers, updated) <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
         for {
           tickers_ <- persistTickers(rateResponse, cmcResponse.data)
@@ -274,9 +274,9 @@ class CMCCrawlerActor(
         tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
       fixGroup = tickersToPersist.grouped(20).toList
       _ <- Future.sequence(
-        fixGroup.map(dbModule.thirdPartyTickerDal.saveTickers)
+        fixGroup.map(dbModule.externalTickerDal.saveTickers)
       )
-      updateSucc <- dbModule.thirdPartyTickerDal.updateEffective(now)
+      updateSucc <- dbModule.externalTickerDal.updateEffective(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE)
         log.error(s"CMC persist failed, code:$updateSucc")
