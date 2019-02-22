@@ -33,7 +33,7 @@ message SocketIOSubscription {
     }
 
     // subscribe for message Activity defined in persistence.proto
-    message ParamsForParamsForActivities {
+    message ParamsForActivities {
         repeated string addresses = 1;
         repeated string tx_types = 2;
     }
@@ -63,7 +63,7 @@ message SocketIOSubscription {
     // subscribe for message MarketMetadata defined in core.proto
     message ParamsForMarkets {
     }
-    
+
     // subscribe for message ExternalTicker defined in persistence.proto
     message ParamsForTickers {
         io.lightcone.core.MarketPair market = 1;
