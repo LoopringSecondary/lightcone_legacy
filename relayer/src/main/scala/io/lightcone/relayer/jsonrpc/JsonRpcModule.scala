@@ -77,7 +77,11 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
             case Some(req) =>
               (requestHandler ? req).map {
                 case err: Error =>
-                  createResponseWithError(err.code.value, Some(err.message))
+                  val e = ErrorException(err)
+                  createResponseWithError(
+                    e.error.code.value,
+                    Some(e.getMessage())
+                  )
                 case err: ErrorException =>
                   createResponseWithError(
                     err.error.code.value,
@@ -148,7 +152,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
     JsonRpcResponse(
       JSON_RPC_VER,
       None,
-      Some(JsonRpcError(code, message)),
+      Some(JsonRpcError(code, message, data)),
       id
     )
   }
