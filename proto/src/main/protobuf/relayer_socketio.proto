@@ -35,7 +35,6 @@ message SocketIOSubscription {
     // subscribe for message Activity defined in persistence.proto
     message ParamsForActivities {
         repeated string addresses = 1;
-        repeated string tx_types = 2;
     }
 
     // subscribe for message OrderUpdate
