@@ -24,17 +24,8 @@ import "relayer_common.proto";
 
 message BalanceUpdate {
     string address                      = 1;
-    string token                        = 2;
-    bytes  balance_bytes                = 3;
-    bytes  allowance_bytes              = 4;
-    bytes  available_balance_bytes      = 5;
-    bytes  available_alloawnce_bytes    = 6;
-    int32  nonce                        = 7;
-
-    string balance                      = 10;
-    string allowance                    = 11;
-    string available_balance            = 12;
-    string available_alloawnce          = 13;
+    io.lightcone.relayer.data.AccountBalance.TokenBalance  token_balance = 2;
+    int32  nonce                        = 3;
 }
 
 message OrderUpdate {

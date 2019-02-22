@@ -19,10 +19,11 @@ package io.lightcone.relayer.socketio.notifiers
 import com.corundumstudio.socketio._
 import com.google.inject.Inject
 import io.lightcone.lib.Address
+import io.lightcone.relayer.data.{BalanceUpdate, SocketIOSubscription}
 import io.lightcone.relayer.socketio._
 
 class BalanceNotifier @Inject()
-    extends SocketIONotifier[SocketIOSubscription.ParamsForBalanceUpdate] {
+    extends SocketIONotifier[SocketIOSubscription.ParamsForAccounts] {
 
   val eventName = "balances"
 
