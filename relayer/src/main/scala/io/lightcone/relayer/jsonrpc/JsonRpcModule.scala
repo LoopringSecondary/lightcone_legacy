@@ -25,7 +25,6 @@ import akka.util.Timeout
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.pattern.ask
-import org.json4s.jackson.Serialization
 import com.typesafe.config.Config
 
 import scala.concurrent._

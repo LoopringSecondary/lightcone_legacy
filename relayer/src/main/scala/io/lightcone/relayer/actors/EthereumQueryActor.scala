@@ -76,7 +76,7 @@ class EthereumQueryActor(
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
-    case req @ GetBalanceAndAllowances.Req(owner, tokens, tag) =>
+    case req @ GetAccount.Req(owner, tokens) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
         brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))
@@ -91,33 +91,33 @@ class EthereumQueryActor(
         balances = balanceResps.map { res =>
           NumericConversion.toBigInt(res.result)
         }
-        balanceAndAllowance = (balances zip allowances).map { ba =>
-          BalanceAndAllowance(ba._1, ba._2)
-        }
-        result = GetBalanceAndAllowances
-          .Res(owner, (erc20Tokens zip balanceAndAllowance).toMap)
+        tokenBalances = erc20Tokens.zipWithIndex.map { token =>
+          token._1 -> AccountBalance
+            .TokenBalance(token._1, balances(token._2), allowances(token._2))
+        }.toMap
+        accountBalance = AccountBalance(owner, tokenBalances, 0) //TODO(HONGYU):确定nonce的获取方式
 
         ethRes <- ethToken match {
           case head :: tail =>
             (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address(owner).toString,
-              tag
+              address = Address(owner).toString
             )).mapAs[EthGetBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
-        finalResult = if (ethRes.isDefined) {
-          result.copy(
-            balanceAndAllowanceMap = result.balanceAndAllowanceMap +
-              (ethToken.head -> BalanceAndAllowance(
+        finalBalance = if (ethRes.isDefined) {
+          accountBalance.copy(
+            tokenBalanceMap = accountBalance.tokenBalanceMap +
+              (ethToken.head -> AccountBalance.TokenBalance(
+                Address.ZERO.toString(),
                 NumericConversion.toBigInt(ethRes.get.result),
                 BigInt(0)
               ))
           )
         } else {
-          result
+          accountBalance
         }
-      } yield finalResult) sendTo sender
+      } yield GetAccount.Res(Some(finalBalance))) sendTo sender
 
     case req @ GetBalance.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)

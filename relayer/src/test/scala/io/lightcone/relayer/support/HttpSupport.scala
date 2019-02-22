@@ -29,7 +29,6 @@ import io.lightcone.core._
 import io.lightcone.lib.ProtoSerializer
 import org.slf4s.Logging
 import scalapb.GeneratedMessage
-import scalapb.json4s._
 
 import scala.concurrent.{Await, ExecutionContext}
 
@@ -133,20 +132,20 @@ trait HttpSupport extends RpcBinding with Logging {
   }
 
   def expectBalanceRes(
-      req: GetBalanceAndAllowances.Req,
-      assertFun: GetBalanceAndAllowances.Res => Boolean,
+      req: GetAccount.Req,
+      assertFun: GetAccount.Res => Boolean,
       expectTimeout: Timeout = timeout
     ) = {
-    var resOpt: Option[GetBalanceAndAllowances.Res] = None
+    var resOpt: Option[GetAccount.Res] = None
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
     while (resOpt.isEmpty &&
            System.currentTimeMillis() <= lastTime) {
       val getBalanceResF =
-        singleRequest(req, "get_balance_and_allowance")
+        singleRequest(req, "get_account")
       val res = Await.result(
-        getBalanceResF.mapTo[GetBalanceAndAllowances.Res],
+        getBalanceResF.mapTo[GetAccount.Res],
         timeout.duration
       )
       if (assertFun(res)) {

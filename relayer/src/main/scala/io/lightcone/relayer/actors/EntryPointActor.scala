@@ -70,12 +70,9 @@ class EntryPointActor(
 
   def findDestination(msg: Any): Option[String] = msg match {
     // TODO(hongyu): implement this
-    case _: GetAccounts.Req => None
-
-    // TODO(hongyu): implement this
     case _: GetAccountActivities.Req => None
 
-    case _: SubmitOrder.Req | _: CancelOrder.Req =>
+    case _: GetAccount.Req | _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
     case _: GetOrders.Req | _: GetFills.Req =>
@@ -90,10 +87,6 @@ class EntryPointActor(
     case _: GetOrderbook.Req => Some(OrderbookManagerMessageValidator.name)
 
     case _: GetMetadatas.Req => Some(MetadataRefresher.name)
-
-    // TODO(hongyu): remove all of the folloiwng
-    case _: GetBalanceAndAllowances.Req =>
-      Some(MultiAccountManagerMessageValidator.name)
 
     // TODO(hongyu): remove all of the folloiwng
     case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>

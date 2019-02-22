@@ -81,7 +81,7 @@ final class MultiAccountManagerMessageValidator(
         _ <- cancelOrderValidator.validate(newReq)
       } yield newReq
 
-    case req: GetBalanceAndAllowances.Req =>
+    case req: GetAccount.Req =>
       Future {
         req.copy(
           address = Address.normalize(req.address),

@@ -70,9 +70,9 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetBalance.Req] //
     .replies[GetBalance.Res]
 
-  method("get_balance_and_allowance")
-    .accepts[GetBalanceAndAllowances.Req]
-    .replies[GetBalanceAndAllowances.Res]
+  method("get_account")
+    .accepts[GetAccount.Req]
+    .replies[GetAccount.Res]
 
   method("get_filled_amount")
     .accepts[GetFilledAmount.Req]

@@ -121,20 +121,6 @@ message GetOrderFilledAmount {
     }
 }
 
-// TODO(hongyu): remove this
-message GetBalanceAndAllowances {
-    message Req {
-        string address = 1;
-        repeated string tokens = 2;
-        string tag = 3;
-    }
-
-    message Res {
-        string address = 1;
-        map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-        io.lightcone.core.Error error = 3;
-    }
-}
 
 // TODO(hongyu): remove this
 message GetBalance {
@@ -166,12 +152,14 @@ message GetAllowance {
 
 
 // TODO(hongyu): support this
-message GetAccounts {
+message GetAccount {
     message Req {
+        string address = 1;
+        repeated string tokens = 2;
     }
 
     message Res {
-        repeated AccountBalance account_balances    = 1;
+        AccountBalance account_balance    = 1;
     }
 }
 

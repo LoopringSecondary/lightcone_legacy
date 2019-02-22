@@ -64,11 +64,11 @@ class JrpcSpec
 
       // 调用没有注册过的actor
       val resonse3 = singleRequest(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           "0xb94065482ad64d4c2b9252358d746b39e820a582",
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        "get_balance_and_allowance"
+        "get_account"
       )
       val result3 = try {
         Await.result(resonse3, timeout.duration)
