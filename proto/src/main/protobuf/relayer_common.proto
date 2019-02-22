@@ -80,7 +80,7 @@ message EthereumProxySettings {
 
 message Ring {
     message Fees {
-        repeated Trade.Fee fees = 1;
+        repeated Fill.Fee fees = 1;
     }
     string   ring_hash         = 1;
     int64    ring_index        = 2;
@@ -92,7 +92,8 @@ message Ring {
     int64    block_timestamp   = 8;
 }
 
-message Trade {
+
+message Fill {
     message Fee {
         // for market
         string token_fee               = 1;
@@ -168,4 +169,30 @@ message OHLCData {
     double     closing_price    = 6;
     double     highest_price    = 7;
     double     lowest_price     = 8;*/
+}
+
+message AccountBalance {
+    message TokenBalance {
+        string token                                    = 2;
+        io.lightcone.core.Amount balance                = 3;
+        io.lightcone.core.Amount allowance              = 4;
+        io.lightcone.core.Amount available_balance      = 5;
+        io.lightcone.core.Amount available_alloawnce    = 6;
+    }
+
+    string address                                  = 1;
+    map<string, TokenBalance> token_balance_map     = 2;
+    int32  nonce                                    = 3;
+}
+
+
+message GeneralNotification {
+    enum Level {
+        INFO            = 0;
+        WARNING         = 1;
+        URGENT          = 3;
+    }
+
+    Level level = 1;
+    string content = 2;
 }

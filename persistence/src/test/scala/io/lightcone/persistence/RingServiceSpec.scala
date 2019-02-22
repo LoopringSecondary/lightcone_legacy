@@ -59,9 +59,9 @@ class RingServiceSpec extends ServiceSpec[RingService] {
       case Some(f) =>
         assert(f.fees.length == 2)
         f.fees foreach {
-          case fee: Trade.Fee if fee == fee1 => assert(true)
-          case fee: Trade.Fee if fee == fee2 => assert(true)
-          case _                             => assert(false)
+          case fee: Fill.Fee if fee == fee1 => assert(true)
+          case fee: Fill.Fee if fee == fee2 => assert(true)
+          case _                            => assert(false)
         }
       case None => assert(false)
     }
@@ -99,7 +99,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     "0x30f3c30128432ef6b0bbf3d89002a6af96768f74390ff3061a4f548848e669dc"
   val miner = "0x624d520bab2e4ad83935fa503fb130614374e850"
 
-  val fee1 = Trade.Fee(
+  val fee1 = Fill.Fee(
     tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
     amountFee = BigInt(10),
     feeAmountS = BigInt(11),
@@ -109,7 +109,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     walletSplitPercentage = 5
   )
 
-  val fee2 = Trade.Fee(
+  val fee2 = Fill.Fee(
     tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
     amountFee = BigInt(20),
     feeAmountS = BigInt(21),

@@ -208,19 +208,19 @@ trait HttpSupport extends RpcBinding with Logging {
   }
 
   def expectTradeRes(
-      req: GetTrades.Req,
-      assertFun: GetTrades.Res => Boolean,
+      req: GetFillss.Req,
+      assertFun: GetFillss.Res => Boolean,
       expectTimeout: Timeout = timeout
     ) = {
-    var resOpt: Option[GetTrades.Res] = None
+    var resOpt: Option[GetFillss.Res] = None
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
     while (resOpt.isEmpty &&
            System.currentTimeMillis() <= lastTime) {
-      val getTradesF =
-        singleRequest(req, "get_trades").mapTo[GetTrades.Res]
-      val res = Await.result(getTradesF, timeout.duration)
+      val getFillsF =
+        singleRequest(req, "get_trades").mapTo[GetFillss.Res]
+      val res = Await.result(getFillsF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {

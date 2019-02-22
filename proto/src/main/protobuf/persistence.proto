@@ -58,10 +58,6 @@ message BlockData {
     bytes  extra_data                           = 17;
 }
 
-message Fill {
-}
-
-
 message News {
 
 }

@@ -30,21 +30,21 @@ import slick.lifted.Query
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-class TradeDalImpl @Inject()(
+class FillDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-dal-trade") val dbConfig: DatabaseConfig[JdbcProfile],
+    @Named("dbconfig-dal-fill") val dbConfig: DatabaseConfig[JdbcProfile],
     timeProvider: TimeProvider)
-    extends TradeDal {
+    extends FillDal {
 
-  import GetTrades._
+  import GetFillss._
 
-  val query = TableQuery[TradeTable]
+  val query = TableQuery[FillTable]
 
-  def saveTrade(trade: Trade): Future[ErrorCode] = {
+  def saveFill(fill: Fill): Future[ErrorCode] = {
     db.run(
-        (query += trade.copy(
-          marketId = MarketHash(MarketPair(trade.tokenS, trade.tokenB)).longId
+        (query += fill.copy(
+          marketId = MarketHash(MarketPair(fill.tokenS, fill.tokenB)).longId
         )).asTry
       )
       .map {
@@ -58,10 +58,10 @@ class TradeDalImpl @Inject()(
       }
   }
 
-  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]] =
-    Future.sequence(trades.map(saveTrade))
+  def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]] =
+    Future.sequence(fills.map(saveFill))
 
-  def getTrades(request: Req): Future[Seq[Trade]] = {
+  def getFills(request: Req): Future[Seq[Fill]] = {
     val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
       request.market
     )
@@ -86,7 +86,7 @@ class TradeDalImpl @Inject()(
     db.run(filters.result)
   }
 
-  def countTrades(request: Req): Future[Int] = {
+  def countFills(request: Req): Future[Int] = {
     val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
       request.market
     )
@@ -133,7 +133,7 @@ class TradeDalImpl @Inject()(
       miner: Option[String] = None,
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
-    ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
+    ): Query[FillTable, FillTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
     if (txHash.nonEmpty) filters = filters.filter(_.txHash === txHash.get)

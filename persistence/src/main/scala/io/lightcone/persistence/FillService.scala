@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.dals
+package io.lightcone.persistence
 
-import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
-import scala.concurrent._
+import io.lightcone.relayer.data._
+import scala.concurrent.Future
 
-trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
-  def saveTrade(trade: Trade): Future[ErrorCode]
-  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]]
-  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
-  def countTrades(request: GetTrades.Req): Future[Int]
+trait FillService {
+  def saveFill(fill: Fill): Future[ErrorCode]
+  def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
+  def getFills(request: GetFillss.Req): Future[Seq[Fill]]
+  def countFills(request: GetFillss.Req): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }

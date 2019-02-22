@@ -142,9 +142,9 @@ class OHLCRawDataEventExtractorSpec
         timeout.duration
       )
       expectTradeRes(
-        GetTrades.Req(owner = account3.getAddress),
-        (res: GetTrades.Res) => {
-          res.trades.length == 1
+        GetFillss.Req(owner = account3.getAddress),
+        (res: GetFillss.Res) => {
+          res.fills.length == 1
         }
       )
       val marketHash =

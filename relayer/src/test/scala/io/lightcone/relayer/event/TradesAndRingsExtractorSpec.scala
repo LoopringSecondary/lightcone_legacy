@@ -91,24 +91,24 @@ class TradesAndRingsExtractorSpec
         timeout.duration
       )
       expectTradeRes(
-        GetTrades.Req(owner = account1.getAddress),
-        (res: GetTrades.Res) => {
-          res.trades.length == 1
+        GetFillss.Req(owner = account1.getAddress),
+        (res: GetFillss.Res) => {
+          res.fills.length == 1
         }
       )
       info("query trades: by owner")
       val tres1 = Await.result(
-        singleRequest(GetTrades.Req(owner = account1.getAddress), "get_trades")
-          .mapTo[GetTrades.Res],
+        singleRequest(GetFillss.Req(owner = account1.getAddress), "get_trades")
+          .mapTo[GetFillss.Res],
         5.second
       )
-      tres1.trades.length should be(1)
+      tres1.fills.length should be(1)
       val tres2 = Await.result(
-        singleRequest(GetTrades.Req(owner = account2.getAddress), "get_trades")
-          .mapTo[GetTrades.Res],
+        singleRequest(GetFillss.Req(owner = account2.getAddress), "get_trades")
+          .mapTo[GetFillss.Res],
         5.second
       )
-      tres2.trades.length should be(1)
+      tres2.fills.length should be(1)
       val req = GetRings.Req()
       val res = Await.result(
         singleRequest(req, "get_rings").mapTo[GetRings.Res],

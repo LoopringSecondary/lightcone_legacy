@@ -42,8 +42,8 @@ trait RpcBinding extends JsonRpcModule {
     .replies[GetOrdersForUser.Res]
 
   method("get_trades")
-    .accepts[GetTrades.Req]
-    .replies[GetTrades.Res]
+    .accepts[GetFillss.Req]
+    .replies[GetFillss.Res]
 
   method("get_rings")
     .accepts[GetRings.Req]

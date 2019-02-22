@@ -20,7 +20,7 @@ import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import io.lightcone.relayer.data._
 
-class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
+class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_TRADES") {
 
   def id = ""
   def owner = columnAddress("owner")
@@ -76,10 +76,10 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
       waiveFeePercentage,
       walletSplitPercentage
     ) <> ({ tuple =>
-      Option((Trade.Fee.apply _).tupled(tuple))
-    }, { paramsOpt: Option[Trade.Fee] =>
-      val params = paramsOpt.getOrElse(Trade.Fee())
-      Trade.Fee.unapply(params)
+      Option((Fill.Fee.apply _).tupled(tuple))
+    }, { paramsOpt: Option[Fill.Fee] =>
+      val params = paramsOpt.getOrElse(Fill.Fee())
+      Fill.Fee.unapply(params)
     })
 
   def * =
@@ -101,5 +101,5 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
       miner,
       blockHeight,
       blockTimestamp
-    ) <> ((Trade.apply _).tupled, Trade.unapply)
+    ) <> ((Fill.apply _).tupled, Fill.unapply)
 }

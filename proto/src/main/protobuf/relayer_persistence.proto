@@ -120,7 +120,7 @@ message UserCancelOrder {
     }
 }
 
-message GetTrades {
+message GetFillss {
     message Req {
         message Market {
             string token_s = 1;
@@ -144,8 +144,8 @@ message GetTrades {
     }
 
     message Res {
-        repeated Trade trades = 1;
-        int32          total  = 2;
+        repeated Fill fills   = 1;
+        int32   total  = 2;
     }
 }
 

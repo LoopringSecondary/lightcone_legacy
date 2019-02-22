@@ -99,11 +99,11 @@ class DatabaseQueryActor(
         GetOrdersForUser.Res(respOrder, total)
       }) sendTo sender
 
-    case req: GetTrades.Req =>
+    case req: GetFillss.Req =>
       (for {
-        result <- dbModule.tradeService.getTrades(req)
-        total <- dbModule.tradeService.countTrades(req)
-      } yield GetTrades.Res(result, total)) sendTo sender
+        result <- dbModule.fillService.getFills(req)
+        total <- dbModule.fillService.countFills(req)
+      } yield GetFillss.Res(result, total)) sendTo sender
 
     case req: GetRings.Req =>
       (for {

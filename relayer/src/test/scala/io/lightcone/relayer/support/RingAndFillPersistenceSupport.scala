@@ -18,11 +18,11 @@ package io.lightcone.relayer.support
 
 import io.lightcone.relayer.actors._
 
-trait RingAndTradePersistenceSupport extends DatabaseModuleSupport {
+trait RingAndFillPersistenceSupport extends DatabaseModuleSupport {
   me: CommonSpec =>
 
   actors.add(
-    RingAndTradePersistenceActor.name,
-    RingAndTradePersistenceActor.start
+    RingAndFillPersistenceActor.name,
+    RingAndFillPersistenceActor.start
   )
 }

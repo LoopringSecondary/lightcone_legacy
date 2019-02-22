@@ -72,9 +72,11 @@ class EntryPointActor(
     case _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
+    // TODO(hongyu): remove this, and support GetAccounts
     case _: GetBalanceAndAllowances.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
+    // TODO(hongyu): remove all of the folloiwng
     case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req =>
       Some(EthereumQueryMessageValidator.name)
 
@@ -83,15 +85,18 @@ class EntryPointActor(
 
     case _: GetOrderbook.Req => Some(OrderbookManagerMessageValidator.name)
 
-    case _: GetOrdersForUser.Req | _: GetTrades.Req | _: GetRings.Req =>
+    case _: GetOrdersForUser.Req | _: GetFillss.Req | _: GetRings.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
+    // TODO(hongyu): remove this.
     case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
       Some(TransactionRecordMessageValidator.name)
 
     case _: GetMetadatas.Req => Some(MetadataRefresher.name)
 
-    case _ => None
+    // TODO(hongyu): implement this
+    case _: GetAccountActivities => None
+    case _                       => None
   }
 
 }
