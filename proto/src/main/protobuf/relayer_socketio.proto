@@ -37,9 +37,15 @@ message SocketIOSubscription {
         repeated string addresses = 1;
     }
 
-    // subscribe for message OrderUpdate
+    // subscribe for message RawOrder defined in core.proto
     message ParamsForOrders {
         repeated string addresses  = 1;
+        io.lightcone.core.MarketPair market = 2;
+    }
+
+    // subscribe for message Fill defined in persistene.proto
+    message ParamsForFills {
+        string address = 1;
         io.lightcone.core.MarketPair market = 2;
     }
 
@@ -49,11 +55,6 @@ message SocketIOSubscription {
         io.lightcone.core.MarketPair market = 2;
     }
 
-    // subscribe for message Fill defined in persistene.proto
-    message ParamsForFills {
-        string address = 1;
-        io.lightcone.core.MarketPair market = 2;
-    }
 
     // subscribe for message TokenMetadata defined in core.proto
     message ParamsForTokens {
