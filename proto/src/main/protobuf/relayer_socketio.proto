@@ -38,8 +38,14 @@ message SocketIOSubscription {
         repeated string tx_types = 2;
     }
 
-    // subscribe for message RawOrder defined in core.proto
-    message ParamsForOrderbookUpdate {
+    // subscribe for message OrderUpdate
+    message ParamsForOrders {
+        repeated string addresses  = 1;
+        io.lightcone.core.MarketPair market = 2;
+    }
+
+    // subscribe for message Orderbook.Update defined in core.proto
+    message ParamsForOrderbook {
         int32 level = 1;
         io.lightcone.core.MarketPair market = 2;
     }
@@ -57,7 +63,7 @@ message SocketIOSubscription {
     // subscribe for message MarketMetadata defined in core.proto
     message ParamsForMarkets {
     }
-
+    
     // subscribe for message ExternalTicker defined in persistence.proto
     message ParamsForTickers {
         io.lightcone.core.MarketPair market = 1;
@@ -69,11 +75,6 @@ message SocketIOSubscription {
         repeated string tokens = 2;
     }
 
-    // subscribe for message OrderUpdate
-    message ParamsForOrderUpdate {
-        repeated string addresses  = 1;
-        io.lightcone.core.MarketPair market = 2;
-    }
 
     // subscribe for message News
     message ParamsForNews {
