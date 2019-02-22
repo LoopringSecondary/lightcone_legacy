@@ -29,10 +29,13 @@ import io.lightcone.core._
 case class TypeItem(
     name: String,
     `type`: String)
+
 case class Type(
     name: String,
     typeItems: List[TypeItem])
+
 case class Types(types: Map[String, Type])
+
 case class EIP712TypedData(
     types: Types,
     primaryType: String,
@@ -41,6 +44,7 @@ case class EIP712TypedData(
 
 trait EIP712Support {
   def jsonToTypedData(jsonString: String): Either[ErrorCode, EIP712TypedData]
+
   def getEIP712Message(typedData: EIP712TypedData): String
 }
 
@@ -78,10 +82,10 @@ class DefaultEIP712Support extends EIP712Support {
    * }
    * """
    */
+
   def jsonToTypedData(jsonStr: String): Either[ErrorCode, EIP712TypedData] = {
     try {
       val root = parse(jsonStr)
-
       val typesMap = (root \ "types").extract[Map[String, List[TypeItem]]]
       val types = Types(typesMap.map(kv => (kv._1, Type(kv._1, kv._2))))
       val primaryType = (root \ "primaryType").asInstanceOf[JString].values
@@ -91,8 +95,7 @@ class DefaultEIP712Support extends EIP712Support {
       val typedData = EIP712TypedData(types, primaryType, domain, message)
       Right(typedData)
     } catch {
-      case e: Throwable =>
-        Left(ERR_EIP712_INVALID_JSON_DATA)
+      case e: Throwable => Left(ERR_EIP712_INVALID_JSON_DATA)
     }
   }
 
@@ -135,41 +138,51 @@ class DefaultEIP712Support extends EIP712Support {
             case s: String => if (s.length > 0) s else "0x0"
             case _         => "0x0"
           }
+
           typeItem.`type` match {
+
             case "string" =>
               val valueHash =
                 Numeric.toHexString(Hash.sha3(stringValue.getBytes))
               encodedValues = valueHash :: encodedValues
+
             case "bytes" =>
               encodedValues = Hash.sha3(stringValue) :: encodedValues
+
             case bytesn if (bytesn.startsWith("bytes") && bytesn.length > 5) =>
               val valueBigInt = Numeric.toBigInt(stringValue)
               val valueBytes32 = Numeric.toBytesPadded(valueBigInt, 32)
               val bytesData = new Bytes32(valueBytes32)
               val encodedValue = TypeEncoder.encode(bytesData)
               encodedValues = encodedValue :: encodedValues
+
             case uintType if (uintType.startsWith("uint")) =>
               val bigIntValue = Numeric.toBigInt(stringValue)
               val uintData = new Uint(bigIntValue)
               val encodedValue = TypeEncoder.encode(uintData)
               encodedValues = encodedValue :: encodedValues
+
             case intType if (intType.startsWith("int")) =>
               val bigIntValue = Numeric.toBigInt(stringValue)
               val intData = new Int(bigIntValue)
               val encodedValue = TypeEncoder.encode(intData)
               encodedValues = encodedValue :: encodedValues
+
             case "address" =>
               val addressData = new Web3jAddress(stringValue)
               encodedValues = TypeEncoder.encode(addressData) :: encodedValues
+
             case "bool" =>
               val boolValue = value.asInstanceOf[Boolean]
               val boolData = new Bool(boolValue)
               encodedValues = TypeEncoder.encode(boolData) :: encodedValues
+
             case structType if (typeDefs.types.contains(structType)) =>
               val jValue = value.asInstanceOf[JObject]
               val typeValueEncoded =
                 encodeData(structType, jValue.values, typeDefs)
               encodedValues = typeValueEncoded :: encodedValues
+
             case _ =>
               throw new IllegalArgumentException(
                 "unsupport solidity data type: " + typeItem.`type`
