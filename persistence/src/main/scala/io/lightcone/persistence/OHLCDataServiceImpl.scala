@@ -42,6 +42,6 @@ class OHLCDataServiceImpl @Inject()(
         request.beginTime,
         request.endTime
       )
-      .map(r => GetMarketHistory.Res(ohlcData = r.map(t => OHLCData(data = t))))
+      .map(r => GetMarketHistory.Res(data = r.map(t => OHLCData(data = t))))
   }
 }

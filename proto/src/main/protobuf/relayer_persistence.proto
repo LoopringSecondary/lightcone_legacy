@@ -298,7 +298,7 @@ message GetMarketHistory {
     }
 
     message Res {
-        repeated OHLCData ohlc_data  = 1;
+        repeated OHLCData data  = 1;
     }
 }
 message SaveTokenMetadatas {

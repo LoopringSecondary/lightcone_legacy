@@ -96,7 +96,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     )
     val resResult = service.getOHLCData(request)
     val res = Await.result(resResult.mapTo[GetMarketHistory.Res], 5.second)
-    val singleData = res.ohlcData(1).data
+    val singleData = res.data(1).data
     assert(
       singleData(0).toLong == 1547682600 &&
         singleData(1) == 60 &&

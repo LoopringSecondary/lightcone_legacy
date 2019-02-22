@@ -149,7 +149,7 @@ class OHLCRawDataEventExtractorSpec
       )
       val marketHash =
         MarketHash(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)).toString
-      val oHLCDatas = Await.result(
+      val res = Await.result(
         (oHLCDataHandlerActor ? GetMarketHistory.Req(
           marketHash,
           GetMarketHistory.Interval.OHLC_INTERVAL_ONE_MINUTES,
@@ -158,7 +158,7 @@ class OHLCRawDataEventExtractorSpec
         )).mapAs[GetMarketHistory.Res],
         timeout.duration
       )
-      oHLCDatas.ohlcData.nonEmpty should be(true)
+      res.data.nonEmpty should be(true)
     }
   }
 }
