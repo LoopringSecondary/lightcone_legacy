@@ -18,44 +18,34 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
-import io.lightcone.lib.Address
+import io.lightcone.core.MarketMetadata
 import io.lightcone.relayer.data.SocketIOSubscription
-import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.socketio.{SocketIONotifier, SocketIOSubscriber}
 
-class TickerNotifier @Inject()
-    extends SocketIONotifier[SocketIOSubscription.ParamsForTickers] {
-  val eventName = "tickers"
+class MarketNotifier @Inject()
+    extends SocketIONotifier[SocketIOSubscription.ParamsForMarkets] {
+
+  val eventName: String = "markets"
 
   def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForTickers
-    ): Boolean = subscription.market.isDefined
+      subscription: SocketIOSubscription.ParamsForMarkets
+    ): Boolean = true
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForTickers
+      subscription: SocketIOSubscription.ParamsForMarkets
     ) =
-    new SocketIOSubscriber(
-      client,
-      subscription.copy(
-        market = subscription.market.map(
-          market =>
-            market.copy(
-              baseToken = Address.normalize(market.baseToken),
-              quoteToken = Address.normalize(market.quoteToken)
-            )
-        )
-      )
-    )
+    new SocketIOSubscriber(client, subscription)
 
   def extractNotifyData(
-      subscription: SocketIOSubscription.ParamsForTickers,
+      subscription: SocketIOSubscription.ParamsForMarkets,
       event: AnyRef
     ): Option[AnyRef] = {
-    event match {
-      case ticker: Ticker =>
-        Some(ticker) // TODO 等待ticker实现
-      case _ => None
 
+    event match {
+      case e: MarketMetadata =>
+        Some(e)
+      case _ => None
     }
   }
 

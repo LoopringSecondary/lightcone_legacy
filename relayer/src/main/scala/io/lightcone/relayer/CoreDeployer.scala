@@ -73,7 +73,10 @@ class CoreDeployer @Inject()(
     orderNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForOrders
     ],
-    tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTicker],
+    fillNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForFills
+    ],
+    tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTickers],
     orderBookNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForOrderbook
     ],
@@ -293,31 +296,35 @@ class CoreDeployer @Inject()(
         val server = new SocketServer
         server
           .addNotifier(
-            classOf[SocketIOSubscription.ParamsForBalanceUpdate],
-            balanceNotifier
+            classOf[SocketIOSubscription.ParamsForAccounts],
+            accountNotifier
           )
           .addNotifier(
-            classOf[SocketIOSubscription.ParamsForTxRecord],
-            transactionNotifier
+            classOf[SocketIOSubscription.ParamsForActivities],
+            activityNotifier
           )
           .addNotifier(
-            classOf[SocketIOSubscription.ParamsForOrderUpdate],
+            classOf[SocketIOSubscription.ParamsForFills],
+            fillNotifier
+          )
+          .addNotifier(
+            classOf[SocketIOSubscription.ParamsForOrders],
             orderNotifier
           )
           .addNotifier(
-            classOf[SocketIOSubscription.ParamsForTicker],
+            classOf[SocketIOSubscription.ParamsForTickers],
             tickerNotifier
           )
           .addNotifier(
-            classOf[SocketIOSubscription.ParamsForOrderbookUpdate],
+            classOf[SocketIOSubscription.ParamsForOrderbook],
             orderBookNotifier
           )
           .addNotifier(
-            classOf[SocketIOSubscription.ParamsForTokenMetadata],
+            classOf[SocketIOSubscription.ParamsForTokens],
             tokenMetadataNotifier
           )
           .addNotifier(
-            classOf[SocketIOSubscription.ParamsForMarketMetadata],
+            classOf[SocketIOSubscription.ParamsForMarkets],
             marketMetadataNotifier
           )
           .start()

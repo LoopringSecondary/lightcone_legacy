@@ -20,42 +20,58 @@ import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
 import io.lightcone.core.{MarketHash, MarketPair}
 import io.lightcone.lib.Address
+import io.lightcone.persistence.Fill
+import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.socketio._
 
-class FillNotifier @Inject() extends SocketIONotifier[SubscribeFill] {
+class FillNotifier @Inject()
+    extends SocketIONotifier[SocketIOSubscription.ParamsForFills] {
 
   val eventName: String = "trades"
 
+  def isSubscriptionValid(
+      subscription: SocketIOSubscription.ParamsForFills
+    ): Boolean =
+    subscription.market.isDefined && (subscription.address.isEmpty || Address
+      .isValid(subscription.address))
+
   def wrapClient(
       client: SocketIOClient,
-      subscription: SubscribeFill
-    ): SocketIOSubscriber[SubscribeFill] =
-    new SocketIOSubscriber[SubscribeFill](
+      subscription: SocketIOSubscription.ParamsForFills
+    ) = {
+    val address = if (subscription.address.nonEmpty) {
+      Address.normalize(subscription.address)
+    } else {
+      subscription.address
+    }
+    new SocketIOSubscriber(
       client,
       subscription = subscription.copy(
-        addresses = subscription.addresses.map(Address.normalize),
-        market = subscription.market.copy(
-          baseToken = Address.normalize(subscription.market.baseToken),
-          quoteToken = Address.normalize(subscription.market.quoteToken)
+        address = address,
+        market = subscription.market.map(
+          market =>
+            market.copy(
+              baseToken = Address.normalize(market.baseToken),
+              quoteToken = Address.normalize(market.quoteToken)
+            )
         )
       )
     )
+  }
 
-  def shouldNotifyClient(
-      subscription: SubscribeFill,
+  def extractNotifyData(
+      subscription: SocketIOSubscription.ParamsForFills,
       event: AnyRef
-    ): Boolean = {
+    ): Option[AnyRef] = {
 
     event match {
-      case trade: Trade =>
-        subscription.addresses.contains(trade.owner) && (MarketHash(
-          MarketPair(
-            subscription.market.baseToken,
-            subscription.market.quoteToken
-          )
-        ) == MarketHash(MarketPair(trade.tokenB, trade.tokenS)))
-
-      case _ => false
+      case fill: Fill =>
+        if ((subscription.address.isEmpty || subscription.address == fill.owner) && (MarketHash(
+              subscription.getMarket
+            ) == MarketHash(MarketPair(fill.tokenB, fill.tokenS))))
+          Some(fill) //TODO(yd) 研究 socketio 与protobuf共同使用,否则使用case class
+        else None
+      case _ => None
     }
 
   }

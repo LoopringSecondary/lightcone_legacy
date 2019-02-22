@@ -18,40 +18,34 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
-import io.lightcone.core.TokenMetadata
-import io.lightcone.lib.Address
-import io.lightcone.relayer.socketio.{
-  SocketIONotifier,
-  SocketIOSubscriber,
-  SocketIOSubscription,
-  TokenMetadataUpdate
-}
+import io.lightcone.relayer.data.{SocketIOSubscription, TokenMetadataUpdate}
+import io.lightcone.relayer.socketio.{SocketIONotifier, SocketIOSubscriber}
 
 class TokensNotifier @Inject()
-    extends SocketIONotifier[SocketIOSubscription.ParamsForTokenMetadata] {
+    extends SocketIONotifier[SocketIOSubscription.ParamsForTokens] {
 
   val eventName: String = "token_metadata"
 
+  def isSubscriptionValid(
+      subscription: SocketIOSubscription.ParamsForTokens
+    ): Boolean = true
+
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForTokenMetadata
-    ): SocketIOSubscriber[SocketIOSubscription.ParamsForTokenMetadata] =
-    new SocketIOSubscriber[SocketIOSubscription.ParamsForTokenMetadata](
+      subscription: SocketIOSubscription.ParamsForTokens
+    ) =
+    new SocketIOSubscriber(
       client,
-      subscription = subscription.copy(
-        tokens = subscription.tokens.map(Address.normalize)
-      )
+      subscription
     )
 
   def extractNotifyData(
-      subscription: SocketIOSubscription.ParamsForTokenMetadata,
+      subscription: SocketIOSubscription.ParamsForTokens,
       event: AnyRef
     ): Option[AnyRef] = {
     event match {
       case e: TokenMetadataUpdate =>
-        if (subscription.tokens.contains(e.address)) {
-          Some()
-        } else None
+        Some(e)
       case _ => None
     }
   }

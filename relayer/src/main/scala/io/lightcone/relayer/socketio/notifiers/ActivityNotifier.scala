@@ -17,16 +17,20 @@
 package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio._
-import io.lightcone.relayer.socketio._
 import com.google.inject.Inject
 import io.lightcone.lib._
 import io.lightcone.persistence.Activity
 import io.lightcone.relayer.data.SocketIOSubscription
+import io.lightcone.relayer.socketio._
 
 class ActivityNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForActivities] {
 
   val eventName = "transactions"
+
+  def isSubscriptionValid(
+      subscription: SocketIOSubscription.ParamsForActivities
+    ): Boolean = subscription.addresses.nonEmpty
 
   def wrapClient(
       client: SocketIOClient,
@@ -44,7 +48,7 @@ class ActivityNotifier @Inject()
     event match {
       case e: Activity =>
         if (subscription.addresses.contains(e.owner)) {
-          Some()
+          Some(e) //TODO(yd) 研究 socketio 与protobuf共同使用,否则使用case class
         } else None
       case _ => None
     }

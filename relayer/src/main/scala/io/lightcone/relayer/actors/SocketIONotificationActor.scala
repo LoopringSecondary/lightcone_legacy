@@ -22,8 +22,13 @@ import com.google.inject.Inject
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.socketio._
 import io.lightcone.core._
-import io.lightcone.ethereum.event._
-import io.lightcone.lib.NumericConversion
+import io.lightcone.core.{Orderbook => POrderBook}
+import io.lightcone.persistence.{Activity, Fill}
+import io.lightcone.relayer.data.{
+  AccountUpdate,
+  SocketIOSubscription,
+  TokenMetadataUpdate
+}
 
 import scala.concurrent.ExecutionContext
 
@@ -35,24 +40,27 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       system: ActorSystem,
       ec: ExecutionContext,
       timeout: Timeout,
-      balanceNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForBalanceUpdate
+      accountNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForAccounts
       ],
-      transactionNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForTxRecord
+      activityNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForActivities
       ],
       orderNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForOrderUpdate
+        SocketIOSubscription.ParamsForOrders
       ],
-      tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTicker],
+      fillNotifier: SocketIONotifier[
+        SocketIOSubscription.ParamsForFills
+      ],
+      tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTickers],
       orderBookNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForOrderbookUpdate
+        SocketIOSubscription.ParamsForOrderbook
       ],
       tokenMetadataNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForTokenMetadata
+        SocketIOSubscription.ParamsForTokens
       ],
       marketMetadataNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForMarketMetadata
+        SocketIOSubscription.ParamsForMarkets
       ],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
@@ -65,37 +73,48 @@ class SocketIONotificationActor @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
-    val balanceNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForBalanceUpdate
+    val accountNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForAccounts
     ],
-    val transactionNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForTxRecord
+    val activityNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForActivities
     ],
     val orderNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrderUpdate
+      SocketIOSubscription.ParamsForOrders
     ],
-    val tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTicker],
+    val fillNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForFills
+    ],
+    val tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTickers],
     val orderBookNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrderbookUpdate
+      SocketIOSubscription.ParamsForOrderbook
     ],
-    val tokenMetadataNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForTokenMetadata
+    val tokenNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForTokens
     ],
-    val marketMetadataNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForMarketMetadata
+    val marketNotifier: SocketIONotifier[
+      SocketIOSubscription.ParamsForMarkets
     ])
     extends Actor {
 
   def receive: Receive = {
     // events to deliver to socket.io clients must be generated here, not inside the listeners.
-    case event: BalanceUpdate =>
-      balanceNotifier.notifyEvent(event)
-
-    case event: TxRecordUpdate =>
-      transactionNotifier.notifyEvent(event)
-
-    case event: OrderUpdate =>
+    case event: AccountUpdate =>
+      accountNotifier.notifyEvent(event)
+    case event: Activity =>
+      activityNotifier.notifyEvent(event)
+    case fill: Fill =>
+      fillNotifier.notifyEvent(fill)
+    case event: MarketMetadata =>
+      marketNotifier.notifyEvent(event)
+    case event: POrderBook.Update =>
+      orderBookNotifier.notifyEvent(event)
+    case event: RawOrder =>
       orderNotifier.notifyEvent(event)
-
+    case event: TokenMetadataUpdate =>
+      tokenNotifier.notifyEvent(event)
+    //TODO(yd) 等待永丰的PR合并
+    case event: TickerResponse =>
+      tickerNotifier.notifyEvent(event)
   }
 }

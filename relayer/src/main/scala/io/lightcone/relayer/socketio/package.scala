@@ -27,10 +27,9 @@ package object socketio {
       balance: String,
       allowance: String,
       availableBalance: String,
-      availableAllowance: String
-  )
+      availableAllowance: String)
 
-  case class AccountInfo(
+  case class AccountBalanceInfo(
       address: String,
       nonce: Int,
       tokenBalance: Option[TokenBalanceAndAllowance])
@@ -66,6 +65,7 @@ package object socketio {
       amount: Double,
       price: Double,
       total: Double)
+
   case class OrderBook(
       lastPrice: Double,
       buys: Seq[OrderBookItem],

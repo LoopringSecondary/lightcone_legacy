@@ -18,9 +18,9 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio.SocketIOClient
 
-class SocketIOSubscriber(
+class SocketIOSubscriber[R](
     val client: SocketIOClient,
-    val subscription: AnyRef) {
+    val subscription: R) {
 
   def sendEvent(
       eventName: String,
@@ -35,7 +35,7 @@ class SocketIOSubscriber(
     if (obj == null) false
     else
       obj match {
-        case c: SocketIOSubscriber =>
+        case c: SocketIOSubscriber[_] =>
           c.client.getSessionId.equals(client.getSessionId)
         case _ => false
       }

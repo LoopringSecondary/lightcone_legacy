@@ -19,19 +19,24 @@ package io.lightcone.relayer.socketio.notifiers
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
 import io.lightcone.core._
-import io.lightcone.lib.{Address, NumericConversion}
+import io.lightcone.lib.Address
+import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.socketio._
 
 class OrderNotifier @Inject()
-    extends SocketIONotifier[SocketIOSubscription.ParamsForOrderUpdate] {
+    extends SocketIONotifier[SocketIOSubscription.ParamsForOrders] {
 
   val eventName = "orders"
 
+  def isSubscriptionValid(
+      subscription: SocketIOSubscription.ParamsForOrders
+    ): Boolean = subscription.addresses.nonEmpty
+
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForOrderUpdate
-    ): SocketIOSubscriber[SocketIOSubscription.ParamsForOrderUpdate] =
-    new SocketIOSubscriber[SocketIOSubscription.ParamsForOrderUpdate](
+      subscription: SocketIOSubscription.ParamsForOrders
+    ) =
+    new SocketIOSubscriber(
       client,
       subscription.copy(
         addresses = subscription.addresses.map(Address.normalize),
@@ -46,27 +51,15 @@ class OrderNotifier @Inject()
     )
 
   def extractNotifyData(
-      subscription: SocketIOSubscription.ParamsForOrderUpdate,
+      subscription: SocketIOSubscription.ParamsForOrders,
       event: AnyRef
     ): Option[AnyRef] = {
     event match {
-      case order: OrderUpdate =>
-        if (subscription.addresses.contains(order.owner) && subscription.market == order.marketPair) {
-          Some(
-            Order(
-              hash = order.orderId,
-              status = order.status.name,
-              dealtAmountB = order.state
-                .map(state => NumericConversion.toHexString(state.amountB))
-                .getOrElse(""),
-              dealtAmountS = order.state
-                .map(state => NumericConversion.toHexString(state.amountB))
-                .getOrElse(""),
-              dealtAmountFee = order.state
-                .map(state => NumericConversion.toHexString(state.amountFee))
-                .getOrElse("")
-            )
-          )
+      case order: RawOrder =>
+        if (subscription.addresses.contains(order.owner) && (subscription.market.isEmpty || MarketHash(
+              subscription.getMarket
+            ) == MarketHash(MarketPair(order.tokenB, order.tokenS)))) {
+          Some(order)
         } else None
       case _ => None
     }

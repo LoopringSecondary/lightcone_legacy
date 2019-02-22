@@ -18,20 +18,25 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
-import io.lightcone.core.MarketPair
+import io.lightcone.core.{Orderbook => POrderBook}
 import io.lightcone.lib.Address
+import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.socketio._
 
 class OrderBookNotifier @Inject()
-    extends SocketIONotifier[SocketIOSubscription.ParamsForOrderbookUpdate] {
+    extends SocketIONotifier[SocketIOSubscription.ParamsForOrderbook] {
 
   val eventName: String = "order_book"
 
+  def isSubscriptionValid(
+      subscription: SocketIOSubscription.ParamsForOrderbook
+    ): Boolean = subscription.market.isDefined
+
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForOrderbookUpdate
-    ): SocketIOSubscriber[SocketIOSubscription.ParamsForOrderbookUpdate] =
-    new SocketIOSubscriber[SocketIOSubscription.ParamsForOrderbookUpdate](
+      subscription: SocketIOSubscription.ParamsForOrderbook
+    ) =
+    new SocketIOSubscriber(
       client,
       subscription.copy(
         market = subscription.market.map(
@@ -45,16 +50,14 @@ class OrderBookNotifier @Inject()
     )
 
   def extractNotifyData(
-      subscription: SocketIOSubscription.ParamsForOrderbookUpdate,
+      subscription: SocketIOSubscription.ParamsForOrderbook,
       event: AnyRef
     ): Option[AnyRef] = {
     event match {
-      case orderBook: OrderBookResponse =>
-        if (subscription.market.isDefined && subscription.getMarket == MarketPair(
-              orderBook.market.baseToken,
-              orderBook.market.quoteToken
-            ) && subscription.level == orderBook.level) {
-          Some(orderBook) //TODO （yd）等待order book 通知的结构
+      case orderBook: POrderBook.Update =>
+        // TODO（yd）&& subscription.level == orderBook.level Update中应该有多个level的数据？
+        if (subscription.market == orderBook.marketPair) {
+          Some(orderBook) //TODO(yd) 研究 socketio 与protobuf共同使用,否则使用case class
         } else {
           None
         }

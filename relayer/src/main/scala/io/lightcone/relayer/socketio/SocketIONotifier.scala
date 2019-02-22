@@ -32,9 +32,11 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
   def wrapClient(
       client: SocketIOClient,
       subscription: R
-    ): SocketIOSubscriber
+    ): SocketIOSubscriber[R]
 
-  private var clients = Seq.empty[SocketIOSubscriber]
+  def isSubscriptionValid(subscription: R): Boolean
+
+  private var clients = Seq.empty[SocketIOSubscriber[R]]
 
   def notifyEvent(event: AnyRef): Unit = {
     clients = clients.filter(_.client.isChannelOpen)
@@ -50,12 +52,17 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
       subscription: R,
       ackSender: AckRequest
     ): Unit = {
-    if (ackSender.isAckRequested) {
-      ackSender.sendAckData(s"$eventName:$subscription events subscribed")
+    if (isSubscriptionValid(subscription)) {
+      if (ackSender.isAckRequested) {
+        ackSender.sendAckData(s"$eventName:$subscription events subscribed")
+      }
+      val wrapped = wrapClient(client, subscription)
+      clients = wrapped +: clients.filterNot(_ == wrapped)
+    } else {
+      if (ackSender.isAckRequested) {
+        ackSender.sendAckData(s"$eventName:$subscription is invalid")
+      }
     }
-
-    val wrapped = wrapClient(client, subscription)
-    clients = wrapped +: clients.filterNot(_ == wrapped)
   }
 
   // Override this method to change the event. Normally we should not do this.

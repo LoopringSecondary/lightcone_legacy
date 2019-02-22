@@ -18,15 +18,19 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio._
 import com.google.inject.Inject
+import io.lightcone.core._
 import io.lightcone.lib.Address
 import io.lightcone.relayer.data.{AccountUpdate, SocketIOSubscription}
 import io.lightcone.relayer.socketio._
-import io.lightcone.core._
 
 class AccountNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForAccounts] {
 
   val eventName = "accounts"
+
+  def isSubscriptionValid(
+      subscription: SocketIOSubscription.ParamsForAccounts
+    ): Boolean = subscription.addresses.nonEmpty
 
   def wrapClient(
       client: SocketIOClient,
@@ -51,20 +55,21 @@ class AccountNotifier @Inject()
               .contains(
                 e.getTokenBalance.token
               ))) {
-          Some(
-            AccountInfo(
-              address = e.address,
-              nonce = e.nonce,
-              tokenBalance = e.tokenBalance.map(
-                tb =>
-                  TokenBalanceAndAllowance(
-                    token = tb.token,
-                    balance = tb.getBalance,
-                    allowance = tb.getAllowance,
-                    availableBalance = tb.getAvailableBalance,
-                    availableAllowance = tb.availableAlloawnce
-                  )
+          val tokenBOpt: Option[TokenBalanceAndAllowance] = e.tokenBalance.map(
+            tb =>
+              TokenBalanceAndAllowance(
+                token = tb.token,
+                balance = tb.getBalance,
+                allowance = tb.getAllowance,
+                availableBalance = tb.getAvailableBalance,
+                availableAllowance = tb.getAvailableAlloawnce
               )
+          )
+          Some(
+            AccountBalanceInfo(
+              e.address,
+              e.nonce,
+              tokenBOpt
             )
           )
         } else None

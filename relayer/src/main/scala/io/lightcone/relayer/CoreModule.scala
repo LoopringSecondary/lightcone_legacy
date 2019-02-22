@@ -139,6 +139,12 @@ class CoreModule(
     bind[SocketIONotifier[SocketIOSubscription.ParamsForOrderbook]]
       .to[OrderBookNotifier]
       .asEagerSingleton
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForMarkets]]
+      .to[MarketNotifier]
+      .asEagerSingleton
+    bind[SocketIONotifier[SocketIOSubscription.ParamsForTokens]]
+      .to[TokensNotifier]
+      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
