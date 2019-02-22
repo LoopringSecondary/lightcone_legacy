@@ -78,4 +78,14 @@ message SocketIOSubscription {
     // subscribe for message News defined in persistence.proto
     message ParamsForNews {
     }
+
+    ParamsForActivities         params_for_activities           = 1;	
+    ParamsForOrders             params_for_orders               = 2;	
+    ParamsForFills              params_for_fills                = 3;	
+    ParamsForOrderbook          params_for_orderbook_           = 4;	
+    ParamsForTokens             params_for_tokens               = 5;	
+    ParamsForMarkets            params_for_markets              = 6;	
+    ParamsForTickers            params_for_tickers              = 7;	
+    ParamsForAccounts           params_for_accounts             = 8;	
+    ParamsForNews               params_for_news                 = 9;
 }
