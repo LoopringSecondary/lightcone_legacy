@@ -201,10 +201,6 @@ class CoreDeployer @Inject()(
           RingSettlementManagerActor.name, //
           RingSettlementManagerActor.start
         )
-        .add(
-          ChainReorganizationManagerActor.name, //
-          ChainReorganizationManagerActor.start
-        )
 
       //-----------deploy sharded actors-----------
       actors
