@@ -98,13 +98,13 @@ class FillsAndRingsExtractorSpec
       )
       info("query trades: by owner")
       val tres1 = Await.result(
-        singleRequest(GetFills.Req(owner = account1.getAddress), "get_trades")
+        singleRequest(GetFills.Req(owner = account1.getAddress), "get_fills")
           .mapTo[GetFills.Res],
         5.second
       )
       tres1.fills.length should be(1)
       val tres2 = Await.result(
-        singleRequest(GetFills.Req(owner = account2.getAddress), "get_trades")
+        singleRequest(GetFills.Req(owner = account2.getAddress), "get_fills")
           .mapTo[GetFills.Res],
         5.second
       )

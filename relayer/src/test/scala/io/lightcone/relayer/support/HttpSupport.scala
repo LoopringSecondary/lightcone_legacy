@@ -219,7 +219,7 @@ trait HttpSupport extends RpcBinding with Logging {
     while (resOpt.isEmpty &&
            System.currentTimeMillis() <= lastTime) {
       val getFillsF =
-        singleRequest(req, "get_trades").mapTo[GetFills.Res]
+        singleRequest(req, "get_fills").mapTo[GetFills.Res]
       val res = Await.result(getFillsF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)

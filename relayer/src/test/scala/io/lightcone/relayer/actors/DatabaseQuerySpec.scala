@@ -64,7 +64,7 @@ class DatabaseQuerySpec
 
   "send an trades request" must {
     "receive a response without trades" in {
-      val method = "get_trades"
+      val method = "get_fills"
       val tokenS = "0xaaaaaaa2"
       val tokenB = "0xbbbbbbb2"
       val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
