@@ -17,7 +17,6 @@
 package io.lightcone.persistence
 
 import com.dimafeng.testcontainers._
-import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import io.lightcone.lib._
 import io.lightcone.core._
@@ -97,7 +96,7 @@ trait ServiceSpec[S]
       )
     val fee = RawOrder.FeeParams(
       tokenFee = tokenFee,
-      amountFee = ByteString.copyFrom("111", "utf-8")
+      amountFee = BigInt(111)
     )
     val since = if (validSince > 0) validSince else (createAt / 1000).toInt
     val until =
@@ -120,8 +119,8 @@ trait ServiceSpec[S]
       version = 1,
       tokenS = tokenS,
       tokenB = tokenB,
-      amountS = ByteString.copyFrom("11", "UTF-8"),
-      amountB = ByteString.copyFrom("12", "UTF-8"),
+      amountS = BigInt(11),
+      amountB = BigInt(12),
       validSince = since,
       state = Some(state),
       feeParams = Some(fee),

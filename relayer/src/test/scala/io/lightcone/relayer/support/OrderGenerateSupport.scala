@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.support
 
-import com.google.protobuf.ByteString
 import io.lightcone.relayer.actors._
 import io.lightcone.ethereum._
 import io.lightcone.core._
@@ -48,8 +47,8 @@ trait OrderGenerateSupport {
       version = 0,
       tokenS = tokenS,
       tokenB = tokenB,
-      amountS = ByteString.copyFrom(amountS.toByteArray),
-      amountB = ByteString.copyFrom(amountB.toByteArray),
+      amountS = amountS,
+      amountB = amountB,
       validSince = validSince,
       state = Some(
         RawOrder.State(
@@ -58,12 +57,8 @@ trait OrderGenerateSupport {
           status = OrderStatus.STATUS_NEW
         )
       ),
-      feeParams = Some(
-        RawOrder.FeeParams(
-          tokenFee = tokenFee,
-          amountFee = ByteString.copyFrom(amountFee.toByteArray)
-        )
-      ),
+      feeParams =
+        Some(RawOrder.FeeParams(tokenFee = tokenFee, amountFee = amountFee)),
       params = Some(RawOrder.Params(validUntil = validUntil)),
       marketId = marketId,
       marketEntityId = MarketManagerActor

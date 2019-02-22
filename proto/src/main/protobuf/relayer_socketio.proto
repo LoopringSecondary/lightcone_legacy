@@ -24,16 +24,11 @@ import "core.proto";
 message BalanceUpdate {
     string address                      = 1;
     string token                        = 2;
-    bytes  balance_bytes                = 3;
-    bytes  allowance_bytes              = 4;
-    bytes  available_balance_bytes      = 5;
-    bytes  available_alloawnce_bytes    = 6;
+    io.lightcone.core.Amount  balance               = 3;
+    io.lightcone.core.Amount  allowance              = 4;
+    io.lightcone.core.Amount  available_balance      = 5;
+    io.lightcone.core.Amount  available_alloawnce    = 6;
     int32  nonce                        = 7;
-
-    string balance                      = 10;
-    string allowance                    = 11;
-    string available_balance            = 12;
-    string available_alloawnce          = 13;
 }
 
 message OrderUpdate {

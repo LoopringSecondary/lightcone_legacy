@@ -16,7 +16,6 @@
 
 package io.lightcone.persistence
 
-import com.google.protobuf.ByteString
 import io.lightcone.core._
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data._
@@ -150,8 +149,8 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         owner = owner1,
         tokenB = tokenB1,
         tokenS = tokenS1,
-        amountB = ByteString.copyFrom("1", "UTF-8"),
-        amountS = ByteString.copyFrom("10", "UTF-8"),
+        amountB = BigInt(1),
+        amountS = BigInt(10),
         blockHeight = 10,
         ringHash = hash1,
         ringIndex = 1,
@@ -165,8 +164,8 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         owner = owner1,
         tokenB = tokenS1,
         tokenS = tokenB1,
-        amountB = ByteString.copyFrom("10", "UTF-8"),
-        amountS = ByteString.copyFrom("1", "UTF-8"),
+        amountB = BigInt(10),
+        amountS = BigInt(1),
         blockHeight = 10,
         ringHash = hash1,
         ringIndex = 1,
@@ -180,8 +179,8 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         owner = owner2,
         tokenB = tokenB2,
         tokenS = tokenS2,
-        amountB = ByteString.copyFrom("1", "UTF-8"),
-        amountS = ByteString.copyFrom("10", "UTF-8"),
+        amountB = BigInt(1),
+        amountS = BigInt(10),
         blockHeight = 20,
         ringHash = hash2,
         ringIndex = 2,
@@ -195,8 +194,8 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         owner = owner2,
         tokenB = tokenS2,
         tokenS = tokenB2,
-        amountB = ByteString.copyFrom("10", "UTF-8"),
-        amountS = ByteString.copyFrom("1", "UTF-8"),
+        amountB = BigInt(10),
+        amountS = BigInt(1),
         blockHeight = 20,
         ringHash = hash2,
         ringIndex = 2,
@@ -215,8 +214,8 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         owner = owner1,
         tokenB = tokenS1,
         tokenS = tokenB1,
-        amountB = ByteString.copyFrom("10", "UTF-8"),
-        amountS = ByteString.copyFrom("1", "UTF-8"),
+        amountB = BigInt(10),
+        amountS = BigInt(1),
         blockHeight = 1,
         ringHash = hash1,
         ringIndex = 1,

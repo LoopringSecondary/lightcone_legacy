@@ -19,6 +19,8 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.relayer.data;
 
+import "core.proto";
+
 /////////////////////////////////////////////////////////////////////
 // ETHEREUM RAW DATA TYPES
 /////////////////////////////////////////////////////////////////////
@@ -160,7 +162,7 @@ message TokenTransferData {
     int64  timestamp            = 4;
     string from                 = 5;
     string to                   = 6;
-    bytes  amount               = 7;
+    io.lightcone.core.Amount  amount               = 7;
     string token                = 8;
 }
 
@@ -183,19 +185,19 @@ message TransactionData {
     int64  timestamp            = 5;
     string from                 = 6;
     string to                   = 7;
-    bytes  amount               = 8;
+    io.lightcone.core.Amount  amount               = 8;
     int32  tx_receipt_status    = 9;
-    bytes  gas_used             = 10;
-    bytes  gas_limit            = 11;
+    io.lightcone.core.Amount  gas_used             = 10;
+    io.lightcone.core.Amount  gas_limit            = 11;
     int64  gas_price            = 12;
-    bytes  tx_fee               = 13;
+    io.lightcone.core.Amount  tx_fee               = 13;
     int64  nonce                = 14;
     bytes  input_data           = 15;
 }
 
 message AddressData {
     string address              = 1;
-    bytes  balance              = 2;
+    io.lightcone.core.Amount  balance              = 2;
     int64  num_tx               = 3;
     string creator_address      = 4;
     string creator_tx           = 5;
@@ -218,7 +220,7 @@ message AddressData {
 message TokenBalance {
     string address              = 1;
     string token                = 2;
-    bytes  balance              = 3;
-    bytes  allowance            = 4;
+    io.lightcone.core.Amount  balance              = 3;
+    io.lightcone.core.Amount  allowance            = 4;
     int64  updated_at_block     = 5;
 }
