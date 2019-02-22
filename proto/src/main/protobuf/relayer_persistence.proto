@@ -273,7 +273,7 @@ message PersistOHLCData {
     }
 }
 
-message GetOHLCData {
+message GetMarketHistory {
     enum Interval {
         OHCL_INTERVAL_INVALID            = 0; // don't use it
         OHLC_INTERVAL_ONE_MINUTES        = 60;

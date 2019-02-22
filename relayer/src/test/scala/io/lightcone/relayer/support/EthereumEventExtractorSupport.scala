@@ -81,7 +81,7 @@ trait EthereumEventExtractorSupport
       )
       .register(
         classOf[OHLCRawDataEvent], //
-        OHLCDataHandlerActor.name
+        MarketHistoryActor.name
       )
       .register(
         classOf[BlockGasPricesExtractedEvent], //
@@ -99,8 +99,8 @@ trait EthereumEventExtractorSupport
 
   actors
     .add(
-      OHLCDataHandlerActor.name, //
-      OHLCDataHandlerActor.start
+      MarketHistoryActor.name, //
+      MarketHistoryActor.start
     )
     .add(
       EthereumEventExtractorActor.name, //

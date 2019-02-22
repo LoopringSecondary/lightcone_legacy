@@ -32,7 +32,9 @@ class OHLCDataServiceImpl @Inject()(
   def saveData(req: PersistOHLCData.Req): Future[PersistOHLCData.Res] =
     ohlcDataDal.saveData(req.data.get)
 
-  def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res] = {
+  def getOHLCData(
+      request: GetMarketHistory.Req
+    ): Future[GetMarketHistory.Res] = {
     ohlcDataDal
       .getOHLCData(
         request.marketHash,
@@ -40,6 +42,6 @@ class OHLCDataServiceImpl @Inject()(
         request.beginTime,
         request.endTime
       )
-      .map(r => GetOHLCData.Res(ohlcData = r.map(t => OHLCData(data = t))))
+      .map(r => GetMarketHistory.Res(ohlcData = r.map(t => OHLCData(data = t))))
   }
 }
