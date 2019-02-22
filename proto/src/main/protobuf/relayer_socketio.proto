@@ -55,6 +55,17 @@ message TxRecordUpdate{
     string tx_type = 7;
 }
 
+message TokenMetadataUpdate{
+    string   status                 = 1;
+    string   address                = 2;
+    string   website_url            = 3;
+    int32    precision              = 4;
+    double   burn_rate_for_market   = 5;
+    double   burn_rate_for_p2p      = 6;
+    double   usd_price              = 7;
+    int64    updated_at             = 8;
+}
+
 message News {
 
 }

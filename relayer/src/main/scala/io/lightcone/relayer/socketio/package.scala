@@ -70,4 +70,14 @@ package object socketio {
       level: Int,
       orderBook: OrderBook)
 
+  case class TokenMetadata(
+      status: String,
+      address: String,
+      website_url: String,
+      precision: Int,
+      burn_rate_for_market: Double,
+      burn_rate_for_p2p: Double,
+      usd_price: Double,
+      updated_at: Long)
+
 }
