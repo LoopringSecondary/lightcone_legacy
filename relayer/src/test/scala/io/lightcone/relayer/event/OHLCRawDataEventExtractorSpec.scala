@@ -35,7 +35,7 @@ class OHLCRawDataEventExtractorSpec
 
       def oHLCDataHandlerActor = actors.get(MarketHistoryActor.name)
 
-      val getBaMethod = "get_balance_and_allowance"
+      val getBaMethod = "get_account"
       val submit_order = "submit_order"
       val account0 = accounts.head
       val account1 = getUniqueAccountWithoutEth
@@ -43,32 +43,32 @@ class OHLCRawDataEventExtractorSpec
       val account3 = getUniqueAccountWithoutEth
       Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account1.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
       Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
       Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account3.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
       Await.result(
@@ -108,13 +108,16 @@ class OHLCRawDataEventExtractorSpec
       Await.result(approveLRCToDelegate("1000000")(account3), timeout.duration)
 
       expectBalanceRes(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           account3.getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        (res: GetBalanceAndAllowances.Res) => {
+        (res: GetAccount.Res) => {
           BigInt(
-            res.balanceAndAllowanceMap(LRC_TOKEN.address).allowance.toByteArray
+            res.getAccountBalance
+              .tokenBalanceMap(LRC_TOKEN.address)
+              .allowance
+              .toByteArray
           ) > 0
         }
       )
