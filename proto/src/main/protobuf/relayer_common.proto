@@ -23,9 +23,9 @@ import "core.proto";
 // import "ethereum.proto";
 
 message OrderState {
-    bytes amount_s          = 1;
-    bytes amount_b          = 2;
-    bytes amount_fee        = 3;
+    io.lightcone.core.Amount amount_s          = 1;
+    io.lightcone.core.Amount amount_b          = 2;
+    io.lightcone.core.Amount amount_fee        = 3;
 }
 
 message Order {
@@ -33,9 +33,9 @@ message Order {
     string token_s                  = 2;
     string token_b                  = 3;
     string token_fee                = 4;
-    bytes amount_s                  = 5;
-    bytes amount_b                  = 6;
-    bytes amount_fee                = 7;
+    io.lightcone.core.Amount amount_s                  = 5;
+    io.lightcone.core.Amount amount_b                  = 6;
+    io.lightcone.core.Amount amount_fee                = 7;
     int64 valid_since               = 8;
     int64 submitted_at              = 9;
     int32 num_attempts              = 10;
@@ -50,7 +50,7 @@ message Order {
 message ExpectedOrderFill {
     Order order                     = 1;
     OrderState pending              = 2;
-    bytes amount_margin             = 3;
+    io.lightcone.core.Amount amount_margin             = 3;
 }
 
 message OrderRing {
@@ -60,16 +60,11 @@ message OrderRing {
 
 
 message BalanceAndAllowance {
-    bytes balance                   = 1;
-    bytes allowance                 = 2;
-    bytes available_balance         = 3;
-    bytes available_allowance       = 4;
+    io.lightcone.core.Amount balance                   = 1;
+    io.lightcone.core.Amount allowance                 = 2;
+    io.lightcone.core.Amount available_balance         = 3;
+    io.lightcone.core.Amount available_allowance       = 4;
     int64 block_num = 5;
-}
-
-message AmountAtBlock {
-    bytes amount                    = 1;
-    int64 block_num                 = 2;
 }
 
 message EthereumProxySettings {
@@ -102,10 +97,10 @@ message Trade {
     message Fee {
         // for market
         string token_fee               = 1;
-        bytes  amount_fee              = 2;
+        io.lightcone.core.Amount  amount_fee              = 2;
         // for p2p
-        bytes  fee_amount_s            = 3;
-        bytes  fee_amount_b            = 4;
+        io.lightcone.core.Amount  fee_amount_s            = 3;
+        io.lightcone.core.Amount  fee_amount_b            = 4;
 
         string fee_recipient           = 5;
         int32  waive_fee_percentage    = 6; // miner waive
@@ -118,12 +113,12 @@ message Trade {
     int64  ring_index        = 4;
     int32  fill_index        = 5;
     string tx_hash           = 6;
-    bytes  amount_s          = 7;
-    bytes  amount_b          = 8;
+    io.lightcone.core.Amount  amount_s          = 7;
+    io.lightcone.core.Amount  amount_b          = 8;
     string token_s           = 9;
     string token_b           = 10;
     int64  market_id         = 11;
-    bytes  split             = 12; // tokenS
+    io.lightcone.core.Amount  split             = 12; // tokenS
     Fee    fee               = 13;
     string wallet            = 14;
     string miner             = 15;

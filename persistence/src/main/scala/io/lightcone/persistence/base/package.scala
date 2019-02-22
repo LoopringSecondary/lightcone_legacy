@@ -17,8 +17,10 @@
 package io.lightcone.persistence
 
 import slick.jdbc.MySQLProfile.api._
+
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
+import io.lightcone.core.Amount
 import io.lightcone.relayer.data._
 
 package object base {
@@ -28,6 +30,13 @@ package object base {
     MappedColumnType.base[ByteString, Array[Byte]](
       bs => bs.toByteArray(),
       bytes => ByteString.copyFrom(bytes)
+    )
+
+  @inline
+  implicit val amountColumnType: BaseColumnType[Amount] =
+    MappedColumnType.base[Amount, Array[Byte]](
+      amount => amount.value.toByteArray,
+      bytes => Amount(ByteString.copyFrom(bytes))
     )
 
   @inline

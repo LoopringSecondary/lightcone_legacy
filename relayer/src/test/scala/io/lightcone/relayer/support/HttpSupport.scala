@@ -21,13 +21,17 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.relayer.RpcBinding
 import io.lightcone.relayer.jsonrpc._
 import io.lightcone.relayer.data.{GetTransactionRecords, _}
 import io.lightcone.core._
+import io.lightcone.lib.NumericConversion
+import org.json4s.JsonAST.JString
 import org.slf4s.Logging
-import scalapb.json4s.JsonFormat
+import scalapb.GeneratedMessage
+import scalapb.json4s._
 
 import scala.concurrent.{Await, ExecutionContext}
 
@@ -38,8 +42,24 @@ trait HttpSupport extends RpcBinding with Logging {
   // TODO:for test, not need it
   override val requestHandler: ActorRef = ActorRef.noSender
 
-  def singleRequest(
-      req: Any,
+  val formatRegistry =
+    JsonFormat.DefaultRegistry
+      .registerWriter[Amount](
+        (amount: Amount) =>
+          JString(
+            NumericConversion.toHexString(BigInt(amount.value.toByteArray))
+          ), {
+          case JString(str) =>
+            Amount(
+              value = ByteString
+                .copyFrom(NumericConversion.toBigInt(str).toByteArray)
+            )
+          case _ => throw new JsonFormatException("Expected a string.")
+        }
+      )
+
+  def singleRequest[T <: GeneratedMessage](
+      req: T,
       method: String
     )(
       implicit
@@ -47,7 +67,8 @@ trait HttpSupport extends RpcBinding with Logging {
       ec: ExecutionContext
     ) = {
     val json = req match {
-      case m: scalapb.GeneratedMessage => JsonFormat.toJson(m)
+      case m: scalapb.GeneratedMessage =>
+        new Printer(formatRegistry = formatRegistry).toJson(req)
     }
     val reqJson = JsonRpcRequest("2.0", method, Some(json), Some("1"))
     for {
@@ -171,10 +192,7 @@ trait HttpSupport extends RpcBinding with Logging {
            System.currentTimeMillis() <= lastTime) {
       val getTransferRecordsF =
         singleRequest(req, "get_transactions").mapTo[GetTransactionRecords.Res]
-      val res = Await.result(
-        getTransferRecordsF,
-        timeout.duration
-      )
+      val res = Await.result(getTransferRecordsF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {
@@ -202,10 +220,7 @@ trait HttpSupport extends RpcBinding with Logging {
            System.currentTimeMillis() <= lastTime) {
       val getTradesF =
         singleRequest(req, "get_trades").mapTo[GetTrades.Res]
-      val res = Await.result(
-        getTradesF,
-        timeout.duration
-      )
+      val res = Await.result(getTradesF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {

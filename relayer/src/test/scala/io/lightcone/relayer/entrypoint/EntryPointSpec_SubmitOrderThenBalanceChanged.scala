@@ -17,7 +17,6 @@
 package io.lightcone.relayer.entrypoint
 
 import akka.pattern._
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
@@ -135,7 +134,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdatedEvent(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        ByteString.copyFrom("25".zeros(LRC_TOKEN.decimals).toByteArray)
+        "25".zeros(LRC_TOKEN.decimals)
       )
 
       Thread.sleep(2000)
