@@ -54,7 +54,7 @@ class IntegrationTest
 
   private var injector: Injector = _
   private var entrypointActor: ActorRef = _
-  var eventDispatcher:EventDispatcher = _
+  var eventDispatcher: EventDispatcher = _
 
   def entrypoint() = entrypointActor
 

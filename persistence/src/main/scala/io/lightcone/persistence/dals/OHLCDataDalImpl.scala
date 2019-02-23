@@ -45,7 +45,9 @@ class OHLCDataDalImpl @Inject()(
       Await.result(db.run(sqlCreateExtention), 10.second)
     } catch {
       case e: Exception =>
-        logger.error("Failed to create timescaledb extension: " + e.getMessage)
+        logger.error(
+          s"Failed to create timescaledb extension: ${e.getMessage}, cause:${e.getCause}"
+        )
         System.exit(0)
     }
 
