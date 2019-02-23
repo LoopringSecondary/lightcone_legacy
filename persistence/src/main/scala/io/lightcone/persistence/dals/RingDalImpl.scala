@@ -37,7 +37,7 @@ class RingDalImpl @Inject()(
     timeProvider: TimeProvider)
     extends RingDal {
 
-  import GetRings.Req.Ring._
+  import GetRings.Req.Ring2._
 
   val query = TableQuery[RingTable]
 
@@ -57,7 +57,7 @@ class RingDalImpl @Inject()(
     Future.sequence(rings.map(saveRing))
 
   private def queryFilters(
-      ring: Option[GetRings.Req.Ring] = None,
+      ring: Option[GetRings.Req.Ring2] = None,
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
     ): Query[RingTable, RingTable#TableElementType, Seq] = {

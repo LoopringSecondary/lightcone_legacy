@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.dals
+package io.lightcone.ethereum
 
-import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
-import slick.jdbc.MySQLProfile.api._
+private[ethereum] final case class TypeItem(
+  name: String, `type`: String)
 
-class OrderStatusMonitorTable(tag: Tag)
-    extends BaseTable[OrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
+private[ethereum] final case class Type(
+  name: String,
+  typeItems: List[TypeItem])
 
-  def id = monitoringType
-  def processTime = column[Long]("process_time")
-  def monitoringType = column[String]("monitoring_type", O.PrimaryKey, O.Unique)
+private[ethereum] final case class Types(types: Map[String, Type])
 
-  def * =
-    (monitoringType, processTime) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
+final case class EIP712TypedData(
+  types: Types,
+  primaryType: String,
+  domain: Map[String, Any],
+  message: Map[String, Any])
 
+trait EIP712Support {
+  def jsonToTypedData(jsonString: String): EIP712TypedData
+
+  def getEIP712Message(typedData: EIP712TypedData): String
 }

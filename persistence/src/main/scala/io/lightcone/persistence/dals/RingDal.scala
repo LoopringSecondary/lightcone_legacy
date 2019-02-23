@@ -18,6 +18,7 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import io.lightcone.core._
+import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 

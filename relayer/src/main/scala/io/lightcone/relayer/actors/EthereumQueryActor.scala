@@ -76,7 +76,7 @@ class EthereumQueryActor(
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
-    case req @ GetBalanceAndAllowances.Req(owner, tokens, tag) =>
+    case req @ GetAccount.Req(owner, tokens) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
         brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))
@@ -130,55 +130,6 @@ class EthereumQueryActor(
           result
         }
       } yield finalResult) sendTo sender
-
-    case req @ GetBalance.Req(owner, tokens, tag) =>
-      val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
-      val batchReqs = brb.buildRequest(req.copy(tokens = erc20Tokens))
-      (for {
-        batchRes <- (ethereumAccessorActor ? batchReqs)
-          .mapAs[BatchCallContracts.Res]
-        balances = batchRes.resps.map { res =>
-          Amount(NumericConversion.toBigInt(res.result), batchRes.blockNum)
-        }
-        result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
-
-        ethRes <- ethToken match {
-          case head :: tail =>
-            (ethereumAccessorActor ? BatchGetEthBalance.Req(
-              Seq(
-                EthGetBalance.Req(
-                  address = Address.normalize(owner),
-                  tag
-                )
-              ),
-              returnBlockNum = brb.shouldReturnBlockNumber(tag)
-            )).mapAs[BatchGetEthBalance.Res].map(Some(_))
-          case Nil => Future.successful(None)
-        }
-
-        finalResult = if (ethRes.isDefined) {
-          val ethResult = Address.ZERO.toString ->
-            Amount(
-              NumericConversion.toBigInt(ethRes.get.resps.head.result),
-              ethRes.get.blockNum
-            )
-          result.copy(balanceMap = result.balanceMap + ethResult)
-        } else {
-          result
-        }
-      } yield finalResult) sendTo sender
-
-    case req @ GetAllowance.Req(owner, tokens, _) =>
-      batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
-        resp =>
-          val allowances = resp.resps.map { res =>
-            Amount(
-              NumericConversion.toBigInt(res.result),
-              resp.blockNum
-            )
-          }
-          GetAllowance.Res(owner, (tokens zip allowances).toMap)
-      }
 
     case req @ GetFilledAmount.Req(orderIds, _) =>
       batchCallEthereum(

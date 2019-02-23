@@ -20,7 +20,7 @@ option java_multiple_files = true;
 package io.lightcone.relayer.data;
 
 import "core.proto";
-// import "ethereum.proto";
+import "persistence.proto";
 
 message OrderState {
     io.lightcone.core.Amount amount_s          = 1;
@@ -29,41 +29,33 @@ message OrderState {
 }
 
 message Order {
-    string id                       = 1;
-    string token_s                  = 2;
-    string token_b                  = 3;
-    string token_fee                = 4;
-    io.lightcone.core.Amount amount_s                  = 5;
-    io.lightcone.core.Amount amount_b                  = 6;
-    io.lightcone.core.Amount amount_fee                = 7;
-    int64 valid_since               = 8;
-    int64 submitted_at              = 9;
-    int32 num_attempts              = 10;
-    io.lightcone.core.OrderStatus status              = 11;
-    double wallet_split_percentage  = 12;
-    OrderState outstanding          = 13;
-    OrderState reserved             = 14;
-    OrderState actual               = 15;
-    OrderState matchable            = 16;
+    string id                                           = 1;
+    string token_s                                      = 2;
+    string token_b                                      = 3;
+    string token_fee                                    = 4;
+    io.lightcone.core.Amount amount_s                   = 5;
+    io.lightcone.core.Amount amount_b                   = 6;
+    io.lightcone.core.Amount amount_fee                 = 7;
+    int64 valid_since                                   = 8;
+    int64 submitted_at                                  = 9;
+    int32 num_attempts                                  = 10;
+    io.lightcone.core.OrderStatus status                = 11;
+    double wallet_split_percentage                      = 12;
+    OrderState outstanding                              = 13;
+    OrderState reserved                                 = 14;
+    OrderState actual                                   = 15;
+    OrderState matchable                                = 16;
 }
 
 message ExpectedOrderFill {
-    Order order                     = 1;
-    OrderState pending              = 2;
-    io.lightcone.core.Amount amount_margin             = 3;
+    Order order                                         = 1;
+    OrderState pending                                  = 2;
+    io.lightcone.core.Amount amount_margin              = 3;
 }
 
 message OrderRing {
-    ExpectedOrderFill maker         = 1;
-    ExpectedOrderFill taker         = 2;
-}
-
-
-message BalanceAndAllowance {
-    io.lightcone.core.Amount balance                   = 1;
-    io.lightcone.core.Amount allowance                 = 2;
-    io.lightcone.core.Amount available_balance         = 3;
-    io.lightcone.core.Amount available_allowance       = 4;
+    ExpectedOrderFill maker                             = 1;
+    ExpectedOrderFill taker                             = 2;
 }
 
 message EthereumProxySettings {
@@ -78,52 +70,7 @@ message EthereumProxySettings {
     repeated Node nodes             = 4;
 }
 
-message Ring {
-    message Fees {
-        repeated Trade.Fee fees = 1;
-    }
-    string   ring_hash         = 1;
-    int64    ring_index        = 2;
-    int32    fills_amount      = 3;
-    string   miner             = 4;
-    string   tx_hash           = 5;
-    Fees     fees              = 6;
-    int64    block_height      = 7;
-    int64    block_timestamp   = 8;
-}
 
-message Trade {
-    message Fee {
-        // for market
-        string token_fee               = 1;
-        io.lightcone.core.Amount  amount_fee              = 2;
-        // for p2p
-        io.lightcone.core.Amount  fee_amount_s            = 3;
-        io.lightcone.core.Amount  fee_amount_b            = 4;
-
-        string fee_recipient           = 5;
-        int32  waive_fee_percentage    = 6; // miner waive
-        int32  wallet_split_percentage = 7;
-    }
-
-    string owner             = 1;
-    string order_hash        = 2;
-    string ring_hash         = 3;
-    int64  ring_index        = 4;
-    int32  fill_index        = 5;
-    string tx_hash           = 6;
-    io.lightcone.core.Amount  amount_s          = 7;
-    io.lightcone.core.Amount  amount_b          = 8;
-    string token_s           = 9;
-    string token_b           = 10;
-    int64  market_id         = 11;
-    io.lightcone.core.Amount  split             = 12; // tokenS
-    Fee    fee               = 13;
-    string wallet            = 14;
-    string miner             = 15;
-    int64  block_height      = 16;
-    int64  block_timestamp   = 17;
-}
 
 message SettlementTx {
     enum Status {
@@ -168,4 +115,30 @@ message OHLCData {
     double     closing_price    = 6;
     double     highest_price    = 7;
     double     lowest_price     = 8;*/
+}
+
+message AccountBalance {
+    message TokenBalance {
+        string token                                    = 2;
+        io.lightcone.core.Amount balance                = 3;
+        io.lightcone.core.Amount allowance              = 4;
+        io.lightcone.core.Amount available_balance      = 5;
+        io.lightcone.core.Amount available_alloawnce    = 6;
+    }
+
+    string address                                  = 1;
+    map<string, TokenBalance> token_balance_map     = 2;
+    int32  nonce                                    = 3;
+}
+
+
+message GeneralNotification {
+    enum Level {
+        INFO            = 0;
+        WARNING         = 1;
+        URGENT          = 3;
+    }
+
+    Level level = 1;
+    string content = 2;
 }

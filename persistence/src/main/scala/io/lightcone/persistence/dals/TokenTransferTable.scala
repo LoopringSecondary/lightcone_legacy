@@ -20,6 +20,8 @@ import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import io.lightcone.relayer.data._
 
+// TODO(yongfeng): delete this?
+
 class TokenTransferTable(tag: Tag)
     extends BaseTable[TokenTransferData](tag, "T_TOKEN_TRANSFERS") {
 

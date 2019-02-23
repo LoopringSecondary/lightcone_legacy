@@ -21,6 +21,8 @@ import io.lightcone.persistence._
 import scala.concurrent._
 import io.lightcone.relayer.data._
 
+// TODO(yongfeng): delete this?
+
 trait TransactionRecordDal
     extends BaseDalImpl[TransactionRecordTable, TransactionRecord] {
 

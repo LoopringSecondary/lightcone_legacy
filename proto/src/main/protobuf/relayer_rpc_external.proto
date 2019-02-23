@@ -1,10 +1,115 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.relayer.rpc;
+package io.lightcone.relayer.data.ext;
+
+import "core.proto";
+import "persistence.proto";
+import "relayer_common.proto";
+
+message GetBalances{
+    message Params{
+        repeated string addresses  = 1;
+        repeated string tokens = 2;
+    }
+    //Result ==> io.lightcone.relayer.data.AccountBalance
+}
+
+message SubmitOrder{
+    //params 应该是io.lightcone.core.RawOrder结构
+    message Result {
+        string order_hash = 1;
+    }
+}
+
+message GetOrders{
+    message Params {
+        string address = 1;
+        io.lightcone.core.MarketPair market = 2;
+        repeated io.lightcone.core.OrderStatus statuses = 3;
+        io.lightcone.persistence.SortingType sort = 4;
+        int32 page_num = 5;
+        int32 page_size = 6;
+    }
+
+    message Result{
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total = 3;
+        repeated io.lightcone.core.RawOrder orders = 4;
+    }
+}
+
+message GetOrderByHash {
+    message Params {
+        string order_hash = 1;
+    }
+    // Result => io.lightcone.core.RawOrder
+}
+
+//order book 可以使用 relayer_rpc_internal_core 中的GetOrderbook
+
+message GetFills{
+    message Params {
+        string address = 1;                    //未定义则查询全部成交
+        io.lightcone.core.MarketPair market = 2;
+        int32 page_num = 3;
+        int32 page_size = 4;
+    }
+    message Result {
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total = 3;
+        repeated io.lightcone.persistence.Fill fills = 4;
+    }
+}
+
+message GetActivities{
+    message Params {
+        string address = 1;
+        string token = 2;
+        int32 page_num = 3;
+        int32 page_size = 4;
+    }
+
+    message Result {
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total = 3;
+        repeated io.lightcone.persistence.Activity activities = 4;
+    }
+}
+
+message GetRings{
+    message Params {
+        io.lightcone.persistence.SortingType sort = 1;
+        int32 page_num = 2;
+        int32 page_size = 3;
+    }
+
+    message Result {
+        int32 page_num = 1;
+        int32 page_size = 2;
+        int32 total  = 3;
+        repeated io.lightcone.persistence.Ring rings = 4;
+    }
+}
 
 
-message GetOrderbook{
-    message Req {}
-    message Res {}
+message GetTokens{
+    message Params{
+    }
+
+    message  Result {
+        repeated io.lightcone.core.TokenMetadata tokens  =1;
+    }
+}
+
+message GetMarkets{
+    message Params{
+    }
+
+    message  Result {
+        repeated io.lightcone.core.MarketMetadata markets  =1;
+    }
 }

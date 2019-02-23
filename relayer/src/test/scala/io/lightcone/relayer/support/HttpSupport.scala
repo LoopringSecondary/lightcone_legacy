@@ -21,17 +21,14 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.relayer.RpcBinding
 import io.lightcone.relayer.jsonrpc._
 import io.lightcone.relayer.data.{GetTransactionRecords, _}
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
-import org.json4s.JsonAST.JString
+import io.lightcone.lib.ProtoSerializer
 import org.slf4s.Logging
 import scalapb.GeneratedMessage
-import scalapb.json4s._
 
 import scala.concurrent.{Await, ExecutionContext}
 
@@ -42,21 +39,7 @@ trait HttpSupport extends RpcBinding with Logging {
   // TODO:for test, not need it
   override val requestHandler: ActorRef = ActorRef.noSender
 
-  val formatRegistry =
-    JsonFormat.DefaultRegistry
-      .registerWriter[Amount](
-        (amount: Amount) =>
-          JString(
-            NumericConversion.toHexString(BigInt(amount.value.toByteArray))
-          ), {
-          case JString(str) =>
-            Amount(
-              value = ByteString
-                .copyFrom(NumericConversion.toBigInt(str).toByteArray)
-            )
-          case _ => throw new JsonFormatException("Expected a string.")
-        }
-      )
+  val ps = new ProtoSerializer
 
   def singleRequest[T <: GeneratedMessage](
       req: T,
@@ -68,9 +51,9 @@ trait HttpSupport extends RpcBinding with Logging {
     ) = {
     val json = req match {
       case m: scalapb.GeneratedMessage =>
-        new Printer(formatRegistry = formatRegistry).toJson(req)
+        ps.serialize(m)
     }
-    val reqJson = JsonRpcRequest("2.0", method, Some(json), Some("1"))
+    val reqJson = JsonRpcRequest("2.0", method, json, Some("1"))
     for {
       response <- Http().singleRequest(
         HttpRequest(
@@ -149,20 +132,20 @@ trait HttpSupport extends RpcBinding with Logging {
   }
 
   def expectBalanceRes(
-      req: GetBalanceAndAllowances.Req,
-      assertFun: GetBalanceAndAllowances.Res => Boolean,
+      req: GetAccount.Req,
+      assertFun: GetAccount.Res => Boolean,
       expectTimeout: Timeout = timeout
     ) = {
-    var resOpt: Option[GetBalanceAndAllowances.Res] = None
+    var resOpt: Option[GetAccount.Res] = None
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
     while (resOpt.isEmpty &&
            System.currentTimeMillis() <= lastTime) {
       val getBalanceResF =
-        singleRequest(req, "get_balance_and_allowance")
+        singleRequest(req, "get_account")
       val res = Await.result(
-        getBalanceResF.mapTo[GetBalanceAndAllowances.Res],
+        getBalanceResF.mapTo[GetAccount.Res],
         timeout.duration
       )
       if (assertFun(res)) {
@@ -208,19 +191,19 @@ trait HttpSupport extends RpcBinding with Logging {
   }
 
   def expectTradeRes(
-      req: GetTrades.Req,
-      assertFun: GetTrades.Res => Boolean,
+      req: GetFills.Req,
+      assertFun: GetFills.Res => Boolean,
       expectTimeout: Timeout = timeout
     ) = {
-    var resOpt: Option[GetTrades.Res] = None
+    var resOpt: Option[GetFills.Res] = None
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
     while (resOpt.isEmpty &&
            System.currentTimeMillis() <= lastTime) {
-      val getTradesF =
-        singleRequest(req, "get_trades").mapTo[GetTrades.Res]
-      val res = Await.result(getTradesF, timeout.duration)
+      val getFillsF =
+        singleRequest(req, "get_fills").mapTo[GetFills.Res]
+      val res = Await.result(getFillsF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {

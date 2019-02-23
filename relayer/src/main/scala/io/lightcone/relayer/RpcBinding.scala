@@ -23,8 +23,8 @@ import io.lightcone.relayer.data._
 trait RpcBinding extends JsonRpcModule {
 
   method("get_orderbook")
-  // .accepts[rpcdata.GetOrderbook.Req, GetOrderbook.Req]
-  // .replies[GetOrderbook.Res, rpcdata.GetOrderbook.Res]
+  // .accepts[ext.GetOrderbook.Req, GetOrderbook.Req]
+  // .replies[GetOrderbook.Res, ext.GetOrderbook.Res]
     .accepts[GetOrderbook.Req]
     .replies[GetOrderbook.Res]
 
@@ -38,12 +38,12 @@ trait RpcBinding extends JsonRpcModule {
 
   // // db query
   method("get_orders")
-    .accepts[GetOrdersForUser.Req]
-    .replies[GetOrdersForUser.Res]
+    .accepts[GetOrders.Req]
+    .replies[GetOrders.Res]
 
-  method("get_trades")
-    .accepts[GetTrades.Req]
-    .replies[GetTrades.Res]
+  method("get_fills")
+    .accepts[GetFills.Req]
+    .replies[GetFills.Res]
 
   method("get_rings")
     .accepts[GetRings.Req]
@@ -61,18 +61,14 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetMetadatas.Req]
     .replies[GetMetadatas.Res]
 
+  method("get_market_history")
+    .accepts[GetMarketHistory.Req]
+    .replies[GetMarketHistory.Res]
+
   //Ethereum Query
-  method("get_allowance")
-    .accepts[GetAllowance.Req]
-    .replies[GetAllowance.Res]
-
-  method("get_balance") //
-    .accepts[GetBalance.Req] //
-    .replies[GetBalance.Res]
-
-  method("get_balance_and_allowance")
-    .accepts[GetBalanceAndAllowances.Req]
-    .replies[GetBalanceAndAllowances.Res]
+  method("get_account")
+    .accepts[GetAccount.Req]
+    .replies[GetAccount.Res]
 
   method("get_filled_amount")
     .accepts[GetFilledAmount.Req]

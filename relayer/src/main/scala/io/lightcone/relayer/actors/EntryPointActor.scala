@@ -69,27 +69,30 @@ class EntryPointActor(
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _: SubmitOrder.Req | _: CancelOrder.Req =>
+    // TODO(hongyu): implement this
+    case _: GetAccountActivities.Req => None
+
+    case _: GetAccount.Req | _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: GetBalanceAndAllowances.Req =>
-      Some(MultiAccountManagerMessageValidator.name)
+    case _: GetOrders.Req | _: GetFills.Req =>
+      Some(DatabaseQueryMessageValidator.name)
 
-    case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req =>
-      Some(EthereumQueryMessageValidator.name)
+    case _: GetRings.Req =>
+      Some(DatabaseQueryMessageValidator.name)
 
     case _: JsonRpc.Request | _: JsonRpc.RequestWithHeight =>
       Some(EthereumAccessActor.name)
 
     case _: GetOrderbook.Req => Some(OrderbookManagerMessageValidator.name)
 
-    case _: GetOrdersForUser.Req | _: GetTrades.Req | _: GetRings.Req =>
-      Some(DatabaseQueryMessageValidator.name)
+    case _: GetMetadatas.Req => Some(MetadataRefresher.name)
 
+    // TODO(hongyu): remove all of the folloiwng
     case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
       Some(TransactionRecordMessageValidator.name)
 
-    case _: GetMetadatas.Req => Some(MetadataRefresher.name)
+    case _: GetMarketHistory.Req => Some(MarketHistoryActor.name)
 
     case _ => None
   }

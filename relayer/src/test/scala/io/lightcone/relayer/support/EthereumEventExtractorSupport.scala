@@ -33,7 +33,7 @@ trait EthereumEventExtractorSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with DatabaseQueryMessageSupport
-    with RingAndTradePersistenceSupport
+    with RingAndFillPersistenceSupport
     with EthereumTransactionRecordSupport {
   me: CommonSpec =>
 
@@ -54,7 +54,7 @@ trait EthereumEventExtractorSupport
       .register(
         classOf[RingMinedEvent],
         MarketManagerActor.name,
-        RingAndTradePersistenceActor.name
+        RingAndFillPersistenceActor.name
       )
       .register(
         classOf[CutoffEvent],
@@ -81,7 +81,7 @@ trait EthereumEventExtractorSupport
       )
       .register(
         classOf[OHLCRawDataEvent], //
-        OHLCDataHandlerActor.name
+        MarketHistoryActor.name
       )
       .register(
         classOf[BlockGasPricesExtractedEvent], //
@@ -99,8 +99,8 @@ trait EthereumEventExtractorSupport
 
   actors
     .add(
-      OHLCDataHandlerActor.name, //
-      OHLCDataHandlerActor.start
+      MarketHistoryActor.name, //
+      MarketHistoryActor.start
     )
     .add(
       EthereumEventExtractorActor.name, //
