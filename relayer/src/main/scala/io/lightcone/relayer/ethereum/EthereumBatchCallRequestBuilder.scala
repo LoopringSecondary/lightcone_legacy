@@ -26,116 +26,110 @@ import org.web3j.utils.Numeric
 class EthereumBatchCallRequestBuilder {
 
   def buildRequest(
-      delegateAddress: Address,
-      req: GetAccount.Req
-    ): BatchCallContracts.Req = {
+    delegateAddress: Address,
+    req: GetAccount.Req): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
       buildBatchErc20AllowanceReq(delegateAddress, owner, tokens)
     val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens)
 
-    BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
+    BatchCallContracts.Req(
+      allowanceCallReqs ++ balanceCallReqs,
+      shouldReturnBlockNumber(req.tag))
   }
 
   def buildRequest(
-      tradeHistoryAddress: Address,
-      req: GetFilledAmount.Req
-    ): BatchCallContracts.Req = {
+    tradeHistoryAddress: Address,
+    req: GetFilledAmount.Req): BatchCallContracts.Req = {
     val batchFilledAmountReqs =
       buildBatchFilledAmountReq(tradeHistoryAddress, req.orderIds, req.tag)
-    BatchCallContracts.Req(batchFilledAmountReqs)
+    BatchCallContracts.Req(
+      batchFilledAmountReqs,
+      shouldReturnBlockNumber(req.tag))
   }
 
   def buildRequest(
-      addresses: Seq[AddressBalanceUpdatedEvent],
-      tag: String
-    ): BatchCallContracts.Req = {
+    addresses: Seq[AddressBalanceUpdatedEvent],
+    tag: String): BatchCallContracts.Req = {
     val balanceCallReqs = addresses.zipWithIndex.map {
       case (address, index) =>
         val data = erc20Abi.balanceOf.pack(
-          BalanceOfFunction.Parms(_owner = address.address.toString)
-        )
+          BalanceOfFunction.Parms(_owner = address.address.toString))
         val param = TransactionParams(to = address.token, data = data)
         EthCall.Req(index, Some(param), tag)
     }
-    BatchCallContracts.Req(balanceCallReqs)
+    BatchCallContracts.Req(
+      balanceCallReqs,
+      shouldReturnBlockNumber(tag))
   }
 
   def buildRequest(
-      delegateAddress: Address,
-      addresses: Seq[AddressAllowanceUpdatedEvent],
-      tag: String
-    ): BatchCallContracts.Req = {
+    delegateAddress: Address,
+    addresses: Seq[AddressAllowanceUpdatedEvent],
+    tag: String): BatchCallContracts.Req = {
     val balanceCallReqs = addresses.zipWithIndex.map {
       case (address, index) =>
         val data = erc20Abi.allowance.pack(
           AllowanceFunction.Parms(
             _owner = address.address,
-            _spender = delegateAddress.toString()
-          )
-        )
+            _spender = delegateAddress.toString()))
         val param = TransactionParams(to = address.token, data = data)
         EthCall.Req(index, Some(param), tag)
     }
-    BatchCallContracts.Req(balanceCallReqs)
+    BatchCallContracts.Req(
+      balanceCallReqs,
+      shouldReturnBlockNumber(tag))
   }
 
   def buildRequest(
-      req: BatchGetCutoffs.Req,
-      tradeHistoryAddress: Address
-    )(
-      implicit
-      rb: EthereumCallRequestBuilder
-    ): BatchCallContracts.Req = {
-
+    req: BatchGetCutoffs.Req,
+    tradeHistoryAddress: Address)(
+      implicit rb: EthereumCallRequestBuilder): BatchCallContracts.Req = {
     val cutoffCallReqs = req.reqs.map { cutoffReq =>
-      rb.buildRequest(cutoffReq, tradeHistoryAddress)
+      rb.buildRequest(cutoffReq, tradeHistoryAddress).reqs.head
     }
-    BatchCallContracts.Req(cutoffCallReqs)
+    BatchCallContracts.Req(cutoffCallReqs, shouldReturnBlockNumber(req.tag))
   }
 
   private def buildBatchErc20AllowanceReq(
-      delegateAddress: Address,
-      owner: Address,
-      tokens: Seq[Address],
-      tag: String = "latest"
-    ): Seq[EthCall.Req] = {
+    delegateAddress: Address,
+    owner: Address,
+    tokens: Seq[Address],
+    tag: String = "latest"): Seq[EthCall.Req] = {
     tokens.zipWithIndex.map(token => {
       val data = erc20Abi.allowance.pack(
         AllowanceFunction
-          .Parms(_spender = delegateAddress.toString, _owner = owner.toString)
-      )
+          .Parms(_spender = delegateAddress.toString, _owner = owner.toString))
       val param = TransactionParams(to = token._1.toString, data = data)
       EthCall.Req(token._2 * 2, Some(param), tag)
     })
   }
 
   private def buildBatchErc20BalanceReq(
-      owner: Address,
-      tokens: Seq[Address],
-      tag: String = "latest"
-    ): Seq[EthCall.Req] = {
+    owner: Address,
+    tokens: Seq[Address],
+    tag: String = "latest"): Seq[EthCall.Req] = {
     tokens.zipWithIndex.map { token =>
       val data = erc20Abi.balanceOf.pack(
-        BalanceOfFunction.Parms(_owner = owner.toString)
-      )
+        BalanceOfFunction.Parms(_owner = owner.toString))
       val param = TransactionParams(to = token._1.toString, data = data)
       EthCall.Req(1 + token._2 * 2, Some(param), tag)
     }
   }
 
   private def buildBatchFilledAmountReq(
-      contractAddress: Address,
-      orderHashes: Seq[String],
-      tag: String = "latest"
-    ) = {
+    contractAddress: Address,
+    orderHashes: Seq[String],
+    tag: String = "latest") = {
     orderHashes.zipWithIndex.map { orderHash =>
       val data = tradeHistoryAbi.filled.pack(
-        FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1))
-      )
+        FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1)))
       val param = TransactionParams(to = contractAddress.toString, data = data)
       EthCall.Req(orderHash._2, Some(param), tag)
     }
   }
+
+  @inline def shouldReturnBlockNumber(tag: String) =
+    tag.isEmpty || tag == "latest"
 }

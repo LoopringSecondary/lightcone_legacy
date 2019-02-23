@@ -16,14 +16,15 @@
 
 package io.lightcone.ethereum
 
-private[ethereum] final case class TypeItem(
-  name: String, `type`: String)
+final case class TypeItem(
+  name: String,
+  `type`: String)
 
-private[ethereum] final case class Type(
+final case class Type(
   name: String,
   typeItems: List[TypeItem])
 
-private[ethereum] final case class Types(types: Map[String, Type])
+final case class Types(types: Map[String, Type])
 
 final case class EIP712TypedData(
   types: Types,

@@ -176,6 +176,7 @@ message GetOrderCancellation {
 
     message Res {
        bool  cancelled = 1;
+       int64 block = 2;
     }
 }
 
@@ -197,6 +198,7 @@ message GetCutoff {
 message BatchGetCutoffs {
     message Req {
         repeated GetCutoff.Req reqs = 1;
+        string tag = 2;
     }
 
     message Res {
@@ -212,6 +214,7 @@ message GetBurnRate {
     message Res {
         double for_market = 1;
         double for_p2p = 2;
+        int64 block = 3;
     }
 }
 

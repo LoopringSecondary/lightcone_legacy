@@ -32,15 +32,13 @@ import io.lightcone.relayer.data._
 import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 // Owner: Hongyu
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
-    val owner: String
-  )(
-    implicit
-    val config: Config,
+  val owner: String)(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -49,11 +47,11 @@ class AccountManagerActor(
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
     val baProvider: BalanceAndAllowanceProvider)
-    extends Actor
-    with AccountManagerActorProcessors
-    with Stash
-    with BlockingReceive
-    with ActorLogging {
+  extends Actor
+  with AccountManagerActorProcessors
+  with Stash
+  with BlockingReceive
+  with ActorLogging {
 
   import ErrorCode._
   import OrderStatus._
@@ -114,8 +112,7 @@ class AccountManagerActor(
           } else {
             accountCutoffState.setTradingPairCutoff(
               cutoffRes.marketHash,
-              cutoff.toLong
-            )
+              cutoff.toLong)
           }
         }
       }
@@ -158,16 +155,14 @@ class AccountManagerActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                  ERR_ORDER_VALIDATION_INVALID_CANCELED |
-                  ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
+                ERR_ORDER_VALIDATION_INVALID_CANCELED |
+                ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
                 dbModule.orderService
                   .updateOrderStatus(
                     rawOrder.hash,
-                    STATUS_ONCHAIN_CANCELLED_BY_USER
-                  )
+                    STATUS_ONCHAIN_CANCELLED_BY_USER)
                   .map(
-                    _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false)
-                  )
+                    _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false))
 
               case ERR_ORDER_PENDING_ACTIVE =>
                 log.error("received orders of PENDIGN_ACTIVE during recovery")
@@ -200,8 +195,8 @@ class AccountManagerActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                  ERR_ORDER_VALIDATION_INVALID_CANCELED |
-                  ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
+                ERR_ORDER_VALIDATION_INVALID_CANCELED |
+                ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
                 val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
                 Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
 
@@ -210,8 +205,7 @@ class AccountManagerActor(
                   resRawOrder <- (orderPersistenceActor ? req
                     .copy(
                       rawOrder =
-                        Some(rawOrder.withStatus(STATUS_PENDING_ACTIVE))
-                    ))
+                        Some(rawOrder.withStatus(STATUS_PENDING_ACTIVE))))
                     .mapAs[RawOrder]
                   resp = SubmitOrder.Res(Some(resRawOrder.toOrder), true)
                 } yield resp
@@ -222,7 +216,7 @@ class AccountManagerActor(
 
         f1.sendTo(sender)
       }
-    case GetAccount.Req(addr, tokens) =>
+    case GetAccount.Req(addr, tokens, _) =>
       count.refine("label" -> "get_account").increment()
       blocking(timer, "get_account") {
         (for {
@@ -239,8 +233,7 @@ class AccountManagerActor(
                 ai.allowance,
                 ai.availableBalance,
                 ai.availableAllowance,
-                ai.blockNumber
-              )
+                ai.blockNumber)
           }
           //TODO(HONGYU):确认nonce的更新以及使用方式
           result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances, 0)))
@@ -260,7 +253,7 @@ class AccountManagerActor(
       }
 
     case req @ CancelOrder
-          .Req("", owner, _, Some(marketPair), _) =>
+      .Req("", owner, _, Some(marketPair), _) =>
       count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner-MarketPair取消订单
         (for {
@@ -288,8 +281,7 @@ class AccountManagerActor(
             } else {
               throw ErrorException(
                 ERR_FAILED_HANDLE_MSG,
-                s"no order found with id: ${req.id}"
-              )
+                s"no order found with id: ${req.id}")
             }
           }
         } yield result).sendTo(sender)
@@ -323,13 +315,12 @@ class AccountManagerActor(
           req.block,
           req.token,
           BigInt(req.balance.toByteArray),
-          BigInt(req.allowance.toByteArray)
-        )
+          BigInt(req.allowance.toByteArray))
       }
 
     // ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff, block) //
-        if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+    if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "cutoff").increment()
       blocking {
         accountCutoffState.setCutoff(cutoff)
@@ -338,13 +329,13 @@ class AccountManagerActor(
 
     // ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(
-          Some(header),
-          broker,
-          owner,
-          marketHash,
-          cutoff,
-          block
-        ) if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+      Some(header),
+      broker,
+      owner,
+      marketHash,
+      cutoff,
+      block
+      ) if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "cutoff_market").increment()
 
       blocking {
@@ -354,12 +345,11 @@ class AccountManagerActor(
 
     // Currently we do not support broker-level cutoff
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff, block) //
-        if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
+    if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "broker_cutoff").increment()
       log.warning(s"not support this event yet: $req")
 
-    case req: OrdersCancelledOnChainEvent
-        if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
+    case req: OrdersCancelledOnChainEvent if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
       count.refine("label" -> "order_cancel").increment()
 
       for {
@@ -370,14 +360,13 @@ class AccountManagerActor(
             owner = o.owner,
             marketPair =
               Some(MarketPair(baseToken = o.tokenS, quoteToken = o.tokenB)),
-            status = STATUS_ONCHAIN_CANCELLED_BY_USER
-          )
+            status = STATUS_ONCHAIN_CANCELLED_BY_USER)
           self ! req
         }
       } yield Unit
 
     case req: OrderFilledEvent //
-        if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
+    if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "order_filled").increment()
       blocking {
         (for {
@@ -401,8 +390,7 @@ class AccountManagerActor(
   }
 
   private def checkOrderNotCancelledNorPending(
-      rawOrder: RawOrder
-    ): Future[Unit] = {
+    rawOrder: RawOrder): Future[Unit] = {
     for {
       _ <- Future {
         if (accountCutoffState.isOrderCutoffByOwner(rawOrder.validSince)) {
@@ -410,8 +398,7 @@ class AccountManagerActor(
         }
         val cutoffTrdingPair = accountCutoffState.isOrderCutoffByTradingPair(
           rawOrder.getMarketHash,
-          rawOrder.validSince
-        )
+          rawOrder.validSince)
 
         if (cutoffTrdingPair) {
           throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR)
@@ -423,8 +410,7 @@ class AccountManagerActor(
       }
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
         broker = rawOrder.owner,
-        orderHash = rawOrder.hash
-      )).mapAs[GetOrderCancellation.Res]
+        orderHash = rawOrder.hash)).mapAs[GetOrderCancellation.Res]
 
       _ = if (res.cancelled) {
         throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
@@ -454,8 +440,7 @@ class AccountManagerActor(
 
       _ = log.debug(
         s"submit order result:  ${updatedOrder}",
-        s"with ${updatedOrders.size} updated orders"
-      )
+        s"with ${updatedOrders.size} updated orders")
 
       _ = if (!successful) {
         val error = status match {
