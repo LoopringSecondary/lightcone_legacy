@@ -133,20 +133,17 @@ class ChainReorganizationManagerImpl(
   private def updateBlockData(
       blockIdx: Long,
       update: BlockData => BlockData
-    ) =
-    blocks.get(blockIdx) match {
-      case Some(block) =>
-        blocks += blockIdx -> update(block)
-      case None =>
-        if (blocks.size == maxDepth) {
-          blocks = blocks.tail
-        }
-        val block = update(new BlockData())
-        blocks += blockIdx -> block
+    ) = {
+    val lastBlock = blocks.lastOption.map(_._1).getOrElse(0L)
+    if (blockIdx > lastBlock - maxDepth) {
+      val block = blocks.getOrElse(blockIdx, new BlockData)
+      blocks += blockIdx -> update(block)
+      blocks = blocks.drop(blocks.size - maxDepth)
 
-        log.debug(
-          s"history size: ${blocks.size} with latest block index: " +
-            blocks.lastOption.map(_._1).getOrElse(0L)
-        )
+      log.debug(
+        s"history size: ${blocks.size} with latest block index: " +
+          blocks.lastOption.map(_._1).getOrElse(0L)
+      )
     }
+  }
 }
