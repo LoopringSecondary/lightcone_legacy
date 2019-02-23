@@ -199,6 +199,8 @@ class MetadataManagerActor(
 
     case _: LoadMarketMetadata.Req =>
       sender ! LoadMarketMetadata.Res(markets)
+
+    case _: TokenTickerChanged => publish()
   }
 
   private def publish() = {

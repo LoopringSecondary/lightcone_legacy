@@ -275,12 +275,34 @@ message MetadataChanged {
 message SubscribeMetadataChanged {
 }
 
+message TokenDetail {
+    // metadata
+    io.lightcone.core.TokenMetadata.Type     type                   = 1;
+    io.lightcone.core.TokenMetadata.Status   status                 = 2;
+    string   symbol                 = 3;
+    string   name                   = 4;
+    string   address                = 5;
+    string   unit                   = 6;
+    int32    decimals               = 7;
+    double   burn_rate_for_market   = 8;
+    double   burn_rate_for_p2p      = 9;
+    // ticker
+    double usd_price   = 10;
+    // info
+    double   circulating_supply     = 11;
+    double   total_supply           = 12;
+    double   max_supply             = 13;
+    int32    cmc_rank               = 14;
+    string   website_url            = 15;
+    int32    precision              = 16;
+}
+
 message GetMetadatas {
     message Req {}
 
     message Res {
-        repeated io.lightcone.core.TokenMetadata  tokens  = 1;
-        repeated io.lightcone.core.MarketMetadata markets = 2;
+        repeated TokenDetail                       tokens  = 1;
+        repeated io.lightcone.core.MarketMetadata  markets = 2;
     }
 }
 

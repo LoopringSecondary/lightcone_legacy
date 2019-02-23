@@ -23,6 +23,7 @@ import scala.concurrent._
 
 class DatabaseModule @Inject()(
     val tokenMetadataDal: TokenMetadataDal,
+    val tokenInfoDal: TokenInfoDal,
     val orderDal: OrderDal,
     val fillDal: FillDal,
     val ringDal: RingDal,
@@ -46,6 +47,7 @@ class DatabaseModule @Inject()(
 
   val tables = Seq(
     tokenMetadataDal,
+    tokenInfoDal,
     orderDal,
     fillDal,
     ringDal,

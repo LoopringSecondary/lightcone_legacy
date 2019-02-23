@@ -24,6 +24,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.data.cmc._
 import io.lightcone.relayer.external._
 import scala.concurrent.{ExecutionContext, Future}
@@ -71,6 +72,8 @@ class CMCCrawlerActor(
     with JsonSupport
     with RepeatedJobActor
     with ActorLogging {
+
+  private def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val selfConfig = config.getConfig(CMCCrawlerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
@@ -137,6 +140,11 @@ class CMCCrawlerActor(
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case _: GetExternalTokenTickers.Req =>
       sender ! GetExternalTokenTickers.Res(allTickersInUSD)
+
+    case _: GetTokenTickers.Req =>
+      sender ! GetTokenTickers.Res(allTickersInUSD.map { t =>
+        TokenTicker(t.symbol, t.price)
+      })
   }
 
   private def syncFromCMC() = this.synchronized {
@@ -161,7 +169,7 @@ class CMCCrawlerActor(
       tickers = persistTickers
 
       refreshTickers()
-      //TODO(du): metadataRefresher
+      metadataManagerActor ! TokenTickerChanged()
     }
   }
 

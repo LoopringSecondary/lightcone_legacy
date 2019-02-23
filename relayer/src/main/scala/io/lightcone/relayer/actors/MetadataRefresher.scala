@@ -67,7 +67,9 @@ class MetadataRefresher(
 
   val mediator = DistributedPubSub(context.system).mediator
 
-  private var tokens = Seq.empty[TokenMetadata]
+  private var tokenMetadatas = Seq.empty[TokenMetadata]
+  private var tokenInfos = Seq.empty[TokenInfo]
+  private var tokenTickers = Seq.empty[TokenTicker]
   private var markets = Seq.empty[MarketMetadata]
 
   override def initialize() = {
@@ -90,24 +92,33 @@ class MetadataRefresher(
         _ = getLocalActors().foreach(_ ! req)
       } yield Unit
 
-    case _: GetMetadatas.Req =>
-      sender ! GetMetadatas.Res(tokens = tokens, markets = markets)
+    case _: GetMetadatas.Req => {
+      val details = fillTokenDetail(tokenMetadatas, tokenInfos, tokenTickers)
+      sender ! GetMetadatas.Res(tokens = details, markets = markets)
+    }
   }
 
   private def refreshMetadata() =
     for {
-      tokens_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
+      tokenMetadatas_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
         .mapTo[LoadTokenMetadata.Res]
         .map(_.tokens)
       markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
         .mapTo[LoadMarketMetadata.Res]
         .map(_.markets)
+      tokenTickers_ <- (cmcCrawlerActor ? GetTokenTickers.Req())
+        .mapTo[GetTokenTickers.Res]
+        .map(_.tickers)
+      tokenInfos_ <- dbModule.tokenInfoDal.getTokens()
     } yield {
-      assert(tokens_.nonEmpty)
+      assert(tokenMetadatas_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokens = tokens_.map(MetadataManager.normalize)
+      assert(tokenTickers_.nonEmpty)
+      tokenMetadatas = tokenMetadatas_.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
-      metadataManager.reset(tokens_, markets_)
+      tokenTickers = tokenTickers_
+      tokenInfos = tokenInfos_
+      metadataManager.reset(tokenMetadatas_, tokenTickers_, markets_)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
@@ -119,6 +130,37 @@ class MetadataRefresher(
       context.system.actorSelection(str.format(OrderbookManagerActor.name)),
       context.system.actorSelection(str.format(MultiAccountManagerActor.name))
     )
+  }
+
+  private def fillTokenDetail(
+      tokenMetadatas: Seq[TokenMetadata],
+      tokenInfos: Seq[TokenInfo],
+      tokenTickers: Seq[TokenTicker]
+    ): Seq[TokenDetail] = {
+    val infoMap = tokenInfos.map(i => i.symbol -> i).toMap
+    val tickerMap = tokenTickers.map(t => t.symbol -> t.usdPrice).toMap
+
+    tokenMetadatas.map { m =>
+      val i = infoMap.getOrElse(m.symbol, TokenInfo())
+      TokenDetail(
+        m.`type`,
+        m.status,
+        m.symbol,
+        m.name,
+        m.address,
+        m.unit,
+        m.decimals,
+        m.burnRateForMarket,
+        m.burnRateForP2P,
+        tickerMap.getOrElse(m.symbol, 0),
+        i.circulatingSupply,
+        i.totalSupply,
+        i.maxSupply,
+        i.cmcRank,
+        i.websiteUrl,
+        i.precision
+      )
+    }
   }
 
 }

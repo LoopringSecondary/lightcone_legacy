@@ -373,3 +373,11 @@ message LoadMarketMetadata {
 }
 
 message TokenTickerChanged {}
+
+message GetTokenTickers {
+    message Req {}
+
+    message Res {
+        repeated io.lightcone.core.TokenTicker tickers = 1;
+    }
+}

@@ -33,14 +33,17 @@ final class MetadataManagerImpl(
 
   def reset(
       tokens: Seq[TokenMetadata],
+      tickers: Seq[TokenTicker],
       markets: Seq[MarketMetadata]
     ) = {
     tokenAddressMap = Map.empty
     tokenSymbolMap = Map.empty
 
+    val tickerMap = tickers.map(t => (t.symbol, t.usdPrice)).toMap
+
     tokens.foreach { meta =>
       val m = MetadataManager.normalize(meta)
-      val t = new Token(meta)
+      val t = new Token(meta, tickerMap.getOrElse(m.symbol, 0))
       tokenAddressMap += m.address -> t
       tokenSymbolMap += m.symbol -> t
     }

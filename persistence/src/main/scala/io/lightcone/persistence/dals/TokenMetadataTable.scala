@@ -35,37 +35,13 @@ class TokenMetadataTable(tag: Tag)
   def address = columnAddress("address", O.PrimaryKey, O.Unique)
   def unit = column[String]("unit")
   def decimals = column[Int]("decimals")
-  def websiteUrl = column[String]("website_url")
-  def precision = column[Int]("precision")
   def burnRateForMarket = column[Double]("burn_rate_for_market")
   def burnRateForP2P = column[Double]("burn_rate_for_p2p")
-
-  // external data
-  def usdPrice = column[Double]("usd_price")
-  def circulatingSupply = column[Double]("circulating_supply")
-  def totalSupply = column[Double]("total_supply")
-  def maxSupply = column[Double]("max_supply")
-  def cmcRank = column[Int]("cmc_rank")
-
   def updateAt = column[Long]("update_at")
 
   def idx_type = index("idx_type", (`type`), unique = false)
   def idx_status = index("idx_status", (status), unique = false)
   def idx_symbol = index("idx_symbol", (symbol), unique = true)
-
-  def externalDataProjection =
-    (
-      usdPrice,
-      circulatingSupply,
-      totalSupply,
-      maxSupply,
-      cmcRank
-    ) <> ({ tuple =>
-      Option((TokenMetadata.ExternalData.apply _).tupled(tuple))
-    }, { paramsOpt: Option[TokenMetadata.ExternalData] =>
-      val params = paramsOpt.getOrElse(TokenMetadata.ExternalData())
-      TokenMetadata.ExternalData.unapply(params)
-    })
 
   def * =
     (
@@ -76,11 +52,8 @@ class TokenMetadataTable(tag: Tag)
       address,
       unit,
       decimals,
-      websiteUrl,
-      precision,
       burnRateForMarket,
       burnRateForP2P,
-      externalDataProjection,
       updateAt
     ) <> ((TokenMetadata.apply _).tupled, TokenMetadata.unapply)
 }

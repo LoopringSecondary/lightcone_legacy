@@ -28,11 +28,6 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
   def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
 
-  def updateTokenPrice(
-      token: String,
-      usdPrice: Double
-    ): Future[ErrorCode]
-
   def getTokens(addresses: Seq[String]): Future[Seq[TokenMetadata]]
 
   def getTokens(): Future[Seq[TokenMetadata]]
