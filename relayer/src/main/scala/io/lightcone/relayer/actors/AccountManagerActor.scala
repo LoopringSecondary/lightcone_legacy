@@ -64,8 +64,6 @@ class AccountManagerActor(
   val timer = KamonSupport.timer("account_manager")
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-  implicit val uoProcessor: UpdatedOrdersProcessor = this
-  implicit val uaProcessor: UpdatedAccountsProcessor = this
 
   val manager = AccountManager.default(owner)
   val accountCutoffState = new AccountCutoffStateImpl()

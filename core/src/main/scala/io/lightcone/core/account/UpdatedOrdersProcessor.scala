@@ -19,8 +19,7 @@ package io.lightcone.core
 import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
 
-trait UpdatedOrdersProcessor {
-  implicit val ec: ExecutionContext
+abstract class UpdatedOrdersProcessor()(implicit val ec: ExecutionContext) {
 
   def processUpdatedOrder(
       trackOrderUpdated: Boolean,

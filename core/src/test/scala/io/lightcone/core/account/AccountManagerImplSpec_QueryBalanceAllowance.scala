@@ -17,16 +17,18 @@
 package io.lightcone.core
 
 class AccountManagerImplSpec_QueryBalanceAllowance
-  extends AccountManagerImplSpec {
+    extends AccountManagerImplSpec {
 
   "query balance/allowance" should "get data from Ethereum for the first time but not later" in {
     setBalanceAllowance(owner, LRC, 100, 200)
 
     manager.getBalanceOfToken(LRC).await should be(
-      BalanceOfToken(LRC, 100, 200, 100, 200, 0))
+      BalanceOfToken(LRC, 100, 200, 100, 200, 0)
+    )
 
     manager.getBalanceOfToken(LRC).await should be(
-      BalanceOfToken(LRC, 100, 200, 100, 200, 0))
+      BalanceOfToken(LRC, 100, 200, 100, 200, 0)
+    )
   }
 
   "query balance/allowance" should "get data for mutiple tokens" in {

@@ -39,23 +39,27 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
         numAttempts = 12, // keep as-is
         walletSplitPercentage = 0.3, // keep as-is
         _reserved = Some(MatchableState(-1, -1, -1)), // update
-        _actual = Some(MatchableState(-2, -2, -2))) // update
+        _actual = Some(MatchableState(-2, -2, -2))
+      ) // update
     } {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(100, 0, 0)),
-        _actual = Some(MatchableState(100, 1, 0)))
+        _actual = Some(MatchableState(100, 1, 0))
+      )
     }
 
     manager.getBalanceOfToken(LRC).await should be(
-      BalanceOfToken(LRC, 1000, 1000, 900, 900, 1))
+      BalanceOfToken(LRC, 1000, 1000, 900, 900, 1)
+    )
 
     softCancelSingleOrderExpectingSuccess(order.id) {
       order.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
     }
 
     manager.getBalanceOfToken(LRC).await should be(
-      BalanceOfToken(LRC, 1000, 1000, 1000, 1000, 0))
+      BalanceOfToken(LRC, 1000, 1000, 1000, 1000, 0)
+    )
 
   }
 
@@ -69,7 +73,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(250, 0, 0)),
-        _actual = Some(MatchableState(250, 15, 0)))
+        _actual = Some(MatchableState(250, 15, 0))
+      )
     }
 
     softCancelSingleOrderExpectingSuccess(order.id) {
@@ -79,18 +84,19 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
 
   "If fee >0 and tokenFee != tokenS & tokenFee != tokenB, submitOrder" should
     "fail when tokenS balance/allowance is 0" in {
-      setSpendable(owner, LRC, 0)
-      setSpendable(owner, GTO, 100)
+    setSpendable(owner, LRC, 0)
+    setSpendable(owner, GTO, 100)
 
-      submitSingleOrderExpectingFailure {
-        owner |> 100.0.lrc --> 1.0.weth -- 10.gto
-      } {
-        _.copy(
-          status = STATUS_SOFT_CANCELLED_LOW_BALANCE,
-          _reserved = Some(MatchableState(0, 0, 10)),
-          _actual = Some(MatchableState(0, 0, 0)))
-      }
+    submitSingleOrderExpectingFailure {
+      owner |> 100.0.lrc --> 1.0.weth -- 10.gto
+    } {
+      _.copy(
+        status = STATUS_SOFT_CANCELLED_LOW_BALANCE,
+        _reserved = Some(MatchableState(0, 0, 10)),
+        _actual = Some(MatchableState(0, 0, 0))
+      )
     }
+  }
 
   it should "fail when tokenFee balance/allowance is 0" in {
     setSpendable(owner, LRC, 1000)
@@ -102,7 +108,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_SOFT_CANCELLED_LOW_BALANCE,
         _reserved = Some(MatchableState(100, 0, 0)),
-        _actual = Some(MatchableState(0, 0, 0)))
+        _actual = Some(MatchableState(0, 0, 0))
+      )
     }
   }
 
@@ -117,7 +124,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(100, 0, 5)),
-        _actual = Some(MatchableState(100, 1, 5)))
+        _actual = Some(MatchableState(100, 1, 5))
+      )
     }
   }
   it should "succeed when tokenS is suffcient but tokenFee is not" in {
@@ -130,7 +138,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(500, 0, 20)),
-        _actual = Some(MatchableState(500, 5, 10)))
+        _actual = Some(MatchableState(500, 5, 10))
+      )
     }
   }
 
@@ -145,7 +154,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(1000, 0, 10)),
-        _actual = Some(MatchableState(500, 5, 10)))
+        _actual = Some(MatchableState(500, 5, 10))
+      )
     }
   }
 
@@ -159,7 +169,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(400, 0, 10)),
-        _actual = Some(MatchableState(400, 16, 8)))
+        _actual = Some(MatchableState(400, 16, 8))
+      )
     }
   }
 
@@ -182,7 +193,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(990, 0, 10)),
-        _actual = Some(MatchableState(990, 20, 10)))
+        _actual = Some(MatchableState(990, 20, 10))
+      )
     }
   }
 
@@ -195,20 +207,21 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(495, 0, 5)),
-        _actual = Some(MatchableState(495, 10, 5)))
+        _actual = Some(MatchableState(495, 10, 5))
+      )
     }
   }
 
   "If fee > 0 and tokenFee == tokenB, submitOrder" should
     "fail when tokenS balance/allowance is 0" in {
-      setSpendable(owner, LRC, 0)
+    setSpendable(owner, LRC, 0)
 
-      submitSingleOrderExpectingFailure {
-        owner |> 1000.0.lrc --> 20.0.weth -- 4.0.weth
-      } {
-        _.copy(status = STATUS_SOFT_CANCELLED_LOW_BALANCE)
-      }
+    submitSingleOrderExpectingFailure {
+      owner |> 1000.0.lrc --> 20.0.weth -- 4.0.weth
+    } {
+      _.copy(status = STATUS_SOFT_CANCELLED_LOW_BALANCE)
     }
+  }
 
   it should "succeed when amountFee <= amountB  and not attemp to reserve the fee token" in {
     setSpendable(owner, LRC, 2000)
@@ -219,7 +232,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(1000, 0, 0)),
-        _actual = Some(MatchableState(1000, 20, 4)))
+        _actual = Some(MatchableState(1000, 20, 4))
+      )
     }
   }
 
@@ -233,7 +247,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_SOFT_CANCELLED_LOW_BALANCE,
         _reserved = Some(MatchableState(1000, 0, 0)),
-        _actual = Some(MatchableState(0, 0, 0)))
+        _actual = Some(MatchableState(0, 0, 0))
+      )
     }
   }
 
@@ -247,7 +262,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(1000, 0, 10)),
-        _actual = Some(MatchableState(500, 10, 20)))
+        _actual = Some(MatchableState(500, 10, 20))
+      )
     }
   }
 
@@ -261,7 +277,8 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(1000, 0, 20)),
-        _actual = Some(MatchableState(1000, 20, 40)))
+        _actual = Some(MatchableState(1000, 20, 40))
+      )
     }
   }
 
