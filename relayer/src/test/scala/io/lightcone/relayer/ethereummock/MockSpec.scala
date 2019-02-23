@@ -24,7 +24,7 @@ import akka.util.Timeout
 import io.lightcone.lib.SystemTimeProvider
 import io.lightcone.relayer.data.{AccountBalance, GetAccount}
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.WordSpecLike
+import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -32,7 +32,14 @@ import scala.concurrent.duration._
 class MockSpec
     extends TestKit(ActorSystem("Lightcone"))
     with WordSpecLike
-    with MockFactory {
+    with MockFactory
+    with BeforeAndAfterAll {
+
+  override def afterAll: Unit = {
+    super.afterAll()
+    TestKit.shutdownActorSystem(system, 10.seconds, false)
+  }
+
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
 
@@ -50,7 +57,9 @@ class MockSpec
         system.actorOf(Props(new MockEthereumQueryActor()))
       val req1 = GetAccount.Req("0xaaa")
       (dataProvider.getAccount _)
-        .expects(req1)
+        .expects(where { req2: GetAccount.Req =>
+          req2.address == req1.address
+        })
         .returns(
           GetAccount.Res(Some(AccountBalance(address = "0xbbb", nonce = 190)))
         )
@@ -61,11 +70,6 @@ class MockSpec
       )
 
       info(s"${res1}")
-      val res2 = Await.result(
-        (ethereumQueryActor ? GetAccount.Req("0xbadfa")).mapTo[GetAccount.Res],
-        timeout.duration
-      )
-      info(s"${res2}")
     }
   }
 }
