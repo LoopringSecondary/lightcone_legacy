@@ -81,7 +81,6 @@ class CoreDeployer @Inject()(
       case (name, actor) => actors.add(name, actor)
     }
 
-    // TODO:需要再次确认启动依赖顺序问题
     var inited = false
     while (!inited) {
       try {
