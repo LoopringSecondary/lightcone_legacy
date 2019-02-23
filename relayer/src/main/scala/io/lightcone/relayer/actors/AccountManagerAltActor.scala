@@ -217,25 +217,27 @@ class AccountManagerAltActor(
 
         f1.sendTo(sender)
       }
-
-    case GetBalanceAndAllowances.Req(addr, tokens, _) =>
-      count.refine("label" -> "get_balance_allowance").increment()
-      blocking(timer, "get_balance_allowance") {
+    case GetAccount.Req(addr, tokens) =>
+      count.refine("label" -> "get_account").increment()
+      blocking(timer, "get_account") {
         (for {
+          _ <- Future { assert(addr == owner) }
           accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
           _ = assert(tokens.size == accountInfos.size)
-          balanceAndAllowanceMap = accountInfos.map { i =>
+          tokenBalances = accountInfos.map { i =>
             i.token -> i
           }.toMap.map {
             case (token, ai) =>
-              token -> BalanceAndAllowance(
+              token -> AccountBalance.TokenBalance(
+                token,
                 ai.balance,
                 ai.allowance,
                 ai.availableBalance,
                 ai.availableAllowance
               )
           }
-          result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
+          //TODO(HONGYU):确认nonce的更新以及使用方式
+          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances, 0)))
         } yield result).sendTo(sender)
       }
 
@@ -415,9 +417,7 @@ class AccountManagerAltActor(
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {
-    println(s"##### rawOrder ${rawOrder}")
     val order = rawOrder.toOrder
-    println(s"#### order ${order}")
     val orderId = order.id
     val matchable: Matchable = order
     log.debug(s"### submitOrder ${order}")
