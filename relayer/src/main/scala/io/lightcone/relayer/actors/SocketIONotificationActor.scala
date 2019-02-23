@@ -108,7 +108,7 @@ class SocketIONotificationActor @Inject()(
       orderBookNotifier.notifyEvent(event)
     case event: RawOrder =>
       orderNotifier.notifyEvent(event)
-    case event: TokenMetadataUpdate =>
+    case event: TokenMetadata =>
       tokensNotifier.notifyEvent(event)
     case event: ExternalMarketTickerInfo =>
       tickerNotifier.notifyEvent(event)

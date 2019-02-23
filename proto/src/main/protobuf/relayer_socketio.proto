@@ -28,30 +28,6 @@ message AccountUpdate {
     int32  nonce                        = 3;
 }
 
-message OrderUpdate {
-    string order_id                                 = 1;
-    string owner                                    = 2;
-    io.lightcone.core.MarketPair   market_pair      = 3;
-    io.lightcone.core.OrderStatus  status           = 4;
-    io.lightcone.relayer.data.OrderState state      = 5;
-}
-
-
-message TokenMetadataUpdate{
-    string   status                 = 1;
-    string   address                = 2;
-    string   website_url            = 3;
-    int32    precision              = 4;
-    double   burn_rate_for_market   = 5;
-    double   burn_rate_for_p2p      = 6;
-    double   usd_price              = 7;
-    int64    updated_at             = 8;
-}
-
-message News {
-
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // socketio subscription
 

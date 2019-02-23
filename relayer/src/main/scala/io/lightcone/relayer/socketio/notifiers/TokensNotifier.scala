@@ -18,8 +18,9 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
-import io.lightcone.relayer.data.{SocketIOSubscription, TokenMetadataUpdate}
-import io.lightcone.relayer.socketio.{SocketIONotifier, SocketIOSubscriber}
+import io.lightcone.core.TokenMetadata
+import io.lightcone.relayer.data.SocketIOSubscription
+import io.lightcone.relayer.socketio._
 
 class TokensNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForTokens] {
@@ -44,8 +45,8 @@ class TokensNotifier @Inject()
       event: AnyRef
     ): Boolean = {
     event match {
-      case _: TokenMetadataUpdate => true
-      case _                      => false
+      case _: TokenMetadata => true
+      case _                => false
     }
   }
 

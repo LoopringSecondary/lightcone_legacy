@@ -31,7 +31,7 @@ class SocketServer(
   socketConfig.setHostname(selfConfig.getString("host"))
   socketConfig.setPort(selfConfig.getInt("port"))
 
-  val jsonSupport = new ProtoJacksonSupport(
+  val jsonSupport = new ProtoJsonSupport(
     new JacksonJsonSupport(DefaultScalaModule)
   )
   socketConfig.setJsonSupport(jsonSupport)

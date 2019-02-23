@@ -29,7 +29,7 @@ import org.json4s._
 import scalapb.GeneratedMessage
 import scalapb.json4s._
 
-class ProtoJacksonSupport(delegate: JacksonJsonSupport) extends JsonSupport {
+class ProtoJsonSupport(delegate: JacksonJsonSupport) extends JsonSupport {
 
   val formatRegistry =
     JsonFormat.DefaultRegistry
@@ -56,6 +56,7 @@ class ProtoJacksonSupport(delegate: JacksonJsonSupport) extends JsonSupport {
     ): AckArgs =
     delegate.readAckArgs(src, callback)
 
+  //TODO(yadong)采用json4s 实现，使支持16进制字符串
   @throws[IOException]
   def readValue[T](
       namespaceName: String,
