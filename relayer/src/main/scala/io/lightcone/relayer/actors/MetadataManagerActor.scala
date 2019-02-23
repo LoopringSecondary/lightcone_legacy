@@ -64,6 +64,7 @@ class MetadataManagerActor(
     with ActorLogging {
   import ErrorCode._
 
+  def cmcCrawlerActor = actors.get(CMCCrawlerActor.name)
   val selfConfig = config.getConfig(MetadataManagerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
@@ -71,14 +72,18 @@ class MetadataManagerActor(
   val mediator = DistributedPubSub(context.system).mediator
   private def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
-  private var tokens = Seq.empty[TokenMetadata]
+  private var tokenMetadatas = Seq.empty[TokenMetadata]
+  private var tokenTickers = Seq.empty[TokenTicker]
   private var markets = Seq.empty[MarketMetadata]
 
   override def initialize() = {
     val f = for {
-      tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokens()
+      tokenTickers_ <- (cmcCrawlerActor ? GetTokenTickers.Req())
+        .mapTo[GetTokenTickers.Res]
+        .map(_.tickers)
       markets_ <- dbModule.marketMetadataDal.getMarkets()
-      tokensUpdated <- Future.sequence(tokens_.map { token =>
+      tokensUpdated <- Future.sequence(tokenMetadatas_.map { token =>
         for {
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
@@ -99,10 +104,11 @@ class MetadataManagerActor(
       })
     } yield {
       assert(tokensUpdated nonEmpty)
+      assert(tokenTickers_ nonEmpty)
       assert(markets_ nonEmpty)
-      tokens = tokensUpdated.map(MetadataManager.normalize)
+      tokenMetadatas = tokensUpdated.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
-      metadataManager.reset(tokens, markets)
+      metadataManager.reset(tokenMetadatas, tokenTickers_, markets)
     }
     f onComplete {
       case Success(_) =>
@@ -195,7 +201,7 @@ class MetadataManagerActor(
       }).sendTo(sender)
 
     case _: LoadTokenMetadata.Req =>
-      sender ! LoadTokenMetadata.Res(tokens)
+      sender ! LoadTokenMetadata.Res(tokenMetadatas)
 
     case _: LoadMarketMetadata.Req =>
       sender ! LoadMarketMetadata.Res(markets)
@@ -213,9 +219,9 @@ class MetadataManagerActor(
     ): Unit = {
     var notify = false
     tokensOpt foreach { tokens_ =>
-      if (tokens_ != tokens) {
+      if (tokens_ != tokenMetadatas) {
         notify = true
-        tokens = tokens_
+        tokenMetadatas = tokens_
       }
     }
 
