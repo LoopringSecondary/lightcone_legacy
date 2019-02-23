@@ -73,6 +73,7 @@ class CoreModule(
 
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
+      "dbconfig-dal-token-info",
       "dbconfig-dal-order",
       "dbconfig-dal-trade",
       "dbconfig-dal-ring",
@@ -94,6 +95,7 @@ class CoreModule(
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
+    bind[TokenInfoDal].to[TokenInfoDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
     bind[ExternalTickerDal]
       .to[ExternalTickerDalImpl]

@@ -63,6 +63,7 @@ class MetadataRefresher(
     with Stash
     with ActorLogging {
   def metadataManagerActor = actors.get(MetadataManagerActor.name)
+  def cmcCrawlerActor = actors.get(CMCCrawlerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
 
