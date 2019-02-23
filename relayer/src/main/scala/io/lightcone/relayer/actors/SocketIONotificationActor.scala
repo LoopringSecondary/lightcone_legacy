@@ -52,10 +52,10 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       orderBookNotifier: SocketIONotifier[
         SocketIOSubscription.ParamsForOrderbook
       ],
-      tokenMetadataNotifier: SocketIONotifier[
+      tokensNotifier: SocketIONotifier[
         SocketIOSubscription.ParamsForTokens
       ],
-      marketMetadataNotifier: SocketIONotifier[
+      marketsNotifier: SocketIONotifier[
         SocketIOSubscription.ParamsForMarkets
       ],
       deployActorsIgnoringRoles: Boolean
@@ -85,10 +85,10 @@ class SocketIONotificationActor @Inject()(
     val orderBookNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForOrderbook
     ],
-    val tokenNotifier: SocketIONotifier[
+    val tokensNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForTokens
     ],
-    val marketNotifier: SocketIONotifier[
+    val marketsNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForMarkets
     ])
     extends Actor {
@@ -103,13 +103,13 @@ class SocketIONotificationActor @Inject()(
     case fill: Fill =>
       fillNotifier.notifyEvent(fill)
     case event: MarketMetadata =>
-      marketNotifier.notifyEvent(event)
+      marketsNotifier.notifyEvent(event)
     case event: Orderbook.Update =>
       orderBookNotifier.notifyEvent(event)
     case event: RawOrder =>
       orderNotifier.notifyEvent(event)
     case event: TokenMetadataUpdate =>
-      tokenNotifier.notifyEvent(event)
+      tokensNotifier.notifyEvent(event)
     case event: ExternalMarketTickerInfo =>
       tickerNotifier.notifyEvent(event)
   }

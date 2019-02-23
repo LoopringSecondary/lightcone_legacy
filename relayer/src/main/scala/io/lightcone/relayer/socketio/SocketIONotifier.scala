@@ -18,6 +18,8 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.listener.DataListener
+import io.lightcone.core.ErrorCode
+import io.lightcone.relayer.data.SocketIOSubscription
 import org.slf4s.Logging
 
 abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
@@ -56,13 +58,21 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
     ): Unit = {
     if (isSubscriptionValid(subscription)) {
       if (ackSender.isAckRequested) {
-        ackSender.sendAckData(s"$eventName:$subscription events subscribed")
+        ackSender.sendAckData(
+          SocketIOSubscription
+            .Ack(message = s"$eventName:$subscription event subscribed")
+        )
       }
       val wrapped = wrapClient(client, subscription)
       clients = wrapped +: clients.filterNot(_ == wrapped)
     } else {
       if (ackSender.isAckRequested) {
-        ackSender.sendAckData(s"$eventName:$subscription is invalid")
+        ackSender.sendAckData(
+          SocketIOSubscription.Ack(
+            error = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
+            s"$eventName:$subscription is invalid"
+          )
+        )
       }
     }
   }

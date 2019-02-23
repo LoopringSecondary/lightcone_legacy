@@ -33,7 +33,7 @@ import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.data.{Notify, SocketIOSubscription}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
@@ -80,10 +80,10 @@ class CoreDeployer @Inject()(
     orderBookNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForOrderbook
     ],
-    tokenMetadataNotifier: SocketIONotifier[
+    tokensNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForTokens
     ],
-    marketMetadataNotifier: SocketIONotifier[
+    marketsNotifier: SocketIONotifier[
       SocketIOSubscription.ParamsForMarkets
     ],
     system: ActorSystem)
@@ -321,11 +321,11 @@ class CoreDeployer @Inject()(
           )
           .addNotifier(
             classOf[SocketIOSubscription.ParamsForTokens],
-            tokenMetadataNotifier
+            tokensNotifier
           )
           .addNotifier(
             classOf[SocketIOSubscription.ParamsForMarkets],
-            marketMetadataNotifier
+            marketsNotifier
           )
           .start()
       }

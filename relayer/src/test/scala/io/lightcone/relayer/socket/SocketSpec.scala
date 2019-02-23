@@ -28,20 +28,20 @@ class SocketSpec
   "socket server  test" must {
     "socket server starts normally and can subscriber and received correct data" in {
 
-      def socketNotifier = actors.get(SocketIONotificationActor.name)
-      Thread.sleep(10 * 1000)
-
-      socketNotifier ! TokenMetadataUpdate(
-        address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
-        status = "1"
-      )
-      Thread.sleep(2 * 1000)
-
-      socketNotifier ! TokenMetadataUpdate(
-        address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
-        status = "3"
-      )
-      Thread.sleep(20 * 1000)
+//      def socketNotifier = actors.get(SocketIONotificationActor.name)
+//      Thread.sleep(10 * 1000)
+//
+//      socketNotifier ! TokenMetadataUpdate(
+//        address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
+//        status = "1"
+//      )
+//      Thread.sleep(2 * 1000)
+//
+//      socketNotifier ! TokenMetadataUpdate(
+//        address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
+//        status = "3"
+//      )
+//      Thread.sleep(20 * 1000)
     }
   }
 }
