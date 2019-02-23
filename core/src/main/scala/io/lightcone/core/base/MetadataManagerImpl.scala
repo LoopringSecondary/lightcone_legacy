@@ -93,4 +93,5 @@ final class MetadataManagerImpl(
   def getMarkets(status: MarketMetadata.Status*): Seq[MarketMetadata] = {
     marketMap.values.filter(m => status.contains(m.status)).toSeq
   }
+
 }

@@ -16,8 +16,8 @@
 
 package io.lightcone.core
 
-import io.lightcone.ethereum.event.TokenBurnRateChangedEvent.BurnRate
 import io.lightcone.lib._
+import io.lightcone.ethereum.event.TokenBurnRateChangedEvent.BurnRate
 
 object MetadataManager {
 
@@ -105,4 +105,5 @@ trait MetadataManager {
       marketPair: MarketPair,
       statuses: MarketMetadata.Status*
     ): Unit = assertMarketStatus(MarketHash(marketPair).toString, statuses: _*)
+  
 }
