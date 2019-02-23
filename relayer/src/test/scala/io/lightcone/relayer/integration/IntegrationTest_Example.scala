@@ -19,6 +19,7 @@ package io.lightcone.relayer
 import io.lightcone.core._
 import io.lightcone.relayer.data.{AccountBalance, BatchGetCutoffs, GetAccount}
 import akka.pattern._
+import io.lightcone.ethereum.event.AddressBalanceUpdatedEvent
 
 import scala.concurrent.Await
 
@@ -58,8 +59,11 @@ class IntegrationTest_Example extends IntegrationTest with testing.Constants {
       .expects(*)
       .returns(BatchGetCutoffs.Res())
       .anyNumberOfTimes()
-
     val res11 = Await.result(entrypoint ? req, timeout.duration)
+
+    //发送事件，只是示例，但是没有检查结果
+    val event = AddressBalanceUpdatedEvent()
+    eventDispatcher.dispatch(event)
 
     info(s"success, ${res11}")
   }

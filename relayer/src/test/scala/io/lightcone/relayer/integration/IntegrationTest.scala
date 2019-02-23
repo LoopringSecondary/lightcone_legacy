@@ -24,6 +24,7 @@ import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.actors.EntryPointActor
 import io.lightcone.relayer.base.Lookup
+import io.lightcone.relayer.ethereum.{EventDispatcher, EventDispatcherImpl}
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.scalamock.scalatest.MockFactory
 
@@ -53,6 +54,7 @@ class IntegrationTest
 
   private var injector: Injector = _
   private var entrypointActor: ActorRef = _
+  var eventDispatcher:EventDispatcher = _
 
   def entrypoint() = entrypointActor
 
@@ -79,6 +81,7 @@ class IntegrationTest
 
     Thread.sleep(5000) //waiting for system ready
 
+    eventDispatcher = injector.instance[EventDispatcher]
     entrypointActor =
       injector.instance[Lookup[ActorRef]].get(EntryPointActor.name)
 
