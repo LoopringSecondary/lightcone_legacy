@@ -26,7 +26,7 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
-trait AccountManagerUpdatedOrdersProcessor extends UpdatedOrdersProcessor {
+trait AccountManagerActorProcessors extends UpdatedOrdersProcessor {
   me: Actor with ActorLogging =>
 
   implicit val timeout: Timeout
@@ -37,8 +37,12 @@ trait AccountManagerUpdatedOrdersProcessor extends UpdatedOrdersProcessor {
   import OrderStatus._
 
   def marketManagerActor: ActorRef
+  def chainReorgManagerActor: ActorRef
 
-  def processOrder(order: Matchable): Future[Any] = {
+  def processOrder(
+      trackOrderUpdated: Boolean,
+      order: Matchable
+    ): Future[Any] = {
     val state = RawOrder.State(
       actualAmountS = order.actual.amountS,
       actualAmountB = order.actual.amountB,
@@ -98,6 +102,12 @@ trait AccountManagerUpdatedOrdersProcessor extends UpdatedOrdersProcessor {
             ERR_INVALID_ORDER_DATA,
             s"unexpected order status: $status in: $order"
           )
+      }
+      _ = if (trackOrderUpdated) {
+        chainReorgManagerActor ! reorg.RecordOrderUpdateReq(
+          order.block,
+          Seq(order.id)
+        )
       }
     } yield Unit
   }

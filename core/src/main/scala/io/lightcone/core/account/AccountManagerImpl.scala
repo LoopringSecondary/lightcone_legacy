@@ -21,23 +21,23 @@ import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
 
 // This class is not thread safe.
-final class AccountManagerAltImpl(
+final class AccountManagerImpl(
     val owner: String,
     enableTracing: Boolean = false
   )(
     implicit
-    processor: UpdatedOrdersProcessor,
+    updatedOrdersProcessor: UpdatedOrdersProcessor,
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
-    extends AccountManagerAlt
+    extends AccountManager
     with Logging {
 
   import OrderStatus._
   import ErrorCode._
 
-  type ReserveManagerMethod = ReserveManagerAlt => Set[String]
+  type ReserveManagerMethod = ReserveManager => Set[String]
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-  private implicit var tokens = Map.empty[String, ReserveManagerAlt]
+  private implicit var tokens = Map.empty[String, ReserveManager]
 
   def getNumOfOrders() = orderPool.size
 
@@ -88,7 +88,7 @@ final class AccountManagerAltImpl(
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processOrders(updatedOrders)
+      _ <- updatedOrdersProcessor.processOrders(true, updatedOrders)
     } yield (successful, updatedOrders)
   }
 
@@ -122,7 +122,7 @@ final class AccountManagerAltImpl(
     }
 
   def purgeOrders(marketPair: MarketPair) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, true) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, None, true) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
         (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
@@ -159,23 +159,32 @@ final class AccountManagerAltImpl(
 
   private def setBalanceAndAllowanceInternal(
       token: String
-    )(method: ReserveManagerAlt => Set[String]
+    )(method: ReserveManager => Set[String]
     ): Future[Map[String, Matchable]] = {
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
+      lastBlock = manager.getLastBlock
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
-        ordersToDelete
-      )
+      _ <- cancelOrderInternal(
+        STATUS_SOFT_CANCELLED_LOW_BALANCE,
+        Some(lastBlock)
+      )(ordersToDelete)
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processOrders(updatedOrders)
+      _ <- updatedOrdersProcessor.processOrders(true, updatedOrders)
+
+      // _ <- {
+      //   if (lastBlockNumber == blockNumber) Future.unit
+      //   else updatedAccountsProcessor.processAccount(blockNumber, owner, token)
+      // }
+
     } yield updatedOrders
   }
 
   private def cancelOrderInternal(
       status: OrderStatus,
+      blockOpt: Option[Long] = None,
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
@@ -210,7 +219,11 @@ final class AccountManagerAltImpl(
         updatedOrders = orderPool.takeUpdatedOrders
         _ <- {
           if (skipProcessingUpdatedOrders) Future.unit
-          else processor.processOrders(updatedOrders)
+          else
+            updatedOrdersProcessor.processOrders(
+              blockOpt.isDefined,
+              updatedOrders
+            )
         }
       } yield updatedOrders
     }
@@ -241,7 +254,7 @@ final class AccountManagerAltImpl(
   private def getReserveManagers(
       tokens_ : Set[String],
       mustReturn: Boolean
-    ): Future[Map[String, ReserveManagerAlt]] = {
+    ): Future[Map[String, ReserveManager]] = {
     val (existing, missing) = tokens_.partition(tokens.contains)
     val existingManagers =
       existing.map(tokens.apply).map(m => m.token -> m).toMap
@@ -256,7 +269,7 @@ final class AccountManagerAltImpl(
         tuples = missing.zip(balanceAndAllowances)
         newManagers = tuples.map {
           case (token, (balance, allowance)) =>
-            val manager = ReserveManagerAlt.default(token, enableTracing)
+            val manager = ReserveManager.default(token, enableTracing)
             manager.setBalanceAndAllowance(balance, allowance)
             tokens += token -> manager
             token -> manager
@@ -269,13 +282,13 @@ final class AccountManagerAltImpl(
   private def getReserveManagerOption(
       token: String,
       mustReturn: Boolean
-    ): Future[Option[ReserveManagerAlt]] = {
+    ): Future[Option[ReserveManager]] = {
     if (tokens.contains(token)) Future.successful(Some(tokens(token)))
     else if (!mustReturn) Future.successful(None)
     else {
       provider.getBalanceAndALlowance(owner, token).map { result =>
         val (balance, allowance) = result
-        val manager = ReserveManagerAlt.default(token, enableTracing)
+        val manager = ReserveManager.default(token, enableTracing)
         manager.setBalanceAndAllowance(balance, allowance)
         tokens += token -> manager
         Some(manager)

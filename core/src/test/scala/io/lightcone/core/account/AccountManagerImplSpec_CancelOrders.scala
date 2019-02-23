@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
+class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
   import OrderStatus._
 
   "cancelling non-existing orders" should "return empty result" in {

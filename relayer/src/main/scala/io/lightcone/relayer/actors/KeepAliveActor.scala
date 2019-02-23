@@ -65,9 +65,12 @@ class KeepAliveActor @Inject()(
   import MarketMetadata.Status._
   val numsOfAccountShards = config.getInt("multi_account_manager.num-of-shards")
 
-  def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  def marketManagerActor = actors.get(MarketManagerActor.name)
-  def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
+  @inline @inline def orderbookManagerActor =
+    actors.get(OrderbookManagerActor.name)
+  @inline def marketManagerActor = actors.get(MarketManagerActor.name)
+
+  @inline def multiAccountManagerActor =
+    actors.get(MultiAccountManagerActor.name)
 
   val repeatedJobs = Seq(
     Job(

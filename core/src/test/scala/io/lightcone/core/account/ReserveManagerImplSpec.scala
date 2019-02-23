@@ -18,10 +18,10 @@ package io.lightcone.core
 
 import io.lightcone.core.testing._
 
-class ReserveManagerAltImplSpec extends CommonSpec {
+class ReserveManagerImplSpec extends CommonSpec {
 
   implicit val token = "ABC"
-  var manager: ReserveManagerAltImpl = _
+  var manager: ReserveManagerImpl = _
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
@@ -40,18 +40,18 @@ class ReserveManagerAltImplSpec extends CommonSpec {
   }
 
   override def beforeEach(): Unit = {
-    manager = new ReserveManagerAltImpl(token)
+    manager = new ReserveManagerImpl(token)
     proccssedOrderIds = Seq.empty
   }
 
-  "ReserveManagerAltImpl" should "not reserve in 0 balance or allowance" in {
+  "ReserveManagerImpl" should "not reserve in 0 balance or allowance" in {
     var result = manager.reserve("order1", 100)
     result should be(Set("order1"))
     manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
     proccssedOrderIds should be(Nil)
   }
 
-  "ReserveManagerAltImpl" should "partially reserve and scale up " in {
+  "ReserveManagerImpl" should "partially reserve and scale up " in {
     // Set balance big enought, but allowance a bit smaller than 100
     manager.setBalanceAndAllowance(110, 80)
     var result = manager.reserve("order1", 100)
@@ -171,7 +171,7 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     )
   }
 
-  "ReserveManagerAltImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
+  "ReserveManagerImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
     manager.setBalanceAndAllowance(100, 110)
 
     var result = manager.reserve("order1", 50)
@@ -196,7 +196,7 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     proccssedOrderIds should be(Nil)
   }
 
-  "ReserveManagerAltImpl" should "release multiple orders in one operation" in {
+  "ReserveManagerImpl" should "release multiple orders in one operation" in {
     manager.setBalanceAndAllowance(95, 95)
 
     // create 10 orders

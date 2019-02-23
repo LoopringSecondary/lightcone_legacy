@@ -92,9 +92,9 @@ class OrderbookManagerActor(
     }
 
   def marketMetadata = metadataManager.getMarket(marketPair)
-  def marketManagerActor = actors.get(MarketManagerActor.name)
   val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
+  @inline def marketManagerActor = actors.get(MarketManagerActor.name)
 
   val repeatedJobs = Seq(
     Job(

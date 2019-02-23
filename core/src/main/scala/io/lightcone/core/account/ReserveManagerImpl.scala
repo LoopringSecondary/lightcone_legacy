@@ -21,15 +21,15 @@ import scala.collection.mutable.ListBuffer
 import java.util.concurrent.atomic.AtomicInteger
 
 // This class is not thread safe.
-// orderOrdersHavePriority = true
+// olderOrdersHavePriority = true
 // allowPartialReserve = true
-private[core] final class ReserveManagerAltImpl(
+private[core] final class ReserveManagerImpl(
     val token: String,
     enableTracing: Boolean = false
   )(
     implicit
     eventHandler: ReserveEventHandler)
-    extends ReserveManagerAlt
+    extends ReserveManager
     with Logging {
   implicit private val t = token
 
@@ -42,6 +42,7 @@ private[core] final class ReserveManagerAltImpl(
   protected var balance: BigInt = 0
   protected var spendable: BigInt = 0
   protected var reserved: BigInt = 0
+  protected var lastBlock: Long = 0
 
   protected var reserves = List.empty[Reserve]
 
@@ -60,6 +61,8 @@ private[core] final class ReserveManagerAltImpl(
       result
     }
   }
+
+  @inline def getLastBlock() = lastBlock
 
   def getAccountInfo() =
     AccountInfo(

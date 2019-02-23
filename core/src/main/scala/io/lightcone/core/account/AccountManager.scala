@@ -20,7 +20,7 @@ import io.lightcone.core.OrderStatus._
 
 import scala.concurrent._
 
-object AccountManagerAlt {
+object AccountManager {
 
   def default(
       owner: String,
@@ -30,10 +30,10 @@ object AccountManagerAlt {
       processor: UpdatedOrdersProcessor,
       provider: BalanceAndAllowanceProvider,
       ec: ExecutionContext
-    ): AccountManagerAlt = new AccountManagerAltImpl(owner)
+    ): AccountManager = new AccountManagerImpl(owner)
 }
 
-trait AccountManagerAlt {
+trait AccountManager {
   val owner: String
 
   def getNumOfOrders(): Int

@@ -43,6 +43,7 @@ case class Matchable(
     validSince: Long = -1,
     submittedAt: Long = -1,
     numAttempts: Int = 0,
+    block: Long = 0,
     status: OrderStatus = OrderStatus.STATUS_NEW,
     walletSplitPercentage: Double = 0,
     _outstanding: Option[MatchableState] = None,
