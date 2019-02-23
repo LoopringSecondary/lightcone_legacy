@@ -80,7 +80,7 @@ message AddressBalanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
     io.lightcone.core.Amount balance   = 3;
-    int64 block_num = 4;
+    int64 block = 4;
 }
 
 message AddressAllowanceUpdatedEvent {

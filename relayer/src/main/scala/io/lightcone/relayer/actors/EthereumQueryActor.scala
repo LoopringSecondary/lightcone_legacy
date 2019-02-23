@@ -76,7 +76,7 @@ class EthereumQueryActor(
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
-    case req @ GetAccount.Req(owner, tokens) =>
+    case req @ GetAccount.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
         brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))
@@ -85,19 +85,21 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
         allowances = allowanceResps.map { res =>
-          Amount(NumericConversion.toBigInt(res.result), batchRes.blockNum)
+          Amount(NumericConversion.toBigInt(res.result), batchRes.block)
         }
         balances = balanceResps.map { res =>
-          Amount(NumericConversion.toBigInt(res.result), batchRes.blockNum)
+          Amount(NumericConversion.toBigInt(res.result), batchRes.block)
         }
-        balanceAndAllowance = (balances zip allowances).map { ba =>
-          BalanceAndAllowance(Some(ba._1), Some(ba._2))
-        }
-        result = GetBalanceAndAllowances
-          .Res(
-            owner,
-            (erc20Tokens zip balanceAndAllowance).toMap
-          )
+        tokenBalances = erc20Tokens.zipWithIndex.map { token =>
+          token._1 -> AccountBalance
+            .TokenBalance(
+              token._1,
+              Some(balances(token._2)),
+              Some(allowances(token._2))
+            )
+        }.toMap
+
+        accountBalance = AccountBalance(owner, tokenBalances, 0) //TODO(HONGYU):确定nonce的获取方式
 
         ethRes <- ethToken match {
           case head :: tail =>
@@ -113,23 +115,24 @@ class EthereumQueryActor(
           case Nil => Future.successful(None)
         }
 
-        finalResult = if (ethRes.isDefined) {
-          val ethResult = ethToken.head -> BalanceAndAllowance(
-            balance = Some(
-              Amount(
-                NumericConversion.toBigInt(ethRes.get.resps.head.result),
-                ethRes.get.blockNum
-              )
-            ),
-            allowance = Some(Amount(BigInt(0), ethRes.get.blockNum))
-          )
-          result.copy(
-            balanceAndAllowanceMap = result.balanceAndAllowanceMap + ethResult
+        finalBalance = if (ethRes.isDefined) {
+          accountBalance.copy(
+            tokenBalanceMap = accountBalance.tokenBalanceMap +
+              (ethToken.head -> AccountBalance.TokenBalance(
+                Address.ZERO.toString(),
+                Some(
+                  Amount(
+                    NumericConversion.toBigInt(ethRes.get.resps.head.result),
+                    ethRes.get.block
+                  )
+                ),
+                Some(Amount(BigInt(0), ethRes.get.block))
+              ))
           )
         } else {
-          result
+          accountBalance
         }
-      } yield finalResult) sendTo sender
+      } yield GetAccount.Res(Some(finalBalance))) sendTo sender
 
     case req @ GetFilledAmount.Req(orderIds, _) =>
       batchCallEthereum(
@@ -142,7 +145,7 @@ class EthereumQueryActor(
             res =>
               Amount(
                 NumericConversion.toBigInt(res.result),
-                result.blockNum
+                result.block
               )
           )).toMap
         GetFilledAmount.Res(fills)
@@ -153,7 +156,7 @@ class EthereumQueryActor(
         result =>
           GetOrderCancellation.Res(
             NumericConversion.toBigInt(result.resps.head.result).intValue == 1,
-            result.blockNum
+            result.block
           )
       }
 
@@ -167,7 +170,7 @@ class EthereumQueryActor(
             cutoff = Some(
               Amount(
                 NumericConversion.toBigInt(result.resps.head.result),
-                result.blockNum
+                result.block
               )
             )
           )
@@ -179,7 +182,7 @@ class EthereumQueryActor(
             case (cutoffReq, res) =>
               val cutoff = Amount(
                 NumericConversion.toBigInt(res.result),
-                blockNum = result.blockNum
+                block = result.block
               )
               GetCutoff.Res(
                 cutoffReq.broker,
@@ -205,7 +208,7 @@ class EthereumQueryActor(
               GetBurnRate.Res(
                 forMarket = marketRate,
                 forP2P = p2pRate,
-                blockNum = result.blockNum
+                block = result.block
               )
             } else {
               throw ErrorException(

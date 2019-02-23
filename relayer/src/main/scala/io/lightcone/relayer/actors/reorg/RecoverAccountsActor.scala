@@ -20,10 +20,9 @@ import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.core._
-import io.lightcone.relayer.base._
 import io.lightcone.ethereum.event._
-import io.lightcone.core._
-import io.lightcone.relayer.data.GetBalanceAndAllowances
+import io.lightcone.relayer.base._
+import io.lightcone.relayer.data.GetAccount
 import org.slf4s.Logging
 
 import scala.concurrent._
@@ -45,10 +44,10 @@ class RecoverAccountsActor(
       log.debug(s"started recovering accounts [size=${accounts.size}]")
       accounts.foreach {
         case ChainReorganizationImpact.AccountInfo(address, tokens) =>
-          (query ? GetBalanceAndAllowances.Req(address, tokens))
-            .mapAs[GetBalanceAndAllowances.Res]
+          (query ? GetAccount.Req(address, tokens))
+            .mapAs[GetAccount.Res]
             .map { resp =>
-              resp.balanceAndAllowanceMap.foreach {
+              resp.getAccountBalance.tokenBalanceMap.foreach {
                 case (token, ba) =>
                   mama ! AddressBalanceAllowanceUpdatedEvent(
                     address = address,

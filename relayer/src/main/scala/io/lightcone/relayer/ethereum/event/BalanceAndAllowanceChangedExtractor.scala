@@ -381,7 +381,7 @@ trait BalanceUpdatedSuppot {
                   res =>
                     Amount(
                       NumericConversion.toBigInt(res.result),
-                      resp.blockNum
+                      resp.block
                     )
                 )
           )
@@ -415,7 +415,7 @@ trait BalanceUpdatedSuppot {
                   res =>
                     Amount(
                       NumericConversion.toBigInt(res.result),
-                      resp.blockNum
+                      resp.block
                     )
                 )
           )
@@ -435,7 +435,7 @@ trait BalanceUpdatedSuppot {
                   res =>
                     Amount(
                       NumericConversion.toBigInt(res.result),
-                      resp.blockNum
+                      resp.block
                     )
                 )
           )
