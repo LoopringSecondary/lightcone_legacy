@@ -59,15 +59,6 @@ message OrderRing {
     ExpectedOrderFill taker                             = 2;
 }
 
-
-message BalanceAndAllowance {
-    io.lightcone.core.Amount balance                   = 1;
-    io.lightcone.core.Amount allowance                 = 2;
-    io.lightcone.core.Amount available_balance         = 3;
-    io.lightcone.core.Amount available_allowance       = 4;
-    int64 block_number                                 = 5;
-}
-
 message EthereumProxySettings {
     message Node {
         string host                 = 1;

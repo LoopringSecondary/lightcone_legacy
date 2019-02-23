@@ -85,7 +85,7 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
         ) =>
       req.owner
 
-    case req: GetBalanceAndAllowances.Req         => req.address
+    case req: GetAccount.Req                      => req.address
     case req: AddressBalanceUpdatedEvent          => req.address
     case req: AddressBalanceAllowanceUpdatedEvent => req.address
     case req: AddressAllowanceUpdatedEvent        => req.address
@@ -241,22 +241,26 @@ class MultiAccountManagerActor(
         token: String
       ): Future[(Long, BigInt, BigInt)] = {
 
-      val t = timer.refine("label" -> "get_balance_allowance").start
+      val t = timer.refine("label" -> "get_account").start
       val ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
       (for {
-        res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
+        res <- (ethereumQueryActor ? GetAccount.Req(
           address,
           Seq(token)
-        )).mapAs[GetBalanceAndAllowances.Res]
-        ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
+        )).mapAs[GetAccount.Res]
+        accountBalance = res.accountBalance.getOrElse(AccountBalance())
+        ba = accountBalance.tokenBalanceMap.getOrElse(
+          token,
+          AccountBalance.TokenBalance()
+        )
         balance = BigInt(ba.balance.toByteArray)
         allowance = BigInt(ba.allowance.toByteArray)
         block = ba.blockNumber
       } yield (block, balance, allowance)).andThen {
         case _ =>
           t.stop()
-          count.refine("label" -> "get_balance_allowance").increment()
+          count.refine("label" -> "get_account").increment()
       }
     }
   }

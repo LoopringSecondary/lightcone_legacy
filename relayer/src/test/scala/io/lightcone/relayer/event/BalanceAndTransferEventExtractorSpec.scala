@@ -29,21 +29,21 @@ class BalanceAndTransferEventExtractorSpec
 
   "ethereum balance update event and transfer event extractor actor test" must {
     "correctly extract balance update events and transfer events from ethereum blocks" in {
-      val getBaMethod = "get_balance_and_allowance"
+      val getBaMethod = "get_account"
       val account0 = accounts.head
       val account2 = getUniqueAccountWithoutEth
       val account3 = getUniqueAccountWithoutEth
       val ba2 = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
-      val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
+      val lrc_ba2 = ba2.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
       info("transfer to account2 1000 LRC")
       Await.result(
         transferEth(account2.getAddress, "10")(account0),
@@ -80,15 +80,15 @@ class BalanceAndTransferEventExtractorSpec
 
       val ba2_1 = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
-      val lrc_ba2_1 = ba2_1.balanceAndAllowanceMap(LRC_TOKEN.address)
+      val lrc_ba2_1 = ba2_1.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
 
       (BigInt(lrc_ba2_1.balance.toByteArray) - BigInt(
         lrc_ba2.balance.toByteArray
