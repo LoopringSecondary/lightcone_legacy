@@ -29,7 +29,6 @@ import io.lightcone.core._
 import scala.concurrent.ExecutionContext
 import com.google.inject._
 import io.lightcone.core.ErrorException
-import io.lightcone.persistence.ExternalTicker.Ticker
 import io.lightcone.persistence._
 import io.lightcone.relayer.actors.CMCCrawlerActor
 import io.lightcone.relayer.data.cmc._
@@ -117,7 +116,8 @@ object CMCExternalTickerFetcher extends Logging {
         )
       }
       val q = t.quote("USD")
-      val usdQuote = ExternalTicker.Ticker(
+      ExternalTicker(
+        t.slug,
         q.price,
         q.volume24H,
         q.percentChange1H,
@@ -125,26 +125,69 @@ object CMCExternalTickerFetcher extends Logging {
         q.percentChange7D,
         q.marketCap
       )
-      ExternalTicker(
-        t.slug,
-        Some(usdQuote)
-      )
     }
   }
 
-  def convertPersistenceToAllQuoteMarkets(
+  def fillAllMarketTickers(
       usdTickers: Seq[ExternalTicker],
       slugSymbols: Seq[CMCTickerConfig],
-      marketQuoteTokens: Set[String]
+      effectiveMarketSymbols: Seq[(String, String)]
     ): Seq[ExternalMarketTickerInfo] = {
-    val tickersInUsdWithQuoteMarkets =
-      getTickersWithAllQuoteMarkets(usdTickers, slugSymbols, marketQuoteTokens)
-    val tickersWithAllQuoteMarkets = convertToAllQuoteMarketsInUsd(
-      tickersInUsdWithQuoteMarkets
+    effectiveMarketSymbols.map { market =>
+      calculateMarketQuote(market._1, market._2, usdTickers, slugSymbols)
+    }
+  }
+
+  private def getTickerBySlug(
+      slug: String,
+      usdTickers: Seq[ExternalTicker]
+    ) = {
+    usdTickers
+      .find(t => t.slug == slug)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found ticker of slug: $slug"
+        )
+      )
+  }
+
+  private def calculateMarketQuote(
+      baseTokenSymbol: String,
+      quoteTokenSymbol: String,
+      usdTickers: Seq[ExternalTicker],
+      slugSymbols: Seq[CMCTickerConfig]
+    ): ExternalMarketTickerInfo = {
+    val baseSlug = getSlugBySymbol(baseTokenSymbol, slugSymbols)
+    val quoteSlug = getSlugBySymbol(quoteTokenSymbol, slugSymbols)
+    val baseTicker = getTickerBySlug(baseSlug, usdTickers)
+    val quoteTicker = getTickerBySlug(quoteSlug, usdTickers)
+    val price = toDouble(BigDecimal(baseTicker.priceUsd / quoteTicker.priceUsd))
+    val volume_24h = toDouble(
+      BigDecimal(baseTicker.volume24H / baseTicker.priceUsd) * price
     )
-    tickersWithAllQuoteMarkets
-      .filter(c => c.symbol != c.market) // LRC-LRC
-      .filterNot(c => c.symbol == "ETH" && c.market == "WETH") // ETH-WETH
+    val market_cap = toDouble(
+      BigDecimal(baseTicker.marketCap / baseTicker.priceUsd) * price
+    )
+    val percent_change_1h = BigDecimal(1 + baseTicker.percentChange1H) / BigDecimal(
+      1 + quoteTicker.percentChange1H
+    ) - 1
+    val percent_change_24h = BigDecimal(1 + baseTicker.percentChange24H) / BigDecimal(
+      1 + quoteTicker.percentChange24H
+    ) - 1
+    val percent_change_7d = BigDecimal(1 + baseTicker.percentChange7D) / BigDecimal(
+      1 + quoteTicker.percentChange7D
+    ) - 1
+    ExternalMarketTickerInfo(
+      baseTokenSymbol,
+      quoteTokenSymbol,
+      s"$baseTokenSymbol-$quoteTokenSymbol",
+      price,
+      volume_24h,
+      toDouble(percent_change_1h),
+      toDouble(percent_change_24h),
+      toDouble(percent_change_7d)
+    )
   }
 
   def normalizeTicker(ticker: CMCTickerData): CMCTickerData =
@@ -172,10 +215,11 @@ object CMCExternalTickerFetcher extends Logging {
       usdToCny: Option[ExternalTicker]
     ) = {
     if (usdTickers.nonEmpty && usdToCny.nonEmpty) {
-      val cnyToUsd = usdToCny.get.usdQuote.get.price
+      val cnyToUsd = usdToCny.get.priceUsd
       usdTickers.map { t =>
         t.copy(
-          price = toDouble(BigDecimal(t.price) / BigDecimal(cnyToUsd))
+          price = toDouble(BigDecimal(t.price) / BigDecimal(cnyToUsd)),
+          volume24H = toDouble(BigDecimal(t.volume24H) / BigDecimal(cnyToUsd))
         )
       }
     } else {
@@ -187,16 +231,10 @@ object CMCExternalTickerFetcher extends Logging {
       ticker: ExternalTicker,
       slugSymbols: Seq[CMCTickerConfig]
     ) = {
-    if (ticker.usdQuote.isEmpty) {
+    if (ticker.priceUsd <= 0) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"not found quote with ticker slug ${ticker.slug}"
-      )
-    }
-    if (ticker.usdQuote.get.price <= 0) {
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"invalid price:${ticker.usdQuote.get.price} with ticker slug ${ticker.slug}"
+        s"invalid price:${ticker.priceUsd} with ticker slug ${ticker.slug}"
       )
     }
     val slugSymbol = slugSymbols
@@ -207,160 +245,28 @@ object CMCExternalTickerFetcher extends Logging {
           s"not found slug: ${ticker.slug} symbol"
         )
       )
-    val quote = ticker.usdQuote.get
     ExternalTokenTickerInfo(
       slugSymbol.symbol,
-      quote.price,
-      quote.volume24H,
-      quote.percentChange1H,
-      quote.percentChange24H,
-      quote.percentChange7D
+      ticker.priceUsd,
+      ticker.volume24H,
+      ticker.percentChange1H,
+      ticker.percentChange24H,
+      ticker.percentChange7D
     )
   }
 
-  private def getTickersWithAllQuoteMarkets(
-      usdTickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCTickerConfig],
-      supportMarketSymbols: Set[String]
-    ) = {
-    val marketsQuote =
-      getAllMarketQuoteInUSD(usdTickers, slugSymbols, supportMarketSymbols)
-    usdTickers.map { usdTicker =>
-      val usdQuote = usdTicker.usdQuote
-      if (usdQuote.isEmpty) {
-        log.error(s"can not found slug:${usdTicker.slug} quote for USD")
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"can not found ${usdTicker.slug} quote for USD"
-        )
-      }
-      val ticker = convertPersistenceWithUsdQuote(usdTicker, slugSymbols)
-      val priceQuote = usdQuote.get
-      val quoteMap = marketsQuote.foldLeft(ticker.quote) { (map, marketQuote) =>
-        //添加市场代币的Quote ("LRC", "WETH", "TUSD", "USDT")
-        map + (marketQuote._1 -> convertQuote(priceQuote, marketQuote._2))
-      }
-      //更新token的quote属性
-      ticker.copy(quote = quoteMap)
-    }
-  }
-
-  private def convertPersistenceWithUsdQuote(
-      t: ExternalTicker,
+  private def getSlugBySymbol(
+      symbol: String,
       slugSymbols: Seq[CMCTickerConfig]
-    ) = {
-    val q = t.usdQuote.get
+    ): String = {
     val slugSymbol = slugSymbols
-      .find(_.slug == t.slug)
+      .find(_.symbol == symbol)
       .getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found slug: ${t.slug} symbol"
+          s"not found symbol: ${symbol}"
         )
       )
-    new CMCTickerData(
-      symbol = slugSymbol.symbol,
-      slug = t.slug,
-      quote = Map(
-        "USD" -> Ticker(
-          q.price,
-          q.volume24H,
-          q.percentChange1H,
-          q.percentChange24H,
-          q.percentChange7D,
-          q.marketCap
-        )
-      )
-    )
-  }
-
-  private def convertToAllQuoteMarketsInUsd(
-      tickersInUsd: Seq[CMCTickerData]
-    ): Seq[ExternalMarketTickerInfo] = {
-    tickersInUsd.flatMap { ticker =>
-      val symbol = ticker.symbol
-      ticker.quote.map { priceQuote =>
-        val market = priceQuote._1
-        val quote = priceQuote._2
-        val price = quote.price
-        val volume24h = quote.volume24H
-        val percentChange1h = quote.percentChange1H
-        val percentChange24h = quote.percentChange24H
-        val percentChange7d = quote.percentChange7D
-        val pair = symbol + "-" + market
-
-        ExternalMarketTickerInfo(
-          symbol,
-          market,
-          pair,
-          price,
-          volume24h,
-          percentChange1h,
-          percentChange24h,
-          percentChange7d
-        )
-      }
-    }
-  }
-
-  // 找到市场代币对USD的priceQuote
-  private def getAllMarketQuoteInUSD(
-      tickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCTickerConfig],
-      supportMarketSymbols: Set[String]
-    ): Seq[(String, ExternalTicker.Ticker)] = {
-    supportMarketSymbols.toSeq.map { s =>
-      // val symbol = if (s == "WETH") "ETH" else s
-      val slugSymbol = slugSymbols
-        .find(_.symbol == s)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found symbol: ${s}"
-          )
-        )
-      val priceQuote =
-        tickers.find(_.slug == slugSymbol.slug).flatMap(_.usdQuote)
-      if (priceQuote.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"can not found ${s} price in USD"
-        )
-      (
-        s,
-        priceQuote.get
-      )
-    }
-  }
-
-  //锚定市场币的priceQuote换算
-  private def convertQuote(
-      tokenQuote: Ticker,
-      marketQuote: Ticker
-    ): Ticker = {
-    val price = toDouble(BigDecimal(tokenQuote.price / marketQuote.price))
-    val volume_24h = toDouble(
-      BigDecimal(tokenQuote.volume24H / tokenQuote.price) * price
-    )
-    val market_cap = toDouble(
-      BigDecimal(tokenQuote.marketCap / tokenQuote.price) * price
-    )
-    val percent_change_1h = BigDecimal(1 + tokenQuote.percentChange1H) / BigDecimal(
-      1 + marketQuote.percentChange1H
-    ) - 1
-    val percent_change_24h = BigDecimal(1 + tokenQuote.percentChange24H) / BigDecimal(
-      1 + marketQuote.percentChange24H
-    ) - 1
-    val percent_change_7d = BigDecimal(1 + tokenQuote.percentChange7D) / BigDecimal(
-      1 + marketQuote.percentChange7D
-    ) - 1
-    Ticker(
-      price,
-      volume_24h,
-      toDouble(percent_change_1h),
-      toDouble(percent_change_24h),
-      toDouble(percent_change_7d),
-      toDouble(market_cap)
-    )
+    slugSymbol.slug
   }
 }

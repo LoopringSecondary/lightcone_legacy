@@ -30,6 +30,15 @@ import scala.math.BigInt
 
 package object support {
 
+  val ETH_TOKEN = TokenMetadata(
+    address = Address.ZERO.toString,
+    decimals = 18,
+    symbol = "ETH",
+    name = "ETH",
+    externalData = Some(TokenMetadata.ExternalData(1000)),
+    status = TokenMetadata.Status.VALID
+  )
+
   val WETH_TOKEN = TokenMetadata(
     address = Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
     decimals = 18,
@@ -112,9 +121,10 @@ package object support {
       MarketHash(MarketPair(GTO_TOKEN.address, LRC_TOKEN.address)).toString
   )
 
-  val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
+  val TOKENS = Seq(ETH_TOKEN, WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
 
   val TOKEN_SLUGS_SYMBOLS = Seq(
+    ("ETH", "ethereum"),
     ("WETH", "weth"),
     ("LRC", "loopring"),
     ("GTO", "gifto")

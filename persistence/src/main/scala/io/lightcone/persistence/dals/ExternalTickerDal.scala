@@ -26,7 +26,7 @@ trait ExternalTickerDal
 
   def saveTickers(tickers: Seq[ExternalTicker]): Future[ErrorCode]
 
-  def getLastTimestamp(): Future[Option[Long]]
+  def getLastTicker(): Future[Option[Long]]
 
   def getTickers(timestamp: Long): Future[Seq[ExternalTicker]]
 

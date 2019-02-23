@@ -24,7 +24,6 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.data.cmc._
 import io.lightcone.relayer.external._
 import scala.concurrent.{ExecutionContext, Future}
@@ -73,8 +72,6 @@ class CMCCrawlerActor(
     with RepeatedJobActor
     with ActorLogging {
 
-  val metadataManagerActor = actors.get(MetadataManagerActor.name)
-
   val selfConfig = config.getConfig(CMCCrawlerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
@@ -110,17 +107,22 @@ class CMCCrawlerActor(
   override def initialize() = {
     val f = for {
       latestEffectiveRequest <- dbModule.externalTickerDal
-        .getLastTimestamp()
-      tickers_ <- if (latestEffectiveRequest.nonEmpty) {
-        dbModule.externalTickerDal.getTickers(
-          latestEffectiveRequest.get
-        )
+        .getLastTicker()
+      (tickers_, slugSymbols_) <- if (latestEffectiveRequest.nonEmpty) {
+        for {
+          t <- dbModule.externalTickerDal.getTickers(
+            latestEffectiveRequest.get
+          )
+          s <- dbModule.cmcTickerConfigDal.getAll()
+        } yield (t, s)
       } else {
-        Future.successful(Seq.empty)
+        Future.successful((Seq.empty, Seq.empty))
       }
     } yield {
-      if (tickers_ nonEmpty) {
+      if (tickers_.nonEmpty && slugSymbols_.nonEmpty) {
         tickers = tickers_
+        slugSymbols = slugSymbols_
+        refreshTickers()
       }
     }
     f onComplete {
@@ -143,9 +145,10 @@ class CMCCrawlerActor(
       cmcResponse <- externalTickerFetcher.fetchExternalTickers()
       rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
       slugSymbols_ <- dbModule.cmcTickerConfigDal.getAll()
-      (persistTickers, updated) <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
+      (persistTickers, updated) <- if (cmcResponse.data.nonEmpty && rateResponse > 0 && slugSymbols_.nonEmpty) {
         for {
           tickers_ <- persistTickers(rateResponse, cmcResponse.data)
+          // TODO(du):更新tokenInfo表
           tokens <- dbModule.tokenMetadataDal.getTokens()
           _ <- updateTokenPrice(cmcResponse.data, tokens)
         } yield (tickers_, true)
@@ -155,42 +158,44 @@ class CMCCrawlerActor(
     } yield {
       assert(cmcResponse.data.nonEmpty)
       assert(rateResponse > 0)
+      assert(slugSymbols_.nonEmpty)
       slugSymbols = slugSymbols_
       tickers = persistTickers
 
-      val cnyToUsd =
-        tickers.find(_.slug == "rmb")
-      assert(cnyToUsd.nonEmpty)
-      assert(cnyToUsd.get.usdQuote.nonEmpty)
-      assert(cnyToUsd.get.usdQuote.get.price > 0)
-      val tickers_ = tickers.filter(_.slug != "rmb")
-      allTickersInUSD = tickers_
-        .filter(isEffectiveToken)
-        .map(CMCExternalTickerFetcher.convertPersistToExternal(_, slugSymbols))
-      allTickersInCNY = tickers_.filter(isEffectiveToken).map { t =>
-        val t_ =
-          CMCExternalTickerFetcher.convertPersistToExternal(t, slugSymbols)
-        assert(t.usdQuote.nonEmpty)
-        t_.copy(
-          price = CMCExternalTickerFetcher.toDouble(
-            BigDecimal(t.usdQuote.get.price) / BigDecimal(
-              cnyToUsd.get.usdQuote.get.price
-            )
-          )
-        )
-      }
-      effectiveMarketTickers = CMCExternalTickerFetcher
-        .convertPersistenceToAllQuoteMarkets(
-          tickers_,
-          slugSymbols,
-          marketQuoteTokens
-        )
-        .filter(isEffectiveMarket)
-
       if (updated) {
-        metadataManagerActor ! ReloadMetadataFromDb()
+        refreshTickers()
       }
     }
+  }
+
+  private def refreshTickers() = this.synchronized {
+    val cnyToUsd =
+      tickers.find(_.slug == "rmb")
+    assert(cnyToUsd.nonEmpty)
+    assert(cnyToUsd.get.priceUsd > 0)
+    val tickers_ = tickers.filter(_.slug != "rmb")
+    allTickersInUSD = tickers_
+      .filter(isEffectiveToken)
+      .map(CMCExternalTickerFetcher.convertPersistToExternal(_, slugSymbols))
+    allTickersInCNY = tickers_.filter(isEffectiveToken).map { t =>
+      val t_ =
+        CMCExternalTickerFetcher.convertPersistToExternal(t, slugSymbols)
+      assert(t.priceUsd > 0)
+      t_.copy(
+        price = CMCExternalTickerFetcher.toDouble(
+          BigDecimal(t.priceUsd) / BigDecimal(
+            cnyToUsd.get.priceUsd
+          )
+        ),
+        volume24H = CMCExternalTickerFetcher.toDouble(
+          BigDecimal(t.volume24H) / BigDecimal(
+            cnyToUsd.get.priceUsd
+          )
+        )
+      )
+    }
+    effectiveMarketTickers = CMCExternalTickerFetcher
+      .fillAllMarketTickers(tickers_, slugSymbols, effectiveMarketSymbols)
   }
 
   private def isEffectiveToken(ticker: ExternalTicker): Boolean = {
@@ -204,9 +209,6 @@ class CMCCrawlerActor(
       )
     tokens.contains(slugSymbol.symbol)
   }
-
-  private def isEffectiveMarket(ticker: ExternalMarketTickerInfo): Boolean =
-    effectiveMarketSymbols.contains((ticker.symbol, ticker.market))
 
   private def updateTokenPrice(
       usdTickers: Seq[CMCTickerData],
@@ -251,7 +253,7 @@ class CMCCrawlerActor(
   }
 
   private def persistTickers(
-      usdTocnyRate: Double,
+      cnyToUsdRate: Double,
       tickers_ : Seq[CMCTickerData]
     ) =
     for {
@@ -262,12 +264,8 @@ class CMCCrawlerActor(
         )
       cnyTicker = ExternalTicker(
         "rmb",
-        Some(
-          ExternalTicker.Ticker(
-            price = CMCExternalTickerFetcher
-              .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
-          )
-        )
+        CMCExternalTickerFetcher
+          .toDouble(BigDecimal(1) / BigDecimal(cnyToUsdRate))
       )
       now = timeProvider.getTimeSeconds()
       _ = tickers =

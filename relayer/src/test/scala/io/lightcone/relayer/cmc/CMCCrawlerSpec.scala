@@ -99,7 +99,6 @@ class CMCCrawlerSpec
       q1._2.length should be(2073) // RMB added
       q1._5.nonEmpty should be(true)
       tickers = q1._2
-      log.info(s"---1 ${tickers}")
       slugSymbols = q1._5 ++ q1._1.data
         .map(t => CMCTickerConfig(t.symbol, t.slug))
       q1._3 should be(2073)
@@ -109,6 +108,7 @@ class CMCCrawlerSpec
     "convert USD tickers to all quote markets (ExternalDataRefresher)" in {
       val (allTickersInUSD, allTickersInCNY, effectiveTickers) =
         refreshTickers()
+
       val tickerMap = marketQuoteTokens.map { market =>
         (market, effectiveTickers.filter(_.market == market))
       }.toMap
@@ -125,15 +125,17 @@ class CMCCrawlerSpec
       val tickerInCny = allTickersInCNY(p)
 
       // verify ticker in USD and CNY
-      val cnyTousd =
+      val cnyToUsd =
         tickers.find(_.slug == "rmb")
       tickerInUsd.symbol should equal(tickerInCny.symbol)
       val cnyTickerVerify =
         CMCExternalTickerFetcher.convertUsdTickersToCny(
           Seq(tickerInUsd),
-          cnyTousd
+          cnyToUsd
         )
       tickerInUsd.price should not equal tickerInCny.price
+      tickerInUsd.volume24H should not equal tickerInCny.volume24H
+      tickerInUsd.volume24H < tickerInCny.volume24H should be(true)
       cnyTickerVerify.nonEmpty should be(true)
       cnyTickerVerify.head should equal(tickerInCny)
     }
@@ -213,12 +215,8 @@ class CMCCrawlerSpec
         )
       cnyTicker = ExternalTicker(
         "rmb",
-        Some(
-          ExternalTicker.Ticker(
-            price = CMCExternalTickerFetcher
-              .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
-          )
-        )
+        CMCExternalTickerFetcher
+          .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
       )
       now = timeProvider.getTimeSeconds()
       _ = tickers =
@@ -249,25 +247,28 @@ class CMCCrawlerSpec
     val cnyToUsd =
       tickers.find(_.slug == "rmb")
     assert(cnyToUsd.nonEmpty)
-    assert(cnyToUsd.get.usdQuote.nonEmpty)
+    assert(cnyToUsd.get.priceUsd > 0)
     val allTickersInCNY = tickers_.filter(isEffectiveToken).map { t =>
       val t_ = CMCExternalTickerFetcher.convertPersistToExternal(t, slugSymbols)
-      assert(t.usdQuote.nonEmpty)
       t_.copy(
         price = CMCExternalTickerFetcher.toDouble(
-          BigDecimal(t.usdQuote.get.price) / BigDecimal(
-            cnyToUsd.get.usdQuote.get.price
+          BigDecimal(t.priceUsd) / BigDecimal(
+            cnyToUsd.get.priceUsd
+          )
+        ),
+        volume24H = CMCExternalTickerFetcher.toDouble(
+          BigDecimal(t.volume24H) / BigDecimal(
+            cnyToUsd.get.priceUsd
           )
         )
       )
     }
-    val effectiveMarketTickers = CMCExternalTickerFetcher
-      .convertPersistenceToAllQuoteMarkets(
-        tickers_,
-        slugSymbols,
-        marketQuoteTokens
-      )
-      .filter(isEffectiveMarket)
+    val effectiveMarketTickers = CMCExternalTickerFetcher.fillAllMarketTickers(
+      tickers_,
+      slugSymbols,
+      effectiveMarketSymbols
+    )
+
     (allTickersInUSD, allTickersInCNY, effectiveMarketTickers)
   }
 
@@ -282,8 +283,5 @@ class CMCCrawlerSpec
       )
     tokens.map(_.meta.symbol).contains(slugSymbol.symbol)
   }
-
-  private def isEffectiveMarket(ticker: ExternalMarketTickerInfo): Boolean =
-    effectiveMarketSymbols.contains((ticker.symbol, ticker.market))
 
 }

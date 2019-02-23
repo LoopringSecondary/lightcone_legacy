@@ -110,199 +110,6 @@ class MetadataManagerSpec
         assert(meta3.marketHash == meta4.marketHash)
       }
     }
-
-    "get all tokens config" in {
-      info("save some tokens config")
-      val tokens = Seq(
-        SaveTokenMetadata(
-          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VALID,
-          symbol = "AAA",
-          slug = "aurora",
-          name = "AAA Token",
-          address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
-          unit = "AAA",
-          decimals = 18,
-          precision = 6,
-          burnRateForMarket = 0.1,
-          burnRateForP2P = 0.2,
-          externalData = Some(TokenMetadata.ExternalData(10))
-        ),
-        SaveTokenMetadata(
-          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VALID,
-          symbol = "ABC",
-          slug = "pivx",
-          name = "ABC Token",
-          address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
-          unit = "ABC",
-          decimals = 18,
-          precision = 6,
-          burnRateForMarket = 0.3,
-          burnRateForP2P = 0.4,
-          externalData = Some(TokenMetadata.ExternalData(8))
-        ),
-        SaveTokenMetadata(
-          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VALID,
-          symbol = "BBB",
-          slug = "linkey",
-          name = "BBB Token",
-          address = "0x989fcbc46845a290e971a6303ef3753fb039d8d5",
-          unit = "BBB",
-          decimals = 9,
-          precision = 3,
-          burnRateForMarket = 0.1,
-          burnRateForP2P = 0.3,
-          externalData = Some(TokenMetadata.ExternalData(1))
-        ),
-        SaveTokenMetadata(
-          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VALID,
-          symbol = "BBC",
-          slug = "decentraland",
-          name = "BBC Token",
-          address = "0x61a11f3d1f3b4dbd3f780f004773e620daf065c4",
-          unit = "BBC",
-          decimals = 18,
-          precision = 6,
-          burnRateForMarket = 0.2,
-          burnRateForP2P = 0.1,
-          externalData = Some(TokenMetadata.ExternalData(8))
-        ),
-        SaveTokenMetadata(
-          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VALID,
-          symbol = "CCC",
-          slug = "moac",
-          name = "CCC Token",
-          address = "0x34a381433f45230390d750113aab46c65129ffab",
-          unit = "CCC",
-          decimals = 18,
-          precision = 6,
-          burnRateForMarket = 0.6,
-          burnRateForP2P = 0.8,
-          externalData = Some(TokenMetadata.ExternalData(7))
-        ),
-        SaveTokenMetadata(
-          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.INVALID,
-          symbol = "CDE",
-          slug = "veritaseum",
-          name = "CDE Token",
-          address = "0xfdeda15e2922c5ed41fc1fdf36da2fb2623666b3",
-          unit = "CDE",
-          decimals = 6,
-          precision = 3,
-          burnRateForMarket = 0.1,
-          burnRateForP2P = 0.9,
-          externalData = Some(TokenMetadata.ExternalData(1))
-        )
-      )
-
-      val saved = Await.result(
-        (actor ? SaveTokenMetadatas.Req(tokens)).mapTo[SaveTokenMetadatas.Res],
-        5.second
-      )
-      assert(saved.savedAddresses.length == tokens.length)
-      info("waiting 3s for repeatJob to reload tokens config")
-      Thread.sleep(3000)
-
-      info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged())
-
-      info("query the tokens from db")
-      val r1 = dbModule.tokenMetadataDal.getTokens(tokens.map(_.address))
-      val res1 = Await.result(r1.mapTo[Seq[TokenMetadata]], 5.second)
-      assert(res1.length == tokens.length)
-
-      info("send a message to load tokens config")
-      val q1 = Await.result(
-        (actor ? LoadTokenMetadata.Req()).mapTo[LoadTokenMetadata.Res],
-        5.second
-      )
-      assert(q1.tokens.length >= tokens.length)
-
-      info("save a new token config: DEF")
-      val r2 = dbModule.tokenMetadataDal.saveToken(
-        TokenMetadata(
-          `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.INVALID,
-          symbol = "DEF",
-          name = "DEF Token",
-          address = "0x244929a8141d2134d9323e65309fb46e4a983840",
-          unit = "DEF",
-          decimals = 6,
-          precision = 3,
-          burnRateForMarket = 0.5,
-          burnRateForP2P = 0.5,
-          externalData = Some(TokenMetadata.ExternalData(1))
-        )
-      )
-      val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
-      assert(res2 == ErrorCode.ERR_NONE)
-
-      val lrc = TokenMetadata(
-        `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VALID,
-        symbol = "AAA",
-        name = "AAA Token",
-        address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
-        unit = "AAA",
-        decimals = 18,
-        precision = 6,
-        burnRateForMarket = 0.1,
-        burnRateForP2P = 0.2,
-        externalData = Some(TokenMetadata.ExternalData(10))
-      )
-      val burnRateRes = Await.result(
-        (ethereumQueryActor ? GetBurnRate.Req(token = lrc.address))
-          .mapTo[GetBurnRate.Res],
-        5.second
-      )
-      info(
-        s"send a message to update burn-rate :{burnRate = 0.2, usdPrice = 20}, but will query ethereum and" +
-          s" replace forMarket as :${burnRateRes.forMarket}, forP2P as :${burnRateRes.forP2P}"
-      )
-      val updated = Await.result(
-        (actor ? UpdateTokenMetadata.Req(
-          Some(
-            lrc.copy(
-              burnRateForMarket = 0.2,
-              externalData = Some(TokenMetadata.ExternalData(20))
-            )
-          )
-        )).mapTo[UpdateTokenMetadata.Res],
-        5.second
-      )
-      assert(updated.error == ErrorCode.ERR_NONE)
-      val query1 = Await.result(
-        dbModule.tokenMetadataDal
-          .getTokens(Seq(lrc.address))
-          .mapTo[Seq[TokenMetadata]],
-        5.second
-      )
-      assert(
-        query1.length == 1 && query1.head.burnRateForMarket === burnRateRes.forMarket &&
-          query1.head.burnRateForP2P == burnRateRes.forP2P && query1.head.externalData.get.usdPrice == 20
-      )
-
-      info("send a message to disable lrc")
-      val disabled = Await.result(
-        (actor ? InvalidateToken.Req(lrc.address)).mapTo[InvalidateToken.Res],
-        5 second
-      )
-      assert(disabled.error == ErrorCode.ERR_NONE)
-      val query2 = Await.result(
-        dbModule.tokenMetadataDal
-          .getTokens(Seq(lrc.address))
-          .mapTo[Seq[TokenMetadata]],
-        5.second
-      )
-      assert(
-        query2.nonEmpty && query2.head.status == TokenMetadata.Status.INVALID
-      )
-    }
   }
 
   "load markets config" must {
@@ -445,7 +252,7 @@ class MetadataManagerSpec
     "call JRPC and get result" in {
       val r = singleRequest(GetMetadatas.Req(), "get_metadatas")
       val res = Await.result(r.mapTo[GetMetadatas.Res], timeout.duration)
-      assert(res.tokens.length >= 7 && res.markets.length >= 4)
+      assert(res.tokens.length >= 4 && res.markets.length >= 4)
     }
   }
 
@@ -567,12 +374,8 @@ class MetadataManagerSpec
         )
       cnyTicker = ExternalTicker(
         "rmb",
-        Some(
-          ExternalTicker.Ticker(
-            price = CMCExternalTickerFetcher
-              .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
-          )
-        )
+        CMCExternalTickerFetcher
+          .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
       )
       now = timeProvider.getTimeSeconds()
       tickers = tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))

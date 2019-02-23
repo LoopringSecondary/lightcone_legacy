@@ -125,72 +125,6 @@ class MetadataManagerActor(
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
 
-    case _: ReloadMetadataFromDb =>
-      syncMetadata()
-
-    case req: SaveTokenMetadatas.Req =>
-      (for {
-        latestEffectiveRequest <- dbModule.externalTickerDal
-          .getLastTimestamp()
-        tokenSlugSymbols = req.tokens.map { t =>
-          (t.slug, t.symbol)
-        }.toMap
-        modifiedTokens <- if (latestEffectiveRequest.nonEmpty) {
-          for {
-            tickers_ <- dbModule.externalTickerDal
-              .getTickers(
-                latestEffectiveRequest.get,
-                tokenSlugSymbols.keys.toSeq
-              )
-          } yield {
-            if (tickers_.nonEmpty || tickers_.length == tokenSlugSymbols.keys.size) {
-              val tickersMap = tickers_.map { t =>
-                (tokenSlugSymbols(t.slug), t)
-              }.toMap
-              req.tokens.map(convertTokenToPersist(_, tickersMap))
-            } else {
-              throw ErrorException(
-                ErrorCode.ERR_INTERNAL_UNKNOWN,
-                s"not found all tickers in request slugs: ${tokenSlugSymbols.keys}, found:${tickers_
-                  .map(_.slug)}"
-              )
-            }
-          }
-        } else {
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found tickers in db"
-          )
-        }
-        saved <- dbModule.tokenMetadataDal.saveTokens(modifiedTokens)
-        tokens_ <- dbModule.tokenMetadataDal.getTokens()
-      } yield {
-        if (saved.nonEmpty) {
-          checkAndPublish(Some(tokens_), None)
-        }
-        SaveTokenMetadatas.Res(saved)
-      }).sendTo(sender)
-
-    case req: UpdateTokenMetadata.Req =>
-      (for {
-        burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
-          token = req.token.get.address
-        )).mapTo[GetBurnRate.Res]
-        result <- dbModule.tokenMetadataDal
-          .updateToken(
-            req.token.get.copy(
-              burnRateForMarket = burnRateRes.forMarket,
-              burnRateForP2P = burnRateRes.forP2P
-            )
-          )
-        tokens_ <- dbModule.tokenMetadataDal.getTokens()
-      } yield {
-        if (result == ERR_NONE) {
-          checkAndPublish(Some(tokens_), None)
-        }
-        UpdateTokenMetadata.Res(result)
-      }).sendTo(sender)
-
     case req: TokenBurnRateChangedEvent =>
       if (req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess) {
         (for {
@@ -301,43 +235,5 @@ class MetadataManagerActor(
     } yield {
       checkAndPublish(Some(tokens_), Some(markets_))
     }
-  }
-
-  private def convertTokenToPersist(
-      token: SaveTokenMetadata,
-      tickersMap: Map[String, ExternalTicker]
-    ) = {
-    val usdTicker = tickersMap.getOrElse(
-      token.symbol,
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"not found ticker of symbol:${token.symbol}"
-      )
-    )
-    val usdQuote = usdTicker.usdQuote.getOrElse(
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"not found ticker usdQuote of symbol:${token.symbol}"
-      )
-    )
-    val externalData = if (token.externalData.nonEmpty) {
-      Some(token.externalData.get.copy(usdPrice = usdQuote.price))
-    } else {
-      Some(TokenMetadata.ExternalData(usdQuote.price))
-    }
-    TokenMetadata(
-      token.`type`,
-      token.status,
-      token.symbol,
-      token.name,
-      token.address,
-      token.unit,
-      token.decimals,
-      token.websiteUrl,
-      token.precision,
-      token.burnRateForMarket,
-      token.burnRateForP2P,
-      externalData
-    )
   }
 }

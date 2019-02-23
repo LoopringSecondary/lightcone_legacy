@@ -22,6 +22,14 @@ package io.lightcone.relayer.data.cmc;
 import "persistence.proto";
 
 message CMCTickerData {
+    message Ticker {
+        double price = 1;
+        double volume_24h = 2;
+        double percent_change_1h = 3;
+        double percent_change_24h = 4;
+        double percent_change_7d = 5;
+        double market_cap = 6;
+    }
     int32 id = 1;
     string name = 2; // Bitcoin
     string symbol = 3; // BTC
@@ -33,7 +41,7 @@ message CMCTickerData {
     int32 num_market_pairs = 9;
     int32 cmc_rank = 10;
     string last_updated = 11;
-    map<string, io.lightcone.persistence.ExternalTicker.Ticker> quote = 12;
+    map<string, Ticker> quote = 12;
 }
 
 message TickerStatus {
@@ -51,8 +59,8 @@ message TickerDataInfo {
 
 message ExternalTokenTickerInfo {
     string symbol = 1;  // GTO
-    double price = 2; // currency price
-    double volume_24h = 3; // volume of usd
+    double price = 2; // price of current currency
+    double volume_24h = 3; // volume of current currency
     double percent_change_1h = 4;
     double percent_change_24h = 5;
     double percent_change_7d = 6;

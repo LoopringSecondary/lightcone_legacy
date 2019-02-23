@@ -38,42 +38,32 @@ class ExternalTickerTable(tag: Tag)
   def isEffective = column[Boolean]("is_effective")
 
   // indexes
-  def idx_request_time =
+  def idx_timestamp =
     index(
-      "idx_request_time",
+      "idx_timestamp",
       (timestamp),
       unique = false
     )
 
-  def idx_request_time_effective =
+  def idx_timestamp_effective =
     index(
-      "idx_request_time_effective",
+      "idx_timestamp_effective",
       (timestamp, isEffective),
       unique = false
     )
 
-  def pk_request_time_slug =
-    primaryKey("pk_request_time_slug", (timestamp, slug))
+  def pk_timestamp_slug =
+    primaryKey("pk_timestamp_slug", (timestamp, slug))
 
-  def quoteProjection =
+  def * =
     (
+      slug,
       priceUsd,
       volume24H,
       percentChange1H,
       percentChange24H,
       percentChange7D,
-      marketCapUsd
-    ) <> ({ tuple =>
-      Option((ExternalTicker.Ticker.apply _).tupled(tuple))
-    }, { paramsOpt: Option[ExternalTicker.Ticker] =>
-      val params = paramsOpt.getOrElse(ExternalTicker.Ticker())
-      ExternalTicker.Ticker.unapply(params)
-    })
-
-  def * =
-    (
-      slug,
-      quoteProjection,
+      marketCapUsd,
       timestamp,
       isEffective
     ) <> ((ExternalTicker.apply _).tupled, ExternalTicker.unapply)

@@ -302,42 +302,6 @@ message GetOHLCData {
     }
 }
 
-message SaveTokenMetadata {
-    io.lightcone.core.TokenMetadata.Type     type   = 1;
-    io.lightcone.core.TokenMetadata.Status   status = 2;
-    string   symbol                 = 3; // BTC
-    string   name                   = 4; // Bitcoin
-    string   slug                   = 5; // bitcoin
-    string   address                = 6;
-    string   unit                   = 7;
-    int32    decimals               = 8;
-    string   website_url            = 9;
-    int32    precision              = 10;
-    double   burn_rate_for_market   = 11;
-    double   burn_rate_for_p2p      = 12;
-    io.lightcone.core.TokenMetadata.ExternalData external_data = 13;
-}
-
-message SaveTokenMetadatas {
-    message Req {
-        repeated SaveTokenMetadata tokens = 1;
-    }
-
-    message Res {
-        repeated string saved_addresses = 1;
-    }
-}
-
-message UpdateTokenMetadata {
-    message Req {
-        io.lightcone.core.TokenMetadata token = 1;
-    }
-
-    message Res {
-        io.lightcone.core.ErrorCode  error = 1;
-    }
-}
-
 message UpdateTokenBurnRate {
     message Req {
         string address  = 1;
@@ -407,7 +371,5 @@ message LoadMarketMetadata {
         repeated io.lightcone.core.MarketMetadata markets = 1;
     }
 }
-
-message ReloadMetadataFromDb {}
 
 message TokenTickerChanged {}

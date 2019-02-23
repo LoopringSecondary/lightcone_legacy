@@ -46,7 +46,7 @@ class ExternalTickerDalImpl @Inject()(
         ERR_NONE
     }
 
-  def getLastTimestamp() = {
+  def getLastTicker() = {
     db.run(query.filter(_.isEffective === true).map(_.timestamp).max.result)
   }
 
