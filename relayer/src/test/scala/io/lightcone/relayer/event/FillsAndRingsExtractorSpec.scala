@@ -61,13 +61,16 @@ class FillsAndRingsExtractorSpec
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
       expectBalanceRes(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           account2.getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        (res: GetBalanceAndAllowances.Res) => {
+        (res: GetAccount.Res) => {
           BigInt(
-            res.balanceAndAllowanceMap(WETH_TOKEN.address).allowance.toByteArray
+            res.getAccountBalance
+              .tokenBalanceMap(WETH_TOKEN.address)
+              .allowance
+              .toByteArray
           ) > 0
         },
         timeout

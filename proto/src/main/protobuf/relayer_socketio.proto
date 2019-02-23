@@ -103,7 +103,7 @@ message SocketIOSubscription {
         repeated string addresses  = 1;
         repeated string tokens = 2;
     }
-    
+
     // subscribe for message News defined in persistence.proto
     message ParamsForNews {
     }
