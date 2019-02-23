@@ -36,8 +36,8 @@ class RecoverAccountsActor(
     extends Actor
     with Logging {
 
-  val mama = actors.get(MultiAccountManagerActor.name)
-  val query = actors.get(EthereumQueryActor.name)
+  @inline val mama = actors.get(MultiAccountManagerActor.name)
+  @inline val query = actors.get(EthereumQueryActor.name)
 
   def receive = {
     case ChainReorganizationImpact(_, accounts) =>

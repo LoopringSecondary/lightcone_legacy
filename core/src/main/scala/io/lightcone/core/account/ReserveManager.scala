@@ -19,16 +19,6 @@ package io.lightcone.core
 import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
 
-trait UpdatedOrdersProcessor {
-  implicit val ec: ExecutionContext
-
-  def processOrder(order: Matchable): Future[Any]
-
-  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
-    serializeFutures(orders.values)(processOrder)
-  }
-}
-
 trait ReserveEventHandler {
 
   def onTokenReservedForOrder(
@@ -38,7 +28,7 @@ trait ReserveEventHandler {
     ): Unit
 }
 
-object ReserveManagerAlt {
+object ReserveManager {
 
   def default(
       token: String,
@@ -46,12 +36,14 @@ object ReserveManagerAlt {
     )(
       implicit
       eventHandler: ReserveEventHandler
-    ): ReserveManagerAlt =
-    new ReserveManagerAltImpl(token, enableTracing)
+    ): ReserveManager =
+    new ReserveManagerImpl(token, enableTracing)
 }
 
-private[core] trait ReserveManagerAlt {
+private[core] trait ReserveManager {
   val token: String
+
+  def getLastBlock(): Long // return the last block number
 
   def getAccountInfo(): AccountInfo
 

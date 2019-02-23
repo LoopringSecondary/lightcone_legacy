@@ -73,7 +73,7 @@ class EthereumQueryActor(
 
   val base = loopringConfig.getInt("burn-rate-table.base")
 
-  protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
+  @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
     case req @ GetAccount.Req(owner, tokens, tag) =>
@@ -104,12 +104,7 @@ class EthereumQueryActor(
         ethRes <- ethToken match {
           case head :: tail =>
             (ethereumAccessorActor ? BatchGetEthBalance.Req(
-              Seq(
-                EthGetBalance.Req(
-                  address = Address.normalize(owner),
-                  tag
-                )
-              ),
+              Seq(EthGetBalance.Req(address = Address.normalize(owner), tag)),
               returnBlockNum = brb.shouldReturnBlockNumber(tag)
             )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
@@ -142,11 +137,7 @@ class EthereumQueryActor(
       ) { result =>
         val fills = (orderIds zip result.resps
           .map(
-            res =>
-              Amount(
-                NumericConversion.toBigInt(res.result),
-                result.block
-              )
+            res => Amount(NumericConversion.toBigInt(res.result), result.block)
           )).toMap
         GetFilledAmount.Res(fills)
       }

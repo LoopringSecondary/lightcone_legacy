@@ -242,13 +242,11 @@ class MultiAccountManagerActor(
       ): Future[(BigInt, BigInt)] = {
 
       val t = timer.refine("label" -> "get_account").start
-      val ethereumQueryActor = actors.get(EthereumQueryActor.name)
+      @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
       (for {
-        res <- (ethereumQueryActor ? GetAccount.Req(
-          address,
-          Seq(token)
-        )).mapAs[GetAccount.Res]
+        res <- (ethereumQueryActor ? GetAccount.Req(address, Seq(token)))
+          .mapAs[GetAccount.Res]
         accountBalance = res.accountBalance.getOrElse(AccountBalance())
         ba = accountBalance.tokenBalanceMap.getOrElse(
           token,
@@ -270,7 +268,7 @@ class MultiAccountManagerActor(
         log.info(s"created new account manager for address $address")
         accountManagerActors.add(
           address,
-          context.actorOf(Props(new AccountManagerAltActor(address)), address)
+          context.actorOf(Props(new AccountManagerActor(address)), address)
         )
       }
       accountManagerActors.get(address)

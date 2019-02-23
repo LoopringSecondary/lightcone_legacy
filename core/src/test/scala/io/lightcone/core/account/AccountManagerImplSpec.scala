@@ -19,7 +19,7 @@ package io.lightcone.core
 import scala.concurrent._
 import io.lightcone.core.testing._
 
-abstract class AccountManagerAltImplSpec extends CommonSpec {
+abstract class AccountManagerImplSpec extends CommonSpec {
 
   var owner = "owning_address"
   var numOfOrdersProcessed = 0
@@ -30,7 +30,10 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
   implicit val updatdOrderProcessor = new UpdatedOrdersProcessor {
     val ec = _ec
 
-    def processOrder(order: Matchable): Future[Any] =
+    def processOrder(
+        trackOrderUpdated: Boolean,
+        order: Matchable
+      ): Future[Any] =
       Future {
         numOfOrdersProcessed += 1
         processOneOrder(order)
@@ -38,14 +41,14 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
 
   }
 
-  var manager: AccountManagerAlt = _
+  var manager: AccountManager = _
 
   var processOneOrder: Matchable => Unit = { order =>
     // println(s"==> order: $order")
   }
   override def beforeEach(): Unit = {
     numOfOrdersProcessed = 0
-    manager = AccountManagerAlt.default(owner, true)
+    manager = AccountManager.default(owner, true)
   }
 
   def setBalanceAllowance(

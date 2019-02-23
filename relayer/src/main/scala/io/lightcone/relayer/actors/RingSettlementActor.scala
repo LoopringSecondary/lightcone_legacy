@@ -100,9 +100,9 @@ class RingSettlementActor(
   )
   private val nonce = new AtomicInteger(0)
 
-  private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
-  private def gasPriceActor = actors.get(GasPriceActor.name)
-  private def marketManagerActor = actors.get(MarketManagerActor.name)
+  @inline def ethereumAccessActor = actors.get(EthereumAccessActor.name)
+  @inline def gasPriceActor = actors.get(GasPriceActor.name)
+  @inline def marketManagerActor = actors.get(MarketManagerActor.name)
 
   override def initialize() = {
     val f = (ethereumAccessActor ? GetNonce.Req(
