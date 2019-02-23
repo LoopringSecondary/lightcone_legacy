@@ -28,20 +28,20 @@ class AllowanceEventExtractorSpec
 
   "ethereum event extractor actor test" must {
     "correctly extract Approval events from ethereum blocks" in {
-      val getBaMethod = "get_balance_and_allowance"
+      val getBaMethod = "get_account"
       val account1 = getUniqueAccountWithoutEth
       val ba = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account1.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
-      val lrc_ba = ba.balanceAndAllowanceMap(LRC_TOKEN.address)
-      val weth_ba = ba.balanceAndAllowanceMap(WETH_TOKEN.address)
+      val lrc_ba = ba.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val weth_ba = ba.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address)
       Await.result(
         transferEth(account1.getAddress, "1000")(accounts.head),
         timeout.duration
@@ -51,28 +51,31 @@ class AllowanceEventExtractorSpec
       info(s"${account1.getAddress} approve WETH")
       Await.result(approveWETHToDelegate("1000000")(account1), timeout.duration)
       expectBalanceRes(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           account1.getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        (res: GetBalanceAndAllowances.Res) => {
+        (res: GetAccount.Res) => {
           BigInt(
-            res.balanceAndAllowanceMap(WETH_TOKEN.address).allowance.toByteArray
+            res.getAccountBalance
+              .tokenBalanceMap(WETH_TOKEN.address)
+              .allowance
+              .toByteArray
           ) > 0
         }
       )
       val ba2 = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account1.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
-      val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
-      val weth_ba2 = ba2.balanceAndAllowanceMap(WETH_TOKEN.address)
+      val lrc_ba2 = ba2.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val weth_ba2 = ba2.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address)
 
       (BigInt(lrc_ba2.allowance.toByteArray) - BigInt(
         lrc_ba.allowance.toByteArray

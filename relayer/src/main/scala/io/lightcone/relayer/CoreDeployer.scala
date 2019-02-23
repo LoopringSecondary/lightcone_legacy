@@ -248,8 +248,8 @@ class CoreDeployer @Inject()(
           OrderbookManagerActor.start
         )
         .add(
-          OHLCDataHandlerActor.name, //
-          OHLCDataHandlerActor.start
+          MarketHistoryActor.name, //
+          MarketHistoryActor.start
         )
         .add(
           TransactionRecordActor.name, //

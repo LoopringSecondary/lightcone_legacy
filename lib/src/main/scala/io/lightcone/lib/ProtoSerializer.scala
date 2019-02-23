@@ -42,6 +42,7 @@ private object ProtoSerializerMacro {
             import scalapb.json4s._
             import com.google.protobuf.ByteString
             import io.lightcone.core.Amount
+            import io.lightcone.lib.NumericConversion
             import org.json4s.JsonAST.{JString, JValue}
             import scalapb.json4s.{JsonFormat, JsonFormatException}
 
@@ -79,6 +80,7 @@ private object ProtoSerializerMacro {
             import scalapb.json4s._
             import com.google.protobuf.ByteString
             import io.lightcone.core.Amount
+            import io.lightcone.lib.NumericConversion
             import org.json4s.JsonAST.{JString, JValue}
             import scalapb.json4s.{JsonFormat, JsonFormatException}
 
