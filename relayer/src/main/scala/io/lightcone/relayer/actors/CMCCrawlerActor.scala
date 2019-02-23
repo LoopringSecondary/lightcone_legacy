@@ -106,12 +106,12 @@ class CMCCrawlerActor(
 
   override def initialize() = {
     val f = for {
-      latestEffectiveRequest <- dbModule.externalTickerDal
+      latestEffectiveTime <- dbModule.externalTickerDal
         .getLastTicker()
-      (tickers_, slugSymbols_) <- if (latestEffectiveRequest.nonEmpty) {
+      (tickers_, slugSymbols_) <- if (latestEffectiveTime.nonEmpty) {
         for {
           t <- dbModule.externalTickerDal.getTickers(
-            latestEffectiveRequest.get
+            latestEffectiveTime.get
           )
           s <- dbModule.cmcTickerConfigDal.getAll()
         } yield (t, s)
@@ -164,6 +164,7 @@ class CMCCrawlerActor(
 
       if (updated) {
         refreshTickers()
+        //TODO(du): send token tickers to metadataRefresher
       }
     }
   }

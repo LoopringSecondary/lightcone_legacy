@@ -109,17 +109,8 @@ class CMCCrawlerSpec
       val (allTickersInUSD, allTickersInCNY, effectiveTickers) =
         refreshTickers()
 
-      val tickerMap = marketQuoteTokens.map { market =>
-        (market, effectiveTickers.filter(_.market == market))
-      }.toMap
-
-      // get a random market
-      val randomMarket = marketQuoteTokens.toList(
-        (new util.Random).nextInt(marketQuoteTokens.size)
-      )
-      tickerMap(randomMarket).nonEmpty should be(true)
-
       // get a random position
+      assert(allTickersInUSD.length == allTickersInCNY.length)
       val p = (new util.Random).nextInt(allTickersInUSD.size)
       val tickerInUsd = allTickersInUSD(p)
       val tickerInCny = allTickersInCNY(p)
