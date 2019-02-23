@@ -22,4 +22,5 @@ case class BalanceOfToken(
     allowance: BigInt,
     availableBalance: BigInt,
     availableAllowance: BigInt,
-    numOfOrders: Int)
+    numOfOrders: Int,
+    block: Long)

@@ -24,25 +24,23 @@ import java.util.concurrent.atomic.AtomicInteger
 // olderOrdersHavePriority = true
 // allowPartialReserve = true
 private[core] final class ReserveManagerImpl(
-    val token: String,
-    enableTracing: Boolean = false
-  )(
-    implicit
-    eventHandler: ReserveEventHandler)
-    extends ReserveManager
-    with Logging {
+  val token: String,
+  enableTracing: Boolean = false)(
+    implicit eventHandler: ReserveEventHandler)
+  extends ReserveManager
+  with Logging {
   implicit private val t = token
 
   case class Reserve(
-      orderId: String,
-      requested: BigInt,
-      reserved: BigInt)
+    orderId: String,
+    requested: BigInt,
+    reserved: BigInt)
 
   protected var allowance: BigInt = 0
   protected var balance: BigInt = 0
   protected var spendable: BigInt = 0
   protected var reserved: BigInt = 0
-  protected var lastBlock: Long = 0
+  protected var block: Long = 0
 
   protected var reserves = List.empty[Reserve]
 
@@ -62,7 +60,7 @@ private[core] final class ReserveManagerImpl(
     }
   }
 
-  @inline def getLastBlock() = lastBlock
+  @inline def getBlock() = block
 
   def getBalanceOfToken() =
     BalanceOfToken(
@@ -71,27 +69,24 @@ private[core] final class ReserveManagerImpl(
       allowance,
       balance - reserved,
       allowance - reserved,
-      reserves.size
-    )
+      reserves.size,
+      block)
 
   def setBalance(
-      block: Long,
-      balance: BigInt
-    ) =
+    block: Long,
+    balance: BigInt) =
     setBalanceAndAllowance(block, balance, this.allowance)
 
   def setAllowance(
-      block: Long,
-      allowance: BigInt
-    ) =
+    block: Long,
+    allowance: BigInt) =
     setBalanceAndAllowance(block, this.balance, allowance)
 
   def setBalanceAndAllowance(
-      block: Long,
-      balance: BigInt,
-      allowance: BigInt
-    ) = trace("setBalanceAndAllowance") {
-    this.lastBlock = block
+    block: Long,
+    balance: BigInt,
+    allowance: BigInt) = trace("setBalanceAndAllowance") {
+    this.block = block
     this.balance = balance
     this.allowance = allowance
     spendable = balance.min(allowance)
@@ -117,9 +112,8 @@ private[core] final class ReserveManagerImpl(
   }
 
   def reserve(
-      orderId: String,
-      requestedAmount: BigInt
-    ): Set[String] = trace("reserve") {
+    orderId: String,
+    requestedAmount: BigInt): Set[String] = trace("reserve") {
     rebalance { (reserveMe, _) =>
       assert(requestedAmount > 0)
 
@@ -149,13 +143,11 @@ private[core] final class ReserveManagerImpl(
     reserves = Nil
   }
 
-  private type RESERVE_METHOD =
-    (String, BigInt, Boolean, Option[BigInt]) => Unit
+  private type RESERVE_METHOD = (String, BigInt, Boolean, Option[BigInt]) => Unit
   private type DELETE_METHOD = (String) => Unit
 
   private def rebalance(
-      func: (RESERVE_METHOD, DELETE_METHOD) => Unit
-    ): Set[String] = {
+    func: (RESERVE_METHOD, DELETE_METHOD) => Unit): Set[String] = {
 
     this.reserved = 0
     val ordersToDelete = ListBuffer.empty[String]
@@ -164,11 +156,10 @@ private[core] final class ReserveManagerImpl(
     def deleteMe(orderId: String): Unit = ordersToDelete += orderId
 
     def reserveMe(
-        orderId: String,
-        requested: BigInt,
-        forceEventHandling: Boolean,
-        prevRequestedOpt: Option[BigInt] = None
-      ) = {
+      orderId: String,
+      requested: BigInt,
+      forceEventHandling: Boolean,
+      prevRequestedOpt: Option[BigInt] = None) = {
       val reserved_ = requested.min(spendable - reserved)
       if (reserved_ == 0) {
         deleteMe(orderId)
@@ -177,15 +168,13 @@ private[core] final class ReserveManagerImpl(
         buf += Reserve(orderId, requested, reserved_)
 
         prevRequestedOpt match {
-          case Some(prevReserved)
-              if !forceEventHandling && prevReserved == reserved_ =>
+          case Some(prevReserved) if !forceEventHandling && prevReserved == reserved_ =>
           case _ =>
             eventHandler.onTokenReservedForOrder(
-              lastBlock,
+              block,
               orderId,
               token,
-              reserved_
-            )
+              reserved_)
         }
       }
     }
