@@ -33,14 +33,13 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.actors.CMCCrawlerActor
 import io.lightcone.relayer.data.cmc._
 
-class CMCExternalTickerFetcher @Inject()(
-    implicit
-    val config: Config,
-    val system: ActorSystem,
-    val ec: ExecutionContext,
-    val materializer: ActorMaterializer)
-    extends ExternalTickerFetcher
-    with Logging {
+class CMCExternalTickerFetcher @Inject() (
+  implicit val config: Config,
+  val system: ActorSystem,
+  val ec: ExecutionContext,
+  val materializer: ActorMaterializer)
+  extends ExternalTickerFetcher
+  with Logging {
 
   val cmcConfig = config.getConfig(CMCCrawlerActor.name)
   val requestHeader = cmcConfig.getString("cmc.header")
@@ -60,9 +59,7 @@ class CMCExternalTickerFetcher @Inject()(
       response <- Http().singleRequest(
         HttpRequest(
           method = HttpMethods.GET,
-          uri = Uri(uri)
-        ).withHeaders(rawHeader)
-      )
+          uri = Uri(uri)).withHeaders(rawHeader))
       res <- response match {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           entity.dataBytes
@@ -73,19 +70,16 @@ class CMCExternalTickerFetcher @Inject()(
               j.status match {
                 case Some(r) if r.errorCode == 0 =>
                   j.copy(
-                    data = j.data.map(CMCExternalTickerFetcher.normalizeTicker)
-                  )
+                    data = j.data.map(CMCExternalTickerFetcher.normalizeTicker))
                 case Some(r) if r.errorCode != 0 =>
                   log.error(
-                    s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
-                  )
+                    s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]")
                   j
                 case m =>
                   log.error(s"Failed request CMC, return:[$m]")
                   throw ErrorException(
                     ErrorCode.ERR_INTERNAL_UNKNOWN,
-                    "Failed request CMC"
-                  )
+                    "Failed request CMC")
               }
             }
 
@@ -93,8 +87,7 @@ class CMCExternalTickerFetcher @Inject()(
           log.error(s"get ticker data from coinmarketcap failed:$m")
           throw ErrorException(
             ErrorCode.ERR_INTERNAL_UNKNOWN,
-            "Failed request CMC"
-          )
+            "Failed request CMC")
       }
     } yield res
   }
@@ -105,15 +98,13 @@ object CMCExternalTickerFetcher extends Logging {
   val utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS Z")
 
   def convertCMCResponseToPersistence(
-      tickers_ : Seq[CMCTickerData]
-    ): Seq[ExternalTicker] = {
+    tickers_ : Seq[CMCTickerData]): Seq[ExternalTicker] = {
     tickers_.map { t =>
       if (t.quote.get("USD").isEmpty) {
         log.error(s"CMC not return ${t.symbol} quote for USD")
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"CMC not return ${t.symbol} quote for USD"
-        )
+          s"CMC not return ${t.symbol} quote for USD")
       }
       val q = t.quote("USD")
       ExternalTicker(
@@ -123,61 +114,60 @@ object CMCExternalTickerFetcher extends Logging {
         q.percentChange1H,
         q.percentChange24H,
         q.percentChange7D,
-        q.marketCap
-      )
+        q.marketCap)
     }
   }
 
   def fillAllMarketTickers(
-      usdTickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCTickerConfig],
-      effectiveMarketSymbols: Seq[(String, String)]
-    ): Seq[ExternalMarketTickerInfo] = {
+    usdTickers: Seq[ExternalTicker],
+    slugSymbols: Seq[CMCTickerConfig],
+    effectiveMarketSymbols: Seq[(String, String)]): Seq[ExternalMarketTickerInfo] = {
     effectiveMarketSymbols.map { market =>
       calculateMarketQuote(market._1, market._2, usdTickers, slugSymbols)
     }
   }
 
   private def getTickerBySlug(
-      slug: String,
-      usdTickers: Seq[ExternalTicker]
-    ) = {
+    slug: String,
+    usdTickers: Seq[ExternalTicker]) = {
     usdTickers
       .find(t => t.slug == slug)
       .getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found ticker of slug: $slug"
-        )
-      )
+          s"not found ticker of slug: $slug"))
   }
 
   private def calculateMarketQuote(
-      baseTokenSymbol: String,
-      quoteTokenSymbol: String,
-      usdTickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCTickerConfig]
-    ): ExternalMarketTickerInfo = {
+    baseTokenSymbol: String,
+    quoteTokenSymbol: String,
+    usdTickers: Seq[ExternalTicker],
+    slugSymbols: Seq[CMCTickerConfig]): ExternalMarketTickerInfo = {
     val baseSlug = getSlugBySymbol(baseTokenSymbol, slugSymbols)
     val quoteSlug = getSlugBySymbol(quoteTokenSymbol, slugSymbols)
     val baseTicker = getTickerBySlug(baseSlug, usdTickers)
     val quoteTicker = getTickerBySlug(quoteSlug, usdTickers)
     val price = toDouble(BigDecimal(baseTicker.priceUsd / quoteTicker.priceUsd))
     val volume_24h = toDouble(
-      BigDecimal(baseTicker.volume24H / baseTicker.priceUsd) * price
-    )
+      BigDecimal(baseTicker.volume24H / baseTicker.priceUsd) * price)
     val market_cap = toDouble(
-      BigDecimal(baseTicker.marketCap / baseTicker.priceUsd) * price
-    )
+      BigDecimal(baseTicker.marketCap / baseTicker.priceUsd) * price)
+    // TODO(yongfeng): define a method somewhere:
+
+    def calc(v1: Double, v2: Double) = BigDecimal((1 + v1) / (1 + v2) - 1).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+
+    val percent_change_1h = calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
+
+    //     val percent_change_1h = BigDecimal(1 + baseTicker.percentChange1H) / BigDecimal(
+    //   1 + quoteTicker.percentChange1H
+    // ) - 1
+
     val percent_change_1h = BigDecimal(1 + baseTicker.percentChange1H) / BigDecimal(
-      1 + quoteTicker.percentChange1H
-    ) - 1
+      1 + quoteTicker.percentChange1H) - 1
     val percent_change_24h = BigDecimal(1 + baseTicker.percentChange24H) / BigDecimal(
-      1 + quoteTicker.percentChange24H
-    ) - 1
+      1 + quoteTicker.percentChange24H) - 1
     val percent_change_7d = BigDecimal(1 + baseTicker.percentChange7D) / BigDecimal(
-      1 + quoteTicker.percentChange7D
-    ) - 1
+      1 + quoteTicker.percentChange7D) - 1
     ExternalMarketTickerInfo(
       baseTokenSymbol,
       quoteTokenSymbol,
@@ -186,15 +176,13 @@ object CMCExternalTickerFetcher extends Logging {
       volume_24h,
       toDouble(percent_change_1h),
       toDouble(percent_change_24h),
-      toDouble(percent_change_7d)
-    )
+      toDouble(percent_change_7d))
   }
 
   def normalizeTicker(ticker: CMCTickerData): CMCTickerData =
     ticker.copy(
       symbol = ticker.symbol.toUpperCase(),
-      slug = ticker.slug.toLowerCase()
-    )
+      slug = ticker.slug.toLowerCase())
 
   def toDouble: PartialFunction[BigDecimal, Double] = {
     case s: BigDecimal =>
@@ -211,16 +199,14 @@ object CMCExternalTickerFetcher extends Logging {
   }
 
   def convertUsdTickersToCny(
-      usdTickers: Seq[ExternalTokenTickerInfo],
-      usdToCny: Option[ExternalTicker]
-    ) = {
+    usdTickers: Seq[ExternalTokenTickerInfo],
+    usdToCny: Option[ExternalTicker]) = {
     if (usdTickers.nonEmpty && usdToCny.nonEmpty) {
       val cnyToUsd = usdToCny.get.priceUsd
       usdTickers.map { t =>
         t.copy(
           price = toDouble(BigDecimal(t.price) / BigDecimal(cnyToUsd)),
-          volume24H = toDouble(BigDecimal(t.volume24H) / BigDecimal(cnyToUsd))
-        )
+          volume24H = toDouble(BigDecimal(t.volume24H) / BigDecimal(cnyToUsd)))
       }
     } else {
       Seq.empty
@@ -228,45 +214,37 @@ object CMCExternalTickerFetcher extends Logging {
   }
 
   def convertPersistToExternal(
-      ticker: ExternalTicker,
-      slugSymbols: Seq[CMCTickerConfig]
-    ) = {
+    ticker: ExternalTicker,
+    slugSymbols: Seq[CMCTickerConfig]) = {
     if (ticker.priceUsd <= 0) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"invalid price:${ticker.priceUsd} with ticker slug ${ticker.slug}"
-      )
+        s"invalid price:${ticker.priceUsd} with ticker slug ${ticker.slug}")
     }
     val slugSymbol = slugSymbols
       .find(_.slug == ticker.slug)
       .getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found slug: ${ticker.slug} symbol"
-        )
-      )
+          s"not found slug: ${ticker.slug} symbol"))
     ExternalTokenTickerInfo(
       slugSymbol.symbol,
       ticker.priceUsd,
       ticker.volume24H,
       ticker.percentChange1H,
       ticker.percentChange24H,
-      ticker.percentChange7D
-    )
+      ticker.percentChange7D)
   }
 
   private def getSlugBySymbol(
-      symbol: String,
-      slugSymbols: Seq[CMCTickerConfig]
-    ): String = {
+    symbol: String,
+    slugSymbols: Seq[CMCTickerConfig]): String = {
     val slugSymbol = slugSymbols
       .find(_.symbol == symbol)
       .getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found symbol: ${symbol}"
-        )
-      )
+          s"not found symbol: ${symbol}"))
     slugSymbol.slug
   }
 }

@@ -73,6 +73,8 @@ class CMCCrawlerActor(
     with ActorLogging {
 
   val selfConfig = config.getConfig(CMCCrawlerActor.name)
+  // TODO(yongfeng): 我们每十分钟爬一次，这就要求我们要做对时，最好是按照时钟准点十分钟爬一次，而不是
+  // 按照启动时间每十分钟.
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
@@ -110,9 +112,7 @@ class CMCCrawlerActor(
         .getLastTicker()
       (tickers_, slugSymbols_) <- if (latestEffectiveTime.nonEmpty) {
         for {
-          t <- dbModule.externalTickerDal.getTickers(
-            latestEffectiveTime.get
-          )
+          t <- dbModule.externalTickerDal.getTickers(latestEffectiveTime.get)
           s <- dbModule.cmcTickerConfigDal.getAll()
         } yield (t, s)
       } else {
@@ -180,14 +180,10 @@ class CMCCrawlerActor(
       assert(t.priceUsd > 0)
       t_.copy(
         price = CMCExternalTickerFetcher.toDouble(
-          BigDecimal(t.priceUsd) / BigDecimal(
-            cnyToUsd.get.priceUsd
-          )
+          BigDecimal(t.priceUsd) / BigDecimal(cnyToUsd.get.priceUsd)
         ),
         volume24H = CMCExternalTickerFetcher.toDouble(
-          BigDecimal(t.volume24H) / BigDecimal(
-            cnyToUsd.get.priceUsd
-          )
+          BigDecimal(t.volume24H) / BigDecimal(cnyToUsd.get.priceUsd)
         )
       )
     }
@@ -214,9 +210,7 @@ class CMCCrawlerActor(
     for {
       _ <- Future.unit
       tickersToPersist = CMCExternalTickerFetcher
-        .convertCMCResponseToPersistence(
-          tickers_
-        )
+        .convertCMCResponseToPersistence(tickers_)
       cnyTicker = ExternalTicker(
         "rmb",
         CMCExternalTickerFetcher
@@ -226,9 +220,7 @@ class CMCCrawlerActor(
       _ = tickers =
         tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
       fixGroup = tickersToPersist.grouped(20).toList
-      _ <- Future.sequence(
-        fixGroup.map(dbModule.externalTickerDal.saveTickers)
-      )
+      _ <- Future.sequence(fixGroup.map(dbModule.externalTickerDal.saveTickers))
       updateSucc <- dbModule.externalTickerDal.updateEffective(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE)

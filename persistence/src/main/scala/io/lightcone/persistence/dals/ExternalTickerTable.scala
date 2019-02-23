@@ -24,6 +24,8 @@ class ExternalTickerTable(tag: Tag)
     extends BaseTable[ExternalTicker](tag, "T_EXTERNAL_TICKER") {
 
   def id = slug
+
+  //TODO(yongfeng): remove this thing
   def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
 
   // usd_quote
@@ -35,22 +37,16 @@ class ExternalTickerTable(tag: Tag)
   def marketCapUsd = column[Double]("market_cap_usd")
 
   def timestamp = column[Long]("timestamp")
+
+  // rename to isValid
   def isEffective = column[Boolean]("is_effective")
 
   // indexes
   def idx_timestamp =
-    index(
-      "idx_timestamp",
-      (timestamp),
-      unique = false
-    )
+    index("idx_timestamp", (timestamp), unique = false)
 
   def idx_timestamp_effective =
-    index(
-      "idx_timestamp_effective",
-      (timestamp, isEffective),
-      unique = false
-    )
+    index("idx_timestamp_effective", (timestamp, isEffective), unique = false)
 
   def pk_timestamp_slug =
     primaryKey("pk_timestamp_slug", (timestamp, slug))

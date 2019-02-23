@@ -28,6 +28,7 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
   def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
 
+  // TODO(yongfeng): remove this method
   def updateTokenPrice(
       token: String,
       usdPrice: Double
@@ -43,5 +44,6 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
       burnRateForP2P: Double
     ): Future[ErrorCode]
 
+  // TODO(yongfeng): method should be starting with lower case !!!
   def InvalidateToken(address: String): Future[ErrorCode]
 }

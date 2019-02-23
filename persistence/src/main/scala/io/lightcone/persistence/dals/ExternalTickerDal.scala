@@ -32,10 +32,12 @@ trait ExternalTickerDal
 
   def countTickers(timestamp: Long): Future[Int]
 
+  // TODO(yongeng): slut is not a concept in our core system
   def getTickers(
       timestamp: Long,
-      tokenSlugs: Seq[String]
+      tokenSlugs: Seq[String] // this should be token Symbols
     ): Future[Seq[ExternalTicker]]
 
+  // TODO(yongfeng): change this to setValid
   def updateEffective(timestamp: Long): Future[ErrorCode]
 }

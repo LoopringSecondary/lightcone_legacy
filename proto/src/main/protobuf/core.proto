@@ -166,6 +166,7 @@ message TokenMetadata {
         INVALID     = 1;  // This token is displayed in wallet.
     }
 
+// TODO(yognfeng): rename to tokenInfo
     message ExternalData {
         double   usd_price              = 1;
         double   circulating_supply     = 2;
@@ -185,7 +186,7 @@ message TokenMetadata {
     int32    precision              = 9;
     double   burn_rate_for_market   = 10;
     double   burn_rate_for_p2p      = 11;
-    ExternalData external_data      = 12;
+    ExternalData external_data      = 12; // TODO(yongfeng): remove this.
     int64    updated_at             = 13;
 }
 

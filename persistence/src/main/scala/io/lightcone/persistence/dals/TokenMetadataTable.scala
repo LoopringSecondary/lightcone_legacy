@@ -41,6 +41,7 @@ class TokenMetadataTable(tag: Tag)
   def burnRateForP2P = column[Double]("burn_rate_for_p2p")
 
   // external data
+  // TODO(yongfeng):  rename it to 'price'
   def usdPrice = column[Double]("usd_price")
   def circulatingSupply = column[Double]("circulating_supply")
   def totalSupply = column[Double]("total_supply")
@@ -54,14 +55,9 @@ class TokenMetadataTable(tag: Tag)
   def idx_symbol = index("idx_symbol", (symbol), unique = true)
 
   def externalDataProjection =
-    (
-      usdPrice,
-      circulatingSupply,
-      totalSupply,
-      maxSupply,
-      cmcRank
-    ) <> ({ tuple =>
-      Option((TokenMetadata.ExternalData.apply _).tupled(tuple))
+    (usdPrice, circulatingSupply, totalSupply, maxSupply, cmcRank) <> ({
+      tuple =>
+        Option((TokenMetadata.ExternalData.apply _).tupled(tuple))
     }, { paramsOpt: Option[TokenMetadata.ExternalData] =>
       val params = paramsOpt.getOrElse(TokenMetadata.ExternalData())
       TokenMetadata.ExternalData.unapply(params)

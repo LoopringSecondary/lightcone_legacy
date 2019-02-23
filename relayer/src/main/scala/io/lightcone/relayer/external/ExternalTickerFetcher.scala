@@ -21,5 +21,8 @@ import scala.concurrent.Future
 
 trait ExternalTickerFetcher {
 
+  // TODO(yongfeng): change it to:
+  // def fetchExternalTickers(): Future[Seq[CMCTickerData]]
+
   def fetchExternalTickers(): Future[TickerDataInfo]
 }

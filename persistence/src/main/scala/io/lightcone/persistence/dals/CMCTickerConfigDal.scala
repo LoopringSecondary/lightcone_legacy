@@ -21,16 +21,23 @@ import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import scala.concurrent._
 
+// TODO(yongfeng): Change the interface as follows:
+
 trait CMCTickerConfigDal
     extends BaseDalImpl[CMCTickerConfigTable, CMCTickerConfig] {
 
+  // rename to saveConfigs
   def saveSlugs(slugs: Seq[CMCTickerConfig]): Future[ErrorCode]
 
+  // rename to getConfigs
   def getAll(): Future[Seq[CMCTickerConfig]]
 
+  // rename to getXonfigs
   def getBySlugs(slugs: Seq[String]): Future[Seq[CMCTickerConfig]]
 
+  // rename to updateConfig
   def update(ticker: CMCTickerConfig): Future[ErrorCode]
 
+  // rename to deleteConfigs
   def deleteBySymbol(symbol: String): Future[Boolean]
 }

@@ -18,7 +18,10 @@ package io.lightcone.relayer.external
 
 import scala.concurrent.Future
 
+// TODO(yongfeng): 这个类至少在定义的时候要支持更多的发币
+
 trait FiatExchangeRateFetcher {
 
+  // def fetchExchangeRates(fiat: Seq[String]): Future[Map[String, Double]]
   def fetchExchangeRates(): Future[Double]
 }
