@@ -84,6 +84,8 @@ enum ErrorCode{
 
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
+    // EIP712 typed json data format error
+    ERR_EIP712_INVALID_JSON_DATA                            = 2201;
 
     //3001 -- 4000 relayer error
     ERR_ORDER_ALREADY_EXIST             = 3001;
@@ -292,7 +294,7 @@ message RawOrder  {
 
 message Amount {
     bytes value     = 1;
-    int64 block_num = 2; // At which block this value is obtained. In many cases this field is not used.
+    int64 block = 2; // At which block this value is obtained. In many cases this field is not used.
 }
 
 message MarketStats {

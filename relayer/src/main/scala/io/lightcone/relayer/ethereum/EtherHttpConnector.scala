@@ -32,7 +32,7 @@ import org.json4s.native.JsonMethods.parse
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors.KeepAliveActor
-import io.lightcone.lib.TimeProvider
+import io.lightcone.lib.{NumericConversion, TimeProvider}
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import scalapb.json4s.JsonFormat
@@ -299,7 +299,7 @@ class HttpConnector(
         .fromJsonString[GetBlockWithTxHashByHash.Res] sendTo sender
 
     case batchR: BatchCallContracts.Req =>
-      val batchReqs = batchR.reqs.map { singleReq =>
+      var batchReqs = batchR.reqs.map { singleReq =>
         {
           BatchMethod(
             id = singleReq.id,
@@ -307,9 +307,14 @@ class HttpConnector(
             params = Seq(singleReq.param, normalizeTag(singleReq.tag))
           )
         }
-
       }
-
+      if (batchR.returnBlockNum) {
+        batchReqs = BatchMethod(
+          id = randInt(),
+          method = "eth_blockNumber",
+          params = Seq.empty
+        ) +: batchReqs
+      }
       //这里无法直接解析成BatchCallContracts.Res
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
@@ -317,7 +322,13 @@ class HttpConnector(
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[EthCall.Res](respJson)
         })
-        BatchCallContracts.Res(resps = callResps)
+        if (batchR.returnBlockNum)
+          BatchCallContracts.Res(
+            callResps.drop(1),
+            NumericConversion.toBigInt(callResps.head.result).toLong
+          )
+        else
+          BatchCallContracts.Res(resps = callResps)
       } sendTo sender
 
     case batchR: BatchGetTransactionReceipts.Req =>
@@ -375,7 +386,7 @@ class HttpConnector(
     }
 
     case batchR: BatchGetEthBalance.Req => {
-      val batchReqs = batchR.reqs.map { singleReq =>
+      var batchReqs = batchR.reqs.map { singleReq =>
         {
           BatchMethod(
             id = randInt(),
@@ -384,13 +395,26 @@ class HttpConnector(
           )
         }
       }
+      if (batchR.returnBlockNum) {
+        batchReqs = BatchMethod(
+          id = randInt(),
+          method = "eth_blockNumber",
+          params = Seq.empty
+        ) +: batchReqs
+      }
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val txResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[EthGetBalance.Res](respJson)
         })
-        BatchGetEthBalance.Res(txResps)
+        if (batchR.returnBlockNum)
+          BatchGetEthBalance.Res(
+            txResps.drop(1),
+            NumericConversion.toBigInt(txResps.head.result).toLong
+          )
+        else
+          BatchGetEthBalance.Res(txResps)
       } sendTo sender
     }
     case req @ Notify("init", _) =>

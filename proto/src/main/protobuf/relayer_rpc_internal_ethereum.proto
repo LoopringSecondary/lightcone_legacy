@@ -95,10 +95,12 @@ message EthGetBalance {
 message BatchGetEthBalance {
     message Req {
         repeated EthGetBalance.Req reqs = 1;
+        bool return_block_num = 2;
     }
 
     message Res {
         repeated EthGetBalance.Res resps = 1;
+        int64 block = 2;
     }
 }
 
@@ -234,10 +236,12 @@ message GetBlockTransactionCount {
 message BatchCallContracts {
     message Req {
         repeated EthCall.Req reqs = 1;
+        bool return_block_num = 2;
     }
 
     message Res {
         repeated EthCall.Res resps = 1;
+        int64 block = 2;
     }
 }
 

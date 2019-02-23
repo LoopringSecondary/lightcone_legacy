@@ -217,7 +217,7 @@ class AccountManagerAltActor(
 
         f1.sendTo(sender)
       }
-    case GetAccount.Req(addr, tokens) =>
+    case GetAccount.Req(addr, tokens, _) =>
       count.refine("label" -> "get_account").increment()
       blocking(timer, "get_account") {
         (for {
