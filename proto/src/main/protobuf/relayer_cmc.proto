@@ -67,12 +67,12 @@ message ExternalTokenTickerInfo {
 }
 
 message ExternalMarketTickerInfo {
-    string symbol = 1;  // GTO
-    string market = 2; // WETH
-    string pair = 3; // GTO-WETH
-    double price = 4; // exchange rate
-    double volume_24h = 5; // volume of the given market token
-    double percent_change_1h = 6; // price change
+    string base_token_symbol = 1;  // GTO
+    string quote_token_symbol = 2; // WETH
+    string market = 3; // GTO-WETH
+    double price = 4; // exchange rate for base token to quote token
+    double volume_24h = 5; // volume of quote token
+    double percent_change_1h = 6;
     double percent_change_24h = 7;
     double percent_change_7d = 8;
 }
