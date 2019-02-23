@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-case class AccountInfo(
+case class BalanceOfToken(
     token: String,
     balance: BigInt,
     allowance: BigInt,

@@ -85,17 +85,20 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
         allowances = allowanceResps.map { res =>
-          Amount(NumericConversion.toBigInt(res.result), batchRes.block)
+          Amount(NumericConversion.toBigInt(res.result))
         }
         balances = balanceResps.map { res =>
-          Amount(NumericConversion.toBigInt(res.result), batchRes.block)
+          Amount(NumericConversion.toBigInt(res.result))
         }
         tokenBalances = erc20Tokens.zipWithIndex.map { token =>
           token._1 -> AccountBalance
             .TokenBalance(
               token._1,
               Some(balances(token._2)),
-              Some(allowances(token._2))
+              Some(allowances(token._2)),
+              None,
+              None,
+              batchRes.block
             )
         }.toMap
 
@@ -110,18 +113,22 @@ class EthereumQueryActor(
           case Nil => Future.successful(None)
         }
 
+        // TODO(yadong): we only need to return block number once using the `block` field.
         finalBalance = if (ethRes.isDefined) {
           accountBalance.copy(
             tokenBalanceMap = accountBalance.tokenBalanceMap +
               (ethToken.head -> AccountBalance.TokenBalance(
-                Address.ZERO.toString(),
+                Address.ZERO.toString(), // TODO(yadong): do we need this?
                 Some(
                   Amount(
                     NumericConversion.toBigInt(ethRes.get.resps.head.result),
                     ethRes.get.block
                   )
                 ),
-                Some(Amount(BigInt(0), ethRes.get.block))
+                Some(Amount(BigInt(0))),
+                None,
+                None,
+                ethRes.get.block
               ))
           )
         } else {

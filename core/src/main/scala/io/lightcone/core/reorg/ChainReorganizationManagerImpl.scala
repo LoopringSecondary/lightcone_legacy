@@ -80,7 +80,7 @@ class ChainReorganizationManagerImpl(
     val orderIds = aggregated.orderIds.toSeq
     val accounts = aggregated.accounts.map {
       case (address, tokens) =>
-        ChainReorganizationImpact.AccountInfo(address, tokens.toSeq)
+        ChainReorganizationImpact.BalanceOfToken(address, tokens.toSeq)
     }.toSeq
 
     val impact = ChainReorganizationImpact(orderIds, accounts)

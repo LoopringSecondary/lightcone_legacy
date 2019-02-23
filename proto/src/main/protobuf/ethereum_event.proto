@@ -87,6 +87,7 @@ message AddressAllowanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
     io.lightcone.core.Amount allowance = 3;
+    int64 block = 4;
 }
 
 message AddressBalanceAllowanceUpdatedEvent {
@@ -94,6 +95,7 @@ message AddressBalanceAllowanceUpdatedEvent {
     string token    = 2;
     io.lightcone.core.Amount balance   = 3;
     io.lightcone.core.Amount allowance = 4;
+    int64 block = 5;
 }
 
 message GasPriceUpdatedEvent {
@@ -169,8 +171,9 @@ message CutoffEvent {
     EventHeader header  = 1;
     string broker       = 2;
     string owner        = 3;
-    string market_hash   = 4;
+    string market_hash  = 4;
     int64  cutoff       = 5; // in seconds.
+    int64  block        = 6;
 }
 
 message OrdersCancelledOnChainEvent {

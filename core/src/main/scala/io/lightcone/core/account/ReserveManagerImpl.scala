@@ -64,8 +64,8 @@ private[core] final class ReserveManagerImpl(
 
   @inline def getLastBlock() = lastBlock
 
-  def getAccountInfo() =
-    AccountInfo(
+  def getBalanceOfToken() =
+    BalanceOfToken(
       token,
       balance,
       allowance,
@@ -74,16 +74,24 @@ private[core] final class ReserveManagerImpl(
       reserves.size
     )
 
-  def setBalance(balance: BigInt) =
-    setBalanceAndAllowance(balance, this.allowance)
+  def setBalance(
+      block: Long,
+      balance: BigInt
+    ) =
+    setBalanceAndAllowance(block, balance, this.allowance)
 
-  def setAllowance(allowance: BigInt) =
-    setBalanceAndAllowance(this.balance, allowance)
+  def setAllowance(
+      block: Long,
+      allowance: BigInt
+    ) =
+    setBalanceAndAllowance(block, this.balance, allowance)
 
   def setBalanceAndAllowance(
+      block: Long,
       balance: BigInt,
       allowance: BigInt
     ) = trace("setBalanceAndAllowance") {
+    this.lastBlock = block
     this.balance = balance
     this.allowance = allowance
     spendable = balance.min(allowance)
@@ -161,17 +169,23 @@ private[core] final class ReserveManagerImpl(
         forceEventHandling: Boolean,
         prevRequestedOpt: Option[BigInt] = None
       ) = {
-      val available = requested.min(spendable - reserved)
-      if (available == 0) {
+      val reserved_ = requested.min(spendable - reserved)
+      if (reserved_ == 0) {
         deleteMe(orderId)
       } else {
-        this.reserved += available
-        buf += Reserve(orderId, requested, available)
+        this.reserved += reserved_
+        buf += Reserve(orderId, requested, reserved_)
 
         prevRequestedOpt match {
-          case Some(amount) if !forceEventHandling && amount == available =>
+          case Some(prevReserved)
+              if !forceEventHandling && prevReserved == reserved_ =>
           case _ =>
-            eventHandler.onTokenReservedForOrder(orderId, token, available)
+            eventHandler.onTokenReservedForOrder(
+              lastBlock,
+              orderId,
+              token,
+              reserved_
+            )
         }
       }
     }

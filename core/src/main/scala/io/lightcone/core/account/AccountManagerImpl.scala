@@ -27,6 +27,7 @@ final class AccountManagerImpl(
   )(
     implicit
     updatedOrdersProcessor: UpdatedOrdersProcessor,
+    updatedAccountsProcessor: UpdatedAccountsProcessor,
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
     extends AccountManager
@@ -41,35 +42,40 @@ final class AccountManagerImpl(
 
   def getNumOfOrders() = orderPool.size
 
-  def getAccountInfo(token: String): Future[AccountInfo] =
-    getReserveManagerOption(token, true).map(_.get.getAccountInfo)
+  def getBalanceOfToken(token: String): Future[BalanceOfToken] =
+    getReserveManagerOption(token, true).map(_.get.getBalanceOfToken)
 
-  def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]] =
+  def getBalanceOfToken(
+      tokens_ : Set[String]
+    ): Future[Map[String, BalanceOfToken]] =
     getReserveManagers(tokens_, true).map(_.map {
-      case (token, manager) => token -> manager.getAccountInfo
+      case (token, manager) => token -> manager.getBalanceOfToken
     })
 
   def setBalanceAndAllowance(
+      block: Long,
       token: String,
       balance: BigInt,
       allowance: BigInt
     ) =
-    setBalanceAndAllowanceInternal(token) {
-      _.setBalanceAndAllowance(balance, allowance)
+    setBalanceAndAllowanceInternal(block, token) {
+      _.setBalanceAndAllowance(block, balance, allowance)
     }
 
   def setBalance(
+      block: Long,
       token: String,
       balance: BigInt
-    ) = setBalanceAndAllowanceInternal(token) {
-    _.setBalance(balance)
+    ) = setBalanceAndAllowanceInternal(block, token) {
+    _.setBalance(block, balance)
   }
 
   def setAllowance(
+      block: Long,
       token: String,
       allowance: BigInt
-    ) = setBalanceAndAllowanceInternal(token) {
-    _.setAllowance(allowance)
+    ) = setBalanceAndAllowanceInternal(block, token) {
+    _.setAllowance(block, allowance)
   }
 
   def resubmitOrder(order: Matchable) = {
@@ -88,7 +94,7 @@ final class AccountManagerImpl(
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- updatedOrdersProcessor.processOrders(true, updatedOrders)
+      _ <- updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
     } yield (successful, updatedOrders)
   }
 
@@ -116,8 +122,11 @@ final class AccountManagerImpl(
   def cancelAllOrders() =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
 
-  def hardCancelOrder(orderId: String) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+  def hardCancelOrder(
+      block: Long,
+      orderId: String
+    ) =
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Option(block)) {
       orderPool.getOrder(orderId).toSeq
     }
 
@@ -129,15 +138,19 @@ final class AccountManagerImpl(
       }
     }
 
-  def handleCutoff(cutoff: Long) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+  def handleCutoff(
+      block: Long,
+      cutoff: Long
+    ) =
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
       orderPool.orders.filter(_.validSince <= cutoff)
     }
 
   def handleCutoff(
+      block: Long,
       cutoff: Long,
       marketHash: String
-    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
     orderPool.orders.filter { order =>
       order.validSince <= cutoff && MarketHash(
         MarketPair(order.tokenS, order.tokenB)
@@ -148,16 +161,20 @@ final class AccountManagerImpl(
   implicit private val reserveEventHandler = new ReserveEventHandler {
 
     def onTokenReservedForOrder(
+        block: Long,
         orderId: String,
         token: String,
         amount: BigInt
       ) = {
       val order = orderPool(orderId)
-      orderPool += order.withReservedAmount(amount)(token)
+      orderPool += order
+        .withReservedAmount(amount)(token)
+        .copy(block = order.block.max(block))
     }
   }
 
   private def setBalanceAndAllowanceInternal(
+      block: Long,
       token: String
     )(method: ReserveManager => Set[String]
     ): Future[Map[String, Matchable]] = {
@@ -172,12 +189,13 @@ final class AccountManagerImpl(
         Some(lastBlock)
       )(ordersToDelete)
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- updatedOrdersProcessor.processOrders(true, updatedOrders)
+      _ <- updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
 
-      // _ <- {
-      //   if (lastBlockNumber == blockNumber) Future.unit
-      //   else updatedAccountsProcessor.processAccount(blockNumber, owner, token)
-      // }
+      _ <- {
+        if (lastBlock == block) Future.unit
+        // TODO(dongw): Should we also update lastBlock?
+        else updatedAccountsProcessor.processUpdatedAccount(block, owner, token)
+      }
 
     } yield updatedOrders
   }
@@ -220,7 +238,7 @@ final class AccountManagerImpl(
         _ <- {
           if (skipProcessingUpdatedOrders) Future.unit
           else
-            updatedOrdersProcessor.processOrders(
+            updatedOrdersProcessor.processUpdatedOrders(
               blockOpt.isDefined,
               updatedOrders
             )
@@ -268,9 +286,9 @@ final class AccountManagerImpl(
         }
         tuples = missing.zip(balanceAndAllowances)
         newManagers = tuples.map {
-          case (token, (balance, allowance)) =>
+          case (token, (block, balance, allowance)) =>
             val manager = ReserveManager.default(token, enableTracing)
-            manager.setBalanceAndAllowance(balance, allowance)
+            manager.setBalanceAndAllowance(block, balance, allowance)
             tokens += token -> manager
             token -> manager
         }.toMap
@@ -287,9 +305,9 @@ final class AccountManagerImpl(
     else if (!mustReturn) Future.successful(None)
     else {
       provider.getBalanceAndALlowance(owner, token).map { result =>
-        val (balance, allowance) = result
+        val (block, balance, allowance) = result
         val manager = ReserveManager.default(token, enableTracing)
-        manager.setBalanceAndAllowance(balance, allowance)
+        manager.setBalanceAndAllowance(block, balance, allowance)
         tokens += token -> manager
         Some(manager)
       }

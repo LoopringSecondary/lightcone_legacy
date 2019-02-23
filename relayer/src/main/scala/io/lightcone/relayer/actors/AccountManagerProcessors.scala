@@ -26,7 +26,10 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
-trait AccountManagerActorProcessors extends UpdatedOrdersProcessor {
+trait AccountManagerProcessors
+    extends Object
+    with UpdatedOrdersProcessor
+    with UpdatedAccountsProcessor {
   me: Actor with ActorLogging =>
 
   implicit val timeout: Timeout
@@ -39,7 +42,16 @@ trait AccountManagerActorProcessors extends UpdatedOrdersProcessor {
   def marketManagerActor: ActorRef
   def chainReorgManagerActor: ActorRef
 
-  def processOrder(
+  def processUpdatedAccount(
+      block: Long,
+      address: String,
+      tokenAddress: String
+    ) = Future {
+    chainReorgManagerActor ! reorg
+      .RecordAccountUpdateReq(block, address, tokenAddress)
+  }
+
+  def processUpdatedOrder(
       trackOrderUpdated: Boolean,
       order: Matchable
     ): Future[Any] = {

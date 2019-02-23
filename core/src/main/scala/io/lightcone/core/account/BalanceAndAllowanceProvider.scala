@@ -23,5 +23,11 @@ trait BalanceAndAllowanceProvider {
   def getBalanceAndALlowance(
       address: String,
       token: String
-    ): Future[(BigInt, BigInt)]
+    ): Future[
+    ( //
+        Long, //
+        BigInt, //
+        BigInt
+    )
+  ]
 }

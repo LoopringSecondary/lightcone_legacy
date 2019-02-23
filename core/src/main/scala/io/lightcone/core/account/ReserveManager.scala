@@ -16,12 +16,10 @@
 
 package io.lightcone.core
 
-import scala.concurrent._
-import io.lightcone.lib.FutureUtil._
-
 trait ReserveEventHandler {
 
   def onTokenReservedForOrder(
+      block: Long,
       orderId: String,
       token: String,
       amount: BigInt
@@ -45,12 +43,20 @@ private[core] trait ReserveManager {
 
   def getLastBlock(): Long // return the last block number
 
-  def getAccountInfo(): AccountInfo
+  def getBalanceOfToken(): BalanceOfToken
 
-  def setBalance(balance: BigInt): Set[String]
-  def setAllowance(allowance: BigInt): Set[String]
+  def setBalance(
+      block: Long,
+      balance: BigInt
+    ): Set[String]
+
+  def setAllowance(
+      block: Long,
+      allowance: BigInt
+    ): Set[String]
 
   def setBalanceAndAllowance(
+      block: Long,
       balance: BigInt,
       allowance: BigInt
     ): Set[String]

@@ -17,18 +17,16 @@
 package io.lightcone.core
 
 class AccountManagerImplSpec_QueryBalanceAllowance
-    extends AccountManagerImplSpec {
+  extends AccountManagerImplSpec {
 
   "query balance/allowance" should "get data from Ethereum for the first time but not later" in {
     setBalanceAllowance(owner, LRC, 100, 200)
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, 100, 200, 100, 200, 0)
-    )
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, 100, 200, 100, 200, 0))
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, 100, 200, 100, 200, 0)
-    )
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, 100, 200, 100, 200, 0))
   }
 
   "query balance/allowance" should "get data for mutiple tokens" in {
@@ -42,9 +40,9 @@ class AccountManagerImplSpec_QueryBalanceAllowance
     }
 
     val accountInfoMap = tokenMap.map {
-      case (t, (b, a)) => t -> AccountInfo(t, b, a, b, a, 0)
+      case (t, (b, a)) => t -> BalanceOfToken(t, b, a, b, a, 0)
     }
-    manager.getAccountInfo(TOKENS.toSet).await should be(accountInfoMap)
+    manager.getBalanceOfToken(TOKENS.toSet).await should be(accountInfoMap)
   }
 
 }

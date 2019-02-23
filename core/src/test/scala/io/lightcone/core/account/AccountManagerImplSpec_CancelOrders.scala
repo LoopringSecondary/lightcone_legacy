@@ -47,17 +47,15 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(100, 0, 0)),
-        _actual = Some(MatchableState(100, 1, 0))
-      )
+        _actual = Some(MatchableState(100, 1, 0)))
     }
 
     softCancelSingleOrderExpectingSuccess(order.id) {
       order.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
     }
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, amount, amount, amount, amount, 0)
-    )
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, amount, amount, amount, amount, 0))
   }
 
   "hard cancelling one order" should "work" in {
@@ -70,17 +68,15 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
       _.copy(
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(100, 0, 0)),
-        _actual = Some(MatchableState(100, 1, 0))
-      )
+        _actual = Some(MatchableState(100, 1, 0)))
     }
 
     hardCancelSingleOrderExpectingSuccess(order.id) {
       order.copy(status = STATUS_ONCHAIN_CANCELLED_BY_USER)
     }
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, amount, amount, amount, amount, 0)
-    )
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, amount, amount, amount, amount, 0))
   }
 
   "canceling all orders in a market" should "work" in {
@@ -95,8 +91,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         _.copy(
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
-          _actual = Some(MatchableState(10, 1, 0))
-        )
+          _actual = Some(MatchableState(10, 1, 0)))
       }
     }
 
@@ -107,8 +102,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         _.copy(
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(1, 0, 0)),
-          _actual = Some(MatchableState(1, 110, 0))
-        )
+          _actual = Some(MatchableState(1, 110, 0)))
       }
     }
     numOfOrdersProcessed should be(200)
@@ -117,8 +111,8 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
     numOfOrdersProcessed should be(400)
 
     Seq(LRC, WETH) foreach { t =>
-      manager.getAccountInfo(t).await should be {
-        AccountInfo(t, amount, amount, amount, amount, 0)
+      manager.getBalanceOfToken(t).await should be {
+        BalanceOfToken(t, amount, amount, amount, amount, 0)
       }
     }
   }
@@ -135,8 +129,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         _.copy(
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
-          _actual = Some(MatchableState(10, 1, 0))
-        )
+          _actual = Some(MatchableState(10, 1, 0)))
       }
     }
 
@@ -147,8 +140,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         _.copy(
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(1, 0, 0)),
-          _actual = Some(MatchableState(1, 110, 0))
-        )
+          _actual = Some(MatchableState(1, 110, 0)))
       }
     }
     numOfOrdersProcessed should be(200)
@@ -157,8 +149,8 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
     numOfOrdersProcessed should be(200)
 
     Seq(LRC, WETH) foreach { t =>
-      manager.getAccountInfo(t).await should be {
-        AccountInfo(t, amount, amount, amount, amount, 0)
+      manager.getBalanceOfToken(t).await should be {
+        BalanceOfToken(t, amount, amount, amount, amount, 0)
       }
     }
   }
@@ -184,13 +176,11 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
     val cost = (System.currentTimeMillis - now).toDouble / num
     info(
       s"submitting $num orders then cancel them all " +
-        s"cost $cost millsecond per order"
-    )
+        s"cost $cost millsecond per order")
 
     TOKENS.foreach { t =>
-      manager.getAccountInfo(t).await should be(
-        AccountInfo(t, balance, allowance, balance, allowance, 0)
-      )
+      manager.getBalanceOfToken(t).await should be(
+        BalanceOfToken(t, balance, allowance, balance, allowance, 0))
     }
   }
 
@@ -209,8 +199,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         _.copy(
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
-          _actual = Some(MatchableState(10, 1, 0))
-        )
+          _actual = Some(MatchableState(10, 1, 0)))
       }
     }
 
@@ -237,8 +226,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         _.copy(
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
-          _actual = Some(MatchableState(10, 1, 0))
-        )
+          _actual = Some(MatchableState(10, 1, 0)))
       }
     }
 
@@ -253,8 +241,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         _.copy(
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
-          _actual = Some(MatchableState(10, 1, 0))
-        )
+          _actual = Some(MatchableState(10, 1, 0)))
       }
     }
 
