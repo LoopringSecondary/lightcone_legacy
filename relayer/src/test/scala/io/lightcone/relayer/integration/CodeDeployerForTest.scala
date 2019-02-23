@@ -23,13 +23,8 @@ import akka.util.Timeout
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.typesafe.config.Config
-import io.lightcone.core.{
-  DustOrderEvaluator,
-  MetadataManager,
-  RingIncomeEvaluator,
-  TokenValueEvaluator
-}
-import io.lightcone.ethereum.{RawOrderValidator, RingBatchGenerator}
+import io.lightcone.core._
+import io.lightcone.ethereum._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.actors._
@@ -73,12 +68,11 @@ class CoreDeployerForTest @Inject()(
     system: ActorSystem)
     extends CoreDeployer {
 
+  implicit var queryDataProvider: EthereumQueryDataProvider = _
+  implicit var accessDataProvider: EthereumAccessDataProvider = _
+
   override def deployEthereum(): Lookup[ActorRef] = {
     actors
-      .add(
-        EthereumClientMonitor.name, //
-        EthereumClientMonitor.start
-      )
       .add(
         EthereumAccessActor.name, //
         system.actorOf(Props(new MockEthereumAccessActor()))
@@ -87,14 +81,15 @@ class CoreDeployerForTest @Inject()(
         EthereumQueryActor.name, //
         system.actorOf(Props(new MockEthereumQueryActor()))
       )
-    //      .add(
-    //        EthereumEventExtractorActor.name,
-    //        EthereumEventExtractorActor.start
-    //      )
-    //      .add(
-    //        MissingBlocksEventExtractorActor.name,
-    //        MissingBlocksEventExtractorActor.start
-    //      )
+  }
+
+  def deploy(
+      ethAccessDataProvider: EthereumAccessDataProvider,
+      ethQueryDataProvider: EthereumQueryDataProvider
+    ) = {
+    queryDataProvider = ethQueryDataProvider
+    accessDataProvider = ethAccessDataProvider
+    super.deploy()
   }
 
 }

@@ -76,6 +76,32 @@ class CoreDeployer @Inject()(
     with Logging {
 
   def deployEthereum() = {
+    //deploy ethereum conntionPools
+    HttpConnector.start.foreach {
+      case (name, actor) => actors.add(name, actor)
+    }
+
+    // TODO:需要再次确认启动依赖顺序问题
+    var inited = false
+    while (!inited) {
+      try {
+        val f =
+          Future.sequence(HttpConnector.connectorNames(config).map {
+            case (nodeName, node) =>
+              val f1 = actors.get(nodeName) ? Notify("init")
+              val r = Await.result(f1, timeout.duration)
+              println(s"#### init HttpConnector ${r}")
+              Future.unit
+          })
+        Await.result(f, timeout.duration)
+        Thread.sleep(500)
+        inited = true
+      } catch {
+        case e: Exception =>
+          println(s"#### init HttpConnector ${e.printStackTrace}")
+      }
+    }
+
     actors
       .add(
         EthereumClientMonitor.name, //
@@ -162,31 +188,6 @@ class CoreDeployer @Inject()(
     //-----------deploy local actors-----------
     // TODO: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
-      //deploy ethereum conntionPools
-      HttpConnector.start.foreach {
-        case (name, actor) => actors.add(name, actor)
-      }
-
-      // TODO:需要再次确认启动依赖顺序问题
-      var inited = false
-      while (!inited) {
-        try {
-          val f =
-            Future.sequence(HttpConnector.connectorNames(config).map {
-              case (nodeName, node) =>
-                val f1 = actors.get(nodeName) ? Notify("init")
-                val r = Await.result(f1, timeout.duration)
-                println(s"#### init HttpConnector ${r}")
-                Future.unit
-            })
-          Await.result(f, timeout.duration)
-          Thread.sleep(500)
-          inited = true
-        } catch {
-          case e: Exception =>
-            println(s"#### init HttpConnector ${e.printStackTrace}")
-        }
-      }
 
       // TODO：按照模块分布，因为启动有依赖顺序
 

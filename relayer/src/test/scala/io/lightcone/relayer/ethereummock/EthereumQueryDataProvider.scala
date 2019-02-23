@@ -16,21 +16,16 @@
 
 package io.lightcone.relayer
 
-import akka.actor._
-import io.lightcone.relayer.data.{GetNonce, SendRawTransaction}
+import io.lightcone.relayer.data._
 
-class MockEthereumAccessActor(
-    implicit
-    val accessDataProvider: EthereumAccessDataProvider)
-    extends Actor
-    with ActorLogging {
+trait EthereumQueryDataProvider {
+  def getAccount(req: GetAccount.Req): GetAccount.Res
+  def getFilledAmount(req: GetFilledAmount.Req): GetFilledAmount.Res
 
-  def receive: Receive = {
-    case req: SendRawTransaction.Req =>
-      sender ! accessDataProvider.sendRawTransaction(req)
-    case req: GetNonce.Req =>
-      sender ! GetNonce.Res()
-    case msg =>
-      log.info(s"received msg: ${msg}")
-  }
+  def getOrderCancellation(
+      req: GetOrderCancellation.Req
+    ): GetOrderCancellation.Res
+  def getCutoff(req: GetCutoff.Req): GetCutoff.Res
+  def batchGetCutoffs(req: BatchGetCutoffs.Req): BatchGetCutoffs.Res
+  def getBurnRate(req: GetBurnRate.Req): GetBurnRate.Res
 }
