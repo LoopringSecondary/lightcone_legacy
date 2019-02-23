@@ -23,10 +23,6 @@ import io.lightcone.core.ErrorCode._
 
 package object data {
 
-  case class BalanceAndAllowanceBigInt(
-      balance: BigInt,
-      allowance: BigInt)
-
   implicit class RichEventHeader(header: EventHeader) {
 
     def sequenceId() = {
@@ -51,16 +47,6 @@ package object data {
       b + t + l + header.eventIndex
     }
   }
-
-  implicit def balanceAndAlowance2BalanceAndAlowanceBigInt(
-      xba: BalanceAndAllowance
-    ): BalanceAndAllowanceBigInt =
-    BalanceAndAllowanceBigInt(balance = xba.balance, allowance = xba.allowance)
-
-  implicit def balanceAndAlowanceBigInt2BalanceAndAlowance(
-      ba: BalanceAndAllowanceBigInt
-    ): BalanceAndAllowance =
-    BalanceAndAllowance(balance = ba.balance, allowance = ba.allowance)
 
   implicit def order2Matchable(order: Order): Matchable =
     Matchable(

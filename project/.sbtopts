@@ -1,4 +1,6 @@
--J-Xms2048m
--J-Xmx2048m
--J-XX:ReservedCodeCacheSize=256m
--J-XX:MaxMetaspaceSize=512m
+-J-Xms4G
+-J-Xmx4G
+-J-XX:ReservedCodeCacheSize=2G
+-J-XX:MaxMetaspaceSize=2G
+-J-XX:MaxPermSize=4G
+-J-XX:+CMSClassUnloadingEnabled

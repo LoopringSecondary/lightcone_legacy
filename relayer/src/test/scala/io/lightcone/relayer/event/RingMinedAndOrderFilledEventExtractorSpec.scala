@@ -30,29 +30,29 @@ class RingMinedAndOrderFilledEventExtractorSpec
     with OrderGenerateSupport {
   "ethereum event extractor actor test" must {
     "correctly extract all kinds events from ethereum blocks" in {
-      val getBaMethod = "get_balance_and_allowance"
+      val getBaMethod = "get_account"
       val submit_order = "submit_order"
       val account0 = accounts.head
       val account1 = getUniqueAccountWithoutEth
       val account2 = getUniqueAccountWithoutEth
       Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account1.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
       Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
       Await.result(
@@ -80,42 +80,47 @@ class RingMinedAndOrderFilledEventExtractorSpec
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
       expectBalanceRes(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           account2.getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        (res: GetBalanceAndAllowances.Res) => {
+        (res: GetAccount.Res) => {
           BigInt(
-            res.balanceAndAllowanceMap(WETH_TOKEN.address).balance.toByteArray
+            res.getAccountBalance
+              .tokenBalanceMap(WETH_TOKEN.address)
+              .balance
+              .toByteArray
           ) > 0
         }
       )
 
       val ba1_1 = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account1.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
       val ba2_1 = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
 
-      val lrc_ba1_1 = ba1_1.balanceAndAllowanceMap(LRC_TOKEN.address)
-      val lrc_ba2_1 = ba2_1.balanceAndAllowanceMap(LRC_TOKEN.address)
-      val weth_ba1_1 = ba1_1.balanceAndAllowanceMap(WETH_TOKEN.address)
-      val weth_ba2_1 = ba2_1.balanceAndAllowanceMap(WETH_TOKEN.address)
+      val lrc_ba1_1 = ba1_1.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val lrc_ba2_1 = ba2_1.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val weth_ba1_1 =
+        ba1_1.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address)
+      val weth_ba2_1 =
+        ba2_1.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address)
 
       info(
         "submit two orders and wait for ring submitter,extract ringMined event"
@@ -138,42 +143,47 @@ class RingMinedAndOrderFilledEventExtractorSpec
         timeout.duration
       )
       expectBalanceRes(
-        GetBalanceAndAllowances.Req(
+        GetAccount.Req(
           account1.getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
-        (res: GetBalanceAndAllowances.Res) => {
+        (res: GetAccount.Res) => {
           BigInt(
-            res.balanceAndAllowanceMap(LRC_TOKEN.address).balance.toByteArray
+            res.getAccountBalance
+              .tokenBalanceMap(LRC_TOKEN.address)
+              .balance
+              .toByteArray
           ) < "1000".zeros(LRC_TOKEN.decimals)
         },
         Timeout(10 seconds)
       )
       val ba1_2 = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account1.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
 
       val ba2_2 = Await.result(
         singleRequest(
-          GetBalanceAndAllowances.Req(
+          GetAccount.Req(
             account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
+        ).mapAs[GetAccount.Res],
         timeout.duration
       )
-      val lrc_ba1_2 = ba1_2.balanceAndAllowanceMap(LRC_TOKEN.address)
-      val lrc_ba2_2 = ba2_2.balanceAndAllowanceMap(LRC_TOKEN.address)
-      val weth_ba1_2 = ba1_2.balanceAndAllowanceMap(WETH_TOKEN.address)
-      val weth_ba2_2 = ba2_2.balanceAndAllowanceMap(WETH_TOKEN.address)
+      val lrc_ba1_2 = ba1_2.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val lrc_ba2_2 = ba2_2.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val weth_ba1_2 =
+        ba1_2.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address)
+      val weth_ba2_2 =
+        ba2_2.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address)
 
       (BigInt(weth_ba1_2.balance.toByteArray) - BigInt(
         weth_ba1_1.balance.toByteArray
