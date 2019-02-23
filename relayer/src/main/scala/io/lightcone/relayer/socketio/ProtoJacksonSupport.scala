@@ -16,42 +16,89 @@
 
 package io.lightcone.relayer.socketio
 
-import com.corundumstudio.socketio.protocol.JacksonJsonSupport
+import java.io.IOException
+import java.util
+
+import com.corundumstudio.socketio.AckCallback
+import com.corundumstudio.socketio.protocol._
 import com.google.protobuf.ByteString
 import io.lightcone.core.Amount
 import io.lightcone.lib.NumericConversion
-import io.lightcone.relayer.jsonrpc.Proto
-import io.netty.buffer.ByteBufOutputStream
-import org.json4s.JsonAST.JString
-import org.json4s.jackson.Serialization
-import scalapb.json4s.{JsonFormat, JsonFormatException}
+import io.netty.buffer._
+import org.json4s._
+import scalapb.GeneratedMessage
+import scalapb.json4s._
 
-class ProtoJacksonSupport extends JacksonJsonSupport {
+class ProtoJacksonSupport(delegate: JacksonJsonSupport) extends JsonSupport {
 
   val formatRegistry =
     JsonFormat.DefaultRegistry
       .registerWriter[Amount](
-      (amount: Amount) =>
-        JString(
-          NumericConversion.toHexString(BigInt(amount.value.toByteArray))
-        ), {
-        case JString(str) =>
-          Amount(
-            value = ByteString
-              .copyFrom(NumericConversion.toBigInt(str).toByteArray)
-          )
-        case _ => throw new JsonFormatException("Expected a string.")
-      }
-    )
+        (amount: Amount) =>
+          JString(
+            NumericConversion.toHexString(BigInt(amount.value.toByteArray))
+          ), {
+          case JString(str) =>
+            Amount(
+              value = ByteString
+                .copyFrom(NumericConversion.toBigInt(str).toByteArray)
+            )
+          case _ => throw new JsonFormatException("Expected a string.")
+        }
+      )
 
-  override def writeValue(
+  val printer = new Printer(formatRegistry = formatRegistry)
+
+  @throws[IOException]
+  def readAckArgs(
+      src: ByteBufInputStream,
+      callback: AckCallback[_]
+    ): AckArgs =
+    delegate.readAckArgs(src, callback)
+
+  @throws[IOException]
+  def readValue[T](
+      namespaceName: String,
+      src: ByteBufInputStream,
+      valueType: Class[T]
+    ): T =
+    delegate.readValue(namespaceName, src, valueType)
+
+  @throws[IOException]
+  def writeValue(
       out: ByteBufOutputStream,
-      value: scala.Any
+      value: scala.AnyRef
     ): Unit = {
     value match {
-      case _: Proto[_] =>
-        Serialization.write(value,out)
-      case _ => super.writeValue(out,value)
+      case list: util.ArrayList[_] =>
+        list.get(1) match {
+          case msg: GeneratedMessage =>
+            val jsonStr =
+              s"""
+                ["${list.get(0)}",${printer.print(msg)}]
+                """.stripMargin
+            out.write(jsonStr.getBytes)
+          case _ =>
+            delegate.writeValue(out, value)
+        }
+      case _ =>
+        delegate.writeValue(out, value)
     }
   }
+
+  def addEventMapping(
+      namespaceName: String,
+      eventName: String,
+      eventClass: Class[_]*
+    ): Unit =
+    delegate.addEventMapping(namespaceName, eventName, eventClass: _*)
+
+  def removeEventMapping(
+      namespaceName: String,
+      eventName: String
+    ): Unit =
+    delegate.removeEventMapping(namespaceName, eventName)
+
+  def getArrays: util.List[Array[Byte]] = delegate.getArrays
+
 }

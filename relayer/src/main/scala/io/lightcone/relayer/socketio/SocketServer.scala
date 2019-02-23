@@ -30,8 +30,13 @@ class SocketServer(
   val socketConfig = new Configuration()
   socketConfig.setHostname(selfConfig.getString("host"))
   socketConfig.setPort(selfConfig.getInt("port"))
-  socketConfig.setJsonSupport(new ProtoJacksonSupport(DefaultScalaModule))
 
+  val jsonSupport = new ProtoJacksonSupport(
+    new JacksonJsonSupport(DefaultScalaModule)
+  )
+  socketConfig.setJsonSupport(jsonSupport)
+
+  println(selfConfig)
   val server = new SocketIOServer(socketConfig)
 
   def addNotifier[R](

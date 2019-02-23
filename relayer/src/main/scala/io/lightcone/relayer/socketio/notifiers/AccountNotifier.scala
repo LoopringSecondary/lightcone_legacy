@@ -18,9 +18,8 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio._
 import com.google.inject.Inject
-import io.lightcone.core._
 import io.lightcone.lib.Address
-import io.lightcone.relayer.data.{AccountUpdate, SocketIOSubscription}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.socketio._
 
 class AccountNotifier @Inject()
@@ -44,38 +43,17 @@ class AccountNotifier @Inject()
       )
     )
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForAccounts,
       event: AnyRef
-    ): Option[AnyRef] = {
-    event match {
-      case e: AccountUpdate =>
-        if (subscription.addresses.contains(e.address)
-            && (subscription.tokens.isEmpty || e.tokenBalance.isEmpty || subscription.tokens
-              .contains(
-                e.getTokenBalance.token
-              ))) {
-          val tokenBOpt: Option[TokenBalanceAndAllowance] = e.tokenBalance.map(
-            tb =>
-              TokenBalanceAndAllowance(
-                token = tb.token,
-                balance = tb.getBalance,
-                allowance = tb.getAllowance,
-                availableBalance = tb.getAvailableBalance,
-                availableAllowance = tb.getAvailableAlloawnce
-              )
+    ): Boolean = event match {
+    case e: AccountUpdate =>
+      subscription.addresses.contains(e.address) && (
+        subscription.tokens.isEmpty || e.tokenBalance.isEmpty || subscription.tokens
+          .contains(
+            e.getTokenBalance.token
           )
-          Some(
-            AccountBalanceInfo(
-              e.address,
-              e.nonce,
-              tokenBOpt
-            )
-          )
-        } else None
-      case _ => None
-    }
-
+      )
+    case _ => false
   }
-
 }

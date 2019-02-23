@@ -50,18 +50,16 @@ class OrderNotifier @Inject()
       )
     )
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForOrders,
       event: AnyRef
-    ): Option[AnyRef] = {
-    event match {
-      case order: RawOrder =>
-        if (subscription.addresses.contains(order.owner) && (subscription.market.isEmpty || MarketHash(
-              subscription.getMarket
-            ) == MarketHash(MarketPair(order.tokenB, order.tokenS)))) {
-          Some(order)
-        } else None
-      case _ => None
-    }
+    ): Boolean = event match {
+    case order: RawOrder =>
+      subscription.addresses
+        .contains(order.owner) && (subscription.market.isEmpty || MarketHash(
+        subscription.getMarket
+      ) == MarketHash(MarketPair(order.tokenB, order.tokenS)))
+    case _ => false
   }
+
 }

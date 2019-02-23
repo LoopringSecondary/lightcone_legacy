@@ -24,10 +24,10 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
 
   val eventName: String
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: R,
       event: AnyRef
-    ): Option[AnyRef]
+    ): Boolean
 
   def wrapClient(
       client: SocketIOClient,
@@ -41,10 +41,12 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
   def notifyEvent(event: AnyRef): Unit = {
     clients = clients.filter(_.client.isChannelOpen)
     val e = transformEvent(event)
-    clients.foreach { client =>
-      extractNotifyData(client.subscription, e)
-        .foreach(res => client.sendEvent(eventName, res))
-    }
+    val targets = clients
+      .filter(client => shouldNotifyClient(client.subscription, e))
+
+    targets.foreach(_.sendEvent(eventName, e))
+
+    log.debug(s"socketio notify: $e to ${targets.size} subscribers")
   }
 
   def onData(

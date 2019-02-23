@@ -41,15 +41,11 @@ class ActivityNotifier @Inject()
       req.copy(addresses = req.addresses.map(Address.normalize))
     )
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForActivities,
       event: AnyRef
-    ): Option[AnyRef] =
-    event match {
-      case e: Activity =>
-        if (subscription.addresses.contains(e.owner)) {
-          Some(e) //TODO(yd) 研究 socketio 与protobuf共同使用,否则使用case class
-        } else None
-      case _ => None
-    }
+    ): Boolean = event match {
+    case e: Activity => subscription.addresses.contains(e.owner)
+    case _           => false
+  }
 }

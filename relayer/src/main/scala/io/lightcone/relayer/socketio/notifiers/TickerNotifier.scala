@@ -18,11 +18,13 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
+import io.lightcone.core.{MarketPair, MetadataManager}
 import io.lightcone.lib.Address
 import io.lightcone.relayer.data.SocketIOSubscription
+import io.lightcone.relayer.data.cmc.ExternalMarketTickerInfo
 import io.lightcone.relayer.socketio._
 
-class TickerNotifier @Inject()
+class TickerNotifier @Inject()(implicit manager: MetadataManager)
     extends SocketIONotifier[SocketIOSubscription.ParamsForTickers] {
   val eventName = "tickers"
 
@@ -47,14 +49,19 @@ class TickerNotifier @Inject()
       )
     )
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForTickers,
       event: AnyRef
-    ): Option[AnyRef] = {
+    ): Boolean = {
     event match {
-      case ticker: Ticker =>
-        Some(ticker) // TODO 等待ticker实现
-      case _ => None
+      case ticker: ExternalMarketTickerInfo =>
+        //TODO(yd)  确定使用地址还是symbol
+        val baseTokenAddress =
+          manager.getTokenWithSymbol(ticker.baseTokenSymbol).get.meta.address
+        val quoteTokenAddress =
+          manager.getTokenWithSymbol(ticker.quoteTokenSymbol).get.meta.address
+        MarketPair(baseTokenAddress, quoteTokenAddress) == subscription.getMarket
+      case _ => false
 
     }
   }

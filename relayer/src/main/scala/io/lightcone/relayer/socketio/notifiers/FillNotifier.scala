@@ -59,21 +59,14 @@ class FillNotifier @Inject()
     )
   }
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForFills,
       event: AnyRef
-    ): Option[AnyRef] = {
-
-    event match {
-      case fill: Fill =>
-        if ((subscription.address.isEmpty || subscription.address == fill.owner) && (MarketHash(
-              subscription.getMarket
-            ) == MarketHash(MarketPair(fill.tokenB, fill.tokenS))))
-          Some(fill) //TODO(yd) 研究 socketio 与protobuf共同使用,否则使用case class
-        else None
-      case _ => None
-    }
-
+    ): Boolean = event match {
+    case fill: Fill =>
+      (subscription.address.isEmpty || subscription.address == fill.owner) && (MarketHash(
+        subscription.getMarket
+      ) == MarketHash(MarketPair(fill.tokenB, fill.tokenS)))
+    case _ => false
   }
-
 }

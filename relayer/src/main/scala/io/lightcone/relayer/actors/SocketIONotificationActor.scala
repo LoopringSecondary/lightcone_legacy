@@ -22,13 +22,9 @@ import com.google.inject.Inject
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.socketio._
 import io.lightcone.core._
-import io.lightcone.core.{Orderbook => POrderBook}
-import io.lightcone.persistence.{Activity, Fill}
-import io.lightcone.relayer.data.{
-  AccountUpdate,
-  SocketIOSubscription,
-  TokenMetadataUpdate
-}
+import io.lightcone.persistence._
+import io.lightcone.relayer.data.cmc.ExternalMarketTickerInfo
+import io.lightcone.relayer.data._
 
 import scala.concurrent.ExecutionContext
 
@@ -99,6 +95,7 @@ class SocketIONotificationActor @Inject()(
 
   def receive: Receive = {
     // events to deliver to socket.io clients must be generated here, not inside the listeners.
+    //TODO(yadong)  需要把不展示到前端的字段清除
     case event: AccountUpdate =>
       accountNotifier.notifyEvent(event)
     case event: Activity =>
@@ -107,14 +104,13 @@ class SocketIONotificationActor @Inject()(
       fillNotifier.notifyEvent(fill)
     case event: MarketMetadata =>
       marketNotifier.notifyEvent(event)
-    case event: POrderBook.Update =>
+    case event: Orderbook.Update =>
       orderBookNotifier.notifyEvent(event)
     case event: RawOrder =>
       orderNotifier.notifyEvent(event)
     case event: TokenMetadataUpdate =>
       tokenNotifier.notifyEvent(event)
-    //TODO(yd) 等待永丰的PR合并
-    case event: TickerResponse =>
+    case event: ExternalMarketTickerInfo =>
       tickerNotifier.notifyEvent(event)
   }
 }

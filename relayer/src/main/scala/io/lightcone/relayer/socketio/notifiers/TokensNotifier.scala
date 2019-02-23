@@ -24,7 +24,7 @@ import io.lightcone.relayer.socketio.{SocketIONotifier, SocketIOSubscriber}
 class TokensNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForTokens] {
 
-  val eventName: String = "token_metadata"
+  val eventName: String = "tokens"
 
   def isSubscriptionValid(
       subscription: SocketIOSubscription.ParamsForTokens
@@ -39,14 +39,13 @@ class TokensNotifier @Inject()
       subscription
     )
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForTokens,
       event: AnyRef
-    ): Option[AnyRef] = {
+    ): Boolean = {
     event match {
-      case e: TokenMetadataUpdate =>
-        Some(e)
-      case _ => None
+      case _: TokenMetadataUpdate => true
+      case _                      => false
     }
   }
 

@@ -37,16 +37,12 @@ class MarketNotifier @Inject()
     ) =
     new SocketIOSubscriber(client, subscription)
 
-  def extractNotifyData(
+  def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForMarkets,
       event: AnyRef
-    ): Option[AnyRef] = {
-
-    event match {
-      case e: MarketMetadata =>
-        Some(e)
-      case _ => None
-    }
+    ): Boolean = event match {
+    case _: MarketMetadata => true
+    case _                 => false
   }
 
 }

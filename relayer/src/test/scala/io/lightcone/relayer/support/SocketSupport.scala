@@ -16,6 +16,8 @@
 
 package io.lightcone.relayer.support
 
+import io.lightcone.relayer.actors.SocketIONotificationActor
+import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.socketio.notifiers._
 
@@ -26,11 +28,47 @@ trait SocketSupport {
   implicit val orderNotifier = new OrderNotifier()
   implicit val orderBookNotifier = new OrderBookNotifier()
   implicit val tickerNotifier = new TickerNotifier()
-  implicit val tradeNotifier = new FillNotifier()
+  implicit val fillNotifier = new FillNotifier()
+  implicit val tokensNotifier = new TokensNotifier()
+  implicit val marketsNotifier = new MarketNotifier()
 
+  actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
 
   val socketServer = new SocketServer()
-  socketServer.start()
+  socketServer
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForAccounts],
+      accountNotifier
+    )
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForActivities],
+      activityNotifier
+    )
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForFills],
+      fillNotifier
+    )
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForOrders],
+      orderNotifier
+    )
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForTickers],
+      tickerNotifier
+    )
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForOrderbook],
+      orderBookNotifier
+    )
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForTokens],
+      tokensNotifier
+    )
+    .addNotifier(
+      classOf[SocketIOSubscription.ParamsForMarkets],
+      marketsNotifier
+    )
+    .start()
 
   println("start socket server......")
 }
