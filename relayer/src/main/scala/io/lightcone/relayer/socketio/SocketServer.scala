@@ -30,7 +30,7 @@ class SocketServer(
   val socketConfig = new Configuration()
   socketConfig.setHostname(selfConfig.getString("host"))
   socketConfig.setPort(selfConfig.getInt("port"))
-  socketConfig.setJsonSupport(new JacksonJsonSupport(DefaultScalaModule))
+  socketConfig.setJsonSupport(new ProtoJacksonSupport(DefaultScalaModule))
 
   val server = new SocketIOServer(socketConfig)
 

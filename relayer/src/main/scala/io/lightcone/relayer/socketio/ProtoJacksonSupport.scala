@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.relayer.socketio
 
-import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.socketio.notifiers._
+import com.corundumstudio.socketio.protocol.JacksonJsonSupport
+import io.lightcone.relayer.jsonrpc.Proto
+import io.netty.buffer.ByteBufOutputStream
+import org.json4s.jackson.Serialization
+import org.json4s.DefaultFormats
 
-trait SocketSupport {
-  com: CommonSpec =>
-  implicit val accountNotifier = new AccountNotifier()
-  implicit val activityNotifier = new ActivityNotifier()
-  implicit val orderNotifier = new OrderNotifier()
-  implicit val orderBookNotifier = new OrderBookNotifier()
-  implicit val tickerNotifier = new TickerNotifier()
-  implicit val tradeNotifier = new FillNotifier()
+class ProtoJacksonSupport extends JacksonJsonSupport {
 
+  implicit val formats = DefaultFormats
 
-  val socketServer = new SocketServer()
-  socketServer.start()
-
-  println("start socket server......")
+  override def writeValue(
+      out: ByteBufOutputStream,
+      value: scala.Any
+    ): Unit = {
+    value match {
+      case _: Proto[_] =>
+        Serialization.write(value,out)
+      case _ => super.writeValue(out,value)
+    }
+  }
 }
