@@ -145,15 +145,12 @@ class CMCCrawlerActor(
       cmcResponse <- externalTickerFetcher.fetchExternalTickers()
       rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
       slugSymbols_ <- dbModule.cmcTickerConfigDal.getAll()
-      (persistTickers, updated) <- if (cmcResponse.data.nonEmpty && rateResponse > 0 && slugSymbols_.nonEmpty) {
+      persistTickers <- if (cmcResponse.data.nonEmpty && rateResponse > 0 && slugSymbols_.nonEmpty) {
         for {
           tickers_ <- persistTickers(rateResponse, cmcResponse.data)
-          // TODO(du):更新tokenInfo表
-          tokens <- dbModule.tokenMetadataDal.getTokens()
-          _ <- updateTokenPrice(cmcResponse.data, tokens)
-        } yield (tickers_, true)
+        } yield tickers_
       } else {
-        Future.successful((Seq.empty, false))
+        Future.successful(Seq.empty)
       }
     } yield {
       assert(cmcResponse.data.nonEmpty)
@@ -163,10 +160,8 @@ class CMCCrawlerActor(
       slugSymbols = slugSymbols_
       tickers = persistTickers
 
-      if (updated) {
-        refreshTickers()
-        //TODO(du): send token tickers to metadataRefresher
-      }
+      refreshTickers()
+      //TODO(du): metadataRefresher
     }
   }
 
@@ -210,48 +205,6 @@ class CMCCrawlerActor(
         )
       )
     tokens.contains(slugSymbol.symbol)
-  }
-
-  private def updateTokenPrice(
-      usdTickers: Seq[CMCTickerData],
-      tokens: Seq[TokenMetadata]
-    ) = {
-    var changedTokens = Seq.empty[TokenMetadata]
-    tokens.foreach { token =>
-      val slugSymbolOpt = slugSymbols.find(t => t.symbol == token.symbol)
-      if (slugSymbolOpt.isEmpty) {
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found slug for symbol: ${token.symbol}"
-        )
-      }
-
-      val priceQuote =
-        usdTickers
-          .find(_.slug == slugSymbolOpt.get.slug)
-          .flatMap(_.quote.get("USD"))
-      val usdPriceQuote = priceQuote.getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"can not found slug:[${slugSymbolOpt.get.slug}] price in USD"
-        )
-      )
-      val externalData = token.externalData
-      if (externalData.get.usdPrice != usdPriceQuote.price) {
-        changedTokens = changedTokens :+ token.copy(
-          externalData =
-            Some(externalData.get.copy(usdPrice = usdPriceQuote.price))
-        )
-      }
-    }
-    Future.sequence(changedTokens.map { token =>
-      dbModule.tokenMetadataDal
-        .updateTokenPrice(token.address, token.externalData.get.usdPrice)
-        .map { r =>
-          if (r != ErrorCode.ERR_NONE)
-            log.error(s"failed to update token price:$token")
-        }
-    })
   }
 
   private def persistTickers(
