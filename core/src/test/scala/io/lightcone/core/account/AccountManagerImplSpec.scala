@@ -60,6 +60,7 @@ abstract class AccountManagerImplSpec extends CommonSpec {
 
   override def beforeEach(): Unit = {
     numOfOrdersProcessed = 0
+    numOfAccountsProcessed = 0
     manager = AccountManager.default(owner, true)
   }
 
