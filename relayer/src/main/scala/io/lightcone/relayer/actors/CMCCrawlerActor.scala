@@ -159,6 +159,7 @@ class CMCCrawlerActor(
       assert(cmcResponse.data.nonEmpty)
       assert(rateResponse > 0)
       assert(slugSymbols_.nonEmpty)
+      assert(persistTickers.nonEmpty)
       slugSymbols = slugSymbols_
       tickers = persistTickers
 
@@ -175,10 +176,10 @@ class CMCCrawlerActor(
     assert(cnyToUsd.nonEmpty)
     assert(cnyToUsd.get.priceUsd > 0)
     val tickers_ = tickers.filter(_.slug != "rmb")
-    allTickersInUSD = tickers_
-      .filter(isEffectiveToken)
+    val effectiveTokens = tickers_.filter(isEffectiveToken)
+    allTickersInUSD = effectiveTokens
       .map(CMCExternalTickerFetcher.convertPersistToExternal(_, slugSymbols))
-    allTickersInCNY = tickers_.filter(isEffectiveToken).map { t =>
+    allTickersInCNY = effectiveTokens.map { t =>
       val t_ =
         CMCExternalTickerFetcher.convertPersistToExternal(t, slugSymbols)
       assert(t.priceUsd > 0)
