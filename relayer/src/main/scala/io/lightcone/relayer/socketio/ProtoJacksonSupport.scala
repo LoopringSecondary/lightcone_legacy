@@ -17,14 +17,32 @@
 package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio.protocol.JacksonJsonSupport
+import com.google.protobuf.ByteString
+import io.lightcone.core.Amount
+import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.jsonrpc.Proto
 import io.netty.buffer.ByteBufOutputStream
+import org.json4s.JsonAST.JString
 import org.json4s.jackson.Serialization
-import org.json4s.DefaultFormats
+import scalapb.json4s.{JsonFormat, JsonFormatException}
 
 class ProtoJacksonSupport extends JacksonJsonSupport {
 
-  implicit val formats = DefaultFormats
+  val formatRegistry =
+    JsonFormat.DefaultRegistry
+      .registerWriter[Amount](
+      (amount: Amount) =>
+        JString(
+          NumericConversion.toHexString(BigInt(amount.value.toByteArray))
+        ), {
+        case JString(str) =>
+          Amount(
+            value = ByteString
+              .copyFrom(NumericConversion.toBigInt(str).toByteArray)
+          )
+        case _ => throw new JsonFormatException("Expected a string.")
+      }
+    )
 
   override def writeValue(
       out: ByteBufOutputStream,
