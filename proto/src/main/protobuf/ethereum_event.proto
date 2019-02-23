@@ -80,14 +80,13 @@ message AddressBalanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
     io.lightcone.core.Amount balance   = 3;
-    int64 block     = 4;
+    int64 block = 4;
 }
 
 message AddressAllowanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
     io.lightcone.core.Amount allowance = 3;
-    int64 block     = 4;
 }
 
 message AddressBalanceAllowanceUpdatedEvent {
@@ -95,7 +94,6 @@ message AddressBalanceAllowanceUpdatedEvent {
     string token    = 2;
     io.lightcone.core.Amount balance   = 3;
     io.lightcone.core.Amount allowance = 4;
-    int64 block     = 5;
 }
 
 message GasPriceUpdatedEvent {

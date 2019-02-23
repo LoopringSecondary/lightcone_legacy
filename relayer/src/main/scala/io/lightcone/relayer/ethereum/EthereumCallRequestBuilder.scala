@@ -27,18 +27,22 @@ class EthereumCallRequestBuilder {
   def buildRequest(
       req: GetBurnRate.Req,
       contractAddress: Address
-    ): EthCall.Req = {
+    ): BatchCallContracts.Req = {
     val input = burnRateTableAbi.getBurnRate.pack(
       GetBurnRateFunction.Params(token = req.token)
     )
-    val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = req.tag)
+    val param = TransactionParams(to = contractAddress.toString(), data = input)
+    val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
+    BatchCallContracts.Req(
+      reqs,
+      shouldReturnBlockNumber(req.tag)
+    )
   }
 
   def buildRequest(
       req: GetOrderCancellation.Req,
       contractAddress: Address
-    ): EthCall.Req = {
+    ): BatchCallContracts.Req = {
     val input = tradeHistoryAbi.cancelled.pack(
       CancelledFunction.Params(
         broker = req.broker,
@@ -46,13 +50,17 @@ class EthereumCallRequestBuilder {
       )
     )
     val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = req.tag)
+    val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
+    BatchCallContracts.Req(
+      reqs,
+      shouldReturnBlockNumber(req.tag)
+    )
   }
 
   def buildRequest(
       req: GetCutoff.Req,
       contractAddress: Address
-    ): EthCall.Req = {
+    ): BatchCallContracts.Req = {
     val input = req match {
       case GetCutoff.Req(broker, "", "", _) =>
         tradeHistoryAbi.cutoffForBroker.pack(
@@ -78,7 +86,13 @@ class EthereumCallRequestBuilder {
     }
 
     val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = req.tag)
+    val reqs = Seq(EthCall.Req(param = Some(param), tag = req.tag))
+    BatchCallContracts.Req(
+      reqs,
+      shouldReturnBlockNumber(req.tag)
+    )
   }
 
+  @inline def shouldReturnBlockNumber(tag: String) =
+    tag.isEmpty || tag == "latest"
 }

@@ -17,12 +17,14 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
+import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.core._
-import io.lightcone.relayer.base._
 import io.lightcone.ethereum.event._
-import io.lightcone.core._
+import io.lightcone.relayer.base._
+import io.lightcone.relayer.data.GetAccount
 import org.slf4s.Logging
+
 import scala.concurrent._
 
 class RecoverAccountsActor(
@@ -40,28 +42,23 @@ class RecoverAccountsActor(
   def receive = {
     case ChainReorganizationImpact(_, accounts) =>
       log.debug(s"started recovering accounts [size=${accounts.size}]")
-
       accounts.foreach {
         case ChainReorganizationImpact.AccountInfo(address, tokens) =>
-          // TODO(yadong): Batch query Ethereum to get the balance and allowance for each
-          // address-token pair
-          val balances: Seq[BigInt] = ???
-          val allowances: Seq[BigInt] = ???
-          val block: Long = ???
-
-          tokens.zip(balances zip allowances) foreach {
-            case (token, (balance, allowance)) =>
-              mama ! AddressBalanceAllowanceUpdatedEvent(
-                address = address,
-                token = token,
-                balance = balance,
-                allowance = allowance,
-                block = block
-              )
-          }
-
+          (query ? GetAccount.Req(address, tokens))
+            .mapAs[GetAccount.Res]
+            .map { resp =>
+              resp.getAccountBalance.tokenBalanceMap.foreach {
+                case (token, ba) =>
+                  mama ! AddressBalanceAllowanceUpdatedEvent(
+                    address = address,
+                    token = token,
+                    balance = ba.balance,
+                    allowance = ba.allowance
+                  )
+                case _ =>
+              }
+            }
       }
-
       context.stop(self)
       log.debug("finished recovering accounts")
   }
