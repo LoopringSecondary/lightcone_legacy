@@ -25,9 +25,9 @@ trait BalanceAndAllowanceProvider {
       token: String
     ): Future[
     ( //
-        Long, //
-        BigInt, //
-        BigInt
+        Long, // the block number
+        BigInt, // balance
+        BigInt // allowance
     )
   ]
 }

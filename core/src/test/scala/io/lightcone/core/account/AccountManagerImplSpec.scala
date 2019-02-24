@@ -22,6 +22,7 @@ import io.lightcone.core.testing._
 abstract class AccountManagerImplSpec extends CommonSpec {
 
   var owner = "owning_address"
+  // TODO(dongw): add more tests to verify these two numbers.
   var numOfOrdersProcessed = 0
   var numOfAccountsProcessed = 0
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
