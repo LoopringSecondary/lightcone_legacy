@@ -17,7 +17,7 @@
 package io.lightcone.core
 
 class AccountManagerImplSpec_BalanceScalesOrders
-  extends AccountManagerImplSpec {
+    extends AccountManagerImplSpec {
   import OrderStatus._
   val block = 1000000L
 
@@ -25,7 +25,7 @@ class AccountManagerImplSpec_BalanceScalesOrders
     setSpendable(block + 1, owner, LRC, 1000L)
     // setSpendable(block - 1, owner, WETH, 10L)
 
-    (1 to 10) foreach { _ =>
+    val orders = (1 to 10) map { _ =>
       submitSingleOrderExpectingSuccess {
         (owner |> 100.0.lrc --> 1.0.weth)
       } {
@@ -33,43 +33,24 @@ class AccountManagerImplSpec_BalanceScalesOrders
           block = block + 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(100, 0, 0)),
-          _actual = Some(MatchableState(100, 1, 0)))
+          _actual = Some(MatchableState(100, 1, 0))
+        )
       }
     }
 
-    // (1 to 10) foreach { _ =>
-    //   submitSingleOrderExpectingSuccess {
-    //     (owner |> 1.0.weth --> 1000.0.lrc)
-    //   } {
-    //     _.copy(
-    //       block = block - 1,
-    //       status = STATUS_PENDING,
-    //       _reserved = Some(MatchableState(1, 0, 0)),
-    //       _actual = Some(MatchableState(1, 1000, 0))
-    //     )
-    //   }
-    // }
     numOfOrdersProcessed should be(10)
 
-    println("===================------------")
+    val res = manager
+      .setBalanceAndAllowance(block - 3, LRC, BigInt(300), BigInt(300))
+      .await
 
-    val res =
-      manager
-        .setBalanceAndAllowance(block - 3, LRC, BigInt(300), BigInt(300))
-        .await
+    val cancelledOrders = orders
+      .drop(3)
+      .map(
+        _.copy(block = block - 3, status = STATUS_SOFT_CANCELLED_LOW_BALANCE)
+      )
 
-    res.foreach(println)
-
-    // res should be(Map())
-
-    // manager.getBalanceOfToken(LRC).await should be {
-    //   BalanceOfToken(LRC, amount, amount, amount, amount, 0, block + 1)
-    // }
-
-    // manager.getBalanceOfToken(WETH).await should be {
-    //   BalanceOfToken(WETH, amount, amount, amount, amount, 0, block - 1)
-    // }
-
+    res.values.toSet should be(cancelledOrders.toSet)
   }
 
 }

@@ -112,7 +112,6 @@ private[core] final class ReserveManagerImpl(
     rebalance { operator =>
       reserves.foreach { r =>
         operator.add(r.orderId, r.requested, false, Some(r.allocated))
-        println(s"$token => spendable: $spendable, reserved: $reserved")
       }
     }
   }
@@ -182,10 +181,8 @@ private[core] final class ReserveManagerImpl(
         val allocated = requested.min(spendable - reserved)
 
         if (allocated == 0) {
-          println(s"$token -- allocated: $allocated")
           remove(orderId)
         } else {
-          println(s"$token ++ allocated: $allocated")
           reserved += allocated
           buf += Reserve(orderId, requested, allocated)
 
