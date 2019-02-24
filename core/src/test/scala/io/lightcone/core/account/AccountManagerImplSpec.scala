@@ -31,8 +31,9 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   implicit val updatdOrdersProcessor = new UpdatedOrdersProcessor()(ec) {
 
     def processUpdatedOrder(
-      trackOrderUpdated: Boolean,
-      order: Matchable): Future[Any] = {
+        trackOrderUpdated: Boolean,
+        order: Matchable
+      ): Future[Any] = {
       numOfOrdersProcessed += 1
       processOneOrder(order)
       Future.unit
@@ -42,9 +43,10 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   implicit val updatdAccountsProcessor = new UpdatedAccountsProcessor {
 
     def processUpdatedAccount(
-      block: Long,
-      address: String,
-      tokenAddress: String) = {
+        block: Long,
+        address: String,
+        tokenAddress: String
+      ) = {
       numOfAccountsProcessed += 1
       Future.unit
     }
@@ -63,24 +65,28 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   }
 
   def setBalanceAllowance(
-    block: Long,
-    owner: String,
-    token: String,
-    balance: BigInt,
-    allowance: BigInt) =
+      block: Long,
+      owner: String,
+      token: String,
+      balance: BigInt,
+      allowance: BigInt
+    ) =
     (baProvider.getBalanceAndALlowance _)
       .when(owner, token)
       .returns(Future.successful((block, balance, allowance)))
       .once
 
   def setSpendable(
-    block: Long,
-    owner: String,
-    token: String,
-    spendable: BigInt) = setBalanceAllowance(block, owner, token, spendable, spendable)
+      block: Long,
+      owner: String,
+      token: String,
+      spendable: BigInt
+    ) = setBalanceAllowance(block, owner, token, spendable, spendable)
 
   def submitSingleOrderExpectingSuccess(
-    order: Matchable)(genExpectedOrder: Matchable => Matchable): Matchable = {
+      order: Matchable
+    )(genExpectedOrder: Matchable => Matchable
+    ): Matchable = {
     val (success, orderMap) = manager.resubmitOrder(order).await
     success should be(true)
     orderMap.size should be(1)
@@ -89,7 +95,9 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   }
 
   def submitSingleOrderExpectingFailure(
-    order: Matchable)(genExpectedOrder: Matchable => Matchable): Matchable = {
+      order: Matchable
+    )(genExpectedOrder: Matchable => Matchable
+    ): Matchable = {
     val (success, orderMap) = manager.resubmitOrder(order).await
     success should be(false)
     orderMap.size should be(1)
@@ -98,7 +106,9 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   }
 
   def softCancelSingleOrderExpectingSuccess(
-    orderId: String)(expectdOrder: Matchable): Matchable = {
+      orderId: String
+    )(expectdOrder: Matchable
+    ): Matchable = {
     val (success, orderMap) = manager.cancelOrder(orderId).await
     success should be(true)
     orderMap.size should be(1)
@@ -107,8 +117,10 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   }
 
   def hardCancelSingleOrderExpectingSuccess(
-    block: Long,
-    orderId: String)(expectdOrder: Matchable): Matchable = {
+      block: Long,
+      orderId: String
+    )(expectdOrder: Matchable
+    ): Matchable = {
     val orderMap = manager.hardCancelOrder(block, orderId).await
     orderMap.size should be(1)
     orderMap(orderId) should be(expectdOrder)
