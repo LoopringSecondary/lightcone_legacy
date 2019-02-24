@@ -22,14 +22,16 @@ import io.lightcone.lib.FutureUtil._
 
 // This class is not thread safe.
 final class AccountManagerImpl(
-  val owner: String,
-  enableTracing: Boolean = false)(
-    implicit updatedOrdersProcessor: UpdatedOrdersProcessor,
+    val owner: String,
+    enableTracing: Boolean = false
+  )(
+    implicit
+    updatedOrdersProcessor: UpdatedOrdersProcessor,
     updatedAccountsProcessor: UpdatedAccountsProcessor,
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
-  extends AccountManager
-  with Logging {
+    extends AccountManager
+    with Logging {
 
   import OrderStatus._
   import ErrorCode._
@@ -44,31 +46,35 @@ final class AccountManagerImpl(
     getReserveManagerOption(token, true).map(_.get.getBalanceOfToken)
 
   def getBalanceOfToken(
-    tokens_ : Set[String]): Future[Map[String, BalanceOfToken]] =
+      tokens_ : Set[String]
+    ): Future[Map[String, BalanceOfToken]] =
     getReserveManagers(tokens_, true).map(_.map {
       case (token, manager) => token -> manager.getBalanceOfToken
     })
 
   def setBalanceAndAllowance(
-    block: Long,
-    token: String,
-    balance: BigInt,
-    allowance: BigInt) =
+      block: Long,
+      token: String,
+      balance: BigInt,
+      allowance: BigInt
+    ) =
     setBalanceAndAllowanceInternal(block, token) {
       _.setBalanceAndAllowance(block, balance, allowance)
     }
 
   def setBalance(
-    block: Long,
-    token: String,
-    balance: BigInt) = setBalanceAndAllowanceInternal(block, token) {
+      block: Long,
+      token: String,
+      balance: BigInt
+    ) = setBalanceAndAllowanceInternal(block, token) {
     _.setBalance(block, balance)
   }
 
   def setAllowance(
-    block: Long,
-    token: String,
-    allowance: BigInt) = setBalanceAndAllowanceInternal(block, token) {
+      block: Long,
+      token: String,
+      allowance: BigInt
+    ) = setBalanceAndAllowanceInternal(block, token) {
     _.setAllowance(block, allowance)
   }
 
@@ -83,7 +89,8 @@ final class AccountManagerImpl(
         orderPool +=
           orderPool(order.id).copy(
             block = order.block.max(block),
-            status = STATUS_SOFT_CANCELLED_LOW_BALANCE)
+            status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+          )
       }
       successful = !orderIdsToDelete.contains(order.id)
       _ = if (successful) {
@@ -95,8 +102,9 @@ final class AccountManagerImpl(
   }
 
   def cancelOrder(
-    orderId: String,
-    status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER) =
+      orderId: String,
+      status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
+    ) =
     for {
       orders <- cancelOrderInternal(status)(orderPool.getOrder(orderId).toSeq)
     } yield (orders.size > 0, orders)
@@ -110,7 +118,7 @@ final class AccountManagerImpl(
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
-          (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
+        (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
       }
     }
 
@@ -118,8 +126,9 @@ final class AccountManagerImpl(
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
 
   def hardCancelOrder(
-    block: Long,
-    orderId: String) =
+      block: Long,
+      orderId: String
+    ) =
     cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Option(block)) {
       orderPool.getOrder(orderId).toSeq
     }
@@ -128,34 +137,38 @@ final class AccountManagerImpl(
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, None, true) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
-          (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
+        (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
       }
     }
 
   def handleCutoff(
-    block: Long,
-    cutoff: Long) =
+      block: Long,
+      cutoff: Long
+    ) =
     cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
       orderPool.orders.filter(_.validSince <= cutoff)
     }
 
   def handleCutoff(
-    block: Long,
-    cutoff: Long,
-    marketHash: String) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
+      block: Long,
+      cutoff: Long,
+      marketHash: String
+    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
     orderPool.orders.filter { order =>
       order.validSince <= cutoff && MarketHash(
-        MarketPair(order.tokenS, order.tokenB)).hashString == marketHash
+        MarketPair(order.tokenS, order.tokenB)
+      ).hashString == marketHash
     }
   }
 
   implicit private val reserveEventHandler = new ReserveEventHandler {
 
     def onTokenReservedForOrder(
-      block: Long,
-      orderId: String,
-      token: String,
-      amount: BigInt) = {
+        block: Long,
+        orderId: String,
+        token: String,
+        amount: BigInt
+      ) = {
       val order = orderPool(orderId)
       orderPool += order
         .withReservedAmount(amount)(token)
@@ -164,8 +177,10 @@ final class AccountManagerImpl(
   }
 
   private def setBalanceAndAllowanceInternal(
-    block: Long,
-    token: String)(method: ReserveManager => Set[String]): Future[Map[String, Matchable]] = {
+      block: Long,
+      token: String
+    )(method: ReserveManager => Set[String]
+    ): Future[Map[String, Matchable]] = {
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
@@ -174,7 +189,8 @@ final class AccountManagerImpl(
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ <- cancelOrderInternal(
         STATUS_SOFT_CANCELLED_LOW_BALANCE,
-        Some(lastBlock))(ordersToDelete)
+        Some(lastBlock)
+      )(ordersToDelete)
       updatedOrders = orderPool.takeUpdatedOrders
       _ <- updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
 
@@ -188,23 +204,25 @@ final class AccountManagerImpl(
   }
 
   private def cancelOrderInternal(
-    status: OrderStatus,
-    blockOpt: Option[Long] = None,
-    skipProcessingUpdatedOrders: Boolean = false)(orders: Iterable[Matchable]) = {
+      status: OrderStatus,
+      blockOpt: Option[Long] = None,
+      skipProcessingUpdatedOrders: Boolean = false
+    )(orders: Iterable[Matchable]
+    ) = {
     val statusIsInvalid = status match {
       case STATUS_EXPIRED | //
-        STATUS_DUST_ORDER | //
-        STATUS_COMPLETELY_FILLED | //
-        STATUS_SOFT_CANCELLED_BY_USER | //
-        STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR | //
-        STATUS_ONCHAIN_CANCELLED_BY_USER | //
-        STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
-        STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
-        STATUS_SOFT_CANCELLED_LOW_BALANCE | //
-        STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
-        STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET | //
-        STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS | //
-        STATUS_SOFT_CANCELLED_DUPLICIATE =>
+          STATUS_DUST_ORDER | //
+          STATUS_COMPLETELY_FILLED | //
+          STATUS_SOFT_CANCELLED_BY_USER | //
+          STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR | //
+          STATUS_ONCHAIN_CANCELLED_BY_USER | //
+          STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
+          STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
+          STATUS_SOFT_CANCELLED_LOW_BALANCE | //
+          STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
+          STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET | //
+          STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS | //
+          STATUS_SOFT_CANCELLED_DUPLICIATE =>
         false
 
       case _ => true
@@ -216,7 +234,11 @@ final class AccountManagerImpl(
       for {
         _ <- serializeFutures(orders) { order =>
           onToken(order.tokenS, _.release(order.id)).andThen {
-            case _ => orderPool += order.copy(status = status)
+            case _ =>
+              orderPool += order.copy(
+                block = order.block.max(blockOpt.getOrElse(0L)),
+                status = status
+              )
           }
         }
         updatedOrders = orderPool.takeUpdatedOrders
@@ -225,7 +247,8 @@ final class AccountManagerImpl(
           else
             updatedOrdersProcessor.processUpdatedOrders(
               blockOpt.isDefined,
-              updatedOrders)
+              updatedOrders
+            )
         }
       } yield updatedOrders
     }
@@ -255,8 +278,9 @@ final class AccountManagerImpl(
   }
 
   private def getReserveManagers(
-    tokens_ : Set[String],
-    mustReturn: Boolean): Future[Map[String, ReserveManager]] = {
+      tokens_ : Set[String],
+      mustReturn: Boolean
+    ): Future[Map[String, ReserveManager]] = {
     val (existing, missing) = tokens_.partition(tokens.contains)
     val existingManagers =
       existing.map(tokens.apply).map(m => m.token -> m).toMap
@@ -282,8 +306,9 @@ final class AccountManagerImpl(
 
   // Do not use getReserveManagers for best performance
   private def getReserveManagerOption(
-    token: String,
-    mustReturn: Boolean): Future[Option[ReserveManager]] = {
+      token: String,
+      mustReturn: Boolean
+    ): Future[Option[ReserveManager]] = {
     if (tokens.contains(token)) Future.successful(Some(tokens(token)))
     else if (!mustReturn) Future.successful(None)
     else {
@@ -298,8 +323,9 @@ final class AccountManagerImpl(
   }
 
   private def onToken(
-    token: String,
-    invoke: ReserveManagerMethod): Future[(Long, Set[String])] =
+      token: String,
+      invoke: ReserveManagerMethod
+    ): Future[(Long, Set[String])] =
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
