@@ -24,7 +24,7 @@ import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.actors.EntryPointActor
 import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.ethereum.{EventDispatcher, EventDispatcherImpl}
+import io.lightcone.relayer.ethereum.EventDispatcher
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.scalamock.scalatest.MockFactory
 

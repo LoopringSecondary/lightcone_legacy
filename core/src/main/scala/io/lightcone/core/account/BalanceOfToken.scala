@@ -16,10 +16,11 @@
 
 package io.lightcone.core
 
-case class AccountInfo(
+case class BalanceOfToken(
     token: String,
     balance: BigInt,
     allowance: BigInt,
     availableBalance: BigInt,
     availableAllowance: BigInt,
-    numOfOrders: Int)
+    numOfOrders: Int,
+    block: Long)

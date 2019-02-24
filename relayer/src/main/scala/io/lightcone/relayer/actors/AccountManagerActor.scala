@@ -50,7 +50,7 @@ class AccountManagerActor(
     val metadataManager: MetadataManager,
     val baProvider: BalanceAndAllowanceProvider)
     extends Actor
-    with AccountManagerActorProcessors
+    with AccountManagerProcessors
     with Stash
     with BlockingReceive
     with ActorLogging {
@@ -64,7 +64,6 @@ class AccountManagerActor(
   val timer = KamonSupport.timer("account_manager")
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-  implicit val uoProcessor: UpdatedOrdersProcessor = this
 
   val manager = AccountManager.default(owner)
   val accountCutoffState = new AccountCutoffStateImpl()
@@ -225,7 +224,7 @@ class AccountManagerActor(
       blocking(timer, "get_account") {
         (for {
           _ <- Future { assert(addr == owner) }
-          accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
+          accountInfos <- Future.sequence(tokens.map(manager.getBalanceOfToken))
           _ = assert(tokens.size == accountInfos.size)
           tokenBalances = accountInfos.map { i =>
             i.token -> i
@@ -298,7 +297,8 @@ class AccountManagerActor(
 
       blocking {
         assert(req.address == owner)
-        manager.setBalance(req.token, BigInt(req.balance.toByteArray))
+        manager
+          .setBalance(req.block, req.token, BigInt(req.balance.toByteArray))
       }
 
     case req: AddressAllowanceUpdatedEvent =>
@@ -306,7 +306,8 @@ class AccountManagerActor(
 
       blocking {
         assert(req.address == owner)
-        manager.setAllowance(req.token, BigInt(req.allowance.toByteArray))
+        manager
+          .setAllowance(req.block, req.token, BigInt(req.allowance.toByteArray))
       }
 
     case req: AddressBalanceAllowanceUpdatedEvent =>
@@ -315,36 +316,35 @@ class AccountManagerActor(
         assert(req.address == owner)
 
         manager.setBalanceAndAllowance(
+          req.block,
           req.token,
           BigInt(req.balance.toByteArray),
           BigInt(req.allowance.toByteArray)
         )
       }
 
-    // ownerCutoff
-    case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) //
-        if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
-      count.refine("label" -> "cutoff").increment()
-      blocking {
-        accountCutoffState.setCutoff(cutoff)
-        manager.handleCutoff(cutoff)
+    case req: CutoffEvent if req.header.nonEmpty =>
+      val header = req.header.get
+      if (header.txStatus != TX_STATUS_SUCCESS) {
+        log.error(s"unexpeted cutoffEvent status: ${header.txStatus}")
+      } else if (req.broker == req.owner) {
+        if (req.marketHash == null || req.marketHash.isEmpty) {
+          count.refine("label" -> "cutoff").increment()
+          blocking {
+            accountCutoffState.setCutoff(req.cutoff)
+            manager.handleCutoff(req.block, req.cutoff)
+          }
+        } else {
+          count.refine("label" -> "cutoff_market").increment()
+          blocking {
+            accountCutoffState.setTradingPairCutoff(req.marketHash, req.cutoff)
+            manager.handleCutoff(req.block, req.cutoff, req.marketHash)
+          }
+        }
+      } else {
+        count.refine("label" -> "broker_cutoff").increment()
+        log.warning(s"not support this event yet: $req")
       }
-
-    // ownerTokenPairCutoff  tokenPair ！= ""
-    case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) //
-        if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
-      count.refine("label" -> "cutoff_market").increment()
-
-      blocking {
-        accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
-        manager.handleCutoff(cutoff, marketHash)
-      }
-
-    // Currently we do not support broker-level cutoff
-    case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) //
-        if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
-      count.refine("label" -> "broker_cutoff").increment()
-      log.warning(s"not support this event yet: $req")
 
     case req: OrdersCancelledOnChainEvent
         if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>

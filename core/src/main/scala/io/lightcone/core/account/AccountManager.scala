@@ -27,7 +27,8 @@ object AccountManager {
       enableTracing: Boolean = false
     )(
       implicit
-      processor: UpdatedOrdersProcessor,
+      updatedAccountsProcessor: UpdatedAccountsProcessor,
+      updatedOrdersProcessor: UpdatedOrdersProcessor,
       provider: BalanceAndAllowanceProvider,
       ec: ExecutionContext
     ): AccountManager = new AccountManagerImpl(owner)
@@ -38,22 +39,27 @@ trait AccountManager {
 
   def getNumOfOrders(): Int
 
-  def getAccountInfo(token: String): Future[AccountInfo]
+  def getBalanceOfToken(token: String): Future[BalanceOfToken]
 
-  def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]]
+  def getBalanceOfToken(
+      tokens_ : Set[String]
+    ): Future[Map[String, BalanceOfToken]]
 
   def setBalanceAndAllowance(
+      block: Long,
       token: String,
       balance: BigInt,
       allowance: BigInt
     ): Future[Map[String, Matchable]]
 
   def setBalance(
+      block: Long,
       token: String,
       balance: BigInt
     ): Future[Map[String, Matchable]]
 
   def setAllowance(
+      block: Long,
       token: String,
       allowance: BigInt
     ): Future[Map[String, Matchable]]
@@ -70,12 +76,19 @@ trait AccountManager {
   def cancelAllOrders(): Future[Map[String, Matchable]]
 
   // cancel an order based on onchain cancel event
-  def hardCancelOrder(orderId: String): Future[Map[String, Matchable]]
+  def hardCancelOrder(
+      block: Long,
+      orderId: String
+    ): Future[Map[String, Matchable]]
 
   // hard cancel multiple orders
-  def handleCutoff(cutoff: Long): Future[Map[String, Matchable]]
+  def handleCutoff(
+      block: Long,
+      cutoff: Long
+    ): Future[Map[String, Matchable]]
 
   def handleCutoff(
+      block: Long,
       cutoff: Long,
       marketHash: String
     ): Future[Map[String, Matchable]]

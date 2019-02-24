@@ -20,7 +20,7 @@ import scala.concurrent._
 
 trait UpdatedAccountsProcessor {
 
-  def processAccount(
+  def processUpdatedAccount(
       block: Long,
       address: String,
       tokenAddress: String

@@ -120,11 +120,12 @@ message OHLCData {
 
 message AccountBalance {
     message TokenBalance {
-        string token                                    = 2;
-        io.lightcone.core.Amount balance                = 3;
-        io.lightcone.core.Amount allowance              = 4;
-        io.lightcone.core.Amount available_balance      = 5;
-        io.lightcone.core.Amount available_alloawnce    = 6;
+        string token                                    = 1;
+        io.lightcone.core.Amount balance                = 2;
+        io.lightcone.core.Amount allowance              = 3;
+        io.lightcone.core.Amount available_balance      = 4;
+        io.lightcone.core.Amount available_alloawnce    = 5;
+        int64 block                                     = 6;
     }
 
     string address                                  = 1;

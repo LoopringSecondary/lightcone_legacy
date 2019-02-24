@@ -18,16 +18,17 @@ package io.lightcone.core
 
 class AccountManagerImplSpec_QueryBalanceAllowance
     extends AccountManagerImplSpec {
+  val block = 10000000L
 
   "query balance/allowance" should "get data from Ethereum for the first time but not later" in {
-    setBalanceAllowance(owner, LRC, 100, 200)
+    setBalanceAllowance(block, owner, LRC, 100, 200)
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, 100, 200, 100, 200, 0)
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, 100, 200, 100, 200, 0, block)
     )
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, 100, 200, 100, 200, 0)
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, 100, 200, 100, 200, 0, block)
     )
   }
 
@@ -38,13 +39,13 @@ class AccountManagerImplSpec_QueryBalanceAllowance
     }.toMap
 
     tokenMap.foreach {
-      case (t, (b, a)) => setBalanceAllowance(owner, t, b, a)
+      case (t, (b, a)) => setBalanceAllowance(block, owner, t, b, a)
     }
 
     val accountInfoMap = tokenMap.map {
-      case (t, (b, a)) => t -> AccountInfo(t, b, a, b, a, 0)
+      case (t, (b, a)) => t -> BalanceOfToken(t, b, a, b, a, 0, block)
     }
-    manager.getAccountInfo(TOKENS.toSet).await should be(accountInfoMap)
+    manager.getBalanceOfToken(TOKENS.toSet).await should be(accountInfoMap)
   }
 
 }
