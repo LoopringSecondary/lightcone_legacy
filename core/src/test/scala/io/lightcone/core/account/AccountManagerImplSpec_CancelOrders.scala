@@ -133,7 +133,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         (owner |> 1.0.weth --> 110.lrc)
       } {
         _.copy(
-          block = block + 1,
+          block = block - 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(1, 0, 0)),
           _actual = Some(MatchableState(1, 110, 0))
@@ -164,7 +164,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
         (owner |> 10.0.lrc --> 1.0.weth)
       } {
         _.copy(
-          block = block + 1,
+          block = block - 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
           _actual = Some(MatchableState(10, 1, 0))
@@ -288,7 +288,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
     orders2.foreach { order =>
       submitSingleOrderExpectingSuccess(order) {
         _.copy(
-          block = block + 1,
+          block = block - 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
           _actual = Some(MatchableState(10, 1, 0))
