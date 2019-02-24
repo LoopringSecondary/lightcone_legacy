@@ -187,16 +187,21 @@ final class AccountManagerImpl(
       lastBlock = manager.getBlock
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ <- cancelOrderInternal(
-        STATUS_SOFT_CANCELLED_LOW_BALANCE,
-        Some(lastBlock)
-      )(ordersToDelete)
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (order.tokenFee == order.tokenS) Future.unit
+        else
+          for {
+            managerFeeOpt <- getReserveManagerOption(order.tokenFee, false)
+            _ = managerFeeOpt.foreach(_.release(order.id))
+            _ = orderPool += order.copy(
+              block = order.block.max(block),
+              status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+            )
+          } yield Unit
+      }
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
-
       _ <- {
         if (lastBlock == block) Future.unit
-        // TODO(dongw): Should we also update lastBlock?
         else updatedAccountsProcessor.processUpdatedAccount(block, owner, token)
       }
 
@@ -230,16 +235,15 @@ final class AccountManagerImpl(
 
     if (statusIsInvalid) {
       Future.failed(ErrorException(ERR_INTERNAL_UNKNOWN, status.toString))
-    } else {
+    } else
       for {
         _ <- serializeFutures(orders) { order =>
-          onToken(order.tokenS, _.release(order.id)).andThen {
-            case _ =>
-              orderPool += order.copy(
-                block = order.block.max(blockOpt.getOrElse(0L)),
-                status = status
-              )
-          }
+          for {
+            managerSOpt <- getReserveManagerOption(order.tokenS, false)
+            _ = managerSOpt.foreach(_.release(order.id))
+            managerFeeOpt <- getReserveManagerOption(order.tokenFee, false)
+            _ = managerFeeOpt.foreach(_.release(order.id))
+          } yield Unit
         }
         updatedOrders = orderPool.takeUpdatedOrders
         _ <- {
@@ -251,8 +255,35 @@ final class AccountManagerImpl(
             )
         }
       } yield updatedOrders
-    }
   }
+
+  private def onToken(
+      token: String,
+      invoke: ReserveManagerMethod
+    ): Future[(Long, Set[String])] =
+    for {
+      managerOpt <- getReserveManagerOption(token, true)
+      manager = managerOpt.get
+      orderIdsToDelete = invoke(manager)
+      ordersToDelete = orderIdsToDelete.map(orderPool.apply)
+      // we cannot parallel execute these following operations
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (token == order.tokenS) Future.unit
+        else {
+          getReserveManagerOption(order.tokenS, false).map { managerOpt =>
+            managerOpt.foreach(_.release(order.id))
+          }
+        }
+      }
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (token == order.tokenFee) Future.unit
+        else {
+          getReserveManagerOption(order.tokenFee, false).map { managerOpt =>
+            managerOpt.foreach(_.release(order.id))
+          }
+        }
+      }
+    } yield (manager.getBlock, orderIdsToDelete)
 
   private def reserveForOrder(order: Matchable): Future[(Long, Set[String])] = {
     val requestedAmountS = order.requestedAmount(order.tokenS)
@@ -321,33 +352,5 @@ final class AccountManagerImpl(
       }
     }
   }
-
-  private def onToken(
-      token: String,
-      invoke: ReserveManagerMethod
-    ): Future[(Long, Set[String])] =
-    for {
-      managerOpt <- getReserveManagerOption(token, true)
-      manager = managerOpt.get
-      orderIdsToDelete = invoke(manager)
-      ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      // we cannot parallel execute these following operations
-      _ <- serializeFutures(ordersToDelete) { order =>
-        if (token == order.tokenS) Future.unit
-        else {
-          getReserveManagerOption(order.tokenS, false).map { managerOpt =>
-            managerOpt.foreach(_.release(order.id))
-          }
-        }
-      }
-      _ <- serializeFutures(ordersToDelete) { order =>
-        if (token == order.tokenFee) Future.unit
-        else {
-          getReserveManagerOption(order.tokenFee, false).map { managerOpt =>
-            managerOpt.foreach(_.release(order.id))
-          }
-        }
-      }
-    } yield (manager.getBlock, orderIdsToDelete)
 
 }

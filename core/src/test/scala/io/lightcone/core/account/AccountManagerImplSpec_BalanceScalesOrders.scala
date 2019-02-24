@@ -17,33 +17,60 @@
 package io.lightcone.core
 
 class AccountManagerImplSpec_BalanceScalesOrders
-  extends AccountManagerImplSpec {
-  val block = 10000000L
+    extends AccountManagerImplSpec {
+  import OrderStatus._
+  val block = 1000000L
 
-  "query balance/allowance" should "get data from Ethereum for the first time but not later" in {
-    // setBalanceAllowance(block, owner, LRC, 100, 200)
+  "lowering down balance or allowance" should "scale down or cancel orders" in {
+    setSpendable(block + 1, owner, LRC, 1000L)
+    // setSpendable(block - 1, owner, WETH, 10L)
 
-    // manager.getBalanceOfToken(LRC).await should be(
-    //   BalanceOfToken(LRC, 100, 200, 100, 200, 0, block))
+    (1 to 10) foreach { _ =>
+      submitSingleOrderExpectingSuccess {
+        (owner |> 100.0.lrc --> 1.0.weth)
+      } {
+        _.copy(
+          block = block + 1,
+          status = STATUS_PENDING,
+          _reserved = Some(MatchableState(100, 0, 0)),
+          _actual = Some(MatchableState(100, 1, 0))
+        )
+      }
+    }
 
-    // manager.getBalanceOfToken(LRC).await should be(
-    //   BalanceOfToken(LRC, 100, 200, 100, 200, 0, block))
-  }
+    // (1 to 10) foreach { _ =>
+    //   submitSingleOrderExpectingSuccess {
+    //     (owner |> 1.0.weth --> 1000.0.lrc)
+    //   } {
+    //     _.copy(
+    //       block = block - 1,
+    //       status = STATUS_PENDING,
+    //       _reserved = Some(MatchableState(1, 0, 0)),
+    //       _actual = Some(MatchableState(1, 1000, 0))
+    //     )
+    //   }
+    // }
+    numOfOrdersProcessed should be(10)
 
-  "query balance/allowance" should "get data for mutiple tokens" in {
+    println("===================------------")
 
-    // val tokenMap = TOKENS.map {
-    //   _ -> (rand.nextInt.abs, rand.nextInt.abs)
-    // }.toMap
+    val res =
+      manager
+        .setBalanceAndAllowance(block - 3, LRC, BigInt(300), BigInt(500))
+        .await
 
-    // tokenMap.foreach {
-    //   case (t, (b, a)) => setBalanceAllowance(block, owner, t, b, a)
+    println("res: " + res)
+
+    res should be(Map())
+
+    // manager.getBalanceOfToken(LRC).await should be {
+    //   BalanceOfToken(LRC, amount, amount, amount, amount, 0, block + 1)
     // }
 
-    // val accountInfoMap = tokenMap.map {
-    //   case (t, (b, a)) => t -> BalanceOfToken(t, b, a, b, a, 0, block)
+    // manager.getBalanceOfToken(WETH).await should be {
+    //   BalanceOfToken(WETH, amount, amount, amount, amount, 0, block - 1)
     // }
-    // manager.getBalanceOfToken(TOKENS.toSet).await should be(accountInfoMap)
+
   }
 
 }
