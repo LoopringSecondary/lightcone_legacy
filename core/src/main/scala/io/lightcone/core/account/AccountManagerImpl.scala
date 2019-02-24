@@ -187,19 +187,28 @@ final class AccountManagerImpl(
       lastBlock = manager.getBlock
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
+
+      // release tokenFee allocations if tokenS != tokenFee
       _ <- serializeFutures(ordersToDelete) { order =>
         if (order.tokenFee == order.tokenS) Future.unit
         else
           for {
             managerFeeOpt <- getReserveManagerOption(order.tokenFee, false)
             _ = managerFeeOpt.foreach(_.release(order.id))
-            _ = orderPool += order.copy(
-              block = order.block.max(block),
-              status = STATUS_SOFT_CANCELLED_LOW_BALANCE
-            )
           } yield Unit
       }
+
+      // Make sure order's block and status are updated
+      _ = ordersToDelete.foreach { order =>
+        orderPool += order.copy(
+          block = block,
+          status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+        )
+      }
+
       updatedOrders = orderPool.takeUpdatedOrders
+
+      // track account update only when block number changed
       _ <- {
         if (lastBlock == block) Future.unit
         else updatedAccountsProcessor.processUpdatedAccount(block, owner, token)
@@ -257,14 +266,15 @@ final class AccountManagerImpl(
       } yield updatedOrders
   }
 
-  private def onToken(
+  private def reserveToken(
       token: String,
-      invoke: ReserveManagerMethod
+      orderId: String,
+      requestedAmountS: BigInt
     ): Future[(Long, Set[String])] =
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
-      orderIdsToDelete = invoke(manager)
+      orderIdsToDelete = manager.reserve(orderId, requestedAmountS)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       // we cannot parallel execute these following operations
       _ <- serializeFutures(ordersToDelete) { order =>
@@ -295,12 +305,12 @@ final class AccountManagerImpl(
     } else
       for {
         _ <- Future.unit
-        (b1, r1) <- onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
+        (b1, r1) <- reserveToken(order.tokenS, order.id, requestedAmountS)
         (b2, r2) <- {
           if (r1.contains(order.id) || order.tokenFee == order.tokenS || requestedAmountFee == 0)
             Future.successful((b1, Set.empty[String]))
           else {
-            onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
+            reserveToken(order.tokenFee, order.id, requestedAmountFee)
           }
         }
         block = b1.max(b2)
