@@ -25,17 +25,18 @@ import io.lightcone.relayer.socketio.{SocketIONotifier, SocketIOSubscriber}
 class MarketNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForMarkets] {
 
-  val eventName: String = "markets"
+  val name: String = "markets"
 
-  def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForMarkets
-    ): Boolean = true
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
+    subscription.paramsForMarkets.isDefined
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForMarkets
+      subscription: SocketIOSubscription
     ) =
-    new SocketIOSubscriber(client, subscription)
+    subscription.paramsForMarkets
+      .map(params => new SocketIOSubscriber(client, params))
+      .get
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForMarkets,

@@ -64,28 +64,7 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
-    accountNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForAccounts
-    ],
-    activityNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForActivities
-    ],
-    orderNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrders
-    ],
-    fillNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForFills
-    ],
-    tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTickers],
-    orderBookNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrderbook
-    ],
-    tokensNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForTokens
-    ],
-    marketsNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForMarkets
-    ],
+    relayerNotifier: RelayerNotifier,
     system: ActorSystem)
     extends Object
     with Logging {
@@ -294,40 +273,7 @@ class CoreDeployer @Inject()(
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("socketio")) {
         val server = new SocketServer
-        server
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForAccounts],
-            accountNotifier
-          )
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForActivities],
-            activityNotifier
-          )
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForFills],
-            fillNotifier
-          )
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForOrders],
-            orderNotifier
-          )
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForTickers],
-            tickerNotifier
-          )
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForOrderbook],
-            orderBookNotifier
-          )
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForTokens],
-            tokensNotifier
-          )
-          .addNotifier(
-            classOf[SocketIOSubscription.ParamsForMarkets],
-            marketsNotifier
-          )
-          .start()
+        server.start()
       }
     }
   }

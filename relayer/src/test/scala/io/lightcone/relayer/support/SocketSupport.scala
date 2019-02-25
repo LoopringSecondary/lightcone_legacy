@@ -32,43 +32,21 @@ trait SocketSupport {
   implicit val tokensNotifier = new TokensNotifier()
   implicit val marketsNotifier = new MarketNotifier()
 
+  implicit val relayerNotifier = new RelayerNotifier(
+    accountNotifier,
+    activityNotifier,
+    orderBookNotifier,
+    orderNotifier,
+    tickerNotifier,
+    fillNotifier,
+    tokensNotifier,
+    marketsNotifier
+  )
+
   actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
 
   val socketServer = new SocketServer()
-  socketServer
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForAccounts],
-      accountNotifier
-    )
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForActivities],
-      activityNotifier
-    )
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForFills],
-      fillNotifier
-    )
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForOrders],
-      orderNotifier
-    )
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForTickers],
-      tickerNotifier
-    )
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForOrderbook],
-      orderBookNotifier
-    )
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForTokens],
-      tokensNotifier
-    )
-    .addNotifier(
-      classOf[SocketIOSubscription.ParamsForMarkets],
-      marketsNotifier
-    )
-    .start()
+  socketServer.start()
 
   println("start socket server......")
 }

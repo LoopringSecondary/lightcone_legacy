@@ -17,14 +17,12 @@
 package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
-import com.corundumstudio.socketio.listener.DataListener
-import io.lightcone.core.ErrorCode
 import io.lightcone.relayer.data.SocketIOSubscription
 import org.slf4s.Logging
 
-abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
+abstract class SocketIONotifier[R]() extends Logging {
 
-  val eventName: String
+  val name: String
 
   def shouldNotifyClient(
       subscription: R,
@@ -33,14 +31,17 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: R
+      subscription: SocketIOSubscription
     ): SocketIOSubscriber[R]
 
-  def isSubscriptionValid(subscription: R): Boolean
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean
 
   private var clients = Seq.empty[SocketIOSubscriber[R]]
 
-  def notifyEvent(event: AnyRef): Unit = {
+  def notifyEvent(
+      event: AnyRef,
+      eventName: String
+    ): Unit = {
     clients = clients.filter(_.client.isChannelOpen)
     val e = transformEvent(event)
     val targets = clients
@@ -53,28 +54,14 @@ abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
 
   def onData(
       client: SocketIOClient,
-      subscription: R,
-      ackSender: AckRequest
-    ): Unit = {
-    if (isSubscriptionValid(subscription)) {
-      if (ackSender.isAckRequested) {
-        ackSender.sendAckData(
-          SocketIOSubscription
-            .Ack(message = s"$eventName:$subscription event subscribed")
-        )
-      }
+      subscription: SocketIOSubscription
+    ): Boolean = {
+    val isValid = isSubscriptionValid(subscription)
+    if (isValid) {
       val wrapped = wrapClient(client, subscription)
       clients = wrapped +: clients.filterNot(_ == wrapped)
-    } else {
-      if (ackSender.isAckRequested) {
-        ackSender.sendAckData(
-          SocketIOSubscription.Ack(
-            error = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
-            s"$eventName:$subscription is invalid"
-          )
-        )
-      }
     }
+    isValid
   }
 
   // Override this method to change the event. Normally we should not do this.

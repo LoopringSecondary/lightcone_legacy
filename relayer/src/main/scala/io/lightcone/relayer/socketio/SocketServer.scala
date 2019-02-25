@@ -20,11 +20,13 @@ import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.protocol.JacksonJsonSupport
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.Config
+import io.lightcone.relayer.data.SocketIOSubscription
 
 class SocketServer(
   )(
     implicit
-    val config: Config) {
+    val config: Config,
+    val notifier: RelayerNotifier) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
@@ -35,21 +37,13 @@ class SocketServer(
     new JacksonJsonSupport(DefaultScalaModule)
   )
   socketConfig.setJsonSupport(jsonSupport)
-
-  println(selfConfig)
   val server = new SocketIOServer(socketConfig)
 
-  def addNotifier[R](
-      cls: Class[R],
-      notifier: SocketIONotifier[R]
-    ): SocketServer = {
-    server.addEventListener(
-      notifier.eventName,
-      cls,
-      notifier
-    )
-    this
-  }
+  server.addEventListener(
+    notifier.eventName,
+    classOf[SocketIOSubscription],
+    notifier
+  )
 
   def start(): Unit = server.start()
 }

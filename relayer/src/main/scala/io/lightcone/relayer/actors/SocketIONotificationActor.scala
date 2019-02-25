@@ -19,12 +19,11 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.google.inject.Inject
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.socketio._
 import io.lightcone.core._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data.cmc.ExternalMarketTickerInfo
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.socketio._
 
 import scala.concurrent.ExecutionContext
 
@@ -36,28 +35,7 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       system: ActorSystem,
       ec: ExecutionContext,
       timeout: Timeout,
-      accountNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForAccounts
-      ],
-      activityNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForActivities
-      ],
-      orderNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForOrders
-      ],
-      fillNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForFills
-      ],
-      tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTickers],
-      orderBookNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForOrderbook
-      ],
-      tokensNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForTokens
-      ],
-      marketsNotifier: SocketIONotifier[
-        SocketIOSubscription.ParamsForMarkets
-      ],
+      notifer: RelayerNotifier,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -69,48 +47,27 @@ class SocketIONotificationActor @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
-    val accountNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForAccounts
-    ],
-    val activityNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForActivities
-    ],
-    val orderNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrders
-    ],
-    val fillNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForFills
-    ],
-    val tickerNotifier: SocketIONotifier[SocketIOSubscription.ParamsForTickers],
-    val orderBookNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForOrderbook
-    ],
-    val tokensNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForTokens
-    ],
-    val marketsNotifier: SocketIONotifier[
-      SocketIOSubscription.ParamsForMarkets
-    ])
+    val notifer: RelayerNotifier)
     extends Actor {
 
   def receive: Receive = {
     // events to deliver to socket.io clients must be generated here, not inside the listeners.
     //TODO(yadong)  需要把不展示到前端的字段清除
-    case event: AccountUpdate =>
-      accountNotifier.notifyEvent(event)
-    case event: Activity =>
-      activityNotifier.notifyEvent(event)
-    case fill: Fill =>
-      fillNotifier.notifyEvent(fill)
-    case event: MarketMetadata =>
-      marketsNotifier.notifyEvent(event)
-    case event: Orderbook.Update =>
-      orderBookNotifier.notifyEvent(event)
     case event: RawOrder =>
-      orderNotifier.notifyEvent(event)
+      notifer.notifyEvent(event)
+    case event: AccountUpdate =>
+      notifer.notifyEvent(event)
+    case event: Activity =>
+      notifer.notifyEvent(event)
+    case fill: Fill =>
+      notifer.notifyEvent(fill)
+    case event: MarketMetadata =>
+      notifer.notifyEvent(event)
+    case event: Orderbook.Update =>
+      notifer.notifyEvent(event)
     case event: TokenMetadata =>
-      tokensNotifier.notifyEvent(event)
-    case event: ExternalMarketTickerInfo =>
-      tickerNotifier.notifyEvent(event)
+      notifer.notifyEvent(event)
+    case event: AnyRef =>
+      notifer.notifyEvent(event)
   }
 }

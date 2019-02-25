@@ -120,32 +120,6 @@ class CoreModule(
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
-    //bind socket listener
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForAccounts]]
-      .to[AccountNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForActivities]]
-      .to[ActivityNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrders]]
-      .to[OrderNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForTickers]]
-      .to[TickerNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForFills]]
-      .to[FillNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForOrderbook]]
-      .to[OrderBookNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForMarkets]]
-      .to[MarketNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SocketIOSubscription.ParamsForTokens]]
-      .to[TokensNotifier]
-      .asEagerSingleton
-
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
 
@@ -234,6 +208,20 @@ class CoreModule(
       new RingMinedEventExtractor(),
       new TokenBurnRateEventExtractor()
     )
+
+  @Provides
+  def bindNotifiers()(implicit manager: MetadataManager): RelayerNotifier = {
+    new RelayerNotifier(
+      new AccountNotifier(),
+      new ActivityNotifier(),
+      new FillNotifier(),
+      new MarketNotifier(),
+      new OrderBookNotifier(),
+      new OrderNotifier(),
+      new TickerNotifier(),
+      new TokensNotifier()
+    )
+  }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

@@ -25,20 +25,18 @@ import io.lightcone.relayer.socketio._
 class TokensNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForTokens] {
 
-  val eventName: String = "tokens"
+  val name: String = "tokens"
 
-  def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForTokens
-    ): Boolean = true
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
+    subscription.paramsForTokens.isDefined
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForTokens
+      subscription: SocketIOSubscription
     ) =
-    new SocketIOSubscriber(
-      client,
-      subscription
-    )
+    subscription.paramsForTokens
+      .map(params => new SocketIOSubscriber(client, params))
+      .get
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForTokens,

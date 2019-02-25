@@ -25,23 +25,27 @@ import io.lightcone.relayer.socketio._
 class AccountNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForAccounts] {
 
-  val eventName = "accounts"
+  val name = "accounts"
 
-  def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForAccounts
-    ): Boolean = subscription.addresses.nonEmpty
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
+    subscription.paramsForAccounts.isDefined && subscription.getParamsForAccounts.addresses.nonEmpty
 
   def wrapClient(
       client: SocketIOClient,
-      req: SocketIOSubscription.ParamsForAccounts
+      req: SocketIOSubscription
     ) =
-    new SocketIOSubscriber(
-      client,
-      req.copy(
-        addresses = req.addresses.map(Address.normalize),
-        tokens = req.tokens.map(Address.normalize)
+    req.paramsForAccounts
+      .map(
+        params =>
+          new SocketIOSubscriber(
+            client,
+            params.copy(
+              addresses = params.addresses.map(Address.normalize),
+              tokens = params.tokens.map(Address.normalize)
+            )
+          )
       )
-    )
+      .get
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForAccounts,

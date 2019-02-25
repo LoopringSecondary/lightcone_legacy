@@ -18,49 +18,50 @@ package io.lightcone.relayer.socketio.notifiers
 
 import com.corundumstudio.socketio.SocketIOClient
 import com.google.inject.Inject
-import io.lightcone.core.{MarketPair, MetadataManager}
+import io.lightcone.core.MetadataManager
 import io.lightcone.lib.Address
 import io.lightcone.relayer.data.SocketIOSubscription
-import io.lightcone.relayer.data.cmc.ExternalMarketTickerInfo
 import io.lightcone.relayer.socketio._
 
 class TickerNotifier @Inject()(implicit manager: MetadataManager)
     extends SocketIONotifier[SocketIOSubscription.ParamsForTickers] {
-  val eventName = "tickers"
+  val name = "tickers"
 
-  def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForTickers
-    ): Boolean = subscription.market.isDefined
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
+    subscription.paramsForTickers.isDefined && subscription.getParamsForTickers.market.isDefined
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForTickers
+      subscription: SocketIOSubscription
     ) =
-    new SocketIOSubscriber(
-      client,
-      subscription.copy(
-        market = subscription.market.map(
-          market =>
-            market.copy(
-              baseToken = Address.normalize(market.baseToken),
-              quoteToken = Address.normalize(market.quoteToken)
-            )
+    subscription.paramsForTickers.map { params =>
+      new SocketIOSubscriber(
+        client,
+        params.copy(
+          market = params.market.map(
+            market =>
+              market.copy(
+                baseToken = Address.normalize(market.baseToken),
+                quoteToken = Address.normalize(market.quoteToken)
+              )
+          )
         )
       )
-    )
+    }.get
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForTickers,
       event: AnyRef
     ): Boolean = {
     event match {
-      case ticker: ExternalMarketTickerInfo =>
-        //TODO(yd)  确定使用地址还是symbol
-        val baseTokenAddress =
-          manager.getTokenWithSymbol(ticker.baseTokenSymbol).get.meta.address
-        val quoteTokenAddress =
-          manager.getTokenWithSymbol(ticker.quoteTokenSymbol).get.meta.address
-        MarketPair(baseTokenAddress, quoteTokenAddress) == subscription.getMarket
+      case ticker: AnyRef =>
+        true // TODO(yadong) 等待永丰的PR合并以后再确定
+
+//        val baseTokenAddress =
+//          manager.getTokenWithSymbol(ticker.baseTokenSymbol).get.meta.address
+//        val quoteTokenAddress =
+//          manager.getTokenWithSymbol(ticker.quoteTokenSymbol).get.meta.address
+//        MarketPair(baseTokenAddress, quoteTokenAddress) == subscription.getMarket
       case _ => false
 
     }

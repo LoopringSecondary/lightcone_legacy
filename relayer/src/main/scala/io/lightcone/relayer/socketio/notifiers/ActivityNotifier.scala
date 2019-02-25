@@ -26,20 +26,24 @@ import io.lightcone.relayer.socketio._
 class ActivityNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForActivities] {
 
-  val eventName = "transactions"
+  val name = "transactions"
 
-  def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForActivities
-    ): Boolean = subscription.addresses.nonEmpty
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
+    subscription.paramsForActivities.isDefined && subscription.paramsForActivities.get.addresses.nonEmpty
 
   def wrapClient(
       client: SocketIOClient,
-      req: SocketIOSubscription.ParamsForActivities
+      req: SocketIOSubscription
     ) =
-    new SocketIOSubscriber(
-      client,
-      req.copy(addresses = req.addresses.map(Address.normalize))
-    )
+    req.paramsForActivities
+      .map(
+        params =>
+          new SocketIOSubscriber(
+            client,
+            params.copy(addresses = params.addresses.map(Address.normalize))
+          )
+      )
+      .get
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForActivities,

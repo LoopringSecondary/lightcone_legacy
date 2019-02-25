@@ -27,37 +27,36 @@ import io.lightcone.relayer.socketio._
 class FillNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForFills] {
 
-  val eventName: String = "trades"
+  val name: String = "trades"
 
-  def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForFills
-    ): Boolean =
-    subscription.market.isDefined && (subscription.address.isEmpty || Address
-      .isValid(subscription.address))
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
+    subscription.paramsForFills.isDefined && subscription.getParamsForFills.market.isDefined && (subscription.getParamsForFills.address.isEmpty || Address
+      .isValid(subscription.getParamsForFills.address))
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForFills
-    ) = {
-    val address = if (subscription.address.nonEmpty) {
-      Address.normalize(subscription.address)
-    } else {
-      subscription.address
-    }
-    new SocketIOSubscriber(
-      client,
-      subscription = subscription.copy(
-        address = address,
-        market = subscription.market.map(
-          market =>
-            market.copy(
-              baseToken = Address.normalize(market.baseToken),
-              quoteToken = Address.normalize(market.quoteToken)
-            )
+      subscription: SocketIOSubscription
+    ) =
+    subscription.paramsForFills.map { params =>
+      val address = if (params.address.nonEmpty) {
+        Address.normalize(params.address)
+      } else {
+        params.address
+      }
+      new SocketIOSubscriber(
+        client,
+        subscription = params.copy(
+          address = address,
+          market = params.market.map(
+            market =>
+              market.copy(
+                baseToken = Address.normalize(market.baseToken),
+                quoteToken = Address.normalize(market.quoteToken)
+              )
+          )
         )
       )
-    )
-  }
+    }.get
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForFills,

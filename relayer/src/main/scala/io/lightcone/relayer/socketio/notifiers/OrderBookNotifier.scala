@@ -26,28 +26,29 @@ import io.lightcone.relayer.socketio._
 class OrderBookNotifier @Inject()
     extends SocketIONotifier[SocketIOSubscription.ParamsForOrderbook] {
 
-  val eventName: String = "order_book"
+  val name: String = "order_book"
 
-  def isSubscriptionValid(
-      subscription: SocketIOSubscription.ParamsForOrderbook
-    ): Boolean = subscription.market.isDefined
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
+    subscription.paramsForOrderbook.isDefined && subscription.getParamsForOrderbook.market.isDefined
 
   def wrapClient(
       client: SocketIOClient,
-      subscription: SocketIOSubscription.ParamsForOrderbook
+      subscription: SocketIOSubscription
     ) =
-    new SocketIOSubscriber(
-      client,
-      subscription.copy(
-        market = subscription.market.map(
-          market =>
-            market.copy(
-              baseToken = Address.normalize(market.baseToken),
-              quoteToken = Address.normalize(market.quoteToken)
-            )
+    subscription.paramsForOrderbook.map { params =>
+      new SocketIOSubscriber(
+        client,
+        params.copy(
+          market = params.market.map(
+            market =>
+              market.copy(
+                baseToken = Address.normalize(market.baseToken),
+                quoteToken = Address.normalize(market.quoteToken)
+              )
+          )
         )
       )
-    )
+    }.get
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForOrderbook,
