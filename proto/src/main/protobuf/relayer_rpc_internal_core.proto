@@ -22,6 +22,7 @@ package io.lightcone.relayer.data;
 import "core.proto";
 import "persistence.proto";
 import "relayer_common.proto";
+import "relayer_external.proto";
 // import "relayer_ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
@@ -326,18 +327,7 @@ message GetExternalMarketTickers {
     }
 
     message Res {
-        repeated ExternalMarketTickerInfo tickers = 2;
-    }
-
-    message ExternalMarketTickerInfo {
-        string base_token_symbol = 1;  // GTO
-        string quote_token_symbol = 2; // WETH
-        string market = 3; // GTO-WETH
-        double price = 4; // exchange rate for base token to quote token
-        double volume_24h = 5; // volume of quote token
-        double percent_change_1h = 6;
-        double percent_change_24h = 7;
-        double percent_change_7d = 8;
+        repeated io.lightcone.relayer.external.ExternalMarketTickerInfo tickers = 2;
     }
 }
 
@@ -345,19 +335,9 @@ message GetExternalTokenTickers {
     message Req {}
 
     message Res {
-        repeated ExternalTokenTickerInfo tickers = 1;
-    }
-
-    message ExternalTokenTickerInfo {
-        string symbol = 1;  // GTO
-        double price = 2; // price of current currency
-        double volume_24h = 3; // volume of current currency
-        double percent_change_1h = 4;
-        double percent_change_24h = 5;
-        double percent_change_7d = 6;
+        repeated io.lightcone.relayer.external.ExternalTokenTickerInfo tickers = 1;
     }
 }
-
 
 message GetOrderbookSlots {
     message Req {

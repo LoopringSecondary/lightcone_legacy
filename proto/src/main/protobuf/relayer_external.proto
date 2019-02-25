@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.relayer.data.cmc;
+package io.lightcone.relayer.external;
 
 message CMCResponse {
      Status status = 1;
@@ -62,4 +62,24 @@ message CMCResponse {
          int32 elapsed = 4;
          int32 credit_count = 5;
      }
+}
+
+message ExternalMarketTickerInfo {
+    string base_token_symbol = 1;  // GTO
+    string quote_token_symbol = 2; // WETH
+    string market = 3; // GTO-WETH
+    double price = 4; // exchange rate for base token to quote token
+    double volume_24h = 5; // volume of quote token
+    double percent_change_1h = 6;
+    double percent_change_24h = 7;
+    double percent_change_7d = 8;
+}
+
+message ExternalTokenTickerInfo {
+    string symbol = 1;  // GTO
+    double price = 2; // price of current currency
+    double volume_24h = 3; // volume of current currency
+    double percent_change_1h = 4;
+    double percent_change_24h = 5;
+    double percent_change_7d = 6;
 }
