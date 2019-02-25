@@ -323,7 +323,7 @@ message GetTokens {
 message GetExternalMarketTickers {
 
     message Req {
-        string   market = 1;
+        repeated string   market = 1;
     }
 
     message Res {
