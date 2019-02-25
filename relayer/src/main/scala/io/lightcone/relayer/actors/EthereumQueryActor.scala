@@ -73,7 +73,7 @@ class EthereumQueryActor(
 
   val base = loopringConfig.getInt("burn-rate-table.base")
 
-  protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
+  @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
     case req @ GetAccount.Req(owner, tokens, tag) =>
@@ -85,17 +85,20 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
         allowances = allowanceResps.map { res =>
-          Amount(NumericConversion.toBigInt(res.result), batchRes.block)
+          Amount(NumericConversion.toBigInt(res.result))
         }
         balances = balanceResps.map { res =>
-          Amount(NumericConversion.toBigInt(res.result), batchRes.block)
+          Amount(NumericConversion.toBigInt(res.result))
         }
         tokenBalances = erc20Tokens.zipWithIndex.map { token =>
           token._1 -> AccountBalance
             .TokenBalance(
               token._1,
               Some(balances(token._2)),
-              Some(allowances(token._2))
+              Some(allowances(token._2)),
+              None,
+              None,
+              batchRes.block
             )
         }.toMap
 
@@ -104,29 +107,28 @@ class EthereumQueryActor(
         ethRes <- ethToken match {
           case head :: tail =>
             (ethereumAccessorActor ? BatchGetEthBalance.Req(
-              Seq(
-                EthGetBalance.Req(
-                  address = Address.normalize(owner),
-                  tag
-                )
-              ),
+              Seq(EthGetBalance.Req(address = Address.normalize(owner), tag)),
               returnBlockNum = brb.shouldReturnBlockNumber(tag)
             )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
+        // TODO(yadong): we only need to return block number once using the `block` field.
         finalBalance = if (ethRes.isDefined) {
           accountBalance.copy(
             tokenBalanceMap = accountBalance.tokenBalanceMap +
               (ethToken.head -> AccountBalance.TokenBalance(
-                Address.ZERO.toString(),
+                Address.ZERO.toString(), // TODO(yadong): do we need this?
                 Some(
                   Amount(
                     NumericConversion.toBigInt(ethRes.get.resps.head.result),
                     ethRes.get.block
                   )
                 ),
-                Some(Amount(BigInt(0), ethRes.get.block))
+                Some(Amount(BigInt(0))),
+                None,
+                None,
+                ethRes.get.block
               ))
           )
         } else {
@@ -142,11 +144,7 @@ class EthereumQueryActor(
       ) { result =>
         val fills = (orderIds zip result.resps
           .map(
-            res =>
-              Amount(
-                NumericConversion.toBigInt(res.result),
-                result.block
-              )
+            res => Amount(NumericConversion.toBigInt(res.result), result.block)
           )).toMap
         GetFilledAmount.Res(fills)
       }

@@ -240,24 +240,22 @@ class MultiAccountManagerActor(
     def getBalanceAndALlowance(
         address: String,
         token: String
-      ): Future[(BigInt, BigInt)] = {
+      ): Future[(Long, BigInt, BigInt)] = {
 
       val t = timer.refine("label" -> "get_account").start
-      val ethereumQueryActor = actors.get(EthereumQueryActor.name)
+      @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
       (for {
-        res <- (ethereumQueryActor ? GetAccount.Req(
-          address,
-          Seq(token)
-        )).mapAs[GetAccount.Res]
+        res <- (ethereumQueryActor ? GetAccount.Req(address, Seq(token)))
+          .mapAs[GetAccount.Res]
         accountBalance = res.accountBalance.getOrElse(AccountBalance())
-        ba = accountBalance.tokenBalanceMap.getOrElse(
+        tb = accountBalance.tokenBalanceMap.getOrElse(
           token,
           AccountBalance.TokenBalance()
         )
-        balance = BigInt(ba.balance.toByteArray)
-        allowance = BigInt(ba.allowance.toByteArray)
-      } yield (balance, allowance)).andThen {
+        balance = BigInt(tb.balance.toByteArray)
+        allowance = BigInt(tb.allowance.toByteArray)
+      } yield (tb.block, balance, allowance)).andThen {
         case _ =>
           t.stop()
           count.refine("label" -> "get_account").increment()
@@ -271,7 +269,7 @@ class MultiAccountManagerActor(
         log.info(s"created new account manager for address $address")
         accountManagerActors.add(
           address,
-          context.actorOf(Props(new AccountManagerAltActor(address)), address)
+          context.actorOf(Props(new AccountManagerActor(address)), address)
         )
       }
       accountManagerActors.get(address)

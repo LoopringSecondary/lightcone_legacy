@@ -111,6 +111,11 @@ trait EthereumSupport {
 
   actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 
+  actors.add(
+    ChainReorganizationManagerActor.name,
+    ChainReorganizationManagerActor.start
+  )
+
   def transferEth(
       to: String,
       amountStr: String

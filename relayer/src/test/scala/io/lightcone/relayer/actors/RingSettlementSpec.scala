@@ -36,7 +36,7 @@ class RingSettlementSpec
     with JsonrpcSupport
     with HttpSupport {
 
-  def orderHandler = actors.get(OrderPersistenceActor.name)
+  @inline def orderHandler = actors.get(OrderPersistenceActor.name)
 
   val account1 = getUniqueAccountWithoutEth
   //设置余额

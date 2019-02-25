@@ -71,6 +71,7 @@ class CoreModule(
     // --- bind db configs ---------------------
     bind[DatabaseConfigManager].toInstance(dbConfigManager)
 
+    //TODO(yongfeng):去除trade和tx的dal时，同时去除该部分
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
@@ -83,7 +84,8 @@ class CoreModule(
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-third-party-token-price",
       "dbconfig-cmc-token-slug",
-      "dbconfig-dal-ohlc-data"
+      "dbconfig-dal-ohlc-data",
+      "dbconfig-dal-fill"
     )
 
     // --- bind dals ---------------------

@@ -179,10 +179,10 @@ class MarketManagerActor(
     maxSettementFailuresPerOrder
   )
 
-  protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def settlementActor = actors.get(RingSettlementManagerActor.name)
-  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def mama = actors.get(MultiAccountManagerActor.name)
+  @inline def gasPriceActor = actors.get(GasPriceActor.name)
+  @inline def settlementActor = actors.get(RingSettlementManagerActor.name)
+  @inline def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  @inline def mama = actors.get(MultiAccountManagerActor.name)
 
   var gasPrice: BigInt = _
   var recoverTimer: Option[StartedTimer] = None

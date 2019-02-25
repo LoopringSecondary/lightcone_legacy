@@ -36,14 +36,14 @@ class RecoverAccountsActor(
     extends Actor
     with Logging {
 
-  val mama = actors.get(MultiAccountManagerActor.name)
-  val query = actors.get(EthereumQueryActor.name)
+  @inline val mama = actors.get(MultiAccountManagerActor.name)
+  @inline val query = actors.get(EthereumQueryActor.name)
 
   def receive = {
     case ChainReorganizationImpact(_, accounts) =>
       log.debug(s"started recovering accounts [size=${accounts.size}]")
       accounts.foreach {
-        case ChainReorganizationImpact.AccountInfo(address, tokens) =>
+        case ChainReorganizationImpact.BalanceOfToken(address, tokens) =>
           (query ? GetAccount.Req(address, tokens))
             .mapAs[GetAccount.Res]
             .map { resp =>

@@ -80,7 +80,7 @@ class EthereumClientMonitor(
     with RepeatedJobActor {
 
   val selfConfig = config.getConfig(EthereumClientMonitor.name)
-  def ethereumAccessor = actors.get(EthereumAccessActor.name)
+  @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   var nodes: Map[String, NodeBlockHeight] =
     HttpConnector.connectorNames(config).map {

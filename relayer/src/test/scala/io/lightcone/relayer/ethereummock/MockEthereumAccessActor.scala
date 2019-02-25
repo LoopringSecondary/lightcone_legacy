@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer
 
-import scala.concurrent._
+import akka.actor._
+import io.lightcone.relayer.data.{GetNonce, SendRawTransaction}
 
-trait BalanceAndAllowanceProvider {
+class MockEthereumAccessActor(
+    implicit
+    val accessDataProvider: EthereumAccessDataProvider)
+    extends Actor
+    with ActorLogging {
 
-  def getBalanceAndALlowance(
-      address: String,
-      token: String
-    ): Future[
-    ( //
-        Long, // the block number
-        BigInt, // balance
-        BigInt // allowance
-    )
-  ]
+  def receive: Receive = {
+    case req: SendRawTransaction.Req =>
+      sender ! accessDataProvider.sendRawTransaction(req)
+    case req: GetNonce.Req =>
+      sender ! GetNonce.Res()
+    case msg =>
+      log.info(s"received msg: ${msg}")
+  }
 }

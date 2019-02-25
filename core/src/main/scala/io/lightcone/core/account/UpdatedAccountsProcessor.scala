@@ -18,16 +18,11 @@ package io.lightcone.core
 
 import scala.concurrent._
 
-trait BalanceAndAllowanceProvider {
+trait UpdatedAccountsProcessor {
 
-  def getBalanceAndALlowance(
+  def processUpdatedAccount(
+      block: Long,
       address: String,
-      token: String
-    ): Future[
-    ( //
-        Long, // the block number
-        BigInt, // balance
-        BigInt // allowance
-    )
-  ]
+      tokenAddress: String
+    ): Future[Any]
 }

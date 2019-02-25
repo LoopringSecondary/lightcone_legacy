@@ -16,19 +16,19 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.actors._
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
 import akka.actor._
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
+import io.lightcone.relayer.actors.EntryPointActor
+import io.lightcone.relayer.base.Lookup
+import io.lightcone.relayer.ethereum.EventDispatcher
 import net.codingwell.scalaguice.InjectorExtensions._
-import org.slf4s.Logging
-import scala.util.Try
+import org.scalamock.scalatest.MockFactory
 
+import scala.util.Try
 import org.scalatest._
 import org.slf4s.Logging
 
@@ -44,12 +44,17 @@ class IntegrationTest
     with BeforeAndAfterAll
     with Matchers
     with Logging
-    with IntegrationTestHelper {
+    with IntegrationTestHelper
+    with MockFactory {
 
   import IntegrationTest._
 
+  implicit val ethQueryDataProvider = mock[EthereumQueryDataProvider]
+  implicit val ethAccessDataProvider = mock[EthereumAccessDataProvider]
+
   private var injector: Injector = _
   private var entrypointActor: ActorRef = _
+  var eventDispatcher: EventDispatcher = _
 
   def entrypoint() = entrypointActor
 
@@ -69,13 +74,20 @@ class IntegrationTest
       .withFallback(ConfigFactory.load())
 
     injector = Guice.createInjector(new CoreModule(config, true))
-    injector.instance[CoreDeployer].deploy()
 
+    injector
+      .instance[CoreDeployerForTest]
+      .deploy(ethAccessDataProvider, ethQueryDataProvider)
+
+    Thread.sleep(5000) //waiting for system ready
+
+    eventDispatcher = injector.instance[EventDispatcher]
     entrypointActor =
       injector.instance[Lookup[ActorRef]].get(EntryPointActor.name)
 
     log.info("akka system started, actors deployed --->")
     log.info(s"database url: ${databaseUrls}")
+
   }
 
   override def afterAll(): Unit = {

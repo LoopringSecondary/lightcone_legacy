@@ -69,7 +69,7 @@ class MetadataManagerActor(
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
 
   val mediator = DistributedPubSub(context.system).mediator
-  private def ethereumQueryActor = actors.get(EthereumQueryActor.name)
+  @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]

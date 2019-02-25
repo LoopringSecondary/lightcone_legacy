@@ -36,7 +36,8 @@ class EntryPointSpec_DatabaseQuery
     with DatabaseQueryMessageSupport
     with RingAndFillPersistenceSupport {
 
-  val ringAndFillPersistActor = actors.get(RingAndFillPersistenceActor.name)
+  @inline val ringAndFillPersistActor =
+    actors.get(RingAndFillPersistenceActor.name)
 
   "DatabaseQueryActor Entrypoint" must {
     "init" in {

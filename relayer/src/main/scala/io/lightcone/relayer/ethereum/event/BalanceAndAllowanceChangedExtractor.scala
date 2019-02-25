@@ -49,10 +49,9 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
-  def wethAddress = Address(
-    metadataManager.getTokenWithSymbol("weth").get.meta.address
-  )
-  def ethereumAccessor = actors.get(EthereumAccessActor.name)
+  def wethAddress =
+    Address(metadataManager.getTokenWithSymbol("weth").get.meta.address)
+  @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   def extractEventsFromTx(
       tx: Transaction,
@@ -379,10 +378,7 @@ trait BalanceUpdatedSuppot {
               resp.resps
                 .map(
                   res =>
-                    Amount(
-                      NumericConversion.toBigInt(res.result),
-                      resp.block
-                    )
+                    Amount(NumericConversion.toBigInt(res.result), resp.block)
                 )
           )
       } else {
@@ -413,10 +409,7 @@ trait BalanceUpdatedSuppot {
               resp.resps
                 .map(
                   res =>
-                    Amount(
-                      NumericConversion.toBigInt(res.result),
-                      resp.block
-                    )
+                    Amount(NumericConversion.toBigInt(res.result), resp.block)
                 )
           )
       } else {
@@ -433,10 +426,7 @@ trait BalanceUpdatedSuppot {
               resp.resps
                 .map(
                   res =>
-                    Amount(
-                      NumericConversion.toBigInt(res.result),
-                      resp.block
-                    )
+                    Amount(NumericConversion.toBigInt(res.result), resp.block)
                 )
           )
       } else {
