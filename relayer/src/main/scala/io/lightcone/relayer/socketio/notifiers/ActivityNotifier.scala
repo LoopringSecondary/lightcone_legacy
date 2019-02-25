@@ -29,7 +29,8 @@ class ActivityNotifier @Inject()
   val name = "transactions"
 
   def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
-    subscription.paramsForActivities.isDefined && subscription.paramsForActivities.get.addresses.nonEmpty
+    subscription.paramsForActivities.isDefined &&
+      subscription.paramsForActivities.get.addresses.nonEmpty
 
   def wrapClient(
       client: SocketIOClient,
@@ -47,9 +48,9 @@ class ActivityNotifier @Inject()
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForActivities,
-      event: AnyRef
-    ): Boolean = event match {
-    case e: Activity => subscription.addresses.contains(e.owner)
-    case _           => false
+      event: SocketIOSubscription.Response
+    ): Boolean = event.resForActivity match {
+    case Some(e: Activity) => subscription.addresses.contains(e.owner)
+    case _                 => false
   }
 }

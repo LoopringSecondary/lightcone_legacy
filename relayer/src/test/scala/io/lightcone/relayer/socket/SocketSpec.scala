@@ -41,7 +41,7 @@ class SocketSpec
         address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
         websiteUrl = "http"
       )
-      Thread.sleep(20 * 1000)
+      Thread.sleep(10 * 1000)
     }
   }
 }

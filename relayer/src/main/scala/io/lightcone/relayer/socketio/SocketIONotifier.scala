@@ -26,7 +26,7 @@ abstract class SocketIONotifier[R]() extends Logging {
 
   def shouldNotifyClient(
       subscription: R,
-      event: AnyRef
+      event: SocketIOSubscription.Response
     ): Boolean
 
   def wrapClient(
@@ -39,7 +39,7 @@ abstract class SocketIONotifier[R]() extends Logging {
   private var clients = Seq.empty[SocketIOSubscriber[R]]
 
   def notifyEvent(
-      event: AnyRef,
+      event: SocketIOSubscription.Response,
       eventName: String
     ): Unit = {
     clients = clients.filter(_.client.isChannelOpen)
@@ -65,5 +65,7 @@ abstract class SocketIONotifier[R]() extends Logging {
   }
 
   // Override this method to change the event. Normally we should not do this.
-  def transformEvent(event: AnyRef): AnyRef = event
+  def transformEvent(
+      event: SocketIOSubscription.Response
+    ): SocketIOSubscription.Response = event
 }

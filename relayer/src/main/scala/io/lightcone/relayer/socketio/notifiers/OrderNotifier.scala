@@ -29,7 +29,8 @@ class OrderNotifier @Inject()
   val name = "orders"
 
   def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
-    subscription.paramsForOrders.isDefined && subscription.getParamsForOrders.addresses.nonEmpty
+    subscription.paramsForOrders.isDefined &&
+      subscription.getParamsForOrders.addresses.nonEmpty
 
   def wrapClient(
       client: SocketIOClient,
@@ -53,9 +54,9 @@ class OrderNotifier @Inject()
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForOrders,
-      event: AnyRef
-    ): Boolean = event match {
-    case order: RawOrder =>
+      event: SocketIOSubscription.Response
+    ): Boolean = event.resForOrder match {
+    case Some(order: RawOrder) =>
       subscription.addresses
         .contains(order.owner) && (subscription.market.isEmpty || MarketHash(
         subscription.getMarket

@@ -54,20 +54,27 @@ class SocketIONotificationActor @Inject()(
     // events to deliver to socket.io clients must be generated here, not inside the listeners.
     //TODO(yadong)  需要把不展示到前端的字段清除
     case event: RawOrder =>
-      notifer.notifyEvent(event)
+      val res = SocketIOSubscription.Response(resForOrder = Some(event))
+      notifer.notifyEvent(res)
     case event: AccountUpdate =>
-      notifer.notifyEvent(event)
+      val res = SocketIOSubscription.Response(resForAccount = Some(event))
+      notifer.notifyEvent(res)
     case event: Activity =>
-      notifer.notifyEvent(event)
+      val res = SocketIOSubscription.Response(resForActivity = Some(event))
+      notifer.notifyEvent(res)
     case fill: Fill =>
-      notifer.notifyEvent(fill)
+      val res = SocketIOSubscription.Response(resForFill = Some(fill))
+      notifer.notifyEvent(res)
     case event: MarketMetadata =>
-      notifer.notifyEvent(event)
+      val res = SocketIOSubscription.Response(resForMarkets = Some(event))
+      notifer.notifyEvent(res)
     case event: Orderbook.Update =>
-      notifer.notifyEvent(event)
+      val res = SocketIOSubscription.Response(resForOrderbook = Some(event))
+      notifer.notifyEvent(res)
     case event: TokenMetadata =>
-      notifer.notifyEvent(event)
+      val res = SocketIOSubscription.Response(resForTokens = Some(event))
+      notifer.notifyEvent(res)
     case event: AnyRef =>
-      notifer.notifyEvent(event)
+      notifer.notifyEvent(SocketIOSubscription.Response())
   }
 }

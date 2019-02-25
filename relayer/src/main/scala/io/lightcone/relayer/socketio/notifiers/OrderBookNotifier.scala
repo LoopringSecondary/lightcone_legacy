@@ -29,7 +29,8 @@ class OrderBookNotifier @Inject()
   val name: String = "order_book"
 
   def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
-    subscription.paramsForOrderbook.isDefined && subscription.getParamsForOrderbook.market.isDefined
+    subscription.paramsForOrderbook.isDefined &&
+      subscription.getParamsForOrderbook.market.isDefined
 
   def wrapClient(
       client: SocketIOClient,
@@ -52,10 +53,10 @@ class OrderBookNotifier @Inject()
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForOrderbook,
-      event: AnyRef
+      event: SocketIOSubscription.Response
     ): Boolean = {
-    event match {
-      case orderBook: Orderbook.Update =>
+    event.resForOrderbook match {
+      case Some(orderBook: Orderbook.Update) =>
         // TODO（yd）&& subscription.level == orderBook.level Update中应该有多个level的数据？
         subscription.market == orderBook.marketPair
       case _ => false

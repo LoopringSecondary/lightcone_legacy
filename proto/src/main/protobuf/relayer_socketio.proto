@@ -21,6 +21,7 @@ package io.lightcone.relayer.data;
 
 import "core.proto";
 import "relayer_common.proto";
+import "persistence.proto";
 
 message AccountUpdate {
     string address                      = 1;
@@ -84,13 +85,24 @@ message SocketIOSubscription {
     message ParamsForNews {
     }
 
+    message Response {
+        io.lightcone.persistence.Activity           res_for_activity        = 1;
+        io.lightcone.core.RawOrder                  res_for_order           = 2;
+        io.lightcone.persistence.Fill               res_for_fill            = 3;
+        io.lightcone.core.Orderbook.Update          res_for_orderbook       = 4;
+        io.lightcone.core.TokenMetadata             res_for_tokens          = 5;
+        io.lightcone.core.MarketMetadata            res_for_markets         = 6;
+        AccountUpdate                               res_for_account         = 7;
+        io.lightcone.persistence.News               res_for_news            = 8;
+    }
+
     ParamsForActivities           params_for_activities           = 1;
-    ParamsForOrders               params_for_orders    = 2;
-    ParamsForFills                params_for_fills     = 3;
-    ParamsForOrderbook            params_for_orderbook      = 4;
-    ParamsForTokens               params_for_tokens       = 5;
-    ParamsForMarkets              params_for_markets               = 6;
-    ParamsForTickers              params_for_tickers         = 7;
+    ParamsForOrders               params_for_orders               = 2;
+    ParamsForFills                params_for_fills                = 3;
+    ParamsForOrderbook            params_for_orderbook            = 4;
+    ParamsForTokens               params_for_tokens               = 5;
+    ParamsForMarkets              params_for_markets              = 6;
+    ParamsForTickers              params_for_tickers              = 7;
     ParamsForNews                 params_for_news                 = 8;
     ParamsForAccounts             params_for_accounts             = 9;
 

@@ -28,7 +28,8 @@ class AccountNotifier @Inject()
   val name = "accounts"
 
   def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
-    subscription.paramsForAccounts.isDefined && subscription.getParamsForAccounts.addresses.nonEmpty
+    subscription.paramsForAccounts.isDefined &&
+      subscription.getParamsForAccounts.addresses.nonEmpty
 
   def wrapClient(
       client: SocketIOClient,
@@ -49,15 +50,16 @@ class AccountNotifier @Inject()
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForAccounts,
-      event: AnyRef
-    ): Boolean = event match {
-    case e: AccountUpdate =>
-      subscription.addresses.contains(e.address) && (
-        subscription.tokens.isEmpty || e.tokenBalance.isEmpty || subscription.tokens
-          .contains(
-            e.getTokenBalance.token
-          )
-      )
-    case _ => false
-  }
+      event: SocketIOSubscription.Response
+    ): Boolean =
+    event.resForAccount match {
+      case Some(e: AccountUpdate) =>
+        subscription.addresses.contains(e.address) && (
+          subscription.tokens.isEmpty || e.tokenBalance.isEmpty || subscription.tokens
+            .contains(
+              e.getTokenBalance.token
+            )
+        )
+      case _ => false
+    }
 }

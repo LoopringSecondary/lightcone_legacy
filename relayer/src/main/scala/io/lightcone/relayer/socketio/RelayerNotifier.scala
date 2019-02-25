@@ -54,6 +54,6 @@ class RelayerNotifier(notifiers: SocketIONotifier[_]*)
     }
   }
 
-  def notifyEvent(event: AnyRef): Unit =
+  def notifyEvent(event: SocketIOSubscription.Response): Unit =
     notifiers.foreach(_.notifyEvent(event, eventName))
 }

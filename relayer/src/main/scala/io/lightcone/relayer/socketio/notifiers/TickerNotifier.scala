@@ -28,7 +28,8 @@ class TickerNotifier @Inject()(implicit manager: MetadataManager)
   val name = "tickers"
 
   def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
-    subscription.paramsForTickers.isDefined && subscription.getParamsForTickers.market.isDefined
+    subscription.paramsForTickers.isDefined &&
+      subscription.getParamsForTickers.market.isDefined
 
   def wrapClient(
       client: SocketIOClient,
@@ -51,7 +52,7 @@ class TickerNotifier @Inject()(implicit manager: MetadataManager)
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForTickers,
-      event: AnyRef
+      event: SocketIOSubscription.Response
     ): Boolean = {
     event match {
       case ticker: AnyRef =>

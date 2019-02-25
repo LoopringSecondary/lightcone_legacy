@@ -30,8 +30,10 @@ class FillNotifier @Inject()
   val name: String = "trades"
 
   def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
-    subscription.paramsForFills.isDefined && subscription.getParamsForFills.market.isDefined && (subscription.getParamsForFills.address.isEmpty || Address
-      .isValid(subscription.getParamsForFills.address))
+    subscription.paramsForFills.isDefined &&
+      subscription.getParamsForFills.market.isDefined &&
+      (subscription.getParamsForFills.address.isEmpty || Address
+        .isValid(subscription.getParamsForFills.address))
 
   def wrapClient(
       client: SocketIOClient,
@@ -60,9 +62,9 @@ class FillNotifier @Inject()
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForFills,
-      event: AnyRef
-    ): Boolean = event match {
-    case fill: Fill =>
+      event: SocketIOSubscription.Response
+    ): Boolean = event.resForFill match {
+    case Some(fill: Fill) =>
       (subscription.address.isEmpty || subscription.address == fill.owner) && (MarketHash(
         subscription.getMarket
       ) == MarketHash(MarketPair(fill.tokenB, fill.tokenS)))

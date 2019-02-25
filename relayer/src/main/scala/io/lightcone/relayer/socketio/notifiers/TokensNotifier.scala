@@ -40,11 +40,11 @@ class TokensNotifier @Inject()
 
   def shouldNotifyClient(
       subscription: SocketIOSubscription.ParamsForTokens,
-      event: AnyRef
+      event: SocketIOSubscription.Response
     ): Boolean = {
-    event match {
-      case _: TokenMetadata => true
-      case _                => false
+    event.resForTokens match {
+      case Some(_: TokenMetadata) => true
+      case _                      => false
     }
   }
 
