@@ -136,7 +136,12 @@ class OrderCutoffSpec
       // 4. send cutoff
       val txHash = "0x999"
       val cutoff = CutoffEvent(
-        header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_SUCCESS)),
+        header = Some(
+          EventHeader(
+            blockHeader = Some(BlockHeader(height = 100)),
+            txStatus = TxStatus.TX_STATUS_SUCCESS
+          )
+        ),
         owner = owner,
         broker = owner,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
