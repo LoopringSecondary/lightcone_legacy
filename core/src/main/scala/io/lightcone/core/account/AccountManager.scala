@@ -91,12 +91,8 @@ trait AccountManager {
 
   def setCutoff(
       block: Long,
-      marketHash: String,
-      cutoff: Long
+      cutoff: Long,
+      marketHash: Option[String]
     ): Future[Map[String, Matchable]]
 
-  def setCutoff(
-      block: Long,
-      cutoff: Long
-    ): Future[Map[String, Matchable]]
 }

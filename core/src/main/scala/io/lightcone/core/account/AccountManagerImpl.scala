@@ -163,31 +163,28 @@ final class AccountManagerImpl(
 
   def setCutoff(
       block: Long,
-      marketHash: String,
-      cutoff: Long
+      cutoff: Long,
+      marketHash: Option[String]
     ) = {
     this.block = block
-    marketPairCutoffs += (marketHash -> cutoff)
 
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
-      orderPool.orders.filter { order =>
-        order.validSince <= cutoff && MarketHash(
-          MarketPair(order.tokenS, order.tokenB)
-        ).hashString == marketHash
-      }
+    marketHash match {
+      case Some(mh) if mh.nonEmpty =>
+        marketPairCutoffs += (mh -> cutoff)
+        cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
+          orderPool.orders.filter { order =>
+            order.validSince <= cutoff &&
+            MarketHash(MarketPair(order.tokenS, order.tokenB)).hashString == mh
+          }
+        }
+
+      case _ =>
+        this.ownerCutoff = cutoff
+        cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
+          orderPool.orders.filter(_.validSince <= cutoff)
+        }
     }
-  }
 
-  def setCutoff(
-      block: Long,
-      cutoff: Long
-    ) = {
-    this.block = block
-    this.ownerCutoff = cutoff
-
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
-      orderPool.orders.filter(_.validSince <= cutoff)
-    }
   }
 
   implicit private val reserveEventHandler = new ReserveEventHandler {

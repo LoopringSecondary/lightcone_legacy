@@ -105,15 +105,11 @@ class AccountManagerActor(
       } yield {
         res.resps foreach { cutoffRes =>
           assert(cutoffRes.block > 0, "TODO(yadong): suppo")
-          if (cutoffRes.marketHash.isEmpty) {
-            manager.setCutoff(cutoffRes.block, cutoffRes.cutoff.toLong)
-          } else {
-            manager.setCutoff(
-              cutoffRes.block,
-              cutoffRes.marketHash,
-              cutoffRes.cutoff.toLong
-            )
-          }
+          manager.setCutoff(
+            cutoffRes.block,
+            cutoffRes.cutoff.toLong,
+            Option(cutoffRes.marketHash)
+          )
         }
       }
 
@@ -334,16 +330,9 @@ class AccountManagerActor(
             throw e
         }
 
-        if (evt.marketHash == null || evt.marketHash.isEmpty) {
-          count.refine("label" -> "cutoff").increment()
-          blocking {
-            manager.setCutoff(block, evt.cutoff)
-          }
-        } else {
-          count.refine("label" -> "cutoff_market").increment()
-          blocking {
-            manager.setCutoff(block, evt.marketHash, evt.cutoff)
-          }
+        count.refine("label" -> "cutoff").increment()
+        blocking {
+          manager.setCutoff(block, evt.cutoff, Option(evt.marketHash))
         }
       } else {
         count.refine("label" -> "broker_cutoff").increment()
