@@ -34,8 +34,7 @@ message AccountUpdate {
 
 message SocketIOSubscription {
     message Ack { // we only need to return a general message
-        io.lightcone.core.ErrorCode error   = 1;
-        string message                      = 2;
+        string message                  = 1;
     }
 
     // subscribe for message Activity defined in persistence.proto
@@ -64,11 +63,11 @@ message SocketIOSubscription {
 
     // subscribe for message TokenMetadata defined in core.proto
     message ParamsForTokens {
-        io.lightcone.core.Amount amount = 1;
-   }
+        // io.lightcone.core.Amount amount = 1;
+    }
 
-   // subscribe for message MarketMetadata defined in core.proto
-   message ParamsForMarkets {
+    // subscribe for message MarketMetadata defined in core.proto
+    message ParamsForMarkets {
     }
 
     // subscribe for message ExternalTicker defined in persistence.proto
@@ -86,15 +85,15 @@ message SocketIOSubscription {
     message ParamsForNews {
     }
 
-    message Response {
-        io.lightcone.persistence.Activity           res_for_activity        = 1;
-        io.lightcone.core.RawOrder                  res_for_order           = 2;
-        io.lightcone.persistence.Fill               res_for_fill            = 3;
-        io.lightcone.core.Orderbook.Update          res_for_orderbook       = 4;
-        io.lightcone.core.TokenMetadata             res_for_tokens          = 5;
-        io.lightcone.core.MarketMetadata            res_for_markets         = 6;
-        AccountUpdate                               res_for_account         = 7;
-        io.lightcone.persistence.News               res_for_news            = 8;
+    message Notification {
+        io.lightcone.persistence.Activity           activity        = 1;
+        io.lightcone.core.RawOrder                  order           = 2;
+        io.lightcone.persistence.Fill               fill            = 3;
+        io.lightcone.core.Orderbook.Update          orderbook       = 4;
+        io.lightcone.core.TokenMetadata             token_metadata  = 5;
+        io.lightcone.core.MarketMetadata            market_metadata = 6;
+        io.lightcone.persistence.News               news            = 7;
+        AccountUpdate                               account         = 8;
     }
 
     ParamsForActivities           params_for_activities           = 1;

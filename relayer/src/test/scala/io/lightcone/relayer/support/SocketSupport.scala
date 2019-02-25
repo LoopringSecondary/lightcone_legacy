@@ -17,31 +17,12 @@
 package io.lightcone.relayer.support
 
 import io.lightcone.relayer.actors.SocketIONotificationActor
-import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.socketio.notifiers._
 
 trait SocketSupport {
   com: CommonSpec =>
-  implicit val accountNotifier = new AccountNotifier()
-  implicit val activityNotifier = new ActivityNotifier()
-  implicit val orderNotifier = new OrderNotifier()
-  implicit val orderBookNotifier = new OrderBookNotifier()
-  implicit val tickerNotifier = new TickerNotifier()
-  implicit val fillNotifier = new FillNotifier()
-  implicit val tokensNotifier = new TokensNotifier()
-  implicit val marketsNotifier = new MarketNotifier()
 
-  implicit val relayerNotifier = new RelayerNotifier(
-    accountNotifier,
-    activityNotifier,
-    orderBookNotifier,
-    orderNotifier,
-    tickerNotifier,
-    fillNotifier,
-    tokensNotifier,
-    marketsNotifier
-  )
+  implicit val relayerNotifier = new RelayerNotifier()
 
   actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
 

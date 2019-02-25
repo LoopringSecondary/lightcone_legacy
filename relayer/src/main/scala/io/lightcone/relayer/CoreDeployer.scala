@@ -64,7 +64,7 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
-    relayerNotifier: RelayerNotifier,
+    socketIONotifier: SocketIONotifier,
     system: ActorSystem)
     extends Object
     with Logging {
@@ -104,10 +104,7 @@ class CoreDeployer @Inject()(
         EthereumAccessActor.name, //
         EthereumAccessActor.start
       )
-      .add(
-        EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start
-      )
+      .add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.start)
       .add(
         MissingBlocksEventExtractorActor.name,
         MissingBlocksEventExtractorActor.start
@@ -206,10 +203,6 @@ class CoreDeployer @Inject()(
           RingSettlementManagerActor.name, //
           RingSettlementManagerActor.start
         )
-        .add(
-          ChainReorganizationManagerActor.name, //
-          ChainReorganizationManagerActor.start
-        )
 
       //-----------deploy sharded actors-----------
       actors
@@ -279,7 +272,7 @@ class CoreDeployer @Inject()(
       //-----------deploy SOCKETIO service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("socketio")) {
-        val server = new SocketServer
+        val server = new SocketServer()
         server.start()
       }
     }

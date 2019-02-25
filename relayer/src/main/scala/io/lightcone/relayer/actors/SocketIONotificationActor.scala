@@ -19,10 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.google.inject.Inject
-import io.lightcone.core._
-import io.lightcone.persistence._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.socketio._
 
 import scala.concurrent.ExecutionContext
@@ -35,7 +32,7 @@ object SocketIONotificationActor extends DeployedAsSingleton {
       system: ActorSystem,
       ec: ExecutionContext,
       timeout: Timeout,
-      notifer: RelayerNotifier,
+      notifer: SocketIONotifier,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new SocketIONotificationActor()))
@@ -47,34 +44,10 @@ class SocketIONotificationActor @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
-    val notifer: RelayerNotifier)
+    val notifer: SocketIONotifier)
     extends Actor {
 
   def receive: Receive = {
-    // events to deliver to socket.io clients must be generated here, not inside the listeners.
-    //TODO(yadong)  需要把不展示到前端的字段清除
-    case event: RawOrder =>
-      val res = SocketIOSubscription.Response(resForOrder = Some(event))
-      notifer.notifyEvent(res)
-    case event: AccountUpdate =>
-      val res = SocketIOSubscription.Response(resForAccount = Some(event))
-      notifer.notifyEvent(res)
-    case event: Activity =>
-      val res = SocketIOSubscription.Response(resForActivity = Some(event))
-      notifer.notifyEvent(res)
-    case fill: Fill =>
-      val res = SocketIOSubscription.Response(resForFill = Some(fill))
-      notifer.notifyEvent(res)
-    case event: MarketMetadata =>
-      val res = SocketIOSubscription.Response(resForMarkets = Some(event))
-      notifer.notifyEvent(res)
-    case event: Orderbook.Update =>
-      val res = SocketIOSubscription.Response(resForOrderbook = Some(event))
-      notifer.notifyEvent(res)
-    case event: TokenMetadata =>
-      val res = SocketIOSubscription.Response(resForTokens = Some(event))
-      notifer.notifyEvent(res)
-    case event: AnyRef =>
-      notifer.notifyEvent(SocketIOSubscription.Response())
+    case event: AnyRef => notifer.notifyEvent(event)
   }
 }
