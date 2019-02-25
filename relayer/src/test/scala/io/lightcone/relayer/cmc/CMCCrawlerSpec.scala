@@ -39,8 +39,8 @@ class CMCCrawlerSpec
 
   var tickers: Seq[ExternalTicker] = Seq.empty[ExternalTicker]
 
-  var slugSymbols
-    : Seq[CMCCrawlerConfigForToken] = Seq.empty[CMCCrawlerConfigForToken] // slug -> symbol
+  var slugSymbols: Seq[CMCCrawlerConfigForToken] =
+    Seq.empty[CMCCrawlerConfigForToken] // slug -> symbol
 
   private val tokens = metadataManager.getTokens.map(_.meta.symbol)
   private val effectiveMarketSymbols = metadataManager

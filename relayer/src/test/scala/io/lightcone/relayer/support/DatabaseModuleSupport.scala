@@ -71,8 +71,8 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   dbModule.createTables()
 
   tokenMetadataDal.saveTokens(TOKENS)
-  cmcTickerConfigDal.saveSlugs(TOKEN_SLUGS_SYMBOLS.map { t =>
-    CMCTickerConfig(t._1, t._2)
+  cmcTickerConfigDal.saveConfigs(TOKEN_SLUGS_SYMBOLS.map { t =>
+    CMCCrawlerConfigForToken(t._1, t._2)
   })
   marketMetadataDal.saveMarkets(MARKETS)
 

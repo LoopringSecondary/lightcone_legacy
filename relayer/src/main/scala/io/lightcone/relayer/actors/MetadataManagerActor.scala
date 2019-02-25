@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer.actors
 
+import java.util.Calendar
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
@@ -28,6 +29,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
+import io.lightcone.lib.TimeProvider
 import scala.util._
 
 // Owner: Yongfeng
@@ -44,9 +46,32 @@ object MetadataManagerActor extends DeployedAsSingleton {
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
       metadataManager: MetadataManager,
+      timeProvider: TimeProvider,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new MetadataManagerActor()))
+  }
+
+  def calculateInitialDelayInSecondWithFixInterval(now: Calendar) = {
+    val s = s"---1 now=> ${now.getTime}"
+    val nowTimestamp = now.getTimeInMillis
+    val minuteNow = now.get(Calendar.MINUTE)
+    val result = if (minuteNow == 0) {
+      println(
+        s"$s minuteNow=>$minuteNow nextMinute =>$minuteNow result=> 0"
+      )
+      0
+    } else {
+      val nextMinute = (Math.ceil(minuteNow / 10).toInt + 1) * 10
+      now.add(Calendar.MINUTE, nextMinute - minuteNow)
+      now.set(Calendar.SECOND, 0)
+      val r = ((now.getTimeInMillis - nowTimestamp) / 1000).toInt
+      println(
+        s"$s minuteNow=>$minuteNow nextMinute =>$nextMinute result=> (${now.getTimeInMillis - nowTimestamp} / 1000 = $r"
+      )
+      r
+    }
+    result
   }
 }
 
@@ -58,6 +83,7 @@ class MetadataManagerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager,
+    val timeProvider: TimeProvider,
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with RepeatedJobActor
@@ -66,7 +92,11 @@ class MetadataManagerActor(
 
   val selfConfig = config.getConfig(MetadataManagerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
-  val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
+
+  val initialDelayInSeconds =
+    MetadataManagerActor.calculateInitialDelayInSecondWithFixInterval(
+      Calendar.getInstance()
+    )
 
   val mediator = DistributedPubSub(context.system).mediator
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)

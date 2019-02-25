@@ -16,6 +16,8 @@
 
 package io.lightcone.relayer.metadata
 
+import java.util.Calendar
+
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.testkit.TestProbe
@@ -24,10 +26,11 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
-import io.lightcone.persistence.ExternalTicker
+import io.lightcone.persistence.{CMCCrawlerConfigForToken, ExternalTicker}
 import io.lightcone.relayer.data.cmc._
 import io.lightcone.relayer.external.CMCExternalTickerFetcher
 import scalapb.json4s.Parser
@@ -49,12 +52,22 @@ class MetadataManagerSpec
   def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   "load tokens config" must {
+    "" in {
+      val now = Calendar.getInstance()
+      for (i <- 0 to 59) {
+        now.set(Calendar.MINUTE, i)
+        val delayInSeconds =
+          MetadataManagerActor.calculateInitialDelayInSecondWithFixInterval(now)
+      }
+    }
+
     "initialize tickers" in {
       val f = for {
         cmcResponse <- getMockedCMCTickers()
         rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
+        slugSymbols_ <- dbModule.cmcTickerConfigDal.getConfigs()
         tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
-          persistTickers(rateResponse, cmcResponse.data)
+          persistTickers(rateResponse, cmcResponse.data, slugSymbols_)
         } else {
           Future.successful(Seq.empty)
         }
@@ -363,19 +376,21 @@ class MetadataManagerSpec
   }
 
   private def persistTickers(
-      usdTocnyRate: Double,
-      tickers_ : Seq[CMCTickerData]
+      usdToCnyRate: Double,
+      tickers_ : Seq[CMCTickerData],
+      slugSymbols: Seq[CMCCrawlerConfigForToken]
     ) =
     for {
       _ <- Future.unit
       tickersToPersist = CMCExternalTickerFetcher
         .convertCMCResponseToPersistence(
-          tickers_
+          tickers_,
+          slugSymbols
         )
       cnyTicker = ExternalTicker(
         "RMB",
         CMCExternalTickerFetcher
-          .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
+          .toDouble(BigDecimal(1) / BigDecimal(usdToCnyRate))
       )
       now = timeProvider.getTimeSeconds()
       tickers = tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
@@ -383,7 +398,7 @@ class MetadataManagerSpec
       _ <- Future.sequence(
         fixGroup.map(dbModule.externalTickerDal.saveTickers)
       )
-      updateSucc <- dbModule.externalTickerDal.updateEffective(now)
+      updateSucc <- dbModule.externalTickerDal.setValid(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE) {
         log.error(s"CMC persist failed, code:$updateSucc")

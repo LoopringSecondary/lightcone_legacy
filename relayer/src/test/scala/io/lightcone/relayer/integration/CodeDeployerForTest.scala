@@ -31,8 +31,8 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.ethereum.event.EventExtractor
+import io.lightcone.relayer.external._
 import io.lightcone.relayer.socketio._
-
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class CoreDeployerForTest @Inject()(
@@ -65,7 +65,9 @@ class CoreDeployerForTest @Inject()(
     tickerNotifier: SocketIONotifier[SubscribeTicker],
     orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
     transferNotifier: SocketIONotifier[SubscribeTransfer],
-    system: ActorSystem)
+    system: ActorSystem,
+    externalTickerFetcher: ExternalTickerFetcher,
+    fiatExchangeRateFetcher: FiatExchangeRateFetcher)
     extends CoreDeployer {
 
   implicit var queryDataProvider: EthereumQueryDataProvider = _
