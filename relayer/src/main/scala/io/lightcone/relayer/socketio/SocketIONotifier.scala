@@ -17,6 +17,7 @@
 package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
+import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data.SocketIOSubscription
 import org.slf4s.Logging
 

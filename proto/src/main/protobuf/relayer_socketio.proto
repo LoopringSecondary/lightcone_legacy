@@ -64,10 +64,11 @@ message SocketIOSubscription {
 
     // subscribe for message TokenMetadata defined in core.proto
     message ParamsForTokens {
-    }
+        io.lightcone.core.Amount amount = 1;
+   }
 
-    // subscribe for message MarketMetadata defined in core.proto
-    message ParamsForMarkets {
+   // subscribe for message MarketMetadata defined in core.proto
+   message ParamsForMarkets {
     }
 
     // subscribe for message ExternalTicker defined in persistence.proto

@@ -18,8 +18,10 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.protocol.JacksonJsonSupport
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.Config
+import io.lightcone.core.Amount
 import io.lightcone.relayer.data.SocketIOSubscription
 
 class SocketServer(
@@ -33,8 +35,12 @@ class SocketServer(
   socketConfig.setHostname(selfConfig.getString("host"))
   socketConfig.setPort(selfConfig.getInt("port"))
 
+  val simpleModule = new SimpleModule()
+  val amountDeserializer = new AmountDeserializer()
+  simpleModule.addDeserializer(classOf[Amount], amountDeserializer)
+
   val jsonSupport = new ProtoJsonSupport(
-    new JacksonJsonSupport(DefaultScalaModule)
+    new JacksonJsonSupport(DefaultScalaModule, simpleModule)
   )
   socketConfig.setJsonSupport(jsonSupport)
   val server = new SocketIOServer(socketConfig)

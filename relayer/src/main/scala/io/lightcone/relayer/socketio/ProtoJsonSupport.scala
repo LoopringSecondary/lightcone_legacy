@@ -56,7 +56,6 @@ class ProtoJsonSupport(delegate: JacksonJsonSupport) extends JsonSupport {
     ): AckArgs =
     delegate.readAckArgs(src, callback)
 
-  //TODO(yadong)采用json4s 实现，使支持16进制字符串
   @throws[IOException]
   def readValue[T](
       namespaceName: String,
