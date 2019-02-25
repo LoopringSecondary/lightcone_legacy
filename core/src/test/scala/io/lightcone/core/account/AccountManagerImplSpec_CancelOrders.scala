@@ -251,7 +251,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
     }
 
     numOfOrdersProcessed should be(100)
-    val result = manager.setCutoff(block, 40).await
+    val result = manager.setCutoff(block, 40, None).await
     result.size should be(40)
     result.keys.toSet should be(orders.take(40).map(_.id).toSet)
 
@@ -298,7 +298,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
 
     val marketHash = MarketHash(MarketPair(LRC, WETH)).hashString
     numOfOrdersProcessed should be(200)
-    val result = manager.setCutoff(block, marketHash, 40).await
+    val result = manager.setCutoff(block, 40, Some(marketHash)).await
     result.size should be(40)
     result.keys.toSet should be(orders1.take(40).map(_.id).toSet)
 
