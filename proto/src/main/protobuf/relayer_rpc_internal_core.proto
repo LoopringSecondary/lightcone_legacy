@@ -275,36 +275,50 @@ message MetadataChanged {
 message SubscribeMetadataChanged {
 }
 
-message TokenDetail {
-    // metadata
-    io.lightcone.core.TokenMetadata.Type     type                   = 1;
-    io.lightcone.core.TokenMetadata.Status   status                 = 2;
-    string   symbol                 = 3;
-    string   name                   = 4;
-    string   address                = 5;
-    string   unit                   = 6;
-    int32    decimals               = 7;
-    double   burn_rate_for_market   = 8;
-    double   burn_rate_for_p2p      = 9;
-    // ticker
-    double usd_price   = 10;
-    // info
-    double   circulating_supply     = 11;
-    double   total_supply           = 12;
-    double   max_supply             = 13;
-    int32    cmc_rank               = 14;
-    string   website_url            = 15;
-    int32    precision              = 16;
-}
 
-message GetMetadatas {
-    message Req {}
+//TODO()：是否有必要存在
+//message TokenDetail {
+//    // metadata
+//    io.lightcone.core.TokenMetadata metadata = 1;
+//    // ticker
+//    io.lightcone.core.TokenTicker ticker = 2;
+//    // info
+//    io.lightcone.core.TokenInfo token_info = 3;
+//}
+//message GetMetadatas {
+//    message Req {}
+//
+//    message Res {
+//        repeated TokenDetail                      tokens  = 1;
+//        repeated io.lightcone.core.MarketMetadata markets = 2;
+//    }
+//}
+
+//TODO：前端获取数Meta据时，是这么一个接口，还是拆分成token和market？
+//TODO: 前端接口应该如何定义，应该拆分成两个接口，
+message GetMarkets {
+    message Req {
+        repeated io.lightcone.core.MarketPair market_pairs = 1;
+    }
 
     message Res {
-        repeated TokenDetail                      tokens  = 1;
-        repeated io.lightcone.core.MarketMetadata markets = 2;
+        repeated io.lightcone.core.MarketMetadata markets = 1;
     }
 }
+
+message GetTokens {
+    message Req {
+        bool require_info = 1;
+        repeated string tokens = 2;
+    }
+
+    message Res {
+        map<string, io.lightcone.core.TokenMetadata> metadatas = 1;
+        map<string, io.lightcone.core.TokenInfo> token_infos = 2;
+        map<string, io.lightcone.core.TokenTicker> token_tickers = 3;
+    }
+}
+
 
 message GetOrderbookSlots {
     message Req {

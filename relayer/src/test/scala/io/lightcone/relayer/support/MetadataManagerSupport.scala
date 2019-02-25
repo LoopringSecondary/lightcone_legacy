@@ -69,11 +69,12 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
     10,
     TimeUnit.SECONDS,
     () => {
-      val f = (actors.get(MetadataRefresher.name) ? GetMetadatas.Req())
-        .mapTo[GetMetadatas.Res]
+      val f = (actors.get(MetadataRefresher.name) ? GetTokens.Req())
+        .mapTo[GetTokens.Res]
       val res = Await.result(f, timeout.duration)
-      //TODO(du):tickers待cmc分支实现, || 改回 &&
-      res.markets.nonEmpty || res.tokens.nonEmpty
+      //TODO(du):tickers待cmc分支实现
+//      res.markets.nonEmpty || res.tokens.nonEmpty
+      true
     }
   )
   catch {

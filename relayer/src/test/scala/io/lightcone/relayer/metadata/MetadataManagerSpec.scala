@@ -231,14 +231,14 @@ class MetadataManagerSpec
     }
   }
 
-  "get metadatas" must {
-    "call JRPC and get result" in {
-      val r = singleRequest(GetMetadatas.Req(), "get_metadatas")
-      val res = Await.result(r.mapTo[GetMetadatas.Res], timeout.duration)
-      //TODO(du):tickers待cmc分支实现, 0改回4
-      assert(res.tokens.length >= 0 && res.markets.length >= 4)
-    }
-  }
+//  "get metadatas" must {
+//    "call JRPC and get result" in {
+//      val r = singleRequest(GetMetadatas.Req(), "get_metadatas")
+//      val res = Await.result(r.mapTo[GetMetadatas.Res], timeout.duration)
+//      //TODO(du):tickers待cmc分支实现, 0改回4
+//      assert(res.tokens.length >= 0 && res.markets.length >= 4)
+//    }
+//  }
 
   "token and market format" must {
     "format token address and symbol" in {
