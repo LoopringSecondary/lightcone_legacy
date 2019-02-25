@@ -62,6 +62,7 @@ trait MetadataManager {
 
   def reset(
       tokens: Seq[TokenMetadata],
+      tickers: Seq[TokenTicker],
       markets: Seq[MarketMetadata]
     ): Unit
 

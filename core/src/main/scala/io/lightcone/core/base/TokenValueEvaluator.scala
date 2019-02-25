@@ -31,7 +31,7 @@ class TokenValueEvaluator @Inject()()(implicit mm: MetadataManager) {
       mm.getTokenWithAddress(tokenAddr)
         .map { token =>
           (Rational(token.fromWei(amount)) *
-            Rational(token.meta.usdPrice)).doubleValue
+            Rational(token.usdPrice)).doubleValue
         }
         .getOrElse(0)
   }

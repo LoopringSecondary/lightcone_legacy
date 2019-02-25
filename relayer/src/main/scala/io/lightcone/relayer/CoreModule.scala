@@ -34,7 +34,6 @@ import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event._
-
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.socketio.notifiers._
 import scala.concurrent.duration._
@@ -83,7 +82,8 @@ class CoreModule(
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-dal-ohlc-data",
-      "dbconfig-dal-fill"
+      "dbconfig-dal-fill",
+      "dbconfig-dal-token-info"
     )
 
     // --- bind dals ---------------------
@@ -93,6 +93,7 @@ class CoreModule(
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
+    bind[TokenInfoDal].to[TokenInfoDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton

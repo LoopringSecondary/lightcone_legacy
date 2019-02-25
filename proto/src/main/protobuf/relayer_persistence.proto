@@ -390,3 +390,11 @@ message LoadMarketMetadata {
         repeated io.lightcone.core.MarketMetadata markets = 1;
     }
 }
+
+message GetTokenTickers {
+    message Req {}
+
+    message Res {
+        repeated io.lightcone.core.TokenTicker tickers = 1;
+    }
+}

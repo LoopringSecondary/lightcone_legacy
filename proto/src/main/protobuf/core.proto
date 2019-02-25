@@ -173,12 +173,25 @@ message TokenMetadata {
     string   address                = 5;
     string   unit                   = 6;
     int32    decimals               = 7;
-    string   website_url            = 8;
-    int32    precision              = 9;
-    double   burn_rate_for_market   = 10;
-    double   burn_rate_for_p2p      = 11;
-    double   usd_price              = 12;
-    int64    updated_at             = 13;
+    double   burn_rate_for_market   = 8;
+    double   burn_rate_for_p2p      = 9;
+    int64    updated_at             = 10;
+}
+
+message TokenTicker {
+    string symbol       = 1;
+    double usd_price   = 2;
+}
+
+message TokenInfo {
+    string symbol = 1;
+    double circulating_supply = 2;
+    double total_supply = 3;
+    double max_supply = 4;
+    int32  cmc_rank = 5;
+    string website_url = 6;
+    int32  precision = 7;
+    int64  updated_at = 8;
 }
 
 message MarketMetadata {
