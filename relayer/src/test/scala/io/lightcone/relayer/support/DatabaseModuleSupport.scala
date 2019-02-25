@@ -27,6 +27,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val dbConfig = dbConfig1
 
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
+  implicit val tokenInfoDal = new TokenInfoDalImpl()
   implicit val orderDal = new OrderDalImpl
   implicit val fillDal = new FillDalImpl
   implicit val ringDal = new RingDalImpl
@@ -55,6 +56,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     marketMetadataDal,
     missingBlocksRecordDal,
     ohlcDataDal,
+    tokenInfoDal,
     orderService,
     fillService,
     ringService,

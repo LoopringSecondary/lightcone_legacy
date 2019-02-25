@@ -70,13 +70,15 @@ class MetadataRefresher(
   private var markets = Seq.empty[MarketMetadata]
 
   override def initialize() = {
+    becomeReady()
     val f = for {
       _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
       _ <- refreshMetadata()
     } yield {}
 
     f onComplete {
-      case Success(_) => becomeReady()
+      case Success(_) =>
+        becomeReady()
       case Failure(e) => throw e
     }
     f
@@ -90,7 +92,8 @@ class MetadataRefresher(
       } yield Unit
 
     case _: GetMetadatas.Req =>
-      sender ! GetMetadatas.Res(tokens = tokens, markets = markets)
+      //TODO(du):tickers待cmc分支实现
+      sender ! GetMetadatas.Res(tokens = Seq.empty, markets = markets)
   }
 
   private def refreshMetadata() =
@@ -106,7 +109,8 @@ class MetadataRefresher(
       assert(markets_.nonEmpty)
       tokens = tokens_.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
-      metadataManager.reset(tokens_, markets_)
+      //TODO(du):tickers待cmc分支实现
+      metadataManager.reset(tokens_, Seq.empty, markets_)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors

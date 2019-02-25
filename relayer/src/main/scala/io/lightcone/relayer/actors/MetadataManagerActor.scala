@@ -103,7 +103,8 @@ class MetadataManagerActor(
       assert(markets_ nonEmpty)
       tokens = tokensUpdated.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
-      metadataManager.reset(tokens, markets)
+      //TODO(du):tickers待cmc分支实现
+      metadataManager.reset(tokens, Seq.empty, markets)
     }
     f onComplete {
       case Success(_) =>
@@ -181,7 +182,7 @@ class MetadataManagerActor(
     case req: InvalidateToken.Req =>
       (for {
         result <- dbModule.tokenMetadataDal
-          .InvalidateToken(req.address)
+          .invalidateToken(req.address)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
         if (result == ERR_NONE) {
