@@ -104,7 +104,8 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
       } yield {
         res.resps foreach { cutoffRes =>
-          assert(cutoffRes.block > 0, "TODO(yadong): suppo")
+          // TODO(yadong): fix this.
+          // assert(cutoffRes.block > 0, "TODO(yadong): suppo")
           manager.setCutoff(
             cutoffRes.block,
             cutoffRes.cutoff.toLong,
@@ -326,7 +327,7 @@ class AccountManagerActor(
           evt.header.get.blockHeader.get.height
         } catch {
           case e: Throwable =>
-            log.error(s"unable to get block header: $evt")
+            log.error(s"unable to get block height in event: $evt")
             throw e
         }
 
