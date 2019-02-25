@@ -16,20 +16,21 @@
 
 package io.lightcone.ethereum
 
-private[ethereum] final case class TypeItem(
-  name: String, `type`: String)
+final case class TypeItem(
+    name: String,
+    itemType: String)
 
-private[ethereum] final case class Type(
-  name: String,
-  typeItems: List[TypeItem])
+final case class Type(
+    name: String,
+    typeItems: List[TypeItem])
 
-private[ethereum] final case class Types(types: Map[String, Type])
+final case class Types(types: Map[String, Type])
 
 final case class EIP712TypedData(
-  types: Types,
-  primaryType: String,
-  domain: Map[String, Any],
-  message: Map[String, Any])
+    types: Types,
+    primaryType: String,
+    domain: Map[String, Any],
+    message: Map[String, Any])
 
 trait EIP712Support {
   def jsonToTypedData(jsonString: String): EIP712TypedData

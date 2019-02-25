@@ -16,75 +16,20 @@
 
 package io.lightcone.core
 
-class AccountManagerAltImplSpec_SubmitMultipleOrders
-    extends AccountManagerAltImplSpec {
+class AccountManagerImplSpec_SubmitMultipleOrders
+    extends AccountManagerImplSpec {
   import OrderStatus._
+  val block = 1000000L
 
-  // "cancelling a older order" should "scale up younger orders" in {
-  //   setSpendable(owner, LRC, 2000)
-  //   setSpendable(owner, WETH, 100)
-
-  //   val order1 = submitSingleOrderExpectingSuccess {
-  //     owner |> 1000.0.lrc --> 20.0.gto -- 50.0.weth
-  //   } {
-  //     _.copy(
-  //       status = STATUS_PENDING,
-  //       _reserved = Some(MatchableState(1000, 0, 50)),
-  //       _actual = Some(MatchableState(1000, 20, 50))
-  //     )
-  //   }
-
-  //   val order2 = submitSingleOrderExpectingSuccess {
-  //     owner |> 2000.0.lrc --> 20.0.weth
-  //   } {
-  //     _.copy(
-  //       status = STATUS_PENDING,
-  //       _reserved = Some(MatchableState(1000, 0, 0)),
-  //       _actual = Some(MatchableState(1000, 10, 0))
-  //     )
-  //   }
-
-  //   val order3 = submitSingleOrderExpectingSuccess {
-  //     owner |> 100.0.weth --> 20.0.gto
-  //   } {
-  //     _.copy(
-  //       status = STATUS_PENDING,
-  //       _reserved = Some(MatchableState(50, 0, 0)),
-  //       _actual = Some(MatchableState(50, 10, 0))
-  //     )
-  //   }
-
-  //   val (success, orderMap) = manager.cancelOrder(order1.id).await
-  //   success should be(true)
-  //   orderMap.size should be(3)
-
-  //   orderMap(order1.id) should be {
-  //     order1.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
-  //   }
-
-  //   orderMap(order2.id) should be {
-  //     order2.copy(
-  //       _reserved = Some(MatchableState(2000, 0, 0)),
-  //       _actual = Some(MatchableState(2000, 20, 0))
-  //     )
-  //   }
-
-  //   orderMap(order3.id) should be {
-  //     order2.copy(
-  //       _reserved = Some(MatchableState(100, 0, 0)),
-  //       _actual = Some(MatchableState(100, 20, 0))
-  //     )
-  //   }
-  // }
-
-  "resubmitting a older order with smaller size" should "scale up younger orders" in {
-    setSpendable(owner, LRC, 2000)
-    setSpendable(owner, WETH, 100)
+  "cancelling a older order" should "scale up younger orders" in {
+    setSpendable(block + 1, owner, LRC, 2000)
+    setSpendable(block - 1, owner, WETH, 100)
 
     val order1 = submitSingleOrderExpectingSuccess {
       owner |> 1000.0.lrc --> 20.0.gto -- 50.0.weth
     } {
       _.copy(
+        block = block + 1,
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(1000, 0, 50)),
         _actual = Some(MatchableState(1000, 20, 50))
@@ -95,6 +40,7 @@ class AccountManagerAltImplSpec_SubmitMultipleOrders
       owner |> 2000.0.lrc --> 20.0.weth
     } {
       _.copy(
+        block = block + 1,
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(1000, 0, 0)),
         _actual = Some(MatchableState(1000, 10, 0))
@@ -105,6 +51,67 @@ class AccountManagerAltImplSpec_SubmitMultipleOrders
       owner |> 100.0.weth --> 20.0.gto
     } {
       _.copy(
+        block = block - 1,
+        status = STATUS_PENDING,
+        _reserved = Some(MatchableState(50, 0, 0)),
+        _actual = Some(MatchableState(50, 10, 0))
+      )
+    }
+
+    val (success, orderMap) = manager.cancelOrder(order1.id).await
+    success should be(true)
+    orderMap.size should be(3)
+
+    orderMap(order1.id) should be {
+      order1.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
+    }
+
+    orderMap(order2.id) should be {
+      order2.copy(
+        _reserved = Some(MatchableState(2000, 0, 0)),
+        _actual = Some(MatchableState(2000, 20, 0))
+      )
+    }
+
+    orderMap(order3.id) should be {
+      order3.copy(
+        _reserved = Some(MatchableState(100, 0, 0)),
+        _actual = Some(MatchableState(100, 20, 0))
+      )
+    }
+  }
+
+  "resubmitting a older order with smaller size" should "scale up younger orders" in {
+    setSpendable(block - 1, owner, LRC, 2000)
+    setSpendable(block + 1, owner, WETH, 100)
+
+    val order1 = submitSingleOrderExpectingSuccess {
+      owner |> 1000.0.lrc --> 20.0.gto -- 50.0.weth
+    } {
+      _.copy(
+        block = block + 1,
+        status = STATUS_PENDING,
+        _reserved = Some(MatchableState(1000, 0, 50)),
+        _actual = Some(MatchableState(1000, 20, 50))
+      )
+    }
+
+    val order2 = submitSingleOrderExpectingSuccess {
+      owner |> 2000.0.lrc --> 20.0.weth
+    } {
+      _.copy(
+        block = block - 1,
+        status = STATUS_PENDING,
+        _reserved = Some(MatchableState(1000, 0, 0)),
+        _actual = Some(MatchableState(1000, 10, 0))
+      )
+    }
+
+    val order3 = submitSingleOrderExpectingSuccess {
+      owner |> 100.0.weth --> 20.0.gto
+    } {
+      _.copy(
+        block = block + 1,
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(50, 0, 0)),
         _actual = Some(MatchableState(50, 10, 0))

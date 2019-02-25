@@ -47,7 +47,7 @@ trait EventExtraction {
 
   var untilBlock: Long
 
-  def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
+  @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def handleMessage: Receive = {
     case GET_BLOCK =>

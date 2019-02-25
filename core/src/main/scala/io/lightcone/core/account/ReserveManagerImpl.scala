@@ -21,29 +21,42 @@ import scala.collection.mutable.ListBuffer
 import java.util.concurrent.atomic.AtomicInteger
 
 // This class is not thread safe.
-// orderOrdersHavePriority = true
+// olderOrdersHavePriority = true
 // allowPartialReserve = true
-private[core] final class ReserveManagerAltImpl(
+private[core] final class ReserveManagerImpl(
     val token: String,
     enableTracing: Boolean = false
   )(
     implicit
     eventHandler: ReserveEventHandler)
-    extends ReserveManagerAlt
+    extends ReserveManager
     with Logging {
   implicit private val t = token
 
   case class Reserve(
       orderId: String,
       requested: BigInt,
-      reserved: BigInt)
+      allocated: BigInt)
 
   protected var allowance: BigInt = 0
   protected var balance: BigInt = 0
   protected var spendable: BigInt = 0
   protected var reserved: BigInt = 0
+  protected var block: Long = 0
 
   protected var reserves = List.empty[Reserve]
+
+  trait InternalOperator {
+
+    def add(
+        orderId: String,
+        requested: BigInt,
+        forceEventHandling: Boolean,
+        prevRequestedOpt: Option[BigInt] = None
+      ): Unit
+
+    def remove(orderId: String): Unit
+  }
 
   def getReserves() = reserves
 
@@ -61,45 +74,56 @@ private[core] final class ReserveManagerAltImpl(
     }
   }
 
-  def getAccountInfo() =
-    AccountInfo(
+  @inline def getBlock() = block
+
+  def getBalanceOfToken() =
+    BalanceOfToken(
       token,
       balance,
       allowance,
       balance - reserved,
       allowance - reserved,
-      reserves.size
+      reserves.size,
+      block
     )
 
-  def setBalance(balance: BigInt) =
-    setBalanceAndAllowance(balance, this.allowance)
+  def setBalance(
+      block: Long,
+      balance: BigInt
+    ) =
+    setBalanceAndAllowance(block, balance, this.allowance)
 
-  def setAllowance(allowance: BigInt) =
-    setBalanceAndAllowance(this.balance, allowance)
+  def setAllowance(
+      block: Long,
+      allowance: BigInt
+    ) =
+    setBalanceAndAllowance(block, this.balance, allowance)
 
   def setBalanceAndAllowance(
+      block: Long,
       balance: BigInt,
       allowance: BigInt
     ) = trace("setBalanceAndAllowance") {
+    this.block = block
     this.balance = balance
     this.allowance = allowance
-    spendable = balance.min(allowance)
+    this.spendable = balance.min(allowance)
 
-    rebalance { (reserveMe, _) =>
+    rebalance { operator =>
       reserves.foreach { r =>
-        reserveMe(r.orderId, r.requested, false, Some(r.reserved))
+        operator.add(r.orderId, r.requested, false, Some(r.allocated))
       }
     }
   }
 
   // Release balance/allowance for an order.
   def release(orderIds: Set[String]): Set[String] = trace("release") {
-    rebalance { (reserveMe, deleteMe) =>
+    rebalance { operator =>
       reserves.foreach { r =>
         if (orderIds.contains(r.orderId)) {
-          deleteMe(r.orderId)
+          operator.remove(r.orderId)
         } else {
-          reserveMe(r.orderId, r.requested, false, Some(r.reserved))
+          operator.add(r.orderId, r.requested, false, Some(r.allocated))
         }
       }
     }
@@ -109,26 +133,27 @@ private[core] final class ReserveManagerAltImpl(
       orderId: String,
       requestedAmount: BigInt
     ): Set[String] = trace("reserve") {
-    rebalance { (reserveMe, _) =>
+    rebalance { operator =>
       assert(requestedAmount > 0)
 
-      var prevReservedOpt: Option[BigInt] = None
+      var prevAllocatedOpt: Option[BigInt] = None
 
       reserves.foreach { r =>
         if (r.orderId == orderId) {
-          prevReservedOpt = Some(r.reserved)
+          prevAllocatedOpt = Some(r.allocated)
 
-          if (requestedAmount <= r.reserved) {
-            reserveMe(r.orderId, requestedAmount, true, Some(r.reserved))
+          if (requestedAmount <= r.allocated) {
+            operator
+              .add(r.orderId, requestedAmount, true, Some(r.allocated))
           }
         } else {
-          reserveMe(r.orderId, r.requested, false, Some(r.reserved))
+          operator.add(r.orderId, r.requested, false, Some(r.allocated))
         }
       }
-      prevReservedOpt match {
+      prevAllocatedOpt match {
         case Some(amount) if amount >= requestedAmount =>
         case _ =>
-          reserveMe(orderId, requestedAmount, true, prevReservedOpt)
+          operator.add(orderId, requestedAmount, true, prevAllocatedOpt)
       }
     }
   }
@@ -138,42 +163,41 @@ private[core] final class ReserveManagerAltImpl(
     reserves = Nil
   }
 
-  private type RESERVE_METHOD =
-    (String, BigInt, Boolean, Option[BigInt]) => Unit
-  private type DELETE_METHOD = (String) => Unit
+  private def rebalance(func: InternalOperator => Unit): Set[String] = {
 
-  private def rebalance(
-      func: (RESERVE_METHOD, DELETE_METHOD) => Unit
-    ): Set[String] = {
-
-    this.reserved = 0
+    reserved = 0
     val ordersToDelete = ListBuffer.empty[String]
     val buf = ListBuffer.empty[Reserve]
 
-    def deleteMe(orderId: String): Unit = ordersToDelete += orderId
+    func(new InternalOperator {
+      def remove(orderId: String): Unit = ordersToDelete += orderId
 
-    def reserveMe(
-        orderId: String,
-        requested: BigInt,
-        forceEventHandling: Boolean,
-        prevRequestedOpt: Option[BigInt] = None
-      ) = {
-      val available = requested.min(spendable - reserved)
-      if (available == 0) {
-        deleteMe(orderId)
-      } else {
-        this.reserved += available
-        buf += Reserve(orderId, requested, available)
+      def add(
+          orderId: String,
+          requested: BigInt,
+          forceEventHandling: Boolean,
+          prevRequestedOpt: Option[BigInt] = None
+        ) = {
+        val allocated = requested.min(spendable - reserved)
 
-        prevRequestedOpt match {
-          case Some(amount) if !forceEventHandling && amount == available =>
-          case _ =>
-            eventHandler.onTokenReservedForOrder(orderId, token, available)
+        if (allocated == 0) {
+          remove(orderId)
+        } else {
+          reserved += allocated
+          buf += Reserve(orderId, requested, allocated)
+
+          prevRequestedOpt match {
+            case Some(prevReserved)
+                if !forceEventHandling && prevReserved == allocated =>
+            case _ =>
+              eventHandler
+                .onTokenReservedForOrder(block, orderId, token, allocated)
+          }
         }
-      }
-    }
 
-    func(reserveMe, deleteMe)
+      }
+
+    })
 
     reserves = buf.toList
     ordersToDelete.toSet

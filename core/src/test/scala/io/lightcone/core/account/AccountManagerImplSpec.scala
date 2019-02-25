@@ -19,36 +19,54 @@ package io.lightcone.core
 import scala.concurrent._
 import io.lightcone.core.testing._
 
-abstract class AccountManagerAltImplSpec extends CommonSpec {
+abstract class AccountManagerImplSpec extends CommonSpec {
 
   var owner = "owning_address"
+  // TODO(dongw): add more tests to verify these two numbers.
   var numOfOrdersProcessed = 0
-  implicit val _ec: ExecutionContext = ExecutionContext.Implicits.global
+  var numOfAccountsProcessed = 0
+  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
   implicit val baProvider = stub[BalanceAndAllowanceProvider]
 
-  implicit val updatdOrderProcessor = new UpdatedOrdersProcessor {
-    val ec = _ec
+  implicit val updatdOrdersProcessor = new UpdatedOrdersProcessor()(ec) {
 
-    def processOrder(order: Matchable): Future[Any] =
-      Future {
-        numOfOrdersProcessed += 1
-        processOneOrder(order)
-      }
-
+    def processUpdatedOrder(
+        trackOrderUpdated: Boolean,
+        order: Matchable
+      ): Future[Any] = {
+      numOfOrdersProcessed += 1
+      processOneOrder(order)
+      Future.unit
+    }
   }
 
-  var manager: AccountManagerAlt = _
+  implicit val updatdAccountsProcessor = new UpdatedAccountsProcessor {
+
+    def processUpdatedAccount(
+        block: Long,
+        address: String,
+        tokenAddress: String
+      ) = {
+      numOfAccountsProcessed += 1
+      Future.unit
+    }
+  }
+
+  var manager: AccountManager = _
 
   var processOneOrder: Matchable => Unit = { order =>
     // println(s"==> order: $order")
   }
+
   override def beforeEach(): Unit = {
     numOfOrdersProcessed = 0
-    manager = AccountManagerAlt.default(owner, true)
+    numOfAccountsProcessed = 0
+    manager = AccountManager.default(owner, true)
   }
 
   def setBalanceAllowance(
+      block: Long,
       owner: String,
       token: String,
       balance: BigInt,
@@ -56,14 +74,15 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
     ) =
     (baProvider.getBalanceAndALlowance _)
       .when(owner, token)
-      .returns(Future.successful((balance, allowance)))
+      .returns(Future.successful((block, balance, allowance)))
       .once
 
   def setSpendable(
+      block: Long,
       owner: String,
       token: String,
       spendable: BigInt
-    ) = setBalanceAllowance(owner, token, spendable, spendable)
+    ) = setBalanceAllowance(block, owner, token, spendable, spendable)
 
   def submitSingleOrderExpectingSuccess(
       order: Matchable
@@ -99,10 +118,11 @@ abstract class AccountManagerAltImplSpec extends CommonSpec {
   }
 
   def hardCancelSingleOrderExpectingSuccess(
+      block: Long,
       orderId: String
     )(expectdOrder: Matchable
     ): Matchable = {
-    val orderMap = manager.hardCancelOrder(orderId).await
+    val orderMap = manager.hardCancelOrder(block, orderId).await
     orderMap.size should be(1)
     orderMap(orderId) should be(expectdOrder)
     orderMap(orderId)

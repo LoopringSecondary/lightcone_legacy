@@ -16,18 +16,11 @@
 
 package io.lightcone.core
 
-import scala.concurrent._
-
-trait BalanceAndAllowanceProvider {
-
-  def getBalanceAndALlowance(
-      address: String,
-      token: String
-    ): Future[
-    ( //
-        Long, // the block number
-        BigInt, // balance
-        BigInt // allowance
-    )
-  ]
-}
+case class BalanceOfToken(
+    token: String,
+    balance: BigInt,
+    allowance: BigInt,
+    availableBalance: BigInt,
+    availableAllowance: BigInt,
+    numOfOrders: Int,
+    block: Long)

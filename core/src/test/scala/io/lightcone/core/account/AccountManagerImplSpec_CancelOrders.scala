@@ -16,8 +16,9 @@
 
 package io.lightcone.core
 
-class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
+class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
   import OrderStatus._
+  val block = 1000000L
 
   "cancelling non-existing orders" should "return empty result" in {
     val (success, orderMap) = manager.cancelOrder("order0").await
@@ -33,18 +34,19 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     map = manager.cancelAllOrders().await
     map.size should be(0)
 
-    map = manager.hardCancelOrder("order0").await
+    map = manager.hardCancelOrder(block, "order0").await
     map.size should be(0)
   }
 
   "soft cancelling one order" should "work" in {
     val amount = 1000
-    setSpendable(owner, LRC, amount)
+    setSpendable(block, owner, LRC, amount)
 
     val order = submitSingleOrderExpectingSuccess {
       owner |> 100.0.lrc --> 1.0.weth
     } {
       _.copy(
+        block = block,
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(100, 0, 0)),
         _actual = Some(MatchableState(100, 1, 0))
@@ -55,44 +57,70 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
       order.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
     }
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, amount, amount, amount, amount, 0)
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, amount, amount, amount, amount, 0, block)
     )
   }
 
-  "hard cancelling one order" should "work" in {
+  "hard cancelling one order with lower block number" should "work" in {
     val amount = 1000
-    setSpendable(owner, LRC, amount)
+    setSpendable(block, owner, LRC, amount)
 
     val order = submitSingleOrderExpectingSuccess {
       owner |> 100.0.lrc --> 1.0.weth
     } {
       _.copy(
+        block = block,
         status = STATUS_PENDING,
         _reserved = Some(MatchableState(100, 0, 0)),
         _actual = Some(MatchableState(100, 1, 0))
       )
     }
 
-    hardCancelSingleOrderExpectingSuccess(order.id) {
-      order.copy(status = STATUS_ONCHAIN_CANCELLED_BY_USER)
+    hardCancelSingleOrderExpectingSuccess(block - 1, order.id) {
+      order.copy(block = block, status = STATUS_ONCHAIN_CANCELLED_BY_USER)
     }
 
-    manager.getAccountInfo(LRC).await should be(
-      AccountInfo(LRC, amount, amount, amount, amount, 0)
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, amount, amount, amount, amount, 0, block)
+    )
+  }
+
+  "hard cancelling one order with higher block number" should "work" in {
+    val amount = 1000
+    setSpendable(block, owner, LRC, amount)
+
+    val order = submitSingleOrderExpectingSuccess {
+      owner |> 100.0.lrc --> 1.0.weth
+    } {
+      _.copy(
+        block = block,
+        status = STATUS_PENDING,
+        _reserved = Some(MatchableState(100, 0, 0)),
+        _actual = Some(MatchableState(100, 1, 0))
+      )
+    }
+
+    hardCancelSingleOrderExpectingSuccess(block + 1, order.id) {
+      order.copy(block = block + 1, status = STATUS_ONCHAIN_CANCELLED_BY_USER)
+    }
+
+    manager.getBalanceOfToken(LRC).await should be(
+      BalanceOfToken(LRC, amount, amount, amount, amount, 0, block)
     )
   }
 
   "canceling all orders in a market" should "work" in {
     val amount = 10000000L
-    setSpendable(owner, LRC, amount)
-    setSpendable(owner, WETH, amount)
+    setSpendable(block + 1, owner, LRC, amount)
+    setSpendable(block - 1, owner, WETH, amount)
 
     (1 to 100) foreach { _ =>
       submitSingleOrderExpectingSuccess {
         (owner |> 10.0.lrc --> 1.0.weth)
       } {
         _.copy(
+          block = block + 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
           _actual = Some(MatchableState(10, 1, 0))
@@ -105,6 +133,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
         (owner |> 1.0.weth --> 110.lrc)
       } {
         _.copy(
+          block = block - 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(1, 0, 0)),
           _actual = Some(MatchableState(1, 110, 0))
@@ -116,23 +145,26 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     manager.cancelOrders(MarketPair(LRC, WETH)).await.size should be(200)
     numOfOrdersProcessed should be(400)
 
-    Seq(LRC, WETH) foreach { t =>
-      manager.getAccountInfo(t).await should be {
-        AccountInfo(t, amount, amount, amount, amount, 0)
-      }
+    manager.getBalanceOfToken(LRC).await should be {
+      BalanceOfToken(LRC, amount, amount, amount, amount, 0, block + 1)
+    }
+
+    manager.getBalanceOfToken(WETH).await should be {
+      BalanceOfToken(WETH, amount, amount, amount, amount, 0, block - 1)
     }
   }
 
   "purge orders" should "not process those orders" in {
     val amount = 10000000L
-    setSpendable(owner, LRC, amount)
-    setSpendable(owner, WETH, amount)
+    setSpendable(block - 1, owner, LRC, amount)
+    setSpendable(block + 1, owner, WETH, amount)
 
     (1 to 100) foreach { _ =>
       submitSingleOrderExpectingSuccess {
         (owner |> 10.0.lrc --> 1.0.weth)
       } {
         _.copy(
+          block = block - 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
           _actual = Some(MatchableState(10, 1, 0))
@@ -145,6 +177,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
         (owner |> 1.0.weth --> 110.lrc)
       } {
         _.copy(
+          block = block + 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(1, 0, 0)),
           _actual = Some(MatchableState(1, 110, 0))
@@ -156,10 +189,12 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     manager.purgeOrders(MarketPair(LRC, WETH)).await.size should be(200)
     numOfOrdersProcessed should be(200)
 
-    Seq(LRC, WETH) foreach { t =>
-      manager.getAccountInfo(t).await should be {
-        AccountInfo(t, amount, amount, amount, amount, 0)
-      }
+    manager.getBalanceOfToken(LRC).await should be {
+      BalanceOfToken(LRC, amount, amount, amount, amount, 0, block - 1)
+    }
+
+    manager.getBalanceOfToken(WETH).await should be {
+      BalanceOfToken(WETH, amount, amount, amount, amount, 0, block + 1)
     }
   }
 
@@ -168,7 +203,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     val allowance = BigInt("200000000000000000")
 
     TOKENS.foreach { t =>
-      setBalanceAllowance(owner, t, balance, allowance)
+      setBalanceAllowance(block, owner, t, balance, allowance)
     }
 
     val now = System.currentTimeMillis
@@ -188,16 +223,16 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     )
 
     TOKENS.foreach { t =>
-      manager.getAccountInfo(t).await should be(
-        AccountInfo(t, balance, allowance, balance, allowance, 0)
+      manager.getBalanceOfToken(t).await should be(
+        BalanceOfToken(t, balance, allowance, balance, allowance, 0, block)
       )
     }
   }
 
   "handleCutoff" should "remove all older orders whose validSince field is smaller" in {
     val amount = 10000000L
-    setSpendable(owner, LRC, amount)
-    // setSpendable(owner, WETH, amount)
+    setSpendable(block, owner, LRC, amount)
+    // setSpendable(block, owner, WETH, amount)
 
     val orders = (1 to 100).map { i =>
       (owner |> 10.0.lrc --> 1.0.weth)
@@ -207,6 +242,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     orders.foreach { order =>
       submitSingleOrderExpectingSuccess(order) {
         _.copy(
+          block = block,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
           _actual = Some(MatchableState(10, 1, 0))
@@ -215,7 +251,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     }
 
     numOfOrdersProcessed should be(100)
-    val result = manager.handleCutoff(40).await
+    val result = manager.handleCutoff(block, 40).await
     result.size should be(40)
     result.keys.toSet should be(orders.take(40).map(_.id).toSet)
 
@@ -224,8 +260,8 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
 
   "handleCutoff for traiding pair" should "remove all older orders in the trading pair whose validSince field is smaller" in {
     val amount = 10000000L
-    setSpendable(owner, LRC, amount)
-    setSpendable(owner, WETH, amount)
+    setSpendable(block + 1, owner, LRC, amount)
+    setSpendable(block - 1, owner, WETH, amount)
 
     val orders1 = (1 to 100).map { i =>
       (owner |> 10.0.lrc --> 1.0.weth)
@@ -235,6 +271,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     orders1.foreach { order =>
       submitSingleOrderExpectingSuccess(order) {
         _.copy(
+          block = block + 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
           _actual = Some(MatchableState(10, 1, 0))
@@ -251,6 +288,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
     orders2.foreach { order =>
       submitSingleOrderExpectingSuccess(order) {
         _.copy(
+          block = block - 1,
           status = STATUS_PENDING,
           _reserved = Some(MatchableState(10, 0, 0)),
           _actual = Some(MatchableState(10, 1, 0))
@@ -260,7 +298,7 @@ class AccountManagerAltImplSpec_CancelOrders extends AccountManagerAltImplSpec {
 
     val marketHash = MarketHash(MarketPair(LRC, WETH)).hashString
     numOfOrdersProcessed should be(200)
-    val result = manager.handleCutoff(40, marketHash).await
+    val result = manager.handleCutoff(block, 40, marketHash).await
     result.size should be(40)
     result.keys.toSet should be(orders1.take(40).map(_.id).toSet)
 

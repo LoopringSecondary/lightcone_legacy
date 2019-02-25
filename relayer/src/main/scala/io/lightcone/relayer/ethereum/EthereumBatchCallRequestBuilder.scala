@@ -32,10 +32,13 @@ class EthereumBatchCallRequestBuilder {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
-      buildBatchErc20AllowanceReq(delegateAddress, owner, tokens)
-    val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens)
+      buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, req.tag)
+    val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, req.tag)
 
-    BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
+    BatchCallContracts.Req(
+      allowanceCallReqs ++ balanceCallReqs,
+      shouldReturnBlockNumber(req.tag)
+    )
   }
 
   def buildRequest(
@@ -44,7 +47,10 @@ class EthereumBatchCallRequestBuilder {
     ): BatchCallContracts.Req = {
     val batchFilledAmountReqs =
       buildBatchFilledAmountReq(tradeHistoryAddress, req.orderIds, req.tag)
-    BatchCallContracts.Req(batchFilledAmountReqs)
+    BatchCallContracts.Req(
+      batchFilledAmountReqs,
+      shouldReturnBlockNumber(req.tag)
+    )
   }
 
   def buildRequest(
@@ -59,7 +65,10 @@ class EthereumBatchCallRequestBuilder {
         val param = TransactionParams(to = address.token, data = data)
         EthCall.Req(index, Some(param), tag)
     }
-    BatchCallContracts.Req(balanceCallReqs)
+    BatchCallContracts.Req(
+      balanceCallReqs,
+      shouldReturnBlockNumber(tag)
+    )
   }
 
   def buildRequest(
@@ -78,7 +87,10 @@ class EthereumBatchCallRequestBuilder {
         val param = TransactionParams(to = address.token, data = data)
         EthCall.Req(index, Some(param), tag)
     }
-    BatchCallContracts.Req(balanceCallReqs)
+    BatchCallContracts.Req(
+      balanceCallReqs,
+      shouldReturnBlockNumber(tag)
+    )
   }
 
   def buildRequest(
@@ -88,11 +100,10 @@ class EthereumBatchCallRequestBuilder {
       implicit
       rb: EthereumCallRequestBuilder
     ): BatchCallContracts.Req = {
-
     val cutoffCallReqs = req.reqs.map { cutoffReq =>
-      rb.buildRequest(cutoffReq, tradeHistoryAddress)
+      rb.buildRequest(cutoffReq, tradeHistoryAddress).reqs.head
     }
-    BatchCallContracts.Req(cutoffCallReqs)
+    BatchCallContracts.Req(cutoffCallReqs, shouldReturnBlockNumber(req.tag))
   }
 
   private def buildBatchErc20AllowanceReq(
@@ -138,4 +149,7 @@ class EthereumBatchCallRequestBuilder {
       EthCall.Req(orderHash._2, Some(param), tag)
     }
   }
+
+  @inline def shouldReturnBlockNumber(tag: String) =
+    tag.isEmpty || tag == "latest"
 }

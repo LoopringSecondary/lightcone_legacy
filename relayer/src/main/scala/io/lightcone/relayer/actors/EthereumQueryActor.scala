@@ -73,10 +73,10 @@ class EthereumQueryActor(
 
   val base = loopringConfig.getInt("burn-rate-table.base")
 
-  protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
+  @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
-    case req @ GetAccount.Req(owner, tokens) =>
+    case req @ GetAccount.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
         brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))
@@ -84,34 +84,51 @@ class EthereumQueryActor(
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
-
         allowances = allowanceResps.map { res =>
-          NumericConversion.toBigInt(res.result)
+          Amount(NumericConversion.toBigInt(res.result))
         }
         balances = balanceResps.map { res =>
-          NumericConversion.toBigInt(res.result)
+          Amount(NumericConversion.toBigInt(res.result))
         }
         tokenBalances = erc20Tokens.zipWithIndex.map { token =>
           token._1 -> AccountBalance
-            .TokenBalance(token._1, balances(token._2), allowances(token._2))
+            .TokenBalance(
+              token._1,
+              Some(balances(token._2)),
+              Some(allowances(token._2)),
+              None,
+              None,
+              batchRes.block
+            )
         }.toMap
+
         accountBalance = AccountBalance(owner, tokenBalances, 0) //TODO(HONGYU):确定nonce的获取方式
 
         ethRes <- ethToken match {
           case head :: tail =>
-            (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address(owner).toString
-            )).mapAs[EthGetBalance.Res].map(Some(_))
+            (ethereumAccessorActor ? BatchGetEthBalance.Req(
+              Seq(EthGetBalance.Req(address = Address.normalize(owner), tag)),
+              returnBlockNum = brb.shouldReturnBlockNumber(tag)
+            )).mapAs[BatchGetEthBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
+        // TODO(yadong): we only need to return block number once using the `block` field.
         finalBalance = if (ethRes.isDefined) {
           accountBalance.copy(
             tokenBalanceMap = accountBalance.tokenBalanceMap +
               (ethToken.head -> AccountBalance.TokenBalance(
-                Address.ZERO.toString(),
-                NumericConversion.toBigInt(ethRes.get.result),
-                BigInt(0)
+                Address.ZERO.toString(), // TODO(yadong): do we need this?
+                Some(
+                  Amount(
+                    NumericConversion.toBigInt(ethRes.get.resps.head.result),
+                    ethRes.get.block
+                  )
+                ),
+                Some(Amount(BigInt(0))),
+                None,
+                None,
+                ethRes.get.block
               ))
           )
         } else {
@@ -125,49 +142,60 @@ class EthereumQueryActor(
         brb
           .buildRequest(tradeHistoryAddress, req)
       ) { result =>
-        GetFilledAmount.Res(
-          (orderIds zip result
-            .map(res => NumericConversion.toAmount(res))).toMap
-        )
+        val fills = (orderIds zip result.resps
+          .map(
+            res => Amount(NumericConversion.toBigInt(res.result), result.block)
+          )).toMap
+        GetFilledAmount.Res(fills)
       }
 
     case req: GetOrderCancellation.Req =>
-      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
+      batchCallEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
           GetOrderCancellation.Res(
-            NumericConversion.toBigInt(result).intValue == 1
+            NumericConversion.toBigInt(result.resps.head.result).intValue == 1,
+            result.block
           )
       }
 
     case req: GetCutoff.Req =>
-      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
+      batchCallEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
           GetCutoff.Res(
             req.broker,
             req.owner,
             req.marketHash,
-            NumericConversion.toBigInt(result)
+            cutoff = Some(
+              Amount(
+                NumericConversion.toBigInt(result.resps.head.result),
+                result.block
+              )
+            )
           )
       }
     case req: BatchGetCutoffs.Req =>
       batchCallEthereum(sender, brb.buildRequest(req, tradeHistoryAddress)) {
         result =>
-          BatchGetCutoffs.Res((req.reqs zip result).map {
+          BatchGetCutoffs.Res((req.reqs zip result.resps).map {
             case (cutoffReq, res) =>
+              val cutoff = Amount(
+                NumericConversion.toBigInt(res.result),
+                block = result.block
+              )
               GetCutoff.Res(
                 cutoffReq.broker,
                 cutoffReq.owner,
                 cutoffReq.marketHash,
-                NumericConversion.toBigInt(res)
+                Some(cutoff)
               )
           })
       }
 
     case req: GetBurnRate.Req =>
-      callEthereum(sender, rb.buildRequest(req, burnRateTableAddress)) {
+      batchCallEthereum(sender, rb.buildRequest(req, burnRateTableAddress)) {
         result =>
           {
-            val formatResult = Numeric.cleanHexPrefix(result)
+            val formatResult = Numeric.cleanHexPrefix(result.resps.head.result)
             if (formatResult.length == 64) {
               val p2pRate = NumericConversion
                 .toBigInt(formatResult.substring(56, 60))
@@ -175,7 +203,11 @@ class EthereumQueryActor(
               val marketRate = NumericConversion
                 .toBigInt(formatResult.substring(60))
                 .doubleValue() / base
-              GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
+              GetBurnRate.Res(
+                forMarket = marketRate,
+                forP2P = p2pRate,
+                block = result.block
+              )
             } else {
               throw ErrorException(
                 ErrorCode.ERR_UNEXPECTED_RESPONSE,
@@ -203,11 +235,10 @@ class EthereumQueryActor(
   private def batchCallEthereum(
       sender: ActorRef,
       batchReq: AnyRef
-    )(resp: Seq[String] => AnyRef
+    )(resp: BatchCallContracts.Res => AnyRef
     ) = {
     (ethereumAccessorActor ? batchReq)
       .mapAs[BatchCallContracts.Res]
-      .map(_.resps.map(_.result))
       .map(resp(_))
       .sendTo(sender)
   }

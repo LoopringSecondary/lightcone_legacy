@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer
 
-import scala.concurrent._
+import io.lightcone.relayer.data.SendRawTransaction
 
-trait BalanceAndAllowanceProvider {
-
-  def getBalanceAndALlowance(
-      address: String,
-      token: String
-    ): Future[
-    ( //
-        Long, // the block number
-        BigInt, // balance
-        BigInt // allowance
-    )
-  ]
+trait EthereumAccessDataProvider {
+  def sendRawTransaction(req: SendRawTransaction.Req): SendRawTransaction.Res
 }

@@ -291,7 +291,7 @@ message RawOrder  {
 
 message Amount {
     bytes value     = 1;
-    int64 block_num = 2; // At which block this value is obtained. In many cases this field is not used.
+    int64 block = 2; // At which block this value is obtained. In many cases this field is not used.
 }
 
 message MarketStats {
@@ -307,13 +307,13 @@ message MarketStats {
 
 message ChainReorganizationImpact {
 
-    message AccountInfo {
+    message BalanceOfToken {
         string address          = 1;
         repeated string tokens  = 2;
     }
 
    repeated string order_ids    = 1;
-   repeated AccountInfo accounts  = 2;
+   repeated BalanceOfToken accounts  = 2;
 }
 
 

@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer
 
-import scala.concurrent._
+import io.lightcone.relayer.data._
 
-trait BalanceAndAllowanceProvider {
+trait EthereumQueryDataProvider {
+  def getAccount(req: GetAccount.Req): GetAccount.Res
+  def getFilledAmount(req: GetFilledAmount.Req): GetFilledAmount.Res
 
-  def getBalanceAndALlowance(
-      address: String,
-      token: String
-    ): Future[
-    ( //
-        Long, // the block number
-        BigInt, // balance
-        BigInt // allowance
-    )
-  ]
+  def getOrderCancellation(
+      req: GetOrderCancellation.Req
+    ): GetOrderCancellation.Res
+  def getCutoff(req: GetCutoff.Req): GetCutoff.Res
+  def batchGetCutoffs(req: BatchGetCutoffs.Req): BatchGetCutoffs.Res
+  def getBurnRate(req: GetBurnRate.Req): GetBurnRate.Res
 }
