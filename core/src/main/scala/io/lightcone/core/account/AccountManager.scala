@@ -66,11 +66,18 @@ trait AccountManager {
 
   def resubmitOrder(order: Matchable): Future[(Boolean, Map[String, Matchable])]
 
+  // mark an order is cancelled on chain
+  def hardCancelOrder(
+      block: Long,
+      orderId: String
+    ): Future[Map[String, Matchable]]
+
   // soft cancel an order
   def cancelOrder(
       orderId: String,
       status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
     ): Future[(Boolean, Map[String, Matchable])]
+
   def cancelOrders(orderIds: Seq[String]): Future[Map[String, Matchable]]
   def cancelOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
   def cancelAllOrders(): Future[Map[String, Matchable]]

@@ -229,7 +229,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
     }
   }
 
-  "handleCutoff" should "remove all older orders whose validSince field is smaller" in {
+  "setCutoff" should "remove all older orders whose validSince field is smaller" in {
     val amount = 10000000L
     setSpendable(block, owner, LRC, amount)
     // setSpendable(block, owner, WETH, amount)
@@ -251,14 +251,14 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
     }
 
     numOfOrdersProcessed should be(100)
-    val result = manager.handleCutoff(block, 40).await
+    val result = manager.setCutoff(block, 40).await
     result.size should be(40)
     result.keys.toSet should be(orders.take(40).map(_.id).toSet)
 
     numOfOrdersProcessed should be(140)
   }
 
-  "handleCutoff for traiding pair" should "remove all older orders in the trading pair whose validSince field is smaller" in {
+  "setCutoff for traiding pair" should "remove all older orders in the trading pair whose validSince field is smaller" in {
     val amount = 10000000L
     setSpendable(block + 1, owner, LRC, amount)
     setSpendable(block - 1, owner, WETH, amount)
@@ -298,7 +298,7 @@ class AccountManagerImplSpec_CancelOrders extends AccountManagerImplSpec {
 
     val marketHash = MarketHash(MarketPair(LRC, WETH)).hashString
     numOfOrdersProcessed should be(200)
-    val result = manager.handleCutoff(block, 40, marketHash).await
+    val result = manager.setCutoff(block, marketHash, 40).await
     result.size should be(40)
     result.keys.toSet should be(orders1.take(40).map(_.id).toSet)
 
