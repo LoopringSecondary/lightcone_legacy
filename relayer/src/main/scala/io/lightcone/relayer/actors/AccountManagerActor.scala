@@ -32,13 +32,15 @@ import io.lightcone.relayer.data._
 import kamon.metric._
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
-  val owner: String)(
-    implicit val config: Config,
+    val owner: String
+  )(
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -47,11 +49,11 @@ class AccountManagerActor(
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
     val baProvider: BalanceAndAllowanceProvider)
-  extends Actor
-  with AccountManagerProcessors
-  with Stash
-  with BlockingReceive
-  with ActorLogging {
+    extends Actor
+    with AccountManagerProcessors
+    with Stash
+    with BlockingReceive
+    with ActorLogging {
 
   import ErrorCode._
   import OrderStatus._
@@ -102,13 +104,15 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
       } yield {
         res.resps foreach { cutoffRes =>
+          assert(cutoffRes.block > 0, "TODO(yadong): suppo")
           if (cutoffRes.marketHash.isEmpty) {
             manager.setCutoff(cutoffRes.block, cutoffRes.cutoff.toLong)
           } else {
             manager.setCutoff(
               cutoffRes.block,
               cutoffRes.marketHash,
-              cutoffRes.cutoff.toLong)
+              cutoffRes.cutoff.toLong
+            )
           }
         }
       }
@@ -151,13 +155,15 @@ class AccountManagerActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                ERR_ORDER_VALIDATION_INVALID_CANCELED =>
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
                 dbModule.orderService
                   .updateOrderStatus(
                     rawOrder.hash,
-                    STATUS_ONCHAIN_CANCELLED_BY_USER)
+                    STATUS_ONCHAIN_CANCELLED_BY_USER
+                  )
                   .map(
-                    _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false))
+                    _ => ActorRecover.OrderRecoverResult(rawOrder.hash, false)
+                  )
 
               case ERR_ORDER_PENDING_ACTIVE =>
                 log.error("received orders of PENDIGN_ACTIVE during recovery")
@@ -190,7 +196,7 @@ class AccountManagerActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                ERR_ORDER_VALIDATION_INVALID_CANCELED =>
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
                 val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
                 Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
 
@@ -199,7 +205,8 @@ class AccountManagerActor(
                   resRawOrder <- (orderPersistenceActor ? req
                     .copy(
                       rawOrder =
-                        Some(rawOrder.withStatus(STATUS_PENDING_ACTIVE))))
+                        Some(rawOrder.withStatus(STATUS_PENDING_ACTIVE))
+                    ))
                     .mapAs[RawOrder]
                   resp = SubmitOrder.Res(Some(resRawOrder.toOrder), true)
                 } yield resp
@@ -226,7 +233,8 @@ class AccountManagerActor(
                 ai.balance,
                 ai.allowance,
                 ai.availableBalance,
-                ai.availableAllowance)
+                ai.availableAllowance
+              )
           }
           //TODO(HONGYU):确认nonce的更新以及使用方式
           result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances, 0)))
@@ -246,7 +254,7 @@ class AccountManagerActor(
       }
 
     case req @ CancelOrder
-      .Req("", owner, _, Some(marketPair), _) =>
+          .Req("", owner, _, Some(marketPair), _) =>
       count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner-MarketPair取消订单
         (for {
@@ -274,90 +282,102 @@ class AccountManagerActor(
             } else {
               throw ErrorException(
                 ERR_FAILED_HANDLE_MSG,
-                s"no order found with id: ${req.id}")
+                s"no order found with id: ${req.id}"
+              )
             }
           }
         } yield result).sendTo(sender)
       }
 
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
-    case req: AddressBalanceUpdatedEvent =>
+    case evt: AddressBalanceUpdatedEvent =>
       count.refine("label" -> "balance_updated").increment()
 
       blocking {
-        assert(req.address == owner)
+        assert(evt.address == owner)
         manager
-          .setBalance(req.block, req.token, BigInt(req.balance.toByteArray))
+          .setBalance(evt.block, evt.token, BigInt(evt.balance.toByteArray))
       }
 
-    case req: AddressAllowanceUpdatedEvent =>
+    case evt: AddressAllowanceUpdatedEvent =>
       count.refine("label" -> "allowance_updated").increment()
 
       blocking {
-        assert(req.address == owner)
+        assert(evt.address == owner)
         manager
-          .setAllowance(req.block, req.token, BigInt(req.allowance.toByteArray))
+          .setAllowance(evt.block, evt.token, BigInt(evt.allowance.toByteArray))
       }
 
-    case req: AddressBalanceAllowanceUpdatedEvent =>
+    case evt: AddressBalanceAllowanceUpdatedEvent =>
       count.refine("label" -> "balance_allowance_updated").increment()
       blocking {
-        assert(req.address == owner)
+        assert(evt.address == owner)
 
         manager.setBalanceAndAllowance(
-          req.block,
-          req.token,
-          BigInt(req.balance.toByteArray),
-          BigInt(req.allowance.toByteArray))
+          evt.block,
+          evt.token,
+          BigInt(evt.balance.toByteArray),
+          BigInt(evt.allowance.toByteArray)
+        )
       }
 
-    case req: CutoffEvent if req.header.nonEmpty =>
-      val header = req.header.get
+    case evt: CutoffEvent if evt.header.nonEmpty =>
+      val header = evt.header.get
       if (header.txStatus != TX_STATUS_SUCCESS) {
         log.error(s"unexpeted cutoffEvent status: ${header.txStatus}")
-      } else if (req.broker == req.owner) {
-        if (req.marketHash == null || req.marketHash.isEmpty) {
+      } else if (evt.broker == evt.owner) {
+        val block = try {
+          evt.header.get.blockHeader.get.height
+        } catch {
+          case e: Throwable =>
+            log.error(s"unable to get block header: $evt")
+            throw e
+        }
+
+        if (evt.marketHash == null || evt.marketHash.isEmpty) {
           count.refine("label" -> "cutoff").increment()
           blocking {
-            manager.setCutoff(req.block, req.cutoff)
+            manager.setCutoff(block, evt.cutoff)
           }
         } else {
           count.refine("label" -> "cutoff_market").increment()
           blocking {
-            manager.setCutoff(req.block, req.marketHash, req.cutoff)
+            manager.setCutoff(block, evt.marketHash, evt.cutoff)
           }
         }
       } else {
         count.refine("label" -> "broker_cutoff").increment()
-        log.warning(s"not support this event yet: $req")
+        log.warning(s"not support this event yet: $evt")
       }
 
-    case req: OrdersCancelledOnChainEvent if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
+    case evt: OrdersCancelledOnChainEvent
+        if evt.header.nonEmpty && evt.getHeader.txStatus.isTxStatusSuccess =>
       count.refine("label" -> "order_cancel").increment()
       for {
-        orders <- dbModule.orderService.getOrders(req.orderHashes)
+        orders <- dbModule.orderService.getOrders(evt.orderHashes)
         _ = orders.foreach { o =>
-          val req = CancelOrder.Req(
+          val evt = CancelOrder.Req(
             id = o.hash,
             owner = o.owner,
             marketPair =
               Some(MarketPair(baseToken = o.tokenS, quoteToken = o.tokenB)),
-            status = STATUS_ONCHAIN_CANCELLED_BY_USER)
-          self ! req
+            status = STATUS_ONCHAIN_CANCELLED_BY_USER
+          )
+          self ! evt
         }
       } yield Unit
 
-    case req: OrderFilledEvent //
-    if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
+    case evt: OrderFilledEvent //
+        if evt.header.nonEmpty && evt.getHeader.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "order_filled").increment()
       blocking {
         (for {
-          orderOpt <- dbModule.orderService.getOrder(req.orderHash)
+          orderOpt <- dbModule.orderService.getOrder(evt.orderHash)
           _ <- swap(orderOpt.map(resubmitOrder))
         } yield Unit)
       }
 
-    case req: MetadataChanged =>
+    case evt: MetadataChanged =>
       //将terminate的market的订单从内存中删除，terminate的市场等已经被停止删除了，
       // 因此不需要再发送给已经停止的market了，也不需要更改数据库状态，保持原状态就可以了
       count.refine("label" -> "metadata_changed").increment()
@@ -372,12 +392,14 @@ class AccountManagerActor(
   }
 
   private def checkOrderNotCancelledNorPendingActive(
-    rawOrder: RawOrder): Future[Unit] = {
+      rawOrder: RawOrder
+    ): Future[Unit] = {
     for {
       _ <- Future {
         if (!manager.doesOrderSatisfyCutoff(
-          rawOrder.validSince,
-          rawOrder.getMarketHash)) {
+              rawOrder.validSince,
+              rawOrder.getMarketHash
+            )) {
           throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CUTOFF)
         }
         if (rawOrder.validSince > timeProvider.getTimeSeconds) {
@@ -386,7 +408,8 @@ class AccountManagerActor(
       }
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
         broker = rawOrder.owner,
-        orderHash = rawOrder.hash)).mapAs[GetOrderCancellation.Res]
+        orderHash = rawOrder.hash
+      )).mapAs[GetOrderCancellation.Res]
 
       _ = if (res.cancelled) {
         throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
@@ -401,7 +424,8 @@ class AccountManagerActor(
     log.debug(s"### submitOrder ${order}")
     for {
       getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
-        Seq(orderId))).mapAs[GetFilledAmount.Res]
+        Seq(orderId)
+      )).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap
         .getOrElse(orderId, Amount(ByteString.copyFrom("0".getBytes)))
@@ -413,7 +437,8 @@ class AccountManagerActor(
 
       _ = log.debug(
         s"submit order result:  ${updatedOrder}",
-        s"with ${updatedOrders.size} updated orders")
+        s"with ${updatedOrders.size} updated orders"
+      )
 
       _ = if (!successful) {
         val error = status match {
