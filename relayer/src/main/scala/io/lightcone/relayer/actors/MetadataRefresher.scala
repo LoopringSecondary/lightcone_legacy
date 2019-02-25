@@ -70,7 +70,6 @@ class MetadataRefresher(
   private var markets = Seq.empty[MarketMetadata]
 
   override def initialize() = {
-    becomeReady()
     val f = for {
       _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
       _ <- refreshMetadata()
@@ -91,9 +90,13 @@ class MetadataRefresher(
         _ = getLocalActors().foreach(_ ! req)
       } yield Unit
 
-    case _: GetMetadatas.Req =>
+    case _: GetMarkets.Req =>
+      //TODO(du):
+      sender ! GetMarkets.Res()
+
+    case _: GetTokens.Req =>
       //TODO(du):tickers待cmc分支实现
-      sender ! GetMetadatas.Res(tokens = Seq.empty, markets = markets)
+      sender ! GetTokens.Res()
   }
 
   private def refreshMetadata() =

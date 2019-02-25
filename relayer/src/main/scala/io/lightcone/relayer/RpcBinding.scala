@@ -57,9 +57,13 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetTransactionRecordCount.Req]
     .replies[GetTransactionRecordCount.Res]
 
-  method("get_metadatas")
-    .accepts[GetMetadatas.Req]
-    .replies[GetMetadatas.Res]
+  method("get_tokens")
+    .accepts[GetTokens.Req]
+    .replies[GetTokens.Res]
+
+  method("get_markets")
+    .accepts[GetMarkets.Req]
+    .replies[GetMarkets.Res]
 
   method("get_market_history")
     .accepts[GetMarketHistory.Req]
