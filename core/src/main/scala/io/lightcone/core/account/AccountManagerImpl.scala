@@ -157,8 +157,8 @@ final class AccountManagerImpl(
       orderValidSince: Long,
       marketHash: String
     ): Boolean = {
-    ownerCutoff >= orderValidSince &&
-    marketPairCutoffs.getOrElse(marketHash, 0L) >= orderValidSince
+    ownerCutoff < orderValidSince &&
+    marketPairCutoffs.getOrElse(marketHash, 0L) < orderValidSince
   }
 
   def setCutoff(
