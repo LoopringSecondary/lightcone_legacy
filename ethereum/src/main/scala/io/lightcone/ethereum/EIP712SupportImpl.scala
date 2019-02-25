@@ -63,7 +63,9 @@ class DefaultEIP712Support extends EIP712Support {
   def jsonToTypedData(jsonStr: String) = {
     try {
       val root = parse(jsonStr)
-      val typesMap = (root \ "types").extract[Map[String, List[TypeItem]]]
+      val typesMap = (root \ "types").transformField {
+        case ("type", x) => ("itemType", x)
+      }.extract[Map[String, List[TypeItem]]]
       val types = Types(typesMap.map(kv => (kv._1, Type(kv._1, kv._2))))
       val primaryType = (root \ "primaryType").asInstanceOf[JString].values
       val domain = (root \ "domain").asInstanceOf[JObject].values
@@ -116,7 +118,7 @@ class DefaultEIP712Support extends EIP712Support {
             case _         => "0x0"
           }
 
-          typeItem.`type` match {
+          typeItem.itemType match {
 
             case "string" =>
               val valueHash =
@@ -162,12 +164,12 @@ class DefaultEIP712Support extends EIP712Support {
 
             case _ =>
               throw new IllegalArgumentException(
-                "unsupport solidity data type: " + typeItem.`type`
+                "unsupport solidity data type: " + typeItem.itemType
               )
           }
         case None =>
           throw new IllegalStateException(
-            "can not get value for " + typeItem.name + " in type " + typeItem.`type`
+            "can not get value for " + typeItem.name + " in type " + typeItem.itemType
           )
       }
     })
@@ -193,7 +195,7 @@ class DefaultEIP712Support extends EIP712Support {
       .map(t => {
         t.name + "(" + t.typeItems
           .map(item => {
-            item.`type` + " " + item.name
+            item.itemType + " " + item.name
           })
           .mkString(",") + ")"
       })
@@ -210,7 +212,7 @@ class DefaultEIP712Support extends EIP712Support {
         typeDef.typeItems
           .map(item => {
             val typeDeps =
-              findTypeDependencies(item.`type`, allTypes, typeDef :: results)
+              findTypeDependencies(item.itemType, allTypes, typeDef :: results)
             typeDef :: typeDeps
           })
           .flatten
