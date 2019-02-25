@@ -18,7 +18,7 @@ package io.lightcone.ethereum
 
 final case class TypeItem(
     name: String,
-    `type`: String)
+    itemType: String)
 
 final case class Type(
     name: String,
