@@ -144,7 +144,7 @@ class AccountManagerActor(
       //恢复时，如果订单已被取消，需要更新数据库状态
       blocking(timer, "recover_order") {
         val f = for {
-          _ <- checkOrderNotCancelledNorPending(rawOrder)
+          _ <- checkOrderNotCancelledNorPendingActive(rawOrder, false)
           _ <- resubmitOrder(rawOrder)
           res = ActorRecover.OrderRecoverResult(rawOrder.hash, true)
         } yield res
@@ -179,7 +179,7 @@ class AccountManagerActor(
       count.refine("label" -> "submit_order").increment()
       blocking {
         val f = for {
-          _ <- checkOrderNotCancelledNorPending(rawOrder)
+          _ <- checkOrderNotCancelledNorPendingActive(rawOrder, true)
 
           resRawOrder <- (orderPersistenceActor ? req
             .copy(rawOrder = Some(rawOrder.withStatus(STATUS_PENDING_ACTIVE))))
@@ -382,8 +382,9 @@ class AccountManagerActor(
 
   }
 
-  private def checkOrderNotCancelledNorPending(
-      rawOrder: RawOrder
+  private def checkOrderNotCancelledNorPendingActive(
+      rawOrder: RawOrder,
+      compareWithCurrentTimestamp: Boolean
     ): Future[Unit] = {
     for {
       _ <- Future {
@@ -392,6 +393,11 @@ class AccountManagerActor(
               rawOrder.getMarketHash
             )) {
           throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CUTOFF)
+        }
+        if (compareWithCurrentTimestamp) {
+          if (rawOrder.validSince > timeProvider.getTimeSeconds) {
+            throw ErrorException(ERR_ORDER_PENDING_ACTIVE)
+          }
         }
       }
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
