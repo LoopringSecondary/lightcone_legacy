@@ -53,25 +53,18 @@ object MetadataManagerActor extends DeployedAsSingleton {
   }
 
   def calculateInitialDelayInSecondWithFixInterval(now: Calendar) = {
-    val s = s"---1 now=> ${now.getTime}"
-    val nowTimestamp = now.getTimeInMillis
-    val minuteNow = now.get(Calendar.MINUTE)
-    val result = if (minuteNow == 0) {
-      println(
-        s"$s minuteNow=>$minuteNow nextMinute =>$minuteNow result=> 0"
-      )
+    val now_ = Calendar.getInstance()
+    now_.setTime(now.getTime)
+    val nowTimestamp = now_.getTimeInMillis
+    val minuteNow = now_.get(Calendar.MINUTE)
+    if (minuteNow % 10 == 0) {
       0
     } else {
       val nextMinute = (Math.ceil(minuteNow / 10).toInt + 1) * 10
-      now.add(Calendar.MINUTE, nextMinute - minuteNow)
-      now.set(Calendar.SECOND, 0)
-      val r = ((now.getTimeInMillis - nowTimestamp) / 1000).toInt
-      println(
-        s"$s minuteNow=>$minuteNow nextMinute =>$nextMinute result=> (${now.getTimeInMillis - nowTimestamp} / 1000 = $r"
-      )
-      r
+      now_.add(Calendar.MINUTE, nextMinute - minuteNow)
+      now_.set(Calendar.SECOND, 0)
+      ((now_.getTimeInMillis - nowTimestamp) / 1000).toInt
     }
-    result
   }
 }
 

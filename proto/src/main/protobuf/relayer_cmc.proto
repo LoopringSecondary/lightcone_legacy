@@ -94,3 +94,11 @@ message GetExternalTokenTickers {
         repeated ExternalTokenTickerInfo tickers = 1;
     }
 }
+
+enum Currency {
+    NOT_USE = 0;
+    USD = 1;
+    RMB = 2;
+    EUR = 3; // 欧元
+    JPY = 4; // 日元
+}

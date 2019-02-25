@@ -72,14 +72,12 @@ class CMCExternalTickerFetcher @Inject()(
             .map { j =>
               j.status match {
                 case Some(r) if r.errorCode == 0 =>
-                  j.copy(
-                    data = j.data.map(CMCExternalTickerFetcher.normalizeTicker)
-                  )
+                  j.data.map(CMCExternalTickerFetcher.normalizeTicker)
                 case Some(r) if r.errorCode != 0 =>
                   log.error(
                     s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
                   )
-                  j
+                  Seq.empty
                 case m =>
                   log.error(s"Failed request CMC, return:[$m]")
                   throw ErrorException(
@@ -119,7 +117,7 @@ object CMCExternalTickerFetcher extends Logging {
       }
       val q = t.quote("USD")
       ExternalTicker(
-        t.slug,
+        t.symbol,
         q.price,
         q.volume24H,
         q.percentChange1H,
@@ -132,11 +130,10 @@ object CMCExternalTickerFetcher extends Logging {
 
   def fillAllMarketTickers(
       usdTickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCCrawlerConfigForToken],
       effectiveMarketSymbols: Seq[(String, String)]
     ): Seq[ExternalMarketTickerInfo] = {
     effectiveMarketSymbols.map { market =>
-      calculateMarketQuote(market._1, market._2, usdTickers, slugSymbols)
+      calculateMarketQuote(market._1, market._2, usdTickers)
     }
   }
 
@@ -154,39 +151,43 @@ object CMCExternalTickerFetcher extends Logging {
       )
   }
 
+  private def calc(
+      v1: Double,
+      v2: Double
+    ) =
+    BigDecimal((1 + v1) / (1 + v2) - 1)
+      .setScale(2, BigDecimal.RoundingMode.HALF_UP)
+      .toDouble
+
   private def calculateMarketQuote(
       baseTokenSymbol: String,
       quoteTokenSymbol: String,
-      usdTickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCCrawlerConfigForToken]
+      usdTickers: Seq[ExternalTicker]
     ): ExternalMarketTickerInfo = {
     val baseTicker = getTickerBySymbol(quoteTokenSymbol, usdTickers)
     val quoteTicker = getTickerBySymbol(quoteTokenSymbol, usdTickers)
     val price = toDouble(BigDecimal(baseTicker.priceUsd / quoteTicker.priceUsd))
-    val volume_24h = toDouble(
+    val volume24H = toDouble(
       BigDecimal(baseTicker.volume24H / baseTicker.priceUsd) * price
     )
     val market_cap = toDouble(
       BigDecimal(baseTicker.marketCap / baseTicker.priceUsd) * price
     )
-    val percent_change_1h = BigDecimal(1 + baseTicker.percentChange1H) / BigDecimal(
-      1 + quoteTicker.percentChange1H
-    ) - 1
-    val percent_change_24h = BigDecimal(1 + baseTicker.percentChange24H) / BigDecimal(
-      1 + quoteTicker.percentChange24H
-    ) - 1
-    val percent_change_7d = BigDecimal(1 + baseTicker.percentChange7D) / BigDecimal(
-      1 + quoteTicker.percentChange7D
-    ) - 1
+    val percentChange1H =
+      calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
+    val percentChange24H =
+      calc(baseTicker.percentChange24H, quoteTicker.percentChange24H)
+    val percentChange7D =
+      calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
     ExternalMarketTickerInfo(
       baseTokenSymbol,
       quoteTokenSymbol,
       s"$baseTokenSymbol-$quoteTokenSymbol",
       price,
-      volume_24h,
-      toDouble(percent_change_1h),
-      toDouble(percent_change_24h),
-      toDouble(percent_change_7d)
+      volume24H,
+      toDouble(percentChange1H),
+      toDouble(percentChange24H),
+      toDouble(percentChange7D)
     )
   }
 
@@ -196,13 +197,11 @@ object CMCExternalTickerFetcher extends Logging {
       slug = ticker.slug.toLowerCase()
     )
 
-  def toDouble: PartialFunction[BigDecimal, Double] = {
-    case s: BigDecimal =>
-      scala.util
-        .Try(s.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
-        .toOption
-        .getOrElse(0)
-  }
+  def toDouble(bigDecimal: BigDecimal): Double =
+    scala.util
+      .Try(bigDecimal.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .toOption
+      .getOrElse(0)
 
   def convertDateToSecond(utcDateStr: String) = {
     utcFormat

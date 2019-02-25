@@ -52,20 +52,27 @@ class CMCCrawlerSpec
     "sina currency rate" in {
       val r =
         Await.result(
-          fiatExchangeRateFetcher.fetchExchangeRates().mapTo[Double],
+          fiatExchangeRateFetcher
+            .fetchExchangeRates(Seq(USD_RMB))
+            .mapTo[Map[String, Double]],
           5.second
         )
-      r > 0 should be(true)
+      r.nonEmpty should be(true)
+      r.contains(USD_RMB) should be(true)
     }
 
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
       val f = for {
         cmcResponse <- getMockedCMCTickers()
-        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
+        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates(Seq(USD_RMB))
         slugSymbols_ <- dbModule.cmcTickerConfigDal.getConfigs()
-        tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
+        tickersToPersist <- if (cmcResponse.nonEmpty && rateResponse.nonEmpty) {
           for {
-            t <- persistTickers(rateResponse, cmcResponse.data, slugSymbols_)
+            t <- persistTickers(
+              rateResponse(USD_RMB),
+              cmcResponse,
+              slugSymbols_
+            )
           } yield t
         } else {
           Future.successful(Seq.empty)
@@ -79,7 +86,7 @@ class CMCCrawlerSpec
       val q1 = Await.result(
         f.mapTo[
           (
-              TickerDataInfo,
+              Seq[CMCTickerData],
               Seq[ExternalTicker],
               Int,
               Seq[TokenMetadata],
@@ -88,14 +95,13 @@ class CMCCrawlerSpec
         ],
         50.second
       )
-      q1._1.data.length should be(2072)
-      q1._2.length should be(2073) // RMB added
+      q1._1.length should be(2072)
+      q1._2.length should be(TOKEN_SLUGS_SYMBOLS.length + 1) // RMB added
+      q1._3 should be(TOKEN_SLUGS_SYMBOLS.length + 1)
       q1._5.nonEmpty should be(true)
       tickers = q1._2
-      slugSymbols = q1._5 ++ q1._1.data
+      slugSymbols = q1._5 ++ q1._1
         .map(t => CMCCrawlerConfigForToken(t.symbol, t.slug))
-      q1._3 should be(2073)
-      q1._4.exists(_.externalData.get.usdPrice != 1000) should be(true)
     }
 
     "convert USD tickers to all quote markets (ExternalDataRefresher)" in {
@@ -110,7 +116,7 @@ class CMCCrawlerSpec
 
       // verify ticker in USD and CNY
       val cnyToUsd =
-        tickers.find(_.symbol == "RMB")
+        tickers.find(_.symbol == RMB)
       tickerInUsd.symbol should equal(tickerInCny.symbol)
       val cnyTickerVerify =
         CMCExternalTickerFetcher.convertUsdTickersToCny(
@@ -132,15 +138,15 @@ class CMCCrawlerSpec
     val res = parser.fromJsonString[TickerDataInfo](fileContents)
     res.status match {
       case Some(r) if r.errorCode == 0 =>
-        Future.successful(res.copy(data = res.data))
+        Future.successful(res.data)
       case Some(r) if r.errorCode != 0 =>
         log.error(
           s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
         )
-        Future.successful(res)
+        Future.successful(Seq.empty)
       case m =>
         log.error(s"Failed request CMC, return:[$m]")
-        Future.successful(TickerDataInfo(Some(TickerStatus(errorCode = 404))))
+        Future.successful(Seq.empty)
     }
   }
 
@@ -157,7 +163,7 @@ class CMCCrawlerSpec
           slugSymbols
         )
       cnyTicker = ExternalTicker(
-        "RMB",
+        RMB,
         CMCExternalTickerFetcher
           .toDouble(BigDecimal(1) / BigDecimal(usdToCnyRate))
       )
@@ -181,14 +187,14 @@ class CMCCrawlerSpec
   private def refreshTickers() = {
     assert(tickers.nonEmpty)
     val tickers_ = tickers
-      .filter(_.symbol != "RMB")
+      .filter(_.symbol != RMB)
       .filter(isEffectiveToken)
     val allTickersInUSD =
       tickers_
         .filter(isEffectiveToken)
         .map(CMCExternalTickerFetcher.convertPersistToExternal)
     val cnyToUsd =
-      tickers.find(_.symbol == "RMB")
+      tickers.find(_.symbol == RMB)
     assert(cnyToUsd.nonEmpty)
     assert(cnyToUsd.get.priceUsd > 0)
     val allTickersInCNY = tickers_.filter(isEffectiveToken).map { t =>
@@ -208,7 +214,6 @@ class CMCCrawlerSpec
     }
     val effectiveMarketTickers = CMCExternalTickerFetcher.fillAllMarketTickers(
       tickers_,
-      slugSymbols,
       effectiveMarketSymbols
     )
 

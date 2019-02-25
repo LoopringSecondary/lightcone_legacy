@@ -141,13 +141,14 @@ class CMCCrawlerActor(
     log.info("CMCCrawlerActor run sync job")
     for {
       cmcResponse <- externalTickerFetcher.fetchExternalTickers()
-      rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
+      rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates(Seq(USD_RMB))
       slugSymbols_ <- dbModule.cmcTickerConfigDal.getConfigs()
-      persistTickers <- if (cmcResponse.data.nonEmpty && rateResponse > 0 && slugSymbols_.nonEmpty) {
+      persistTickers <- if (cmcResponse.nonEmpty && rateResponse.nonEmpty && rateResponse
+                              .contains(USD) && slugSymbols_.nonEmpty) {
         for {
           tickers_ <- persistTickers(
-            rateResponse,
-            cmcResponse.data,
+            rateResponse(USD_RMB),
+            cmcResponse,
             slugSymbols_
           )
         } yield tickers_
@@ -155,8 +156,8 @@ class CMCCrawlerActor(
         Future.successful(Seq.empty)
       }
     } yield {
-      assert(cmcResponse.data.nonEmpty)
-      assert(rateResponse > 0)
+      assert(cmcResponse.nonEmpty)
+      assert(rateResponse.nonEmpty)
       assert(slugSymbols_.nonEmpty)
       assert(persistTickers.nonEmpty)
       slugSymbols = slugSymbols_
@@ -168,10 +169,10 @@ class CMCCrawlerActor(
 
   private def refreshTickers() = this.synchronized {
     val cnyToUsd =
-      tickers.find(_.symbol == "RMB")
+      tickers.find(_.symbol == RMB)
     assert(cnyToUsd.nonEmpty)
     assert(cnyToUsd.get.priceUsd > 0)
-    val tickers_ = tickers.filter(_.symbol != "RMB")
+    val tickers_ = tickers.filter(_.symbol != RMB)
     val effectiveTokens = tickers_.filter(isEffectiveToken)
     allTickersInUSD = effectiveTokens
       .map(CMCExternalTickerFetcher.convertPersistToExternal)
@@ -193,7 +194,7 @@ class CMCCrawlerActor(
       )
     }
     effectiveMarketTickers = CMCExternalTickerFetcher
-      .fillAllMarketTickers(tickers_, slugSymbols, effectiveMarketSymbols)
+      .fillAllMarketTickers(tickers_, effectiveMarketSymbols)
   }
 
   private def isEffectiveToken(ticker: ExternalTicker): Boolean = {
@@ -215,7 +216,7 @@ class CMCCrawlerActor(
           slugSymbols
         )
       cnyTicker = ExternalTicker(
-        "RMB",
+        RMB,
         CMCExternalTickerFetcher
           .toDouble(BigDecimal(1) / BigDecimal(cnyToUsdRate))
       )

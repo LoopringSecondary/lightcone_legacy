@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.relayer
 
-import io.lightcone.relayer.data.cmc.{CMCTickerData, TickerDataInfo}
-import scala.concurrent.Future
+package object external {
 
-trait ExternalTickerFetcher {
-
-  def fetchExternalTickers(): Future[Seq[CMCTickerData]]
+  val USD = "USD"
+  val RMB = "RMB"
+  val USD_RMB = s"$USD-$RMB"
 }

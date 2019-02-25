@@ -41,7 +41,8 @@ class SinaFiatExchangeRateFetcher @Inject()(
 
   val uri = currencyConfig.getString("sina.uri")
 
-  def fetchExchangeRates(): Future[Double] =
+  // TODO(du):只定义接口支持多种法币，sina实现只支持USD-CNY,后续再找支持多种法币的接口实现
+  def fetchExchangeRates(fiat: Seq[String]): Future[Map[String, Double]] =
     for {
       response <- Http().singleRequest(
         HttpRequest(
@@ -68,7 +69,7 @@ class SinaFiatExchangeRateFetcher @Inject()(
               val currency = charArr(2).toDouble
               assert(currency > 0)
               assert(time > 0)
-              currency
+              Map(USD_RMB -> currency)
             }
 
         case m =>

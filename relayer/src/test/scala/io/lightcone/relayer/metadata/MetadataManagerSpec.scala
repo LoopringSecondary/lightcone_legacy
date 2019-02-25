@@ -17,7 +17,6 @@
 package io.lightcone.relayer.metadata
 
 import java.util.Calendar
-
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.testkit.TestProbe
@@ -26,13 +25,12 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
 import io.lightcone.persistence.{CMCCrawlerConfigForToken, ExternalTicker}
 import io.lightcone.relayer.data.cmc._
-import io.lightcone.relayer.external.CMCExternalTickerFetcher
+import io.lightcone.relayer.external.{CMCExternalTickerFetcher, USD_RMB}
 import scalapb.json4s.Parser
 
 class MetadataManagerSpec
@@ -64,10 +62,11 @@ class MetadataManagerSpec
     "initialize tickers" in {
       val f = for {
         cmcResponse <- getMockedCMCTickers()
-        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
+        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates(Seq(USD_RMB))
         slugSymbols_ <- dbModule.cmcTickerConfigDal.getConfigs()
-        tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse > 0) {
-          persistTickers(rateResponse, cmcResponse.data, slugSymbols_)
+        tickersToPersist <- if (cmcResponse.data.nonEmpty && rateResponse.nonEmpty && rateResponse
+                                  .contains(USD_RMB)) {
+          persistTickers(rateResponse(USD_RMB), cmcResponse.data, slugSymbols_)
         } else {
           Future.successful(Seq.empty)
         }
