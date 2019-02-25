@@ -82,8 +82,7 @@ class CoreModule(
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-dal-ohlc-data",
-      "dbconfig-dal-fill",
-      "dbconfig-dal-token-info"
+      "dbconfig-dal-fill"
     )
 
     // --- bind dals ---------------------
@@ -93,7 +92,6 @@ class CoreModule(
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
-    bind[TokenInfoDal].to[TokenInfoDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
