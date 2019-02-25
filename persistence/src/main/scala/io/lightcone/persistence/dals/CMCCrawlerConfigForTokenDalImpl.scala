@@ -27,33 +27,33 @@ import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-class CMCTickerConfigDalImpl @Inject()(
+class CMCCrawlerConfigForTokenDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
     @Named("dbconfig-cmc-ticker-config") val dbConfig: DatabaseConfig[
       JdbcProfile
     ])
-    extends CMCTickerConfigDal {
+    extends CMCCrawlerConfigForTokenDal {
 
-  val query = TableQuery[CMCTickerConfigTable]
+  val query = TableQuery[CMCCrawlerConfigForTokenTable]
 
-  def saveSlugs(slugs: Seq[CMCTickerConfig]): Future[ErrorCode] =
-    db.run((query ++= slugs).asTry).map {
+  def saveConfigs(configs: Seq[CMCCrawlerConfigForToken]): Future[ErrorCode] =
+    db.run((query ++= configs).asTry).map {
       case Failure(ex) => {
-        logger.error(s"save tickers error : ${ex.getMessage}")
+        logger.error(s"save ticker configs error : ${ex.getMessage}")
         ERR_PERSISTENCE_INTERNAL
       }
       case Success(x) =>
         ERR_NONE
     }
 
-  def getAll(): Future[Seq[CMCTickerConfig]] =
+  def getConfigs(): Future[Seq[CMCCrawlerConfigForToken]] =
     db.run(query.take(Integer.MAX_VALUE).result)
 
-  def getBySlugs(slugs: Seq[String]): Future[Seq[CMCTickerConfig]] =
+  def getConfigs(slugs: Seq[String]): Future[Seq[CMCCrawlerConfigForToken]] =
     db.run(query.filter(_.slug inSet slugs).result)
 
-  def update(ticker: CMCTickerConfig): Future[ErrorCode] =
+  def updateConfig(ticker: CMCCrawlerConfigForToken): Future[ErrorCode] =
     for {
       result <- db.run(
         query
@@ -66,6 +66,6 @@ class CMCTickerConfigDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def deleteBySymbol(symbol: String): Future[Boolean] =
+  def deleteConfigs(symbol: String): Future[Boolean] =
     db.run(query.filter(_.symbol === symbol).delete).map(_ > 0)
 }

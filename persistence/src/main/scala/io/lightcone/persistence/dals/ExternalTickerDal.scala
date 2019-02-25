@@ -34,8 +34,8 @@ trait ExternalTickerDal
 
   def getTickers(
       timestamp: Long,
-      tokenSlugs: Seq[String]
+      tokenSymbols: Seq[String]
     ): Future[Seq[ExternalTicker]]
 
-  def updateEffective(timestamp: Long): Future[ErrorCode]
+  def setValid(timestamp: Long): Future[ErrorCode]
 }

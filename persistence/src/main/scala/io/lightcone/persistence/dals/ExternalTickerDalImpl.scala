@@ -47,7 +47,7 @@ class ExternalTickerDalImpl @Inject()(
     }
 
   def getLastTicker() = {
-    db.run(query.filter(_.isEffective === true).map(_.timestamp).max.result)
+    db.run(query.filter(_.isValid === true).map(_.timestamp).max.result)
   }
 
   def getTickers(timestamp: Long): Future[Seq[ExternalTicker]] =
@@ -58,21 +58,21 @@ class ExternalTickerDalImpl @Inject()(
 
   def getTickers(
       timestamp: Long,
-      tokenSlugs: Seq[String]
+      tokenSymbols: Seq[String]
     ): Future[Seq[ExternalTicker]] =
     db.run(
       query
         .filter(_.timestamp === timestamp)
-        .filter(_.slug inSet tokenSlugs)
+        .filter(_.symbol inSet tokenSymbols)
         .result
     )
 
-  def updateEffective(timestamp: Long) =
+  def setValid(timestamp: Long) =
     for {
       result <- db.run(
         query
           .filter(_.timestamp === timestamp)
-          .map(_.isEffective)
+          .map(_.isValid)
           .update(true)
       )
     } yield {

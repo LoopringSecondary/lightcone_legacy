@@ -373,7 +373,7 @@ class MetadataManagerSpec
           tickers_
         )
       cnyTicker = ExternalTicker(
-        "rmb",
+        "RMB",
         CMCExternalTickerFetcher
           .toDouble(BigDecimal(1) / BigDecimal(usdTocnyRate))
       )

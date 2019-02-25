@@ -77,8 +77,6 @@ class CMCCrawlerActor(
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   private val tokens = metadataManager.getTokens().map(_.meta.symbol)
-  private val marketQuoteTokens =
-    metadataManager.getMarkets().map(_.quoteTokenSymbol).toSet
   private val effectiveMarketSymbols = metadataManager
     .getMarkets()
     .filter(_.status != MarketMetadata.Status.TERMINATED)
@@ -86,8 +84,8 @@ class CMCCrawlerActor(
 
   private var tickers: Seq[ExternalTicker] =
     Seq.empty[ExternalTicker]
-  private var slugSymbols
-    : Seq[CMCTickerConfig] = Seq.empty[CMCTickerConfig] // slug -> symbol
+  private var slugSymbols: Seq[CMCCrawlerConfigForToken] =
+    Seq.empty[CMCCrawlerConfigForToken] // slug -> symbol
   private var allTickersInUSD: Seq[ExternalTokenTickerInfo] =
     Seq.empty[ExternalTokenTickerInfo] // USD price
   private var allTickersInCNY: Seq[ExternalTokenTickerInfo] =
@@ -113,7 +111,7 @@ class CMCCrawlerActor(
           t <- dbModule.externalTickerDal.getTickers(
             latestEffectiveTime.get
           )
-          s <- dbModule.cmcTickerConfigDal.getAll()
+          s <- dbModule.cmcTickerConfigDal.getConfigs()
         } yield (t, s)
       } else {
         Future.successful((Seq.empty, Seq.empty))
@@ -144,10 +142,14 @@ class CMCCrawlerActor(
     for {
       cmcResponse <- externalTickerFetcher.fetchExternalTickers()
       rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates()
-      slugSymbols_ <- dbModule.cmcTickerConfigDal.getAll()
+      slugSymbols_ <- dbModule.cmcTickerConfigDal.getConfigs()
       persistTickers <- if (cmcResponse.data.nonEmpty && rateResponse > 0 && slugSymbols_.nonEmpty) {
         for {
-          tickers_ <- persistTickers(rateResponse, cmcResponse.data)
+          tickers_ <- persistTickers(
+            rateResponse,
+            cmcResponse.data,
+            slugSymbols_
+          )
         } yield tickers_
       } else {
         Future.successful(Seq.empty)
@@ -161,22 +163,21 @@ class CMCCrawlerActor(
       tickers = persistTickers
 
       refreshTickers()
-      //TODO(du): metadataRefresher
     }
   }
 
   private def refreshTickers() = this.synchronized {
     val cnyToUsd =
-      tickers.find(_.slug == "rmb")
+      tickers.find(_.symbol == "RMB")
     assert(cnyToUsd.nonEmpty)
     assert(cnyToUsd.get.priceUsd > 0)
-    val tickers_ = tickers.filter(_.slug != "rmb")
+    val tickers_ = tickers.filter(_.symbol != "RMB")
     val effectiveTokens = tickers_.filter(isEffectiveToken)
     allTickersInUSD = effectiveTokens
-      .map(CMCExternalTickerFetcher.convertPersistToExternal(_, slugSymbols))
+      .map(CMCExternalTickerFetcher.convertPersistToExternal)
     allTickersInCNY = effectiveTokens.map { t =>
       val t_ =
-        CMCExternalTickerFetcher.convertPersistToExternal(t, slugSymbols)
+        CMCExternalTickerFetcher.convertPersistToExternal(t)
       assert(t.priceUsd > 0)
       t_.copy(
         price = CMCExternalTickerFetcher.toDouble(
@@ -196,29 +197,25 @@ class CMCCrawlerActor(
   }
 
   private def isEffectiveToken(ticker: ExternalTicker): Boolean = {
-    val slugSymbol = slugSymbols
-      .find(_.slug == ticker.slug)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found slug: ${ticker.slug} to symbol config"
-        )
-      )
-    tokens.contains(slugSymbol.symbol)
+    tokens.contains(ticker.symbol) && slugSymbols.exists(
+      _.symbol == ticker.symbol
+    )
   }
 
   private def persistTickers(
       cnyToUsdRate: Double,
-      tickers_ : Seq[CMCTickerData]
+      tickers_ : Seq[CMCTickerData],
+      slugSymbols: Seq[CMCCrawlerConfigForToken]
     ) =
     for {
       _ <- Future.unit
       tickersToPersist = CMCExternalTickerFetcher
         .convertCMCResponseToPersistence(
-          tickers_
+          tickers_,
+          slugSymbols
         )
       cnyTicker = ExternalTicker(
-        "rmb",
+        "RMB",
         CMCExternalTickerFetcher
           .toDouble(BigDecimal(1) / BigDecimal(cnyToUsdRate))
       )
@@ -229,7 +226,7 @@ class CMCCrawlerActor(
       _ <- Future.sequence(
         fixGroup.map(dbModule.externalTickerDal.saveTickers)
       )
-      updateSucc <- dbModule.externalTickerDal.updateEffective(now)
+      updateSucc <- dbModule.externalTickerDal.setValid(now)
     } yield {
       if (updateSucc != ErrorCode.ERR_NONE)
         log.error(s"CMC persist failed, code:$updateSucc")

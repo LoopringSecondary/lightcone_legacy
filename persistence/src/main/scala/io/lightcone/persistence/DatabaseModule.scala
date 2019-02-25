@@ -32,7 +32,7 @@ class DatabaseModule @Inject()(
     val missingBlocksRecordDal: MissingBlocksRecordDal,
     val ohlcDataDal: OHLCDataDal,
     val externalTickerDal: ExternalTickerDal,
-    val cmcTickerConfigDal: CMCTickerConfigDal,
+    val cmcTickerConfigDal: CMCCrawlerConfigForTokenDal,
     val orderService: OrderService,
     val fillService: FillService,
     val ringService: RingService,

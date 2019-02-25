@@ -28,11 +28,6 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
   def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
 
-  def updateTokenPrice(
-      token: String,
-      usdPrice: Double
-    ): Future[ErrorCode]
-
   def getTokens(addresses: Seq[String]): Future[Seq[TokenMetadata]]
 
   def getTokens(): Future[Seq[TokenMetadata]]
@@ -43,5 +38,5 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
       burnRateForP2P: Double
     ): Future[ErrorCode]
 
-  def InvalidateToken(address: String): Future[ErrorCode]
+  def invalidateToken(address: String): Future[ErrorCode]
 }

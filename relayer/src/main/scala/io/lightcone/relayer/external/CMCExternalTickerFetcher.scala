@@ -105,9 +105,11 @@ object CMCExternalTickerFetcher extends Logging {
   val utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS Z")
 
   def convertCMCResponseToPersistence(
-      tickers_ : Seq[CMCTickerData]
+      tickers_ : Seq[CMCTickerData],
+      slugSymbols: Seq[CMCCrawlerConfigForToken]
     ): Seq[ExternalTicker] = {
-    tickers_.map { t =>
+    val slugSymbolMap = slugSymbols.map(s => s.slug -> s.symbol).toMap
+    tickers_.filter(t => slugSymbolMap.keySet.contains(t.slug)).map { t =>
       if (t.quote.get("USD").isEmpty) {
         log.error(s"CMC not return ${t.symbol} quote for USD")
         throw ErrorException(
@@ -130,7 +132,7 @@ object CMCExternalTickerFetcher extends Logging {
 
   def fillAllMarketTickers(
       usdTickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCTickerConfig],
+      slugSymbols: Seq[CMCCrawlerConfigForToken],
       effectiveMarketSymbols: Seq[(String, String)]
     ): Seq[ExternalMarketTickerInfo] = {
     effectiveMarketSymbols.map { market =>
@@ -138,16 +140,16 @@ object CMCExternalTickerFetcher extends Logging {
     }
   }
 
-  private def getTickerBySlug(
-      slug: String,
+  private def getTickerBySymbol(
+      symbol: String,
       usdTickers: Seq[ExternalTicker]
     ) = {
     usdTickers
-      .find(t => t.slug == slug)
+      .find(t => t.symbol == symbol)
       .getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found ticker of slug: $slug"
+          s"not found ticker of symbol: $symbol"
         )
       )
   }
@@ -156,12 +158,10 @@ object CMCExternalTickerFetcher extends Logging {
       baseTokenSymbol: String,
       quoteTokenSymbol: String,
       usdTickers: Seq[ExternalTicker],
-      slugSymbols: Seq[CMCTickerConfig]
+      slugSymbols: Seq[CMCCrawlerConfigForToken]
     ): ExternalMarketTickerInfo = {
-    val baseSlug = getSlugBySymbol(baseTokenSymbol, slugSymbols)
-    val quoteSlug = getSlugBySymbol(quoteTokenSymbol, slugSymbols)
-    val baseTicker = getTickerBySlug(baseSlug, usdTickers)
-    val quoteTicker = getTickerBySlug(quoteSlug, usdTickers)
+    val baseTicker = getTickerBySymbol(quoteTokenSymbol, usdTickers)
+    val quoteTicker = getTickerBySymbol(quoteTokenSymbol, usdTickers)
     val price = toDouble(BigDecimal(baseTicker.priceUsd / quoteTicker.priceUsd))
     val volume_24h = toDouble(
       BigDecimal(baseTicker.volume24H / baseTicker.priceUsd) * price
@@ -227,26 +227,9 @@ object CMCExternalTickerFetcher extends Logging {
     }
   }
 
-  def convertPersistToExternal(
-      ticker: ExternalTicker,
-      slugSymbols: Seq[CMCTickerConfig]
-    ) = {
-    if (ticker.priceUsd <= 0) {
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"invalid price:${ticker.priceUsd} with ticker slug ${ticker.slug}"
-      )
-    }
-    val slugSymbol = slugSymbols
-      .find(_.slug == ticker.slug)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found slug: ${ticker.slug} symbol"
-        )
-      )
+  implicit def convertPersistToExternal(ticker: ExternalTicker) = {
     ExternalTokenTickerInfo(
-      slugSymbol.symbol,
+      ticker.symbol,
       ticker.priceUsd,
       ticker.volume24H,
       ticker.percentChange1H,
@@ -257,7 +240,7 @@ object CMCExternalTickerFetcher extends Logging {
 
   private def getSlugBySymbol(
       symbol: String,
-      slugSymbols: Seq[CMCTickerConfig]
+      slugSymbols: Seq[CMCCrawlerConfigForToken]
     ): String = {
     val slugSymbol = slugSymbols
       .find(_.symbol == symbol)

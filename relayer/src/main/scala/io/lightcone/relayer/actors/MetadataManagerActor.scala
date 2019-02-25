@@ -149,7 +149,7 @@ class MetadataManagerActor(
     case req: InvalidateToken.Req =>
       (for {
         result <- dbModule.tokenMetadataDal
-          .InvalidateToken(req.address)
+          .invalidateToken(req.address)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
         if (result == ERR_NONE) {

@@ -16,21 +16,26 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.core.ErrorCode
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
-import scala.concurrent._
+import slick.jdbc.MySQLProfile.api._
 
-trait CMCTickerConfigDal
-    extends BaseDalImpl[CMCTickerConfigTable, CMCTickerConfig] {
+class CMCCrawlerConfigForTokenTable(tag: Tag)
+    extends BaseTable[CMCCrawlerConfigForToken](
+      tag,
+      "T_CMC_CRAWLER_CONFIG_FOR_TOKEN"
+    ) {
 
-  def saveSlugs(slugs: Seq[CMCTickerConfig]): Future[ErrorCode]
+  def id = slug
+  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"), O.PrimaryKey)
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(50)"))
 
-  def getAll(): Future[Seq[CMCTickerConfig]]
+  // indexes
+  def idx_symbol = index("idx_symbol", (symbol), unique = true)
 
-  def getBySlugs(slugs: Seq[String]): Future[Seq[CMCTickerConfig]]
-
-  def update(ticker: CMCTickerConfig): Future[ErrorCode]
-
-  def deleteBySymbol(symbol: String): Future[Boolean]
+  def * =
+    (
+      slug,
+      symbol
+    ) <> ((CMCCrawlerConfigForToken.apply _).tupled, CMCCrawlerConfigForToken.unapply)
 }

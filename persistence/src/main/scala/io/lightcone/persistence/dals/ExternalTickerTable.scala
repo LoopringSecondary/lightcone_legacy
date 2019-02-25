@@ -23,8 +23,8 @@ import slick.jdbc.MySQLProfile.api._
 class ExternalTickerTable(tag: Tag)
     extends BaseTable[ExternalTicker](tag, "T_EXTERNAL_TICKER") {
 
-  def id = slug
-  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
+  def id = symbol
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(50)"))
 
   // usd_quote
   def priceUsd = column[Double]("price_usd")
@@ -35,29 +35,22 @@ class ExternalTickerTable(tag: Tag)
   def marketCapUsd = column[Double]("market_cap_usd")
 
   def timestamp = column[Long]("timestamp")
-  def isEffective = column[Boolean]("is_effective")
+  def isValid = column[Boolean]("is_valid")
 
   // indexes
-  def idx_timestamp =
-    index(
-      "idx_timestamp",
-      (timestamp),
-      unique = false
-    )
-
   def idx_timestamp_effective =
     index(
       "idx_timestamp_effective",
-      (timestamp, isEffective),
+      (timestamp, isValid),
       unique = false
     )
 
   def pk_timestamp_slug =
-    primaryKey("pk_timestamp_slug", (timestamp, slug))
+    primaryKey("pk_timestamp_slug", (timestamp, symbol))
 
   def * =
     (
-      slug,
+      symbol,
       priceUsd,
       volume24H,
       percentChange1H,
@@ -65,6 +58,6 @@ class ExternalTickerTable(tag: Tag)
       percentChange7D,
       marketCapUsd,
       timestamp,
-      isEffective
+      isValid
     ) <> ((ExternalTicker.apply _).tupled, ExternalTicker.unapply)
 }

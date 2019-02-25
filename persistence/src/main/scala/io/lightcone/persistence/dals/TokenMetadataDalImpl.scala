@@ -71,25 +71,6 @@ class TokenMetadataDalImpl @Inject()(
       }
     }
 
-  def updateTokenPrice(
-      token: String,
-      usdPrice: Double
-    ): Future[ErrorCode] =
-    for {
-      result <- db.run(
-        query
-          .filter(_.address === token)
-          .map(c => (c.usdPrice, c.updateAt))
-          .update(
-            usdPrice,
-            timeProvider.getTimeMillis()
-          )
-      )
-    } yield {
-      if (result >= 1) ERR_NONE
-      else ERR_PERSISTENCE_UPDATE_FAILED
-    }
-
   def getTokens() =
     db.run(query.take(Int.MaxValue).result)
 
@@ -117,7 +98,7 @@ class TokenMetadataDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def InvalidateToken(address: String): Future[ErrorCode] =
+  def invalidateToken(address: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query
