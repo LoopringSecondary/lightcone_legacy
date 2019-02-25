@@ -75,23 +75,21 @@ trait AccountManager {
   def cancelOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
   def cancelAllOrders(): Future[Map[String, Matchable]]
 
-  // cancel an order based on onchain cancel event
-  def hardCancelOrder(
-      block: Long,
-      orderId: String
-    ): Future[Map[String, Matchable]]
+  def purgeOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
 
-  // hard cancel multiple orders
-  def handleCutoff(
+  def doesOrderSatisfyCutoff(
+      orderValidSince: Long,
+      marketHash: String
+    ): Boolean
+
+  def setCutoff(
       block: Long,
+      marketHash: String,
       cutoff: Long
     ): Future[Map[String, Matchable]]
 
-  def handleCutoff(
+  def setCutoff(
       block: Long,
-      cutoff: Long,
-      marketHash: String
+      cutoff: Long
     ): Future[Map[String, Matchable]]
-
-  def purgeOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
 }

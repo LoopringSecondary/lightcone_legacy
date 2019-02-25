@@ -66,7 +66,6 @@ class AccountManagerActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
 
   val manager = AccountManager.default(owner)
-  val accountCutoffState = new AccountCutoffStateImpl()
 
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -105,13 +104,13 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
       } yield {
         res.resps foreach { cutoffRes =>
-          val cutoff: BigInt = cutoffRes.cutoff
           if (cutoffRes.marketHash.isEmpty) {
-            accountCutoffState.setCutoff(cutoff.toLong)
+            manager.setCutoff(cutoffRes.block, cutoffRes.cutoff.toLong)
           } else {
-            accountCutoffState.setTradingPairCutoff(
+            manager.setCutoff(
+              cutoffRes.block,
               cutoffRes.marketHash,
-              cutoff.toLong
+              cutoffRes.cutoff.toLong
             )
           }
         }
@@ -155,8 +154,7 @@ class AccountManagerActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                  ERR_ORDER_VALIDATION_INVALID_CANCELED |
-                  ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
                 dbModule.orderService
                   .updateOrderStatus(
                     rawOrder.hash,
@@ -197,8 +195,7 @@ class AccountManagerActor(
             e.error.code match {
 
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                  ERR_ORDER_VALIDATION_INVALID_CANCELED |
-                  ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR =>
+                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
                 val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
                 Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
 
@@ -331,14 +328,12 @@ class AccountManagerActor(
         if (req.marketHash == null || req.marketHash.isEmpty) {
           count.refine("label" -> "cutoff").increment()
           blocking {
-            accountCutoffState.setCutoff(req.cutoff)
-            manager.handleCutoff(req.block, req.cutoff)
+            manager.setCutoff(req.block, req.cutoff)
           }
         } else {
           count.refine("label" -> "cutoff_market").increment()
           blocking {
-            accountCutoffState.setTradingPairCutoff(req.marketHash, req.cutoff)
-            manager.handleCutoff(req.block, req.cutoff, req.marketHash)
+            manager.setCutoff(req.block, req.marketHash, req.cutoff)
           }
         }
       } else {
@@ -392,20 +387,11 @@ class AccountManagerActor(
     ): Future[Unit] = {
     for {
       _ <- Future {
-        if (accountCutoffState.isOrderCutoffByOwner(rawOrder.validSince)) {
+        if (manager.doesOrderSatisfyCutoff(
+              rawOrder.validSince,
+              rawOrder.getMarketHash
+            )) {
           throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CUTOFF)
-        }
-        val cutoffTrdingPair = accountCutoffState.isOrderCutoffByTradingPair(
-          rawOrder.getMarketHash,
-          rawOrder.validSince
-        )
-
-        if (cutoffTrdingPair) {
-          throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR)
-        }
-
-        if (rawOrder.validSince > timeProvider.getTimeSeconds) {
-          throw ErrorException(ERR_ORDER_PENDING_ACTIVE)
         }
       }
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
