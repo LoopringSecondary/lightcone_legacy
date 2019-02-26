@@ -102,7 +102,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       })
 
       //orderbook
-      info("the depth should be empty when allowance is not enough")
+      info("the depth should not be empty when allowance is not enough")
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
