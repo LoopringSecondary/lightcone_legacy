@@ -193,7 +193,6 @@ message GetCutoff {
         string owner = 2;
         string market_hash = 3;
         io.lightcone.core.Amount cutoff = 4;
-        int64 block = 5;
     }
 }
 
