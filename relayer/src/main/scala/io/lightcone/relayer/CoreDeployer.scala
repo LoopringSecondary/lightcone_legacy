@@ -272,8 +272,8 @@ class CoreDeployer @Inject()(
       //-----------deploy SOCKETIO service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("socketio")) {
-        val server = new SocketServer()
-        server.start()
+        val server = new SocketServer
+        server.start
       }
     }
   }

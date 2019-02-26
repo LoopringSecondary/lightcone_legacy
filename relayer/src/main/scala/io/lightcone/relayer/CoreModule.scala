@@ -34,9 +34,7 @@ import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.socketio._
-// import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.ethereum.event._
-// import io.lightcone.relayer.socketio.notifiers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
