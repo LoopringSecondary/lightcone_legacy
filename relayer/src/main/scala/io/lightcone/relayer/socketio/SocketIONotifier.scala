@@ -20,6 +20,8 @@ import com.corundumstudio.socketio._
 import io.lightcone.relayer.data._
 import org.slf4s.Logging
 import com.corundumstudio.socketio.listener.DataListener
+import io.lightcone.lib.Address
+import io.lightcone.relayer.data._
 
 abstract class SocketIONotifier
     extends DataListener[SocketIOSubscription]
@@ -53,6 +55,50 @@ abstract class SocketIONotifier
     log.debug(s"socketio notify: $event to ${targets.size} subscribers")
   }
 
+  def normalizeSubscription(
+      subscription: SocketIOSubscription
+    ): SocketIOSubscription =
+    subscription.copy(
+      paramsForAccounts = subscription.paramsForAccounts.map(
+        params =>
+          params.copy(
+            addresses = params.addresses.map(Address.normalize),
+            tokens = params.tokens.map(Address.normalize)
+          )
+      ),
+      paramsForActivities = subscription.paramsForActivities.map(
+        params =>
+          params.copy(addresses = params.addresses.map(Address.normalize))
+      ),
+      paramsForFills = subscription.paramsForFills.map { params =>
+        params.copy(
+          address =
+            if (params.address.isEmpty) params.address
+            else Address.normalize(params.address),
+          market = params.market.map(_.normalize())
+        )
+      },
+      paramsForOrderbook = subscription.paramsForOrderbook.map(
+        params =>
+          params.copy(
+            market = params.market.map(_.normalize())
+          )
+      ),
+      paramsForOrders = subscription.paramsForOrders.map(
+        params =>
+          params.copy(
+            addresses = params.addresses.map(Address.normalize),
+            market = params.market.map(_.normalize())
+          )
+      ),
+      paramsForTickers = subscription.paramsForTickers.map(
+        params =>
+          params.copy(
+            market = params.market.map(_.normalize())
+          )
+      )
+    )
+
   def onData(
       client: SocketIOClient,
       subscription: SocketIOSubscription,
@@ -61,7 +107,6 @@ abstract class SocketIONotifier
 
     val isValid = isSubscriptionValid(subscription)
 
-    // TODO
     if (ackSender.isAckRequested) {
       val ack =
         if (isValid) {
@@ -75,7 +120,8 @@ abstract class SocketIONotifier
     }
 
     if (isValid) {
-      val wrapped = new SocketIOSubscriber(client, subscription)
+      val wrapped =
+        new SocketIOSubscriber(client, normalizeSubscription(subscription))
       clients = wrapped +: clients.filterNot(_ == wrapped)
     }
   }

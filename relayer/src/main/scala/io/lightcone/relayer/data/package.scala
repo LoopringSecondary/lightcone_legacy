@@ -155,6 +155,11 @@ package object data {
         baseToken = Address.normalize(marketPair.baseToken),
         quoteToken = Address.normalize(marketPair.quoteToken)
       )
+
+    def isValid() =
+      Address.isValid(marketPair.baseToken) && Address.isValid(
+        marketPair.quoteToken
+      )
   }
 
   implicit class RichRawOrder(order: RawOrder) {

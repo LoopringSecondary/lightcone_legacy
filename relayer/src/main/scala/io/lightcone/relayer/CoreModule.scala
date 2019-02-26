@@ -33,6 +33,7 @@ import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.socketio._
 // import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.ethereum.event._
 // import io.lightcone.relayer.socketio.notifiers._
@@ -104,6 +105,8 @@ class CoreModule(
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
     bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton
+
+    bind[SocketIONotifier].to[RelayerNotifier].asEagerSingleton
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
@@ -209,11 +212,6 @@ class CoreModule(
       new RingMinedEventExtractor(),
       new TokenBurnRateEventExtractor()
     )
-
-  // @Provides
-  // def bindNotifiers()(implicit manager: MetadataManager): RelayerNotifier = {
-  //   new RelayerNotifier()
-  // }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]
