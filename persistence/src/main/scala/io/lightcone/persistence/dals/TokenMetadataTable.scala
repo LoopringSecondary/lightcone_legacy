@@ -30,11 +30,12 @@ class TokenMetadataTable(tag: Tag)
 
   def `type` = column[TokenMetadata.Type]("type")
   def status = column[TokenMetadata.Status]("status")
-  def symbol = column[String]("symbol", O.SqlType("VARCHAR(50)"))
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
   def name = column[String]("name", O.SqlType("VARCHAR(50)"))
   def address = columnAddress("address", O.PrimaryKey, O.Unique)
   def unit = column[String]("unit")
   def decimals = column[Int]("decimals")
+  def precision = column[Int]("precision")
   def burnRateForMarket = column[Double]("burn_rate_for_market")
   def burnRateForP2P = column[Double]("burn_rate_for_p2p")
   def updateAt = column[Long]("update_at")
@@ -53,6 +54,7 @@ class TokenMetadataTable(tag: Tag)
       address,
       unit,
       decimals,
+      precision,
       burnRateForMarket,
       burnRateForP2P,
       updateAt

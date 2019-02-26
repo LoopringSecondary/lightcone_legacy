@@ -21,9 +21,8 @@ import com.typesafe.config.Config
 import io.lightcone.core.MarketMetadata.Status.{ACTIVE, READONLY}
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
-import io.lightcone.relayer.data._
+import io.lightcone.relayer.data.{Token => T, _}
 import org.web3j.utils.Numeric
-
 import scala.concurrent._
 import io.lightcone.core._
 import io.lightcone.lib._
