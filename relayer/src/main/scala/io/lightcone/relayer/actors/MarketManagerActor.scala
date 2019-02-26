@@ -131,15 +131,13 @@ class MarketManagerActor(
     def symbol(token: String) =
       metadataManager
         .getTokenWithAddress(token)
-        .get
-        .metadata
         .getOrElse(
           throw ErrorException(
             ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found metadata of token $token"
+            s"not found token: $token"
           )
         )
-        .symbol
+        .getSymbol()
     s"market_${symbol(marketPair.baseToken)}_${symbol(marketPair.quoteToken)}"
   }
 

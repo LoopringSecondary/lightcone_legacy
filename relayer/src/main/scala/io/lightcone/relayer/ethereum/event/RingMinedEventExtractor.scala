@@ -48,15 +48,13 @@ class RingMinedEventExtractor @Inject()(
   implicit def ringBatchContext = RingBatchContext(
     lrcAddress = metadataManager
       .getTokenWithSymbol("lrc")
-      .get
-      .metadata
       .getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found metadata of token LRC"
+          s"not found token: LRC"
         )
       )
-      .address
+      .getAddress()
   )
   val fillLength: Int = 8 * 64
 
@@ -126,14 +124,7 @@ trait OHLCRawDataSupport {
     ): (Double, Double) = {
     val amountInWei =
       if (Address(
-            baseToken.metadata
-              .getOrElse(
-                throw ErrorException(
-                  ErrorCode.ERR_INTERNAL_UNKNOWN,
-                  s"not found metadata"
-                )
-              )
-              .address
+            baseToken.getAddress()
           ).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(fill.filledAmountB.toByteArray)
@@ -144,14 +135,7 @@ trait OHLCRawDataSupport {
 
     val totalInWei =
       if (Address(
-            quoteToken.metadata
-              .getOrElse(
-                throw ErrorException(
-                  ErrorCode.ERR_INTERNAL_UNKNOWN,
-                  s"not found metadata"
-                )
-              )
-              .address
+            quoteToken.getAddress()
           ).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(fill.filledAmountB.toByteArray)

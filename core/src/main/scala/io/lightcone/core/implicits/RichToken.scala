@@ -35,4 +35,26 @@ private[core] class RichToken(token: Token) {
 
   def toWei(amount: Double): BigInt =
     (Rational(amount) * scaling).toBigInt
+
+  def getSymbol() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .symbol
+  }
+
+  def getAddress() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .address
+  }
 }

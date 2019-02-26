@@ -15,6 +15,7 @@
  */
 
 package io.lightcone.relayer.ethereum.event
+
 import akka.actor.ActorRef
 import akka.pattern._
 import io.lightcone.relayer.base._
@@ -28,7 +29,6 @@ import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.core._
-
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,15 +53,13 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
     Address(
       metadataManager
         .getTokenWithSymbol("weth")
-        .get
-        .metadata
         .getOrElse(
           throw ErrorException(
             ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found metadata of token WETH"
+            s"not found token: WETH"
           )
         )
-        .address
+        .getAddress()
     )
   @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
