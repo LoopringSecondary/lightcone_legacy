@@ -19,6 +19,7 @@ package io.lightcone.persistence.dals
 import io.lightcone.core.{ErrorCode, ErrorException}
 import io.lightcone.persistence.Activity.ActivityType
 import io.lightcone.persistence.Activity.ActivityType._
+import io.lightcone.persistence.Activity.Detail._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
@@ -92,26 +93,15 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
         sequenceId = tuple._9
       )
     }, { activity: Activity =>
-      val detailBytes = activity.activityType match {
-        case ETHER_TRANSFER_OUT | ETHER_TRANSFER_IN =>
-          activity.detail.etherTransfer.get.toByteArray
-        case ETHER_WRAP | ETHER_UNWRAP =>
-          activity.detail.etherConversion.get.toByteArray
-        case TOKEN_TRANSFER_OUT | TOKEN_TRANSFER_IN =>
-          activity.detail.tokenTransfer.get.toByteArray
-        case TOKEN_AUTH =>
-          activity.detail.tokenAuth.get.toByteArray
-        case TRADE_SELL | TRADE_BUY =>
-          activity.detail.trade.get.toByteArray
-        case ORDER_CANCEL =>
-          activity.detail.orderCancellation.get.toByteArray
-        case ORDER_SUBMIT =>
-          activity.detail.orderSubmission.get.toByteArray
-        case _ =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"invalid activity_type ${activity.activityType}"
-          )
+      val detailBytes = activity.detail match {
+        case EtherTransfer(value)     => value.toByteArray
+        case TokenTransfer(value)     => value.toByteArray
+        case EtherConversion(value)   => value.toByteArray
+        case TokenAuth(value)         => value.toByteArray
+        case Trade(value)             => value.toByteArray
+        case OrderCancellation(value) => value.toByteArray
+        case OrderSubmission(value)   => value.toByteArray
+        case _                        => Array.empty[Byte]
       }
       Some(
         (
