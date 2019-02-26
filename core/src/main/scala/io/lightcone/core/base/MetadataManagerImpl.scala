@@ -83,8 +83,8 @@ final class MetadataManagerImpl(
       .map(
         m =>
           BurnRate(
-            m.metadata.getOrElse(TokenMetadata()).burnRateForMarket,
-            m.metadata.getOrElse(TokenMetadata()).burnRateForP2P
+            m.getBurnRateForMarket(),
+            m.getBurnRateForP2P()
           )
       )
       .getOrElse(BurnRate(defaultBurnRateForMarket, defaultBurnRateForP2P))

@@ -57,4 +57,26 @@ private[core] class RichToken(token: Token) {
       )
       .address
   }
+
+  def getBurnRateForMarket() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .burnRateForMarket
+  }
+
+  def getBurnRateForP2P() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .burnRateForP2P
+  }
 }
