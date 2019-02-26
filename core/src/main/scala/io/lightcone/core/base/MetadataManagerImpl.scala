@@ -32,21 +32,28 @@ final class MetadataManagerImpl(
   private var marketMap = Map.empty[String, MarketMetadata]
 
   def reset(
-      tokens: Seq[TokenMetadata],
+      tokenMetadatas: Seq[TokenMetadata],
+      tokenInfos: Seq[TokenInfo],
       tickerMap: Map[String, Double],
       markets: Seq[MarketMetadata]
     ) = {
     tokenAddressMap = Map.empty
     tokenSymbolMap = Map.empty
 
-    tokens.foreach { meta =>
+    val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
+
+    tokenMetadatas.foreach { meta =>
       val m = MetadataManager.normalize(meta)
-      val t = new Token(meta, tickerMap.getOrElse(m.symbol, 0))
+      val t = new Token(
+        Some(m),
+        tokenInfoMap.get(m.symbol),
+        tickerMap.getOrElse(m.symbol, 0)
+      )
       tokenAddressMap += m.address -> t
       tokenSymbolMap += m.symbol -> t
     }
-    marketMap = Map.empty
 
+    marketMap = Map.empty
     markets.foreach { meta =>
       val m = MetadataManager.normalize(meta)
       marketMap += m.marketHash -> m
@@ -73,7 +80,13 @@ final class MetadataManagerImpl(
   def getBurnRate(addr: String) =
     tokenAddressMap
       .get(addr.toLowerCase())
-      .map(m => BurnRate(m.meta.burnRateForMarket, m.meta.burnRateForP2P))
+      .map(
+        m =>
+          BurnRate(
+            m.getBurnRateForMarket(),
+            m.getBurnRateForP2P()
+          )
+      )
       .getOrElse(BurnRate(defaultBurnRateForMarket, defaultBurnRateForP2P))
 
   def getTokens = tokenAddressMap.values.toSeq

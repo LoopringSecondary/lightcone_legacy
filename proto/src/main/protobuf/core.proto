@@ -347,3 +347,14 @@ message TokenTicker {
     double percent_change_24h = 5;
     double percent_change_7d = 6;
 }
+
+message Market {
+    MarketMetadata metadata = 1;
+    MarketTicker   ticker   = 2;
+}
+
+message Token {
+    TokenMetadata metadata = 1;
+    TokenInfo     info     = 2;
+    double        price    = 3; // to given quote token in request
+}

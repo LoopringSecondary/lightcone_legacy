@@ -18,10 +18,8 @@ package io.lightcone.core
 
 import spire.math.Rational
 
-class Token(
-    val meta: TokenMetadata,
-    val usdPrice: Double) {
-  val scaling = Rational(BigInt(10).pow(meta.decimals))
+private[core] class RichToken(token: Token) {
+  val scaling = Rational(BigInt(10).pow(token.metadata.get.decimals))
 
   def fromWei(amount: BigInt): Double =
     (Rational(amount) / scaling).doubleValue
@@ -37,4 +35,48 @@ class Token(
 
   def toWei(amount: Double): BigInt =
     (Rational(amount) * scaling).toBigInt
+
+  def getSymbol() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .symbol
+  }
+
+  def getAddress() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .address
+  }
+
+  def getBurnRateForMarket() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .burnRateForMarket
+  }
+
+  def getBurnRateForP2P() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .burnRateForP2P
+  }
 }

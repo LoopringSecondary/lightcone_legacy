@@ -66,7 +66,8 @@ class MetadataRefresher(
 
   val mediator = DistributedPubSub(context.system).mediator
 
-  private var tokens = Seq.empty[TokenMetadata]
+  private var tokenMetadatas = Seq.empty[TokenMetadata]
+  private var tokenInfos = Seq.empty[TokenInfo]
   private var markets = Seq.empty[MarketMetadata]
 
   override def initialize() = {
@@ -101,19 +102,20 @@ class MetadataRefresher(
 
   private def refreshMetadata() =
     for {
-      tokens_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
+      tokenMetadatas_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
         .mapTo[LoadTokenMetadata.Res]
         .map(_.tokens)
+      // TODO(du) tokeninfos
       markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
         .mapTo[LoadMarketMetadata.Res]
         .map(_.markets)
     } yield {
-      assert(tokens_.nonEmpty)
+      assert(tokenMetadatas_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokens = tokens_.map(MetadataManager.normalize)
+      tokenMetadatas = tokenMetadatas_.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
       //TODO(du):tickers待cmc分支实现
-      metadataManager.reset(tokens_, Map.empty, markets_)
+      metadataManager.reset(tokenMetadatas, tokenInfos, Map.empty, markets_)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors

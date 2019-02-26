@@ -37,7 +37,8 @@ final class EthereumQueryMessageValidator(
 
   def normalize(addrOrSymbol: String): String =
     metadataManager.getTokenWithSymbol(addrOrSymbol) match {
-      case Some(t) => t.meta.address
+      case Some(t) =>
+        t.getAddress()
       case None if Address.isValid(addrOrSymbol) =>
         Address.normalize(addrOrSymbol)
       case _ =>
