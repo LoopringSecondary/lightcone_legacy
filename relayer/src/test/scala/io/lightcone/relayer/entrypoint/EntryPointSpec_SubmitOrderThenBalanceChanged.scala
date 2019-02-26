@@ -17,11 +17,14 @@
 package io.lightcone.relayer.entrypoint
 
 import akka.pattern._
-import io.lightcone.ethereum.event._
-import io.lightcone.relayer.actors._
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum.event._
+import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.actors._
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum.EthereumAccessActor
+import io.lightcone.relayer.support._
+
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrderThenBalanceChanged
@@ -102,7 +105,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       })
 
       //orderbook
-      info("the depth should be empty when allowance is not enough")
+      info("the depth should not be empty when allowance is not enough")
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
@@ -124,6 +127,13 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       }
 
       info("then make allowance enough.")
+      val ethereumAccessActor = actors.get(EthereumAccessActor.name)
+      val blockHex = Await.result(
+        (ethereumAccessActor ? GetBlockNumber.Req()).mapTo[GetBlockNumber.Res],
+        timeout.duration
+      )
+      val block = NumericConversion.toBigInt(blockHex.result)
+
       val setAllowanceF = approveErc20(
         config.getString("loopring_protocol.delegate-address"),
         LRC_TOKEN.address,
@@ -134,7 +144,8 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdatedEvent(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        "25".zeros(LRC_TOKEN.decimals)
+        "25".zeros(LRC_TOKEN.decimals),
+        block.toLong + 2
       )
 
       Thread.sleep(2000)
