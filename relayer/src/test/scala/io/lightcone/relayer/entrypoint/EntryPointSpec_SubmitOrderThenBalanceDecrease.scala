@@ -17,13 +17,13 @@
 package io.lightcone.relayer.entrypoint
 
 import akka.pattern._
-import io.lightcone.relayer.actors._
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.AddressBalanceUpdatedEvent
 import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.actors._
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum.EthereumAccessActor
+import io.lightcone.relayer.support._
 
 import scala.concurrent.{Await, Future}
 
