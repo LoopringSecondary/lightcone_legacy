@@ -173,7 +173,6 @@ message CutoffEvent {
     string owner        = 3;
     string market_hash  = 4;
     int64  cutoff       = 5; // in seconds.
-    int64  block        = 6;
 }
 
 message OrdersCancelledOnChainEvent {

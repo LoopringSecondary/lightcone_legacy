@@ -40,6 +40,10 @@ final class AccountManagerImpl(
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   private implicit var tokens = Map.empty[String, ReserveManager]
 
+  private var block = 0L
+  private var marketPairCutoffs = Map.empty[String, Long]
+  private var ownerCutoff: Long = 0L
+
   def getNumOfOrders() = orderPool.size
 
   def getBalanceOfToken(token: String): Future[BalanceOfToken] =
@@ -57,25 +61,33 @@ final class AccountManagerImpl(
       token: String,
       balance: BigInt,
       allowance: BigInt
-    ) =
-    setBalanceAndAllowanceInternal(block, token) {
+    ) = {
+    this.block = block
+    setBalanceAndAllowanceInternal(token) {
       _.setBalanceAndAllowance(block, balance, allowance)
     }
+  }
 
   def setBalance(
       block: Long,
       token: String,
       balance: BigInt
-    ) = setBalanceAndAllowanceInternal(block, token) {
-    _.setBalance(block, balance)
+    ) = {
+    this.block = block
+    setBalanceAndAllowanceInternal(token) {
+      _.setBalance(block, balance)
+    }
   }
 
   def setAllowance(
       block: Long,
       token: String,
       allowance: BigInt
-    ) = setBalanceAndAllowanceInternal(block, token) {
-    _.setAllowance(block, allowance)
+    ) = {
+    this.block = block
+    setBalanceAndAllowanceInternal(token) {
+      _.setAllowance(block, allowance)
+    }
   }
 
   def resubmitOrder(order: Matchable) = {
@@ -141,24 +153,38 @@ final class AccountManagerImpl(
       }
     }
 
-  def handleCutoff(
-      block: Long,
-      cutoff: Long
-    ) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
-      orderPool.orders.filter(_.validSince <= cutoff)
-    }
+  def doesOrderSatisfyCutoff(
+      orderValidSince: Long,
+      marketHash: String
+    ): Boolean = {
+    ownerCutoff < orderValidSince &&
+    marketPairCutoffs.getOrElse(marketHash, 0L) < orderValidSince
+  }
 
-  def handleCutoff(
+  def setCutoff(
       block: Long,
       cutoff: Long,
-      marketHash: String
-    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
-    orderPool.orders.filter { order =>
-      order.validSince <= cutoff && MarketHash(
-        MarketPair(order.tokenS, order.tokenB)
-      ).hashString == marketHash
+      marketHash: Option[String]
+    ) = {
+    this.block = block
+
+    marketHash match {
+      case Some(mh) if mh.nonEmpty =>
+        marketPairCutoffs += (mh -> cutoff)
+        cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
+          orderPool.orders.filter { order =>
+            order.validSince <= cutoff &&
+            MarketHash(MarketPair(order.tokenS, order.tokenB)).hashString == mh
+          }
+        }
+
+      case _ =>
+        this.ownerCutoff = cutoff
+        cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
+          orderPool.orders.filter(_.validSince <= cutoff)
+        }
     }
+
   }
 
   implicit private val reserveEventHandler = new ReserveEventHandler {
@@ -177,7 +203,6 @@ final class AccountManagerImpl(
   }
 
   private def setBalanceAndAllowanceInternal(
-      block: Long,
       token: String
     )(method: ReserveManager => Set[String]
     ): Future[Map[String, Matchable]] = {
@@ -207,6 +232,7 @@ final class AccountManagerImpl(
       }
 
       updatedOrders = orderPool.takeUpdatedOrders
+      _ <- updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
 
       // track account update only when block number changed
       _ <- {

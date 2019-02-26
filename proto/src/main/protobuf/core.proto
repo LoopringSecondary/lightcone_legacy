@@ -77,10 +77,9 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_INVALID_SIG                        = 2010;
     ERR_ORDER_VALIDATION_INVALID                            = 2011;
     ERR_ORDER_VALIDATION_INVALID_CUTOFF                     = 2012;
-    ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR        = 2013;
-    ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2014;
-    ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2015;
-    ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2016;
+    ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2013;
+    ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2014;
+    ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2015;
 
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
