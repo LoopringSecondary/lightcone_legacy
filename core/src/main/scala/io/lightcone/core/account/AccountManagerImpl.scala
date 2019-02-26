@@ -236,7 +236,10 @@ final class AccountManagerImpl(
       // track account update only when block number changed
       _ <- {
         if (lastBlock == block) Future.unit
-        else updatedAccountsProcessor.processUpdatedAccount(block, owner, token)
+        else {
+          updatedAccountsProcessor.processUpdatedAccount(block, owner, token)
+          updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
+        }
       }
 
     } yield updatedOrders

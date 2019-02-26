@@ -22,6 +22,9 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.ethereum.EthereumAccessActor
+
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrderThenBalanceChanged
@@ -124,6 +127,13 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       }
 
       info("then make allowance enough.")
+      val ethereumAccessActor = actors.get(EthereumAccessActor.name)
+      val blockHex = Await.result(
+        (ethereumAccessActor ? GetBlockNumber.Req()).mapTo[GetBlockNumber.Res],
+        timeout.duration
+      )
+      val block = NumericConversion.toBigInt(blockHex.result)
+
       val setAllowanceF = approveErc20(
         config.getString("loopring_protocol.delegate-address"),
         LRC_TOKEN.address,
@@ -134,7 +144,8 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdatedEvent(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        "25".zeros(LRC_TOKEN.decimals)
+        "25".zeros(LRC_TOKEN.decimals),
+        block.toLong + 2
       )
 
       Thread.sleep(2000)
@@ -150,8 +161,8 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
           assert(sells.size == 1)
           assert(
             sells(0).price == "0.050000" &&
-              sells(0).amount == "12.50000" &&
-              sells(0).total == "0.62500"
+              sells(0).amount == "20.00000" &&
+              sells(0).total == "1.00000"
           )
           assert(buys.isEmpty)
         case _ => assert(false)

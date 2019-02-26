@@ -17,11 +17,14 @@
 package io.lightcone.relayer.entrypoint
 
 import akka.pattern._
-import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum.event.AddressBalanceUpdatedEvent
+import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.ethereum.EthereumAccessActor
+
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrderThenBalanceDecrease
@@ -113,21 +116,31 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       }
 
       info("then make balance is not enough.")
+
+      val ethereumAccessActor = actors.get(EthereumAccessActor.name)
+      val blockHex = Await.result(
+        (ethereumAccessActor ? GetBlockNumber.Req()).mapTo[GetBlockNumber.Res],
+        timeout.duration
+      )
+      val block = NumericConversion.toBigInt(blockHex.result)
+
       val setAllowanceF =
         Future.sequence(Seq(transferLRC(accounts(0).getAddress, "10")(account)))
       Await.result(setAllowanceF, timeout.duration)
 
+      println(s"#### make balance is not enough, ${block}")
       actors.get(MultiAccountManagerActor.name) ? AddressBalanceUpdatedEvent(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        "15".zeros(LRC_TOKEN.decimals)
+        "15".zeros(LRC_TOKEN.decimals),
+        block.toLong + 1
       )
 
-      info("the depth should be empty after balance change to 10.")
+      info("the depth should be empty after balance change to 15.")
 
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells(0).amount == "20.00000"
+        (orderbook: Orderbook) => orderbook.sells(0).amount == "12.50000"
       )
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
