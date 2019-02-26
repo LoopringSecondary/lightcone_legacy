@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.core
 
-import io.lightcone.relayer.actors.SocketIONotificationActor
-import io.lightcone.relayer.socketio._
+import scala.concurrent._
 
-trait SocketSupport {
-  com: CommonSpec =>
+trait UpdatedAccountsProcessor {
 
-  implicit val relayerNotifier = new RelayerNotifier()
-
-  actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
-
-  val socketServer = new SocketServer()
-  socketServer.start()
-
-  println("start socket server......")
+  def processUpdatedAccount(
+      block: Long,
+      address: String,
+      tokenAddress: String
+    ): Future[Any]
 }

@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.core
 
-import io.lightcone.relayer.actors.SocketIONotificationActor
-import io.lightcone.relayer.socketio._
-
-trait SocketSupport {
-  com: CommonSpec =>
-
-  implicit val relayerNotifier = new RelayerNotifier()
-
-  actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
-
-  val socketServer = new SocketServer()
-  socketServer.start()
-
-  println("start socket server......")
-}
+case class BalanceOfToken(
+    token: String,
+    balance: BigInt,
+    allowance: BigInt,
+    availableBalance: BigInt,
+    availableAllowance: BigInt,
+    numOfOrders: Int,
+    block: Long)

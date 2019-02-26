@@ -16,44 +16,25 @@
 
 package io.lightcone.relayer.socketio
 
-import com.corundumstudio.socketio._
-import com.corundumstudio.socketio.listener.DataListener
-import io.lightcone.relayer.data.SocketIOSubscription
+import io.lightcone.relayer.data._
 
-class RelayerNotifier(notifiers: SocketIONotifier[_]*)
-    extends DataListener[SocketIOSubscription] {
+// TODO(yadong): implement this.
+class RelayerNotifier() extends SocketIONotifier {
+  import SocketIOSubscription._
 
-  val eventName: String = "lightCone"
+  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean = ???
 
-  def onData(
-      client: SocketIOClient,
-      subscription: SocketIOSubscription,
-      ackSender: AckRequest
-    ): Unit = {
+  def generateNotification(
+      evt: AnyRef,
+      subscription: SocketIOSubscription
+    ): Option[Notification] = evt match {
 
-    val updatedNotifiers = notifiers.filter(_.onData(client, subscription))
+    // case e: TokenMetadata =>
+    //   if (subscription.paramsForTokenMetadata.isDefined) // TODO
+    //     Some(Notifiation(tokenParams = Some(e)))
+    //   else None
 
-    if (ackSender.isAckRequested) {
-      if (updatedNotifiers.nonEmpty) {
-        val eventNames = updatedNotifiers.map(_.name).mkString(",")
-        ackSender.sendAckData(
-          SocketIOSubscription
-            .Ack(
-              message = s"$subscription successfully subscribed $eventNames:"
-            )
-        )
-      } else {
-        ackSender.sendAckData(
-          SocketIOSubscription
-            .Ack(
-              message =
-                s"$subscription  successfully subscribed none of the events"
-            )
-        )
-      }
-    }
+    case _ => None
   }
 
-  def notifyEvent(event: SocketIOSubscription.Response): Unit =
-    notifiers.foreach(_.notifyEvent(event, eventName))
 }

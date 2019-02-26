@@ -33,10 +33,9 @@ import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.data.SocketIOSubscription
+// import io.lightcone.relayer.data.SocketIOSubscription
 import io.lightcone.relayer.ethereum.event._
-import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.socketio.notifiers._
+// import io.lightcone.relayer.socketio.notifiers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -72,6 +71,7 @@ class CoreModule(
     // --- bind db configs ---------------------
     bind[DatabaseConfigManager].toInstance(dbConfigManager)
 
+    //TODO(yongfeng):去除trade和tx的dal时，同时去除该部分
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
@@ -82,7 +82,8 @@ class CoreModule(
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
-      "dbconfig-dal-ohlc-data"
+      "dbconfig-dal-ohlc-data",
+      "dbconfig-dal-fill"
     )
 
     // --- bind dals ---------------------
@@ -209,19 +210,10 @@ class CoreModule(
       new TokenBurnRateEventExtractor()
     )
 
-  @Provides
-  def bindNotifiers()(implicit manager: MetadataManager): RelayerNotifier = {
-    new RelayerNotifier(
-      new AccountNotifier(),
-      new ActivityNotifier(),
-      new FillNotifier(),
-      new MarketNotifier(),
-      new OrderBookNotifier(),
-      new OrderNotifier(),
-      new TickerNotifier(),
-      new TokensNotifier()
-    )
-  }
+  // @Provides
+  // def bindNotifiers()(implicit manager: MetadataManager): RelayerNotifier = {
+  //   new RelayerNotifier()
+  // }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

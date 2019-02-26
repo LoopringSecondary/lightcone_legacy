@@ -17,56 +17,66 @@
 package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
-import io.lightcone.lib.NumericConversion
-import io.lightcone.relayer.data.SocketIOSubscription
+import io.lightcone.relayer.data._
 import org.slf4s.Logging
+import com.corundumstudio.socketio.listener.DataListener
 
-abstract class SocketIONotifier[R]() extends Logging {
+abstract class SocketIONotifier
+    extends DataListener[SocketIOSubscription]
+    with Logging {
 
-  val name: String
+  import SocketIOSubscription._
 
-  def shouldNotifyClient(
-      subscription: R,
-      event: SocketIOSubscription.Response
-    ): Boolean
+  val eventName = "lightcone"
 
-  def wrapClient(
-      client: SocketIOClient,
+  def generateNotification(
+      evt: AnyRef,
       subscription: SocketIOSubscription
-    ): SocketIOSubscriber[R]
+    ): Option[Notification]
 
   def isSubscriptionValid(subscription: SocketIOSubscription): Boolean
 
-  private var clients = Seq.empty[SocketIOSubscriber[R]]
+  private var clients = Seq.empty[SocketIOSubscriber]
 
-  def notifyEvent(
-      event: SocketIOSubscription.Response,
-      eventName: String
-    ): Unit = {
+  def notifyEvent(event: AnyRef): Unit = {
     clients = clients.filter(_.client.isChannelOpen)
-    val e = transformEvent(event)
+
     val targets = clients
-      .filter(client => shouldNotifyClient(client.subscription, e))
+      .map(client => client -> generateNotification(event, client.subscription))
 
-    targets.foreach(_.sendEvent(eventName, e))
+    targets.foreach {
+      case (client, Some(notification)) =>
+        client.sendEvent(eventName, notification)
+      case _ =>
+    }
 
-    log.debug(s"socketio notify: $e to ${targets.size} subscribers")
+    log.debug(s"socketio notify: $event to ${targets.size} subscribers")
   }
 
   def onData(
       client: SocketIOClient,
-      subscription: SocketIOSubscription
-    ): Boolean = {
+      subscription: SocketIOSubscription,
+      ackSender: AckRequest
+    ) = {
+
     val isValid = isSubscriptionValid(subscription)
+
+    // TODO
+    if (ackSender.isAckRequested) {
+      val ack =
+        if (isValid) {
+          SocketIOSubscription.Ack(
+            message = s"$subscription successfully subscribed $eventName"
+          )
+        } else {
+          SocketIOSubscription.Ack(message = s"invalid subscription")
+        }
+      ackSender.sendAckData(ack)
+    }
+
     if (isValid) {
-      val wrapped = wrapClient(client, subscription)
+      val wrapped = new SocketIOSubscriber(client, subscription)
       clients = wrapped +: clients.filterNot(_ == wrapped)
     }
-    isValid
   }
-
-  // Override this method to change the event. Normally we should not do this.
-  def transformEvent(
-      event: SocketIOSubscription.Response
-    ): SocketIOSubscription.Response = event
 }

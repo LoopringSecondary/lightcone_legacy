@@ -49,10 +49,9 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
-  def wethAddress = Address(
-    metadataManager.getTokenWithSymbol("weth").get.meta.address
-  )
-  def ethereumAccessor = actors.get(EthereumAccessActor.name)
+  def wethAddress =
+    Address(metadataManager.getTokenWithSymbol("weth").get.meta.address)
+  @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   def extractEventsFromTx(
       tx: Transaction,
@@ -375,8 +374,12 @@ trait BalanceUpdatedSuppot {
         (ethereumAccessor ? batchCallReq)
           .mapAs[BatchCallContracts.Res]
           .map(
-            _.resps
-              .map(res => NumericConversion.toBigInt(res.result))
+            resp =>
+              resp.resps
+                .map(
+                  res =>
+                    Amount(NumericConversion.toBigInt(res.result), resp.block)
+                )
           )
       } else {
         Future.successful(Seq.empty)
@@ -386,7 +389,7 @@ trait BalanceUpdatedSuppot {
         event.AddressAllowanceUpdatedEvent(
           address = Address.normalize(item._1.address),
           token = Address.normalize(item._1.token),
-          allowance = item._2
+          allowance = Some(item._2)
         )
       })
     }
@@ -402,8 +405,12 @@ trait BalanceUpdatedSuppot {
         (ethereumAccessor ? batchCallReq)
           .mapAs[BatchCallContracts.Res]
           .map(
-            _.resps
-              .map(res => NumericConversion.toBigInt(res.result))
+            resp =>
+              resp.resps
+                .map(
+                  res =>
+                    Amount(NumericConversion.toBigInt(res.result), resp.block)
+                )
           )
       } else {
         Future.successful(Seq.empty)
@@ -415,22 +422,31 @@ trait BalanceUpdatedSuppot {
           ))
           .mapAs[BatchGetEthBalance.Res]
           .map(
-            _.resps
-              .map(res => NumericConversion.toBigInt(res.result))
+            resp =>
+              resp.resps
+                .map(
+                  res =>
+                    Amount(NumericConversion.toBigInt(res.result), resp.block)
+                )
           )
       } else {
         Future.successful(Seq.empty)
       }
     } yield {
       (tokenAddresses zip tokenBalances).map(
-        item => item._1.withBalance(item._2)
+        item =>
+          item._1.copy(
+            address = Address.normalize(item._1.address),
+            token = Address.normalize(item._1.token),
+            balance = Some(item._2)
+          )
       ) ++
         (ethAddress zip ethBalances).map(
           item =>
             event.AddressBalanceUpdatedEvent(
               address = Address.normalize(item._1.address),
               token = Address.normalize(item._1.token),
-              balance = item._2
+              balance = Some(item._2)
             )
         )
     }

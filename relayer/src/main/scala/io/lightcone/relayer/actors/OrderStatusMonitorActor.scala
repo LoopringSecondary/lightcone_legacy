@@ -78,8 +78,8 @@ class OrderStatusMonitorActor(
   val ACTIVATE_ORDER_NOTIFY = Notify("activate_order")
   val EXPIRE_ORDER_NOTIFY = Notify("expire_order")
 
-  def mama = actors.get(MultiAccountManagerActor.name)
-  def mma = actors.get(MarketManagerActor.name)
+  @inline def mama = actors.get(MultiAccountManagerActor.name)
+  @inline def mma = actors.get(MarketManagerActor.name)
 
   val repeatedJobs = Seq(
     Job(

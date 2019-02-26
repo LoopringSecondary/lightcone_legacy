@@ -70,7 +70,7 @@ class EIP712SupportImplSpec extends FlatSpec with Matchers {
     """.stripMargin
 
     val res = eip712Support.jsonToTypedData(typedDataJson1)
-    // TODO(kongliang): verify the result is correct
+    assert(res.isInstanceOf[EIP712TypedData], "json to typed data failed.")
   }
 
   /**

@@ -21,7 +21,6 @@ import java.util
 
 import com.corundumstudio.socketio.AckCallback
 import com.corundumstudio.socketio.protocol._
-import com.google.protobuf.ByteString
 import io.lightcone.core.Amount
 import io.lightcone.lib.NumericConversion
 import io.netty.buffer._
@@ -38,12 +37,8 @@ class ProtoJsonSupport(delegate: JacksonJsonSupport) extends JsonSupport {
           JString(
             NumericConversion.toHexString(BigInt(amount.value.toByteArray))
           ), {
-          case JString(str) =>
-            Amount(
-              value = ByteString
-                .copyFrom(NumericConversion.toBigInt(str).toByteArray)
-            )
-          case _ => throw new JsonFormatException("Expected a string.")
+          case JString(str) => null // this should never happen
+          case _            => throw new JsonFormatException("Expected a string.")
         }
       )
 

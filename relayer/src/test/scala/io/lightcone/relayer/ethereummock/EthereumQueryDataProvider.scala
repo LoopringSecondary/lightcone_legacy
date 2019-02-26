@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.relayer
 
-import io.lightcone.relayer.actors.SocketIONotificationActor
-import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.data._
 
-trait SocketSupport {
-  com: CommonSpec =>
+trait EthereumQueryDataProvider {
+  def getAccount(req: GetAccount.Req): GetAccount.Res
+  def getFilledAmount(req: GetFilledAmount.Req): GetFilledAmount.Res
 
-  implicit val relayerNotifier = new RelayerNotifier()
-
-  actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
-
-  val socketServer = new SocketServer()
-  socketServer.start()
-
-  println("start socket server......")
+  def getOrderCancellation(
+      req: GetOrderCancellation.Req
+    ): GetOrderCancellation.Res
+  def getCutoff(req: GetCutoff.Req): GetCutoff.Res
+  def batchGetCutoffs(req: BatchGetCutoffs.Req): BatchGetCutoffs.Res
+  def getBurnRate(req: GetBurnRate.Req): GetBurnRate.Res
 }

@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.relayer
 
-import io.lightcone.relayer.actors.SocketIONotificationActor
-import io.lightcone.relayer.socketio._
+import akka.actor._
+import io.lightcone.relayer.data.{GetNonce, SendRawTransaction}
 
-trait SocketSupport {
-  com: CommonSpec =>
+class MockEthereumAccessActor(
+    implicit
+    val accessDataProvider: EthereumAccessDataProvider)
+    extends Actor
+    with ActorLogging {
 
-  implicit val relayerNotifier = new RelayerNotifier()
-
-  actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
-
-  val socketServer = new SocketServer()
-  socketServer.start()
-
-  println("start socket server......")
+  def receive: Receive = {
+    case req: SendRawTransaction.Req =>
+      sender ! accessDataProvider.sendRawTransaction(req)
+    case req: GetNonce.Req =>
+      sender ! GetNonce.Res()
+    case msg =>
+      log.info(s"received msg: ${msg}")
+  }
 }

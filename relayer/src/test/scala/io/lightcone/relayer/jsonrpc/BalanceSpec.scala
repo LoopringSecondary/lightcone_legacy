@@ -72,7 +72,7 @@ class BalanceSpec
               .availableBalance
           val sold: BigInt = maker.amountS
           val fee: BigInt = maker.toOrder.amountFee
-          info(s"matcheAmount: ${bf - bs}, expectAmount ${sold + fee}")
+          info(s"matchAmount: ${bf - bs}, expectAmount ${sold + fee}")
           assert(bf - bs >= sold + fee - 1000 && bf - bs <= sold + fee) //有计算的误差
         case _ => assert(false)
       }

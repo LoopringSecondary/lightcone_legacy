@@ -16,10 +16,22 @@
 
 package io.lightcone.core
 
-case class AccountInfo(
-    token: String,
-    balance: BigInt,
-    allowance: BigInt,
-    availableBalance: BigInt,
-    availableAllowance: BigInt,
-    numOfOrders: Int)
+import scala.concurrent._
+import io.lightcone.lib.FutureUtil._
+
+abstract class UpdatedOrdersProcessor()(implicit val ec: ExecutionContext) {
+
+  def processUpdatedOrder(
+      trackOrderUpdated: Boolean,
+      order: Matchable
+    ): Future[Any]
+
+  def processUpdatedOrders(
+      trackOrderUpdated: Boolean,
+      orders: Map[String, Matchable]
+    ): Future[Any] = {
+    serializeFutures(orders.values)(
+      o => processUpdatedOrder(trackOrderUpdated, o)
+    )
+  }
+}

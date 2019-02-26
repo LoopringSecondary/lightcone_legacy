@@ -39,12 +39,13 @@ message Order {
     int64 valid_since                                   = 8;
     int64 submitted_at                                  = 9;
     int32 num_attempts                                  = 10;
-    io.lightcone.core.OrderStatus status                = 11;
-    double wallet_split_percentage                      = 12;
-    OrderState outstanding                              = 13;
-    OrderState reserved                                 = 14;
-    OrderState actual                                   = 15;
-    OrderState matchable                                = 16;
+    int64 block                                         = 11;
+    io.lightcone.core.OrderStatus status                = 12;
+    double wallet_split_percentage                      = 13;
+    OrderState outstanding                              = 14;
+    OrderState reserved                                 = 15;
+    OrderState actual                                   = 16;
+    OrderState matchable                                = 17;
 }
 
 message ExpectedOrderFill {
@@ -97,10 +98,10 @@ message NodeBlockHeight{
 }
 
 message MissingBlocksRecord {
-    int64 block_start = 1;
-    int64 block_end = 2;
-    int64 last_handled_block = 3;
-    int64 sequence_id = 4;
+    int64 block_start           = 1;
+    int64 block_end             = 2;
+    int64 last_handled_block    = 3;
+    int64 sequence_id           = 4;
 }
 
 // Used as statistical data, such as a histogram
@@ -119,11 +120,12 @@ message OHLCData {
 
 message AccountBalance {
     message TokenBalance {
-        string token                                    = 2;
-        io.lightcone.core.Amount balance                = 3;
-        io.lightcone.core.Amount allowance              = 4;
-        io.lightcone.core.Amount available_balance      = 5;
-        io.lightcone.core.Amount available_alloawnce    = 6;
+        string token                                    = 1;
+        io.lightcone.core.Amount balance                = 2;
+        io.lightcone.core.Amount allowance              = 3;
+        io.lightcone.core.Amount available_balance      = 4;
+        io.lightcone.core.Amount available_alloawnce    = 5;
+        int64 block                                     = 6;
     }
 
     string address                                  = 1;

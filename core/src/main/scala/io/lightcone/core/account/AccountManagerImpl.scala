@@ -21,55 +21,61 @@ import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
 
 // This class is not thread safe.
-final class AccountManagerAltImpl(
+final class AccountManagerImpl(
     val owner: String,
     enableTracing: Boolean = false
   )(
     implicit
-    processor: UpdatedOrdersProcessor,
+    updatedOrdersProcessor: UpdatedOrdersProcessor,
+    updatedAccountsProcessor: UpdatedAccountsProcessor,
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
-    extends AccountManagerAlt
+    extends AccountManager
     with Logging {
 
   import OrderStatus._
   import ErrorCode._
 
-  type ReserveManagerMethod = ReserveManagerAlt => Set[String]
+  type ReserveManagerMethod = ReserveManager => Set[String]
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-  private implicit var tokens = Map.empty[String, ReserveManagerAlt]
+  private implicit var tokens = Map.empty[String, ReserveManager]
 
   def getNumOfOrders() = orderPool.size
 
-  def getAccountInfo(token: String): Future[AccountInfo] =
-    getReserveManagerOption(token, true).map(_.get.getAccountInfo)
+  def getBalanceOfToken(token: String): Future[BalanceOfToken] =
+    getReserveManagerOption(token, true).map(_.get.getBalanceOfToken)
 
-  def getAccountInfo(tokens_ : Set[String]): Future[Map[String, AccountInfo]] =
+  def getBalanceOfToken(
+      tokens_ : Set[String]
+    ): Future[Map[String, BalanceOfToken]] =
     getReserveManagers(tokens_, true).map(_.map {
-      case (token, manager) => token -> manager.getAccountInfo
+      case (token, manager) => token -> manager.getBalanceOfToken
     })
 
   def setBalanceAndAllowance(
+      block: Long,
       token: String,
       balance: BigInt,
       allowance: BigInt
     ) =
-    setBalanceAndAllowanceInternal(token) {
-      _.setBalanceAndAllowance(balance, allowance)
+    setBalanceAndAllowanceInternal(block, token) {
+      _.setBalanceAndAllowance(block, balance, allowance)
     }
 
   def setBalance(
+      block: Long,
       token: String,
       balance: BigInt
-    ) = setBalanceAndAllowanceInternal(token) {
-    _.setBalance(balance)
+    ) = setBalanceAndAllowanceInternal(block, token) {
+    _.setBalance(block, balance)
   }
 
   def setAllowance(
+      block: Long,
       token: String,
       allowance: BigInt
-    ) = setBalanceAndAllowanceInternal(token) {
-    _.setAllowance(allowance)
+    ) = setBalanceAndAllowanceInternal(block, token) {
+    _.setAllowance(block, allowance)
   }
 
   def resubmitOrder(order: Matchable) = {
@@ -77,18 +83,21 @@ final class AccountManagerAltImpl(
       _ <- Future.unit
       order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
       _ = { orderPool += order_.as(STATUS_PENDING) } // potentially replace the old one.
-      orderIdsToDelete <- reserveForOrder(order_)
+      (block, orderIdsToDelete) <- reserveForOrder(order_)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
         orderPool +=
-          orderPool(order.id).copy(status = STATUS_SOFT_CANCELLED_LOW_BALANCE)
+          orderPool(order.id).copy(
+            block = order.block.max(block),
+            status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+          )
       }
       successful = !orderIdsToDelete.contains(order.id)
       _ = if (successful) {
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processOrders(updatedOrders)
+      _ <- updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
     } yield (successful, updatedOrders)
   }
 
@@ -116,28 +125,35 @@ final class AccountManagerAltImpl(
   def cancelAllOrders() =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
 
-  def hardCancelOrder(orderId: String) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+  def hardCancelOrder(
+      block: Long,
+      orderId: String
+    ) =
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Option(block)) {
       orderPool.getOrder(orderId).toSeq
     }
 
   def purgeOrders(marketPair: MarketPair) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, true) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, None, true) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
         (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
       }
     }
 
-  def handleCutoff(cutoff: Long) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+  def handleCutoff(
+      block: Long,
+      cutoff: Long
+    ) =
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
       orderPool.orders.filter(_.validSince <= cutoff)
     }
 
   def handleCutoff(
+      block: Long,
       cutoff: Long,
       marketHash: String
-    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER, Some(block)) {
     orderPool.orders.filter { order =>
       order.validSince <= cutoff && MarketHash(
         MarketPair(order.tokenS, order.tokenB)
@@ -148,34 +164,62 @@ final class AccountManagerAltImpl(
   implicit private val reserveEventHandler = new ReserveEventHandler {
 
     def onTokenReservedForOrder(
+        block: Long,
         orderId: String,
         token: String,
         amount: BigInt
       ) = {
       val order = orderPool(orderId)
-      orderPool += order.withReservedAmount(amount)(token)
+      orderPool += order
+        .withReservedAmount(amount)(token)
+        .copy(block = order.block.max(block))
     }
   }
 
   private def setBalanceAndAllowanceInternal(
+      block: Long,
       token: String
-    )(method: ReserveManagerAlt => Set[String]
+    )(method: ReserveManager => Set[String]
     ): Future[Map[String, Matchable]] = {
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
+      lastBlock = manager.getBlock
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
-        ordersToDelete
-      )
+
+      // release tokenFee allocations if tokenS != tokenFee
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (order.tokenFee == order.tokenS) Future.unit
+        else
+          for {
+            managerFeeOpt <- getReserveManagerOption(order.tokenFee, false)
+            _ = managerFeeOpt.foreach(_.release(order.id))
+          } yield Unit
+      }
+
+      // Make sure order's block and status are updated
+      _ = ordersToDelete.foreach { order =>
+        orderPool += order.copy(
+          block = block,
+          status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+        )
+      }
+
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processOrders(updatedOrders)
+
+      // track account update only when block number changed
+      _ <- {
+        if (lastBlock == block) Future.unit
+        else updatedAccountsProcessor.processUpdatedAccount(block, owner, token)
+      }
+
     } yield updatedOrders
   }
 
   private def cancelOrderInternal(
       status: OrderStatus,
+      blockOpt: Option[Long] = None,
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) = {
@@ -203,94 +247,49 @@ final class AccountManagerAltImpl(
     } else {
       for {
         _ <- serializeFutures(orders) { order =>
-          onToken(order.tokenS, _.release(order.id)).andThen {
-            case _ => orderPool += order.copy(status = status)
-          }
+          for {
+            managerSOpt <- getReserveManagerOption(order.tokenS, false)
+            r1 = managerSOpt.map(_.release(order.id))
+
+            managerFeeOpt <- {
+              if (order.tokenS == order.tokenFee) Future.successful(None)
+              else getReserveManagerOption(order.tokenFee, false)
+            }
+
+            _ = managerFeeOpt.map(_.release(order.id))
+
+            _ = orders.foreach { order =>
+              orderPool +=
+                order.copy(
+                  block = order.block.max(blockOpt.getOrElse(0)),
+                  status = status
+                )
+            }
+
+          } yield Unit
         }
         updatedOrders = orderPool.takeUpdatedOrders
         _ <- {
           if (skipProcessingUpdatedOrders) Future.unit
-          else processor.processOrders(updatedOrders)
+          else
+            updatedOrdersProcessor.processUpdatedOrders(
+              blockOpt.isDefined,
+              updatedOrders
+            )
         }
       } yield updatedOrders
     }
   }
 
-  private def reserveForOrder(order: Matchable): Future[Set[String]] = {
-    val requestedAmountS = order.requestedAmount(order.tokenS)
-    val requestedAmountFee = order.requestedAmount(order.tokenFee)
-
-    if (requestedAmountS <= 0 || requestedAmountFee < 0) {
-      orderPool += order.copy(status = STATUS_INVALID_DATA)
-      Future.successful(Set(order.id))
-    } else
-      for {
-        _ <- Future.unit
-        r1 <- onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
-        r2 <- {
-          if (order.tokenFee == order.tokenS || requestedAmountFee == 0)
-            Future.successful(Set.empty[String])
-          else {
-            onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
-          }
-        }
-        orderIdsToDelete = r1 ++ r2
-      } yield orderIdsToDelete
-  }
-
-  private def getReserveManagers(
-      tokens_ : Set[String],
-      mustReturn: Boolean
-    ): Future[Map[String, ReserveManagerAlt]] = {
-    val (existing, missing) = tokens_.partition(tokens.contains)
-    val existingManagers =
-      existing.map(tokens.apply).map(m => m.token -> m).toMap
-    if (!mustReturn) Future.successful(existingManagers)
-    else {
-      for {
-        balanceAndAllowances <- Future.sequence {
-          missing.map { token =>
-            provider.getBalanceAndALlowance(owner, token)
-          }
-        }
-        tuples = missing.zip(balanceAndAllowances)
-        newManagers = tuples.map {
-          case (token, (balance, allowance)) =>
-            val manager = ReserveManagerAlt.default(token, enableTracing)
-            manager.setBalanceAndAllowance(balance, allowance)
-            tokens += token -> manager
-            token -> manager
-        }.toMap
-      } yield newManagers ++ existingManagers
-    }
-  }
-
-  // Do not use getReserveManagers for best performance
-  private def getReserveManagerOption(
+  private def reserveToken(
       token: String,
-      mustReturn: Boolean
-    ): Future[Option[ReserveManagerAlt]] = {
-    if (tokens.contains(token)) Future.successful(Some(tokens(token)))
-    else if (!mustReturn) Future.successful(None)
-    else {
-      provider.getBalanceAndALlowance(owner, token).map { result =>
-        val (balance, allowance) = result
-        val manager = ReserveManagerAlt.default(token, enableTracing)
-        manager.setBalanceAndAllowance(balance, allowance)
-        tokens += token -> manager
-        Some(manager)
-      }
-    }
-  }
-
-  private def onToken(
-      token: String,
-      invoke: ReserveManagerMethod
-    ): Future[Set[String]] =
+      orderId: String,
+      requestedAmountS: BigInt
+    ): Future[(Long, Set[String])] =
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
-      orderIdsToDelete = invoke(manager)
+      orderIdsToDelete = manager.reserve(orderId, requestedAmountS)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       // we cannot parallel execute these following operations
       _ <- serializeFutures(ordersToDelete) { order =>
@@ -309,6 +308,74 @@ final class AccountManagerAltImpl(
           }
         }
       }
-    } yield orderIdsToDelete
+    } yield (manager.getBlock, orderIdsToDelete)
+
+  private def reserveForOrder(order: Matchable): Future[(Long, Set[String])] = {
+    val requestedAmountS = order.requestedAmount(order.tokenS)
+    val requestedAmountFee = order.requestedAmount(order.tokenFee)
+
+    if (requestedAmountS <= 0 || requestedAmountFee < 0) {
+      orderPool += order.copy(status = STATUS_INVALID_DATA)
+      Future.successful((0L, Set(order.id)))
+    } else
+      for {
+        _ <- Future.unit
+        (b1, r1) <- reserveToken(order.tokenS, order.id, requestedAmountS)
+        (b2, r2) <- {
+          if (r1.contains(order.id) || order.tokenFee == order.tokenS || requestedAmountFee == 0)
+            Future.successful((b1, Set.empty[String]))
+          else {
+            reserveToken(order.tokenFee, order.id, requestedAmountFee)
+          }
+        }
+        block = b1.max(b2)
+        orderIdsToDelete = r1 ++ r2
+      } yield (block, orderIdsToDelete)
+  }
+
+  private def getReserveManagers(
+      tokens_ : Set[String],
+      mustReturn: Boolean
+    ): Future[Map[String, ReserveManager]] = {
+    val (existing, missing) = tokens_.partition(tokens.contains)
+    val existingManagers =
+      existing.map(tokens.apply).map(m => m.token -> m).toMap
+    if (!mustReturn) Future.successful(existingManagers)
+    else {
+      for {
+        balanceAndAllowances <- Future.sequence {
+          missing.map { token =>
+            provider.getBalanceAndALlowance(owner, token)
+          }
+        }
+        tuples = missing.zip(balanceAndAllowances)
+        newManagers = tuples.map {
+          case (token, (block, balance, allowance)) =>
+            val manager = ReserveManager.default(token, enableTracing)
+            manager.setBalanceAndAllowance(block, balance, allowance)
+            tokens += token -> manager
+            token -> manager
+        }.toMap
+      } yield newManagers ++ existingManagers
+    }
+  }
+
+  // Do not use getReserveManagers for best performance
+  private def getReserveManagerOption(
+      token: String,
+      mustReturn: Boolean
+    ): Future[Option[ReserveManager]] = {
+    if (tokens.contains(token)) Future.successful(Some(tokens(token)))
+    else if (!mustReturn) Future.successful(None)
+    else {
+      provider.getBalanceAndALlowance(owner, token).map { result =>
+        val (block, balance, allowance) = result
+        val manager = ReserveManager.default(token, enableTracing)
+        manager.setBalanceAndAllowance(block, balance, allowance)
+        tokens += token -> manager
+        Some(manager)
+      }
+    }
+  }
 
 }

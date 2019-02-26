@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.relayer
 
-import io.lightcone.relayer.actors.SocketIONotificationActor
-import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.data.SendRawTransaction
 
-trait SocketSupport {
-  com: CommonSpec =>
-
-  implicit val relayerNotifier = new RelayerNotifier()
-
-  actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
-
-  val socketServer = new SocketServer()
-  socketServer.start()
-
-  println("start socket server......")
+trait EthereumAccessDataProvider {
+  def sendRawTransaction(req: SendRawTransaction.Req): SendRawTransaction.Res
 }

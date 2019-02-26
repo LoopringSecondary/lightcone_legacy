@@ -18,38 +18,28 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.protocol.JacksonJsonSupport
-import com.fasterxml.jackson.databind.module.SimpleModule
+import io.lightcone.relayer.data.SocketIOSubscription
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.Config
-import io.lightcone.core.Amount
-import io.lightcone.relayer.data.SocketIOSubscription
 
-class SocketServer(
-  )(
-    implicit
-    val config: Config,
-    val notifier: RelayerNotifier) {
+class SocketServer()(
+  implicit val config: Config,
+  val notifier: SocketIONotifier) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
   socketConfig.setHostname(selfConfig.getString("host"))
   socketConfig.setPort(selfConfig.getInt("port"))
 
-  val simpleModule = new SimpleModule()
-  val amountDeserializer = new AmountDeserializer()
-  simpleModule.addDeserializer(classOf[Amount], amountDeserializer)
-
   val jsonSupport = new ProtoJsonSupport(
-    new JacksonJsonSupport(DefaultScalaModule, simpleModule)
-  )
+    new JacksonJsonSupport(DefaultScalaModule))
   socketConfig.setJsonSupport(jsonSupport)
   val server = new SocketIOServer(socketConfig)
 
   server.addEventListener(
     notifier.eventName,
     classOf[SocketIOSubscription],
-    notifier
-  )
+    notifier)
 
   def start(): Unit = server.start()
 }

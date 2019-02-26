@@ -64,12 +64,61 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
-    relayerNotifier: RelayerNotifier,
+    socketIONotifier: SocketIONotifier,
     system: ActorSystem)
     extends Object
     with Logging {
 
+  def deployEthereum() = {
+    //deploy ethereum conntionPools
+    HttpConnector.start.foreach {
+      case (name, actor) => actors.add(name, actor)
+    }
+
+    var inited = false
+    while (!inited) {
+      try {
+        val f =
+          Future.sequence(HttpConnector.connectorNames(config).map {
+            case (nodeName, node) =>
+              val f1 = actors.get(nodeName) ? Notify("init")
+              val r = Await.result(f1, timeout.duration)
+              println(s"#### init HttpConnector ${r}")
+              Future.unit
+          })
+        Await.result(f, timeout.duration)
+        Thread.sleep(500)
+        inited = true
+      } catch {
+        case e: Exception =>
+          println(s"#### init HttpConnector ${e.printStackTrace}")
+      }
+    }
+
+    actors
+      .add(
+        EthereumClientMonitor.name, //
+        EthereumClientMonitor.start
+      )
+      .add(
+        EthereumAccessActor.name, //
+        EthereumAccessActor.start
+      )
+      .add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.start)
+      .add(
+        MissingBlocksEventExtractorActor.name,
+        MissingBlocksEventExtractorActor.start
+      )
+      .add(
+        EthereumQueryActor.name, //
+        EthereumQueryActor.start
+      )
+  }
+
   def deploy(): Unit = {
+
+    //deploy ethereum actors
+    deployEthereum()
 
     //-----------deploy local actors-----------
     actors
@@ -129,44 +178,11 @@ class CoreDeployer @Inject()(
     //-----------deploy local actors-----------
     // TODO: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
-      //deploy ethereum conntionPools
-      HttpConnector.start.foreach {
-        case (name, actor) => actors.add(name, actor)
-      }
-
-      // TODO:需要再次确认启动依赖顺序问题
-      var inited = false
-      while (!inited) {
-        try {
-          val f =
-            Future.sequence(HttpConnector.connectorNames(config).map {
-              case (nodeName, node) =>
-                val f1 = actors.get(nodeName) ? Notify("init")
-                val r = Await.result(f1, timeout.duration)
-                println(s"#### init HttpConnector ${r}")
-                Future.unit
-            })
-          Await.result(f, timeout.duration)
-          Thread.sleep(500)
-          inited = true
-        } catch {
-          case e: Exception =>
-            println(s"#### init HttpConnector ${e.printStackTrace}")
-        }
-      }
 
       // TODO：按照模块分布，因为启动有依赖顺序
 
       //-----------deploy singleton actors-----------
       actors
-        .add(
-          EthereumClientMonitor.name, //
-          EthereumClientMonitor.start
-        )
-        .add(
-          EthereumAccessActor.name, //
-          EthereumAccessActor.start
-        )
         .add(
           OrderRecoverCoordinator.name, //
           OrderRecoverCoordinator.start
@@ -184,28 +200,12 @@ class CoreDeployer @Inject()(
           ChainReorganizationManagerActor.start
         )
         .add(
-          EthereumEventExtractorActor.name,
-          EthereumEventExtractorActor.start
-        )
-        .add(
-          MissingBlocksEventExtractorActor.name,
-          MissingBlocksEventExtractorActor.start
-        )
-        .add(
           RingSettlementManagerActor.name, //
           RingSettlementManagerActor.start
-        )
-        .add(
-          ChainReorganizationManagerActor.name, //
-          ChainReorganizationManagerActor.start
         )
 
       //-----------deploy sharded actors-----------
       actors
-        .add(
-          EthereumQueryActor.name, //
-          EthereumQueryActor.start
-        )
         .add(
           DatabaseQueryActor.name, //
           DatabaseQueryActor.start
@@ -272,7 +272,7 @@ class CoreDeployer @Inject()(
       //-----------deploy SOCKETIO service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("socketio")) {
-        val server = new SocketServer
+        val server = new SocketServer()
         server.start()
       }
     }
