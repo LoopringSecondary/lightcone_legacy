@@ -104,7 +104,10 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
       } yield {
         res.resps foreach { cutoffRes =>
-           assert(cutoffRes.cutoff.get.block >= 0, "block num must be greater or equal to 0")
+          assert(
+            cutoffRes.cutoff.get.block >= 0,
+            "block num must be greater or equal to 0"
+          )
           manager.setCutoff(
             cutoffRes.cutoff.get.block,
             cutoffRes.cutoff.toLong,

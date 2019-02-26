@@ -150,8 +150,8 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
           assert(sells.size == 1)
           assert(
             sells(0).price == "0.050000" &&
-              sells(0).amount == "20.00000" &&
-              sells(0).total == "1.00000"
+              sells(0).amount == "12.50000" &&
+              sells(0).total == "0.62500"
           )
           assert(buys.isEmpty)
         case _ => assert(false)

@@ -127,7 +127,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
 
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells(0).amount == "12.50000"
+        (orderbook: Orderbook) => orderbook.sells(0).amount == "20.00000"
       )
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
