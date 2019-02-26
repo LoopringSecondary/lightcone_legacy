@@ -199,7 +199,7 @@ message Activity {
     }
 }
 
-message TokenTicker {
+message TokenTickerRecord {
     string token_address        = 1;
     double price                = 2;  //默认存储的为usd价格
     double volume_24h           = 3;
