@@ -22,6 +22,7 @@ package io.lightcone.relayer.data;
 import "core.proto";
 import "persistence.proto";
 import "relayer_common.proto";
+import "relayer_external.proto";
 // import "relayer_ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
@@ -275,12 +276,31 @@ message MetadataChanged {
 message SubscribeMetadataChanged {
 }
 
-message GetMetadatas {
-    message Req {}
+message GetMarkets {
+    message Req {
+        bool require_metadata = 1;
+        bool require_ticker = 2;
+        bool query_loopring_ticker = 3;
+        io.lightcone.core.Currency quote_currency_for_ticker = 4;  // USD, RMB
+        repeated io.lightcone.core.MarketPair market_pairs = 5; // empty for query all
+    }
 
     message Res {
-        repeated io.lightcone.core.TokenMetadata  tokens  = 1;
-        repeated io.lightcone.core.MarketMetadata markets = 2;
+        repeated io.lightcone.core.Market markets = 1;
+    }
+}
+
+message GetTokens {
+    message Req {
+        bool require_metadata = 1;
+        bool require_info = 2;
+        bool require_price = 3;
+        io.lightcone.core.Currency quote_currency_for_price = 4;  // USD, RMB
+        repeated string tokens = 5;
+    }
+
+    message Res {
+        repeated io.lightcone.core.Token tokens = 1;
     }
 }
 

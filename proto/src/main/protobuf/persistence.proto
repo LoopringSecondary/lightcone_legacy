@@ -198,3 +198,16 @@ message Activity {
         OrderSubmission     order_submission    = 27;
     }
 }
+
+message TokenTickerRecord {
+    string token_address        = 1;
+    double price                = 2;  //默认存储的为usd价格
+    double volume_24h           = 3;
+    double percent_change_1h    = 4;
+    double percent_change_24h   = 5;
+    double percent_change_7d    = 6;
+    double market_cap           = 7;
+    int64 timestamp             = 8;
+    bool  is_valid              = 9;
+    string data_source          = 10;
+}

@@ -14,26 +14,11 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer.external
 
-import com.google.inject.Inject
-import spire.math.Rational
+import io.lightcone.persistence.TokenTickerRecord
+import scala.concurrent.Future
 
-// TODO(dongw): we need a price provider
-class TokenValueEvaluator @Inject()()(implicit mm: MetadataManager) {
-
-  def getValue(
-      tokenAddr: String,
-      amount: BigInt
-    ): Double = {
-    if (amount.signum <= 0) 0
-    else
-      mm.getTokenWithAddress(tokenAddr)
-        .map { token =>
-          (Rational(token.fromWei(amount)) *
-            Rational(token.price)).doubleValue
-        }
-        .getOrElse(0)
-  }
-
+trait ExternalTickerFetcher {
+  def fetchExternalTickers(): Future[Seq[TokenTickerRecord]]
 }

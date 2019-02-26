@@ -38,5 +38,5 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
       burnRateForP2P: Double
     ): Future[ErrorCode]
 
-  def InvalidateToken(address: String): Future[ErrorCode]
+  def invalidateToken(address: String): Future[ErrorCode]
 }

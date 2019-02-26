@@ -17,17 +17,14 @@
 package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
-
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import akka.pattern._
 import io.lightcone.core.MetadataManager
-
 import scala.concurrent.Await
 
 trait MetadataManagerSupport extends DatabaseModuleSupport {
@@ -59,8 +56,10 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
         "Timed out waiting for MetadataManagerActor init.)"
       )
   }
+  //TODO(du):tickers待cmc分支实现
   metadataManager.reset(
     TOKENS.map(MetadataManager.normalize),
+    Seq.empty,
     MARKETS.map(MetadataManager.normalize)
   )
 
@@ -70,10 +69,12 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
     10,
     TimeUnit.SECONDS,
     () => {
-      val f = (actors.get(MetadataRefresher.name) ? GetMetadatas.Req())
-        .mapTo[GetMetadatas.Res]
+      val f = (actors.get(MetadataRefresher.name) ? GetTokens.Req())
+        .mapTo[GetTokens.Res]
       val res = Await.result(f, timeout.duration)
-      res.markets.nonEmpty && res.tokens.nonEmpty
+      //TODO(du):tickers待cmc分支实现
+//      res.markets.nonEmpty || res.tokens.nonEmpty
+      true
     }
   )
   catch {
