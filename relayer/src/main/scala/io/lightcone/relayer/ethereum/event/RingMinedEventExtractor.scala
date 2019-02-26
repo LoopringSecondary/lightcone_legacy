@@ -21,7 +21,7 @@ import com.typesafe.config.Config
 import io.lightcone.core.MarketMetadata.Status.{ACTIVE, READONLY}
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
-import io.lightcone.relayer.data.{Token => T, _}
+import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
 import scala.concurrent._
 import io.lightcone.core._
@@ -46,7 +46,17 @@ class RingMinedEventExtractor @Inject()(
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
   implicit def ringBatchContext = RingBatchContext(
-    lrcAddress = metadataManager.getTokenWithSymbol("lrc").get.meta.address
+    lrcAddress = metadataManager
+      .getTokenWithSymbol("lrc")
+      .get
+      .metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token LRC"
+        )
+      )
+      .address
   )
   val fillLength: Int = 8 * 64
 
@@ -115,7 +125,16 @@ trait OHLCRawDataSupport {
       marketMetadata: MarketMetadata
     ): (Double, Double) = {
     val amountInWei =
-      if (Address(baseToken.meta.address).equals(Address(fill.tokenS)))
+      if (Address(
+            baseToken.metadata
+              .getOrElse(
+                throw ErrorException(
+                  ErrorCode.ERR_INTERNAL_UNKNOWN,
+                  s"not found metadata"
+                )
+              )
+              .address
+          ).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(fill.filledAmountB.toByteArray)
 
@@ -124,7 +143,16 @@ trait OHLCRawDataSupport {
       .doubleValue()
 
     val totalInWei =
-      if (Address(quoteToken.meta.address).equals(Address(fill.tokenS)))
+      if (Address(
+            quoteToken.metadata
+              .getOrElse(
+                throw ErrorException(
+                  ErrorCode.ERR_INTERNAL_UNKNOWN,
+                  s"not found metadata"
+                )
+              )
+              .address
+          ).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(fill.filledAmountB.toByteArray)
 

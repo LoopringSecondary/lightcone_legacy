@@ -50,7 +50,19 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
   def wethAddress =
-    Address(metadataManager.getTokenWithSymbol("weth").get.meta.address)
+    Address(
+      metadataManager
+        .getTokenWithSymbol("weth")
+        .get
+        .metadata
+        .getOrElse(
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not found metadata of token WETH"
+          )
+        )
+        .address
+    )
   @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   def extractEventsFromTx(

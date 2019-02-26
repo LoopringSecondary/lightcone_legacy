@@ -17,6 +17,7 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
+import io.lightcone.core.ErrorCode.ERR_INTERNAL_UNKNOWN
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
@@ -37,7 +38,15 @@ final class EthereumQueryMessageValidator(
 
   def normalize(addrOrSymbol: String): String =
     metadataManager.getTokenWithSymbol(addrOrSymbol) match {
-      case Some(t) => t.meta.address
+      case Some(t) =>
+        t.metadata
+          .getOrElse(
+            throw ErrorException(
+              ERR_INTERNAL_UNKNOWN,
+              s"no found token($addrOrSymbol)"
+            )
+          )
+          .address
       case None if Address.isValid(addrOrSymbol) =>
         Address.normalize(addrOrSymbol)
       case _ =>

@@ -18,10 +18,8 @@ package io.lightcone.core
 
 import spire.math.Rational
 
-class Token(
-    val meta: TokenMetadata,
-    val usdPrice: Double) {
-  val scaling = Rational(BigInt(10).pow(meta.decimals))
+private[core] class RichToken(token: Token) {
+  val scaling = Rational(BigInt(10).pow(token.metadata.get.decimals))
 
   def fromWei(amount: BigInt): Double =
     (Rational(amount) / scaling).doubleValue

@@ -56,7 +56,15 @@ final class MultiAccountManagerMessageValidator(
 
   def normalize(addrOrSymbol: String): String = {
     metadataManager.getTokenWithSymbol(addrOrSymbol) match {
-      case Some(t) => t.meta.address
+      case Some(t) =>
+        t.metadata
+          .getOrElse(
+            throw ErrorException(
+              code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+              message = s"not found token $addrOrSymbol"
+            )
+          )
+          .address
       case None if Address.isValid(addrOrSymbol) =>
         Address.normalize(addrOrSymbol)
       case _ =>

@@ -129,7 +129,17 @@ class MarketManagerActor(
 
   private val metricName: String = {
     def symbol(token: String) =
-      metadataManager.getTokenWithAddress(token).get.meta.symbol
+      metadataManager
+        .getTokenWithAddress(token)
+        .get
+        .metadata
+        .getOrElse(
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not found metadata of token $token"
+          )
+        )
+        .symbol
     s"market_${symbol(marketPair.baseToken)}_${symbol(marketPair.quoteToken)}"
   }
 

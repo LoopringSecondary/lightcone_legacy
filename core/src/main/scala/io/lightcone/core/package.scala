@@ -85,4 +85,7 @@ package object core {
   @inline
   implicit class Rich_MatchableRing(raw: MatchableRing)
       extends RichMatchableRing(raw)
+
+  @inline
+  implicit class Rich_Token(token: Token) extends RichToken(token)
 }

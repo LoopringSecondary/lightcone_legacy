@@ -72,14 +72,16 @@ class MetadataManagerActor(
   val mediator = DistributedPubSub(context.system).mediator
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
-  private var tokens = Seq.empty[TokenMetadata]
+  private var tokenMetadatas = Seq.empty[TokenMetadata]
+  private var tokenInfos = Seq.empty[TokenInfo]
   private var markets = Seq.empty[MarketMetadata]
 
   override def initialize() = {
     val f = for {
-      tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokens()
+      // TODO(du) tokeninfos
       markets_ <- dbModule.marketMetadataDal.getMarkets()
-      tokensUpdated <- Future.sequence(tokens_.map { token =>
+      tokensUpdated <- Future.sequence(tokenMetadatas_.map { token =>
         for {
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
@@ -101,10 +103,10 @@ class MetadataManagerActor(
     } yield {
       assert(tokensUpdated nonEmpty)
       assert(markets_ nonEmpty)
-      tokens = tokensUpdated.map(MetadataManager.normalize)
+      tokenMetadatas = tokensUpdated.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
       //TODO(du):tickers待cmc分支实现
-      metadataManager.reset(tokens, Map.empty, markets)
+      metadataManager.reset(tokenMetadatas, tokenInfos, Map.empty, markets)
     }
     f onComplete {
       case Success(_) =>
@@ -228,7 +230,7 @@ class MetadataManagerActor(
       }).sendTo(sender)
 
     case req: LoadTokenMetadata.Req =>
-      sender ! LoadTokenMetadata.Res(tokens)
+      sender ! LoadTokenMetadata.Res(tokenMetadatas)
 
     case req: LoadMarketMetadata.Req =>
       sender ! LoadMarketMetadata.Res(markets)
@@ -244,9 +246,9 @@ class MetadataManagerActor(
     ): Unit = {
     var notify = false
     tokensOpt foreach { tokens_ =>
-      if (tokens_ != tokens) {
+      if (tokens_ != tokenMetadatas) {
         notify = true
-        tokens = tokens_
+        tokenMetadatas = tokens_
       }
     }
 
