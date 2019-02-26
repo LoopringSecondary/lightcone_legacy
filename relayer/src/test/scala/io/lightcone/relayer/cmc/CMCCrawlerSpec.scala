@@ -53,23 +53,32 @@ class CMCCrawlerSpec
       val r =
         Await.result(
           fiatExchangeRateFetcher
-            .fetchExchangeRates(Seq(USD_RMB))
+            .fetchExchangeRates(CURRENCY_EXCHANGE_PAIR)
             .mapTo[Map[String, Double]],
           5.second
         )
       r.nonEmpty should be(true)
       r.contains(USD_RMB) should be(true)
+      r(USD_RMB) > 0 should be(true)
+      r.contains(USD_JPY) should be(true)
+      r(USD_JPY) > 0 should be(true)
+      r.contains(USD_EUR) should be(true)
+      r(USD_EUR) > 0 should be(true)
+      r.contains(USD_GBP) should be(true)
+      r(USD_GBP) > 0 should be(true)
     }
 
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
       val f = for {
         cmcResponse <- getMockedCMCTickers()
-        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates(Seq(USD_RMB))
+        rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates(
+          CURRENCY_EXCHANGE_PAIR
+        )
         slugSymbols_ <- dbModule.cmcTickerConfigDal.getConfigs()
         tickersToPersist <- if (cmcResponse.nonEmpty && rateResponse.nonEmpty) {
           for {
             t <- persistTickers(
-              rateResponse(USD_RMB),
+              rateResponse,
               cmcResponse,
               slugSymbols_
             )
@@ -96,8 +105,12 @@ class CMCCrawlerSpec
         50.second
       )
       q1._1.length should be(2072)
-      q1._2.length should be(TOKEN_SLUGS_SYMBOLS.length + 1) // RMB added
-      q1._3 should be(TOKEN_SLUGS_SYMBOLS.length + 1)
+      q1._2.length should be(
+        TOKEN_SLUGS_SYMBOLS.length + CURRENCY_EXCHANGE_PAIR.length
+      ) // some fiat currency added
+      q1._3 should be(
+        TOKEN_SLUGS_SYMBOLS.length + CURRENCY_EXCHANGE_PAIR.length
+      )
       q1._5.nonEmpty should be(true)
       tickers = q1._2
       slugSymbols = q1._5 ++ q1._1
@@ -151,7 +164,7 @@ class CMCCrawlerSpec
   }
 
   private def persistTickers(
-      usdToCnyRate: Double,
+      exchangeRate: Map[String, Double],
       tickers_ : Seq[CMCTickerData],
       slugSymbols: Seq[CMCCrawlerConfigForToken]
     ) =
@@ -162,14 +175,16 @@ class CMCCrawlerSpec
           tickers_,
           slugSymbols
         )
-      cnyTicker = ExternalTicker(
-        RMB,
-        CMCExternalTickerFetcher
-          .toDouble(BigDecimal(1) / BigDecimal(usdToCnyRate))
-      )
+      currencyTickers = exchangeRate.map { k =>
+        ExternalTicker(
+          k._1.split("-")(1),
+          CMCExternalTickerFetcher
+            .toDouble(BigDecimal(1) / BigDecimal(k._2))
+        )
+      }
       now = timeProvider.getTimeSeconds()
       _ = tickers =
-        tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
+        tickersToPersist.++:(currencyTickers).map(t => t.copy(timestamp = now))
       fixGroup = tickers.grouped(20).toList
       _ <- Future.sequence(
         fixGroup.map(dbModule.externalTickerDal.saveTickers)

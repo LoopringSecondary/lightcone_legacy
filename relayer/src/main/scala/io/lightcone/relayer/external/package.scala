@@ -20,5 +20,19 @@ package object external {
 
   val USD = "USD"
   val RMB = "RMB"
+  val JPY = "JPY" // 日元
+  val EUR = "EUR" // 欧元
+  val GBP = "GBP" // 英镑
+
   val USD_RMB = s"$USD-$RMB"
+  val USD_JPY = s"$USD-$JPY"
+  val USD_EUR = s"$USD-$EUR"
+  val USD_GBP = s"$USD-$GBP"
+
+  val CURRENCY_EXCHANGE_PAIR = Seq(
+    USD_RMB,
+    USD_JPY,
+    USD_EUR,
+    USD_GBP
+  )
 }

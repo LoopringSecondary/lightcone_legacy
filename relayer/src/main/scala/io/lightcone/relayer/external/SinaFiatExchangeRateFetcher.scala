@@ -41,7 +41,6 @@ class SinaFiatExchangeRateFetcher @Inject()(
 
   val uri = currencyConfig.getString("sina.uri")
 
-  // TODO(du):只定义接口支持多种法币，sina实现只支持USD-CNY,后续再找支持多种法币的接口实现
   def fetchExchangeRates(fiat: Seq[String]): Future[Map[String, Double]] =
     for {
       response <- Http().singleRequest(
@@ -56,20 +55,44 @@ class SinaFiatExchangeRateFetcher @Inject()(
             .map(_.utf8String)
             .runReduce(_ + _)
             .map { j =>
-              // var hq_str_fx_susdcny="12:50:00,6.7562,6.7559,6.7731,154,6.7642,6.7665,6.7511,6.7559,在岸人民币,-0.2,-0.0133,0.002277,Mecklai Financial Services. Mumbai,6.9762,6.2409,*******-,2019-02-18"
-              val value = j.substring(j.lastIndexOf("=") + 1)
-              val charArr = value
+              val currencyArr = j
                 .replaceAll("\"", "")
-                .replaceAll(";", "")
                 .replaceAll("\r", "")
                 .replaceAll("\n", "")
-                .split(",")
-              val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-              val time = formatter.parse(charArr(17) + " " + charArr(0)).getTime
-              val currency = charArr(2).toDouble
-              assert(currency > 0)
-              assert(time > 0)
-              Map(USD_RMB -> currency)
+                .split(";")
+              val currencyMap = currencyArr.map { c =>
+                val currencyItem = c.split("=")
+                assert(currencyItem.length == 2)
+                val key = currencyItem(0)
+                val charArr = currencyItem(1).split(",")
+//              val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+//              val time = formatter.parse(charArr(17) + " " + charArr(0)).getTime
+//                assert(time > 0)
+                val currency = charArr(2).toDouble
+                assert(currency > 0)
+                if (key.indexOf("hq_str_fx_susdcny") > -1) {
+                  USD_RMB -> currency
+                } else if (key.indexOf("hq_str_fx_susdjpy") > -1) {
+                  USD_JPY -> currency
+                } else if (key.indexOf("hq_str_fx_seurusd") > -1) {
+                  USD_EUR -> SinaFiatExchangeRateFetcher.toDouble(
+                    BigDecimal(1) / BigDecimal(currency)
+                  )
+                } else if (key.indexOf("hq_str_fx_sgbpusd") > -1) {
+                  USD_GBP -> SinaFiatExchangeRateFetcher.toDouble(
+                    BigDecimal(1) / BigDecimal(currency)
+                  )
+                } else {
+                  throw ErrorException(
+                    ErrorCode.ERR_INTERNAL_UNKNOWN,
+                    s"unsupport value: $c"
+                  )
+                }
+              }.toMap
+
+              fiat.map { f =>
+                f -> currencyMap.getOrElse(f, 0.0)
+              }.toMap
             }
 
         case m =>
@@ -81,4 +104,13 @@ class SinaFiatExchangeRateFetcher @Inject()(
       }
     } yield res
 
+}
+
+object SinaFiatExchangeRateFetcher {
+
+  def toDouble(bigDecimal: BigDecimal): Double =
+    scala.util
+      .Try(bigDecimal.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .toOption
+      .getOrElse(0)
 }

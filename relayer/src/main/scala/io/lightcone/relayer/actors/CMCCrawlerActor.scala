@@ -141,13 +141,15 @@ class CMCCrawlerActor(
     log.info("CMCCrawlerActor run sync job")
     for {
       cmcResponse <- externalTickerFetcher.fetchExternalTickers()
-      rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates(Seq(USD_RMB))
+      rateResponse <- fiatExchangeRateFetcher.fetchExchangeRates(
+        CURRENCY_EXCHANGE_PAIR
+      )
       slugSymbols_ <- dbModule.cmcTickerConfigDal.getConfigs()
       persistTickers <- if (cmcResponse.nonEmpty && rateResponse.nonEmpty && rateResponse
                               .contains(USD) && slugSymbols_.nonEmpty) {
         for {
           tickers_ <- persistTickers(
-            rateResponse(USD_RMB),
+            rateResponse,
             cmcResponse,
             slugSymbols_
           )
@@ -204,7 +206,7 @@ class CMCCrawlerActor(
   }
 
   private def persistTickers(
-      cnyToUsdRate: Double,
+      exchangeRate: Map[String, Double],
       tickers_ : Seq[CMCTickerData],
       slugSymbols: Seq[CMCCrawlerConfigForToken]
     ) =
@@ -215,14 +217,16 @@ class CMCCrawlerActor(
           tickers_,
           slugSymbols
         )
-      cnyTicker = ExternalTicker(
-        RMB,
-        CMCExternalTickerFetcher
-          .toDouble(BigDecimal(1) / BigDecimal(cnyToUsdRate))
-      )
+      currencyTickers = exchangeRate.map { k =>
+        ExternalTicker(
+          k._1.split("-")(1),
+          CMCExternalTickerFetcher
+            .toDouble(BigDecimal(1) / BigDecimal(k._2))
+        )
+      }
       now = timeProvider.getTimeSeconds()
       _ = tickers =
-        tickersToPersist.+:(cnyTicker).map(t => t.copy(timestamp = now))
+        tickersToPersist.++:(currencyTickers).map(t => t.copy(timestamp = now))
       fixGroup = tickersToPersist.grouped(20).toList
       _ <- Future.sequence(
         fixGroup.map(dbModule.externalTickerDal.saveTickers)
