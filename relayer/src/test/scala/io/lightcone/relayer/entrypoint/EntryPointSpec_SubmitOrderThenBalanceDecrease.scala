@@ -128,7 +128,6 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
         Future.sequence(Seq(transferLRC(accounts(0).getAddress, "10")(account)))
       Await.result(setAllowanceF, timeout.duration)
 
-      println(s"#### make balance is not enough, ${block}")
       actors.get(MultiAccountManagerActor.name) ? AddressBalanceUpdatedEvent(
         rawOrders(0).owner,
         LRC_TOKEN.address,
