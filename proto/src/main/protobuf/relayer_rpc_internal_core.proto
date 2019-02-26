@@ -285,8 +285,9 @@ message GetMarkets {
     message Req {
         bool require_metadata = 1;
         bool require_ticker = 2;
-        io.lightcone.core.Currency quote_currency_for_ticker = 3;  // USD, BTC
-        repeated io.lightcone.core.MarketPair market_pairs = 4;
+        bool query_loopring_ticker = 3;
+        io.lightcone.core.Currency quote_currency_for_ticker = 4;  // USD, BTC
+        repeated io.lightcone.core.MarketPair market_pairs = 5; // empty for query all
     }
 
     message Res {
@@ -311,25 +312,6 @@ message GetTokens {
 
     message Res {
         repeated Token tokens = 1;
-    }
-}
-
-message GetExternalMarketTickers {
-
-    message Req {
-        repeated string   market = 1;
-    }
-
-    message Res {
-        repeated io.lightcone.relayer.external.ExternalMarketTickerInfo tickers = 2;
-    }
-}
-
-message GetExternalTokenTickers {
-    message Req {}
-
-    message Res {
-        repeated io.lightcone.relayer.external.ExternalTokenTickerInfo tickers = 1;
     }
 }
 
