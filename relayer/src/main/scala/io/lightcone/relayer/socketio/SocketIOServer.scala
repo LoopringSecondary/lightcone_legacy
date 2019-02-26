@@ -22,9 +22,11 @@ import io.lightcone.relayer.data.SocketIOSubscription
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.Config
 
-class SocketServer()(
-  implicit val config: Config,
-  val notifier: SocketIONotifier) {
+class SocketServer(
+  )(
+    implicit
+    val config: Config,
+    val notifier: SocketIONotifier) {
 
   val selfConfig = config.getConfig("socketio")
   val socketConfig = new Configuration()
@@ -32,14 +34,16 @@ class SocketServer()(
   socketConfig.setPort(selfConfig.getInt("port"))
 
   val jsonSupport = new ProtoJsonSupport(
-    new JacksonJsonSupport(DefaultScalaModule))
+    new JacksonJsonSupport(DefaultScalaModule)
+  )
   socketConfig.setJsonSupport(jsonSupport)
   val server = new SocketIOServer(socketConfig)
 
   server.addEventListener(
     notifier.eventName,
     classOf[SocketIOSubscription],
-    notifier)
+    notifier
+  )
 
   def start(): Unit = server.start()
 }
