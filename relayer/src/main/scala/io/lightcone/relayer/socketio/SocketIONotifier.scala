@@ -17,11 +17,10 @@
 package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
-import io.lightcone.relayer.data._
-import org.slf4s.Logging
 import com.corundumstudio.socketio.listener.DataListener
 import io.lightcone.lib.Address
 import io.lightcone.relayer.data._
+import org.slf4s.Logging
 
 abstract class SocketIONotifier
     extends DataListener[SocketIOSubscription]

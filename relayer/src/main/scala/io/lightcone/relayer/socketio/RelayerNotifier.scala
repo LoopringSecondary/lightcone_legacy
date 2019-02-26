@@ -16,16 +16,9 @@
 
 package io.lightcone.relayer.socketio
 
-import io.lightcone.core.{
-  MarketHash,
-  MarketMetadata,
-  MarketPair,
-  Orderbook,
-  RawOrder,
-  TokenMetadata
-}
+import io.lightcone.core._
 import io.lightcone.lib.Address
-import io.lightcone.persistence.{Activity, Fill}
+import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 
 class RelayerNotifier() extends SocketIONotifier {
