@@ -391,10 +391,10 @@ message LoadMarketMetadata {
     }
 }
 
-message GetTokenTickers {
+message GetTicker {
     message Req {}
 
     message Res {
-        repeated io.lightcone.core.TokenTicker tickers = 1;
+        map<string, double> tickers = 1;
     }
 }

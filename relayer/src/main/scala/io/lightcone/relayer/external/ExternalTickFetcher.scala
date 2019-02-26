@@ -16,10 +16,9 @@
 
 package io.lightcone.relayer.external
 
-import io.lightcone.persistence.ExternalTicker
-
+import io.lightcone.persistence.TokenTicker
 import scala.concurrent.Future
 
 trait ExternalTickerFetcher {
-  def fetchExternalTickers(): Future[Seq[ExternalTicker]]
+  def fetchExternalTickers(): Future[Seq[TokenTicker]]
 }

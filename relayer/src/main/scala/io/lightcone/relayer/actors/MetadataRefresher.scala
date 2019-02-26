@@ -113,7 +113,7 @@ class MetadataRefresher(
       tokens = tokens_.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
       //TODO(du):tickers待cmc分支实现
-      metadataManager.reset(tokens_, Seq.empty, markets_)
+      metadataManager.reset(tokens_, Map.empty, markets_)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors

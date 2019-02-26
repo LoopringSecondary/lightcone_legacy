@@ -104,7 +104,7 @@ class MetadataManagerActor(
       tokens = tokensUpdated.map(MetadataManager.normalize)
       markets = markets_.map(MetadataManager.normalize)
       //TODO(du):tickers待cmc分支实现
-      metadataManager.reset(tokens, Seq.empty, markets)
+      metadataManager.reset(tokens, Map.empty, markets)
     }
     f onComplete {
       case Success(_) =>
