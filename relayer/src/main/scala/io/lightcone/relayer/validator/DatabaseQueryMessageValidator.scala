@@ -69,7 +69,7 @@ final class DatabaseQueryMessageValidator(
     case req: GetFills.Req =>
       Future {
         val owner = normalizeAddress(req.owner)
-        val ringOpt = req.ring match {
+        val ringOpt = req.ringFilter match {
           case Some(r) =>
             val ringHash =
               normalizeHash(r.ringHash)
@@ -87,22 +87,22 @@ final class DatabaseQueryMessageValidator(
                   s"invalid fillIndex:${r.fillIndex}"
                 )
               else r.fillIndex
-            Some(GetFills.Req.Ring2(ringHash, ringIndex, fillIndex))
+            Some(GetFills.Req.RingFilter(ringHash, ringIndex, fillIndex))
           case _ => None
         }
-        val marketOpt = req.market match {
+        val marketOpt = req.marketFilter match {
           case Some(m) =>
             val tokenS = normalizeAddress(m.tokenS)
             val tokenB = normalizeAddress(m.tokenB)
-            Some(GetFills.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+            Some(GetFills.Req.MarketFilter(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
         GetFills.Req(
           owner,
           normalizeHash(req.txHash),
           normalizeHash(req.orderHash),
-          ringOpt,
           marketOpt,
+          ringOpt,
           normalizeAddress(req.wallet),
           normalizeAddress(req.miner),
           req.sort,

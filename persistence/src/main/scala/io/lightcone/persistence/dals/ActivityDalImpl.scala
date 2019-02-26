@@ -17,10 +17,8 @@
 package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
-import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.core._
-import io.lightcone.lib._
 import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
@@ -30,10 +28,11 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 class ActivityDalImpl @Inject()(
+    val shardId: String,
+    val dbConfig: DatabaseConfig[JdbcProfile]
+  )(
     implicit
-    val ec: ExecutionContext,
-    @Named("dbconfig-dal-activity") val dbConfig: DatabaseConfig[JdbcProfile],
-    timeProvider: TimeProvider)
+    val ec: ExecutionContext)
     extends ActivityDal {
 
   val query = TableQuery[ActivityTable]
@@ -60,6 +59,7 @@ class ActivityDalImpl @Inject()(
     val filters = query
       .filter(_.owner === owner)
       .filter(_.token === token)
+      .sortBy(c => c.timestamp.desc)
       .drop(paging.skip)
       .take(paging.size)
     db.run(filters.result)

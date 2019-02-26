@@ -166,7 +166,7 @@ message Activity {
     }
 
     message OrderCancellation {
-        string order_id         = 1;
+        repeated string order_id         = 1;
         int64  cutoff           = 2; // if order_id is not "", this must be not 0.
         string market_pair      = 3; // dispaly as "LRC/ETH", if missing, means all markets.
         string broker           = 4; // optional
@@ -175,9 +175,6 @@ message Activity {
     message OrderSubmission {
         // Support in the future
     }
-
-    //todo: 还是为混合的，是否需要增加一个token字段，是否还需要增加market的，这样设计上
-    //或者不存储二进制，而是将字段全部展开
 
     // To query Tx records for a address "ABC", either owner or target will be ABC.
     // if owner == target == ABC, we treat  owner == ABC and ignore target.
@@ -190,6 +187,7 @@ message Activity {
     int64  timestamp            = 5; //  (indexed) may not be unique, used in sorting
     double fiat_value           = 6;
     string token                = 7;
+    int64 sequence_id           = 8;
 
     oneof detail {
         EtherTransfer       ether_transfer      = 21;

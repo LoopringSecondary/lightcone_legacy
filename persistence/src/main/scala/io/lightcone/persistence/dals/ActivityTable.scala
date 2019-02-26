@@ -36,6 +36,7 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
   def timestamp = column[Long]("timestamp")
   def fiatValue = column[Double]("fiat_value")
   def detail = column[Array[Byte]]("detail")
+  def sequenceId = column[Long]("detail")
 
   def * =
     (
@@ -46,7 +47,8 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
       activityType,
       timestamp,
       fiatValue,
-      detail
+      detail,
+      sequenceId
     ) <> ({ tuple =>
       val t = tuple._5
       val detailBytes = tuple._8
@@ -86,7 +88,8 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
         activityType = t,
         timestamp = tuple._6,
         fiatValue = tuple._7,
-        detail = detailValue
+        detail = detailValue,
+        sequenceId = tuple._9
       )
     }, { activity: Activity =>
       val detailBytes = activity.activityType match {
@@ -119,7 +122,8 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
           activity.activityType,
           activity.timestamp,
           activity.fiatValue,
-          detailBytes
+          detailBytes,
+          activity.sequenceId
         )
       )
     })

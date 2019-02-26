@@ -63,26 +63,32 @@ class FillServiceSpec extends ServiceSpec[FillService] {
     assert(r3_3.length == 3)
 
     info("query fills: by owner and market")
-    val q4 = Req(owner = owner1, market = Some(Req.Market(tokenS1, tokenB1)))
+    val q4 = Req(
+      owner = owner1,
+      marketFilter = Some(Req.MarketFilter(tokenS1, tokenB1))
+    )
     val r4 = Await.result(service.getFills(q4).mapTo[Seq[Fill]], 5.second)
     val c4 = Await.result(service.countFills(q4).mapTo[Int], 5.second)
     assert(r4.length == 1 && c4 == 1)
     val q5 =
-      Req(owner = owner1, market = Some(Req.Market(tokenS1, tokenB1, true)))
+      Req(
+        owner = owner1,
+        marketFilter = Some(Req.MarketFilter(tokenS1, tokenB1, true))
+      )
     val r5 = Await.result(service.getFills(q5).mapTo[Seq[Fill]], 5.second)
     val c5 = Await.result(service.countFills(q5).mapTo[Int], 5.second)
     assert(r5.length == 2 && c5 == 2)
 
     info("query fills: by ring")
-    val q6 = Req(ring = Some(Req.Ring2(hash2)))
+    val q6 = Req(ringFilter = Some(Req.RingFilter(hash2)))
     val r6 = Await.result(service.getFills(q6).mapTo[Seq[Fill]], 5.second)
     val c6 = Await.result(service.countFills(q6).mapTo[Int], 5.second)
     assert(r6.length == 2 && c6 == 2)
-    val q7 = Req(ring = Some(Req.Ring2(hash2, "2", "1")))
+    val q7 = Req(ringFilter = Some(Req.RingFilter(hash2, "2", "1")))
     val r7 = Await.result(service.getFills(q7).mapTo[Seq[Fill]], 5.second)
     val c7 = Await.result(service.countFills(q7).mapTo[Int], 5.second)
     assert(r7.length == 1 && c7 == 1)
-    val q8 = Req(ring = Some(Req.Ring2(hash2, "2", "2")))
+    val q8 = Req(ringFilter = Some(Req.RingFilter(hash2, "2", "2")))
     val r8 = Await.result(service.getFills(q8).mapTo[Seq[Fill]], 5.second)
     val c8 = Await.result(service.countFills(q8).mapTo[Int], 5.second)
     assert(r8.isEmpty && c8 == 0)
@@ -92,8 +98,8 @@ class FillServiceSpec extends ServiceSpec[FillService] {
       owner = owner1,
       txHash = hash1,
       orderHash = hash1,
-      market = Some(Req.Market(tokenS1, tokenB1)),
-      ring = Some(Req.Ring2(hash1, "1", "0")),
+      marketFilter = Some(Req.MarketFilter(tokenS1, tokenB1)),
+      ringFilter = Some(Req.RingFilter(hash1, "1", "0")),
       wallet = wallet,
       miner = miner
     )
@@ -104,8 +110,8 @@ class FillServiceSpec extends ServiceSpec[FillService] {
       owner = owner2,
       txHash = hash1,
       orderHash = hash1,
-      market = Some(Req.Market(tokenS1, tokenB1)),
-      ring = Some(Req.Ring2(hash1, "1", "0")),
+      marketFilter = Some(Req.MarketFilter(tokenS1, tokenB1)),
+      ringFilter = Some(Req.RingFilter(hash1, "1", "0")),
       wallet = wallet,
       miner = miner
     )

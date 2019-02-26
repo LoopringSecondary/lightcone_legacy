@@ -61,10 +61,10 @@ class FillDalImpl @Inject()(
 
   def getFills(request: GetFills.Req): Future[Seq[Fill]] = {
     val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
-      request.market
+      request.marketFilter
     )
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      request.ring
+      request.ringFilter
     )
     val filters = queryFilters(
       getOptString(request.owner),
@@ -86,10 +86,10 @@ class FillDalImpl @Inject()(
 
   def countFills(request: GetFills.Req): Future[Int] = {
     val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
-      request.market
+      request.marketFilter
     )
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      request.ring
+      request.ringFilter
     )
     val filters = queryFilters(
       getOptString(request.owner),
@@ -161,7 +161,7 @@ class FillDalImpl @Inject()(
   }
 
   private def getMarketQueryParameters(
-      marketOpt: Option[GetFills.Req.Market]
+      marketOpt: Option[GetFills.Req.MarketFilter]
     ) = {
     marketOpt match {
       case Some(m)
@@ -177,7 +177,9 @@ class FillDalImpl @Inject()(
     }
   }
 
-  private def getRingQueryParameters(ringOpt: Option[GetFills.Req.Ring2]) = {
+  private def getRingQueryParameters(
+      ringOpt: Option[GetFills.Req.RingFilter]
+    ) = {
     ringOpt match {
       case Some(r) =>
         val ringHash = getOptString(r.ringHash)

@@ -28,7 +28,7 @@ class ActivityServiceSpec extends ServiceSpec[ActivityService] {
   implicit var dal: ActivityDal = _
 
   def getService = {
-    dal = new ActivityDalImpl()
+    dal = new ActivityDalImpl("1", dbConfig)
     new ActivityServiceImpl()
   }
 
