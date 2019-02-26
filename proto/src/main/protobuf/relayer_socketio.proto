@@ -34,7 +34,8 @@ message AccountUpdate {
 
 message SocketIOSubscription {
     message Ack { // we only need to return a general message
-        string message                  = 1;
+        io.lightcone.core.ErrorCode error   = 1;
+        string message                      = 2;
     }
 
     // subscribe for message Activity defined in persistence.proto

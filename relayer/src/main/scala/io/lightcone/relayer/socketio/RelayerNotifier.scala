@@ -24,25 +24,61 @@ import io.lightcone.relayer.data._
 class RelayerNotifier() extends SocketIONotifier {
   import SocketIOSubscription._
 
-  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean =
-    (subscription.paramsForAccounts.isEmpty ||
-      (subscription.getParamsForAccounts.addresses.nonEmpty && subscription.getParamsForAccounts.addresses
-        .forall(Address.isValid))) &&
-      (subscription.paramsForActivities.isEmpty ||
-        (subscription.getParamsForActivities.addresses.nonEmpty && subscription.getParamsForActivities.addresses
-          .forall(Address.isValid))) &&
-      (subscription.paramsForFills.isEmpty ||
-        (subscription.getParamsForFills.market.isDefined && subscription.getParamsForFills.getMarket
-          .isValid())) &&
-      (subscription.paramsForOrderbook.isEmpty ||
-        (subscription.getParamsForOrderbook.market.isDefined && subscription.getParamsForOrderbook.getMarket
-          .isValid())) &&
-      (subscription.paramsForOrders.isEmpty ||
-        (subscription.getParamsForOrders.addresses.nonEmpty && subscription.getParamsForOrders.addresses
-          .forall(Address.isValid))) &&
-      (subscription.paramsForTickers.isEmpty ||
-        (subscription.getParamsForTickers.market.isDefined && subscription.getParamsForTickers.getMarket
-          .isValid()))
+  def checkSubscriptionValidation(
+      subscription: SocketIOSubscription
+    ): Option[String] = {
+    subscription match {
+      case SocketIOSubscription(Some(params), _, _, _, _, _, _, _, _)
+          if params.addresses.isEmpty ||
+            !params.addresses.forall(Address.isValid) =>
+        Some(
+          s"invalid ParamsForActivities:$params, " +
+            s"addresses shouldn't be empty and must be valid ethereum addresses"
+        )
+
+      case SocketIOSubscription(_, Some(paramsForOrders), _, _, _, _, _, _, _)
+          if paramsForOrders.addresses.isEmpty ||
+            !paramsForOrders.addresses.forall(Address.isValid) =>
+        Some(
+          s"invalid ParamsForOrders:$paramsForOrders, " +
+            s"addresses shouldn't be empty and must be valid ethereum addresses"
+        )
+
+      case SocketIOSubscription(_, _, Some(paramsForFills), _, _, _, _, _, _)
+          if paramsForFills.market.isEmpty ||
+            !paramsForFills.getMarket.isValid() =>
+        Some(
+          s"invalid ParamsForFills:$paramsForFills," +
+            s" market shouldn't be null and market token addresses must be valid ethereum addresses"
+        )
+
+      case SocketIOSubscription(_, _, _, Some(params), _, _, _, _, _)
+          if params.market.isEmpty || !params.getMarket.isValid() =>
+        Some(
+          s"invalid ParamsForOrderbook:$params, " +
+            s"market shouldn't be null and market token addresses must be valid ethereum addresses"
+        )
+
+      case SocketIOSubscription(_, _, _, _, _, _, Some(paramsForTickers), _, _)
+          if paramsForTickers.market.isEmpty ||
+            !paramsForTickers.getMarket.isValid() =>
+        Some(
+          s"invalid paramsForTickers:$paramsForTickers," +
+            s" market shouldn't be null and market token addresses must be valid ethereum addresses"
+        )
+
+      case SocketIOSubscription(_, _, _, _, _, _, _, _, Some(paramsForAccounts))
+          if paramsForAccounts.addresses.isEmpty ||
+            !paramsForAccounts.addresses.forall(Address.isValid) =>
+        Some(
+          s"invalid ParamsForAccounts:$paramsForAccounts, " +
+            s"addresses shouldn't be empty and must be valid ethereum addresses"
+        )
+
+      case _ => None
+    }
+
+  }
 
   def generateNotification(
       evt: AnyRef,
@@ -56,22 +92,28 @@ class RelayerNotifier() extends SocketIONotifier {
             .contains(e.getTokenBalance.token)))
         Some(Notification(account = Some(e)))
       else None
+
     case e: Activity =>
       if (subscription.paramsForActivities.isDefined &&
           subscription.getParamsForActivities.addresses.contains(e.owner))
         Some(Notification(activity = Some(e)))
       else None
+
     case e: Fill =>
       if (subscription.paramsForFills.isDefined &&
-          (subscription.getParamsForFills.address.isEmpty || subscription.getParamsForFills.address == e.owner)
+          (subscription.getParamsForFills.address.isEmpty ||
+          subscription.getParamsForFills.address == e.owner)
           && (MarketHash(subscription.getParamsForFills.getMarket) ==
             MarketHash(MarketPair(e.tokenB, e.tokenS))))
         Some(Notification(fill = Some(e)))
       else None
+
     case e: Orderbook.Update =>
-      if (subscription.paramsForOrderbook.isDefined && subscription.getParamsForOrderbook.market == e.marketPair)
+      if (subscription.paramsForOrderbook.isDefined &&
+          subscription.getParamsForOrderbook.market == e.marketPair)
         Some(Notification(orderbook = Some(e)))
       else None
+
     case order: RawOrder =>
       if (subscription.paramsForOrders.isDefined && subscription.getParamsForOrders.addresses
             .contains(order.owner) && (subscription.getParamsForOrders.market.isEmpty || MarketHash(
@@ -79,10 +121,12 @@ class RelayerNotifier() extends SocketIONotifier {
           ) == MarketHash(MarketPair(order.tokenB, order.tokenS))))
         Some(Notification(order = Some(order)))
       else None
+
     case e: TokenMetadata =>
       if (subscription.paramsForTokens.isDefined)
         Some(Notification(tokenMetadata = Some(e)))
       else None
+
     case e: MarketMetadata =>
       if (subscription.paramsForMarkets.isDefined)
         Some(Notification(marketMetadata = Some(e)))

@@ -18,6 +18,7 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.listener.DataListener
+import io.lightcone.core.ErrorCode
 import io.lightcone.lib.Address
 import io.lightcone.relayer.data._
 import org.slf4s.Logging
@@ -35,15 +36,18 @@ abstract class SocketIONotifier
       subscription: SocketIOSubscription
     ): Option[Notification]
 
-  def isSubscriptionValid(subscription: SocketIOSubscription): Boolean
+  def checkSubscriptionValidation(
+      subscription: SocketIOSubscription
+    ): Option[String]
 
   private var clients = Seq.empty[SocketIOSubscriber]
 
   def notifyEvent(event: AnyRef): Unit = {
     clients = clients.filter(_.client.isChannelOpen)
 
-    val targets = clients
-      .map(client => client -> generateNotification(event, client.subscription))
+    val targets = clients.map { client =>
+      client -> generateNotification(event, client.subscription)
+    }
 
     targets.foreach {
       case (client, Some(notification)) =>
@@ -104,21 +108,24 @@ abstract class SocketIONotifier
       ackSender: AckRequest
     ) = {
 
-    val isValid = isSubscriptionValid(subscription)
+    val error = checkSubscriptionValidation(subscription)
 
     if (ackSender.isAckRequested) {
       val ack =
-        if (isValid) {
+        if (error.isEmpty) {
           SocketIOSubscription.Ack(
             message = s"$subscription successfully subscribed $eventName"
           )
         } else {
-          SocketIOSubscription.Ack(message = s"invalid subscription")
+          SocketIOSubscription.Ack(
+            message = error.get,
+            error = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION
+          )
         }
       ackSender.sendAckData(ack)
     }
 
-    if (isValid) {
+    if (error.isEmpty) {
       val wrapped =
         new SocketIOSubscriber(client, normalizeSubscription(subscription))
       clients = wrapped +: clients.filterNot(_ == wrapped)
