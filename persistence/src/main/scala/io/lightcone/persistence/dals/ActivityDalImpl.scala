@@ -19,7 +19,7 @@ package io.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
+import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
@@ -84,7 +84,7 @@ class ActivityDalImpl @Inject()(
       case Some("") =>
         query
           .filter(_.owner === owner)
-          .filter(_.token === NumericConversion.toHexString(BigInt(0))) //以0地址表示以太坊
+          .filter(_.token === Address.ZERO.toString()) //以0地址表示以太坊
       case Some(value) =>
         query
           .filter(_.owner === owner)
