@@ -62,6 +62,8 @@ class MetadataRefresher(
     extends InitializationRetryActor
     with Stash
     with ActorLogging {
+
+  @inline def externalCrawlerActor = actors.get(ExternalCrawlerActor.name)
   @inline def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
@@ -70,9 +72,17 @@ class MetadataRefresher(
   private var tokenInfos = Seq.empty[TokenInfo]
   private var markets = Seq.empty[MarketMetadata]
 
+  private var tickerRecords: Seq[TokenTickerRecord] =
+    Seq.empty[TokenTickerRecord]
+  private var tokenTickersInUSD: Seq[TokenTicker] =
+    Seq.empty[TokenTicker] // USD price
+  private var marketTickers: Seq[MarketTicker] =
+    Seq.empty[MarketTicker] // price represent exchange rate of market (price of market LRC-WETH is 0.01)
+
   override def initialize() = {
     val f = for {
       _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
+      _ <- mediator ? Subscribe(ExternalCrawlerActor.pubsubTopic, self)
       _ <- refreshMetadata()
     } yield {}
 
@@ -91,6 +101,12 @@ class MetadataRefresher(
         _ = getLocalActors().foreach(_ ! req)
       } yield Unit
 
+    case req: TokenTickerChanged =>
+      for {
+        _ <- refreshTicker()
+        _ = getLocalActors().foreach(_ ! req)
+      } yield Unit
+
     case _: GetMarkets.Req =>
       //TODO(du):
       sender ! GetMarkets.Res()
@@ -102,20 +118,20 @@ class MetadataRefresher(
 
   private def refreshMetadata() =
     for {
-      tokenMetadatas_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
+      tokens_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
         .mapTo[LoadTokenMetadata.Res]
-        .map(_.tokens)
-      // TODO(du) tokeninfos
       markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
         .mapTo[LoadMarketMetadata.Res]
         .map(_.markets)
     } yield {
-      assert(tokenMetadatas_.nonEmpty)
+      assert(tokens_.metadatas.nonEmpty)
+      assert(tokens_.infos.nonEmpty)
       assert(markets_.nonEmpty)
-      tokenMetadatas = tokenMetadatas_.map(MetadataManager.normalize)
+      tokenMetadatas = tokens_.metadatas.map(MetadataManager.normalize)
+      tokenInfos = tokens_.infos
       markets = markets_.map(MetadataManager.normalize)
-      //TODO(du):tickers待cmc分支实现
-      metadataManager.reset(tokenMetadatas, tokenInfos, Map.empty, markets_)
+
+      checkAndRest()
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
@@ -127,6 +143,30 @@ class MetadataRefresher(
       context.system.actorSelection(str.format(OrderbookManagerActor.name)),
       context.system.actorSelection(str.format(MultiAccountManagerActor.name))
     )
+  }
+
+  private def refreshTicker() =
+    for {
+      tickers <- (externalCrawlerActor ? GetTokenTickers.Req())
+        .mapTo[GetTokenTickers.Res]
+    } yield {
+      assert(tickers.tickerRecords.nonEmpty)
+      assert(tickers.tokenTickers.nonEmpty)
+      assert(tickers.marketTickers.nonEmpty)
+      tickerRecords = tickers.tickerRecords
+      tokenTickersInUSD = tickers.tokenTickers
+      marketTickers = tickers.marketTickers
+
+      checkAndRest()
+    }
+
+  private def checkAndRest(): Unit = {
+    assert(tokenMetadatas.nonEmpty)
+    assert(tokenInfos.nonEmpty)
+    assert(markets.nonEmpty)
+    assert(tokenTickersInUSD.nonEmpty)
+    val tickerMap = tokenTickersInUSD.map(t => (t.symbol, t.price)).toMap
+    metadataManager.reset(tokenMetadatas, tokenInfos, tickerMap, markets)
   }
 
 }

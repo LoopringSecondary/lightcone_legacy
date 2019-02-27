@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.relayer.implicits
 
-import io.lightcone.persistence.TokenTickerRecord
-import scala.concurrent.Future
+import io.lightcone.core.Currency
+import io.lightcone.lib.NumericConversion
 
-trait FiatExchangeRateFetcher {
+private[relayer] class RichCurrency(ticker: Currency) {
 
-  def fetchExchangeRates(fiat: Seq[String]): Future[Seq[TokenTickerRecord]]
-
+  def getAddress() = {
+    if (ticker.isEth) {
+      "0x0"
+    } else {
+      NumericConversion.toHexString(BigInt(Math.abs(ticker.name.hashCode)))
+    }
+  }
 }

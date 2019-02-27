@@ -201,13 +201,14 @@ message Activity {
 
 message TokenTickerRecord {
     string token_address        = 1;
-    double price                = 2;  //默认存储的为usd价格
-    double volume_24h           = 3;
-    double percent_change_1h    = 4;
-    double percent_change_24h   = 5;
-    double percent_change_7d    = 6;
-    double market_cap           = 7;
-    int64 timestamp             = 8;
-    bool  is_valid              = 9;
-    string data_source          = 10;
+    string symbol               = 2;
+    double price                = 3;  //默认存储的为usd价格
+    double volume_24h           = 4;
+    double percent_change_1h    = 5;
+    double percent_change_24h   = 6;
+    double percent_change_7d    = 7;
+    double market_cap           = 8;
+    int64 timestamp             = 9;
+    bool  is_valid              = 10;
+    string data_source          = 11;
 }

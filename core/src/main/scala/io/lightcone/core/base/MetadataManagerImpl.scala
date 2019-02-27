@@ -47,7 +47,7 @@ final class MetadataManagerImpl(
       val t = new Token(
         Some(m),
         tokenInfoMap.get(m.symbol),
-        tickerMap.getOrElse(m.symbol, 0)
+        tickerMap.getOrElse(m.symbol, 0.0)
       )
       tokenAddressMap += m.address -> t
       tokenSymbolMap += m.symbol -> t

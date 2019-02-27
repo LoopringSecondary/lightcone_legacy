@@ -35,7 +35,6 @@ import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -73,6 +72,7 @@ class CoreModule(
     //TODO(yongfeng):去除trade和tx的dal时，同时去除该部分
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
+      "dbconfig-dal-token-info",
       "dbconfig-dal-order",
       "dbconfig-dal-trade",
       "dbconfig-dal-ring",
@@ -82,7 +82,8 @@ class CoreModule(
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-dal-ohlc-data",
-      "dbconfig-dal-fill"
+      "dbconfig-dal-fill",
+      "dbconfig-token-ticker-record"
     )
 
     // --- bind dals ---------------------
@@ -95,6 +96,8 @@ class CoreModule(
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
+    bind[TokenTickerRecordDal].to[TokenTickerRecordDalImpl].asEagerSingleton
+    bind[TokenInfoDal].to[TokenInfoDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton

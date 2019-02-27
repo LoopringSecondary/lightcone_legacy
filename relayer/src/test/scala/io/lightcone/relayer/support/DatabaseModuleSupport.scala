@@ -27,6 +27,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val dbConfig = dbConfig1
 
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
+  implicit val tokenInfoDal = new TokenInfoDalImpl()
   implicit val orderDal = new OrderDalImpl
   implicit val fillDal = new FillDalImpl
   implicit val ringDal = new RingDalImpl
@@ -34,6 +35,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val settlementTxDal = new SettlementTxDalImpl
   implicit val marketMetadataDal = new MarketMetadataDalImpl()
   implicit val missingBlocksRecordDal = new MissingBlocksRecordDalImpl()
+  implicit val tokenTickerRecordDal = new TokenTickerRecordDalImpl()
   implicit val orderService = new OrderServiceImpl
   implicit val fillService = new FillServiceImpl
   implicit val ringService = new RingServiceImpl
@@ -47,6 +49,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
 
   implicit val dbModule = new DatabaseModule(
     tokenMetadataDal,
+    tokenInfoDal,
     orderDal,
     fillDal,
     ringDal,
@@ -54,6 +57,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     settlementTxDal,
     marketMetadataDal,
     missingBlocksRecordDal,
+    tokenTickerRecordDal,
     ohlcDataDal,
     orderService,
     fillService,
@@ -67,6 +71,9 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   dbModule.createTables()
 
   tokenMetadataDal.saveTokens(TOKENS)
+  tokenTickerRecordDal.saveTickers(TOKENS.map { t =>
+    TokenTickerRecord(t.address, t.symbol)
+  })
   marketMetadataDal.saveMarkets(MARKETS)
 
   actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.relayer
 
-import io.lightcone.persistence.TokenTickerRecord
-import scala.concurrent.Future
+import io.lightcone.core.Currency
 
-trait FiatExchangeRateFetcher {
+package object implicits {
 
-  def fetchExchangeRates(fiat: Seq[String]): Future[Seq[TokenTickerRecord]]
-
+  @inline
+  implicit class Rich_Currency(currency: Currency)
+      extends RichCurrency(currency)
 }

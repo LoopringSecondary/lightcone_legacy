@@ -47,7 +47,7 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
         (actors.get(MetadataManagerActor.name) ? LoadTokenMetadata.Req())
           .mapTo[LoadTokenMetadata.Res]
       val res = Await.result(f, timeout.duration)
-      res.tokens.nonEmpty
+      res.metadatas.nonEmpty
     }
   )
   catch {

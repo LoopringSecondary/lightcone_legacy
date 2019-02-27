@@ -62,7 +62,6 @@ class MetadataManagerActor(
     extends InitializationRetryActor
     with RepeatedJobActor
     with ActorLogging {
-
   import ErrorCode._
 
   val selfConfig = config.getConfig(MetadataManagerActor.name)
@@ -79,7 +78,7 @@ class MetadataManagerActor(
   override def initialize() = {
     val f = for {
       tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokens()
-      // TODO(du) tokeninfos
+      tokenInfos_ <- dbModule.tokenInfoDal.getTokens()
       markets_ <- dbModule.marketMetadataDal.getMarkets()
       tokensUpdated <- Future.sequence(tokenMetadatas_.map { token =>
         for {
@@ -101,12 +100,13 @@ class MetadataManagerActor(
           )
       })
     } yield {
-      assert(tokensUpdated nonEmpty)
+      assert(tokenMetadatas_.nonEmpty)
+      assert(tokenInfos_.nonEmpty)
       assert(markets_ nonEmpty)
+      assert(tokensUpdated nonEmpty)
       tokenMetadatas = tokensUpdated.map(MetadataManager.normalize)
+      tokenInfos = tokenInfos_
       markets = markets_.map(MetadataManager.normalize)
-      //TODO(du):tickers待cmc分支实现
-      metadataManager.reset(tokenMetadatas, tokenInfos, Map.empty, markets)
     }
     f onComplete {
       case Success(_) =>
@@ -128,37 +128,6 @@ class MetadataManagerActor(
   )
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
-
-    case req: SaveTokenMetadatas.Req =>
-      (for {
-        saved <- dbModule.tokenMetadataDal.saveTokens(req.tokens)
-        tokens_ <- dbModule.tokenMetadataDal.getTokens()
-      } yield {
-        if (saved.nonEmpty) {
-          checkAndPublish(Some(tokens_), None)
-        }
-        SaveTokenMetadatas.Res(saved)
-      }).sendTo(sender)
-
-    case req: UpdateTokenMetadata.Req =>
-      (for {
-        burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
-          token = req.token.get.address
-        )).mapTo[GetBurnRate.Res]
-        result <- dbModule.tokenMetadataDal
-          .updateToken(
-            req.token.get.copy(
-              burnRateForMarket = burnRateRes.forMarket,
-              burnRateForP2P = burnRateRes.forP2P
-            )
-          )
-        tokens_ <- dbModule.tokenMetadataDal.getTokens()
-      } yield {
-        if (result == ERR_NONE) {
-          checkAndPublish(Some(tokens_), None)
-        }
-        UpdateTokenMetadata.Res(result)
-      }).sendTo(sender)
 
     case req: TokenBurnRateChangedEvent =>
       if (req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess) {
@@ -229,10 +198,10 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case req: LoadTokenMetadata.Req =>
-      sender ! LoadTokenMetadata.Res(tokenMetadatas)
+    case _: LoadTokenMetadata.Req =>
+      sender ! LoadTokenMetadata.Res(tokenMetadatas, tokenInfos)
 
-    case req: LoadMarketMetadata.Req =>
+    case _: LoadMarketMetadata.Req =>
       sender ! LoadMarketMetadata.Res(markets)
   }
 

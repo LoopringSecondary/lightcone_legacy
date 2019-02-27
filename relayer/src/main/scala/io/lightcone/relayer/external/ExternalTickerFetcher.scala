@@ -19,8 +19,7 @@ package io.lightcone.relayer.external
 import io.lightcone.persistence.TokenTickerRecord
 import scala.concurrent.Future
 
-trait FiatExchangeRateFetcher {
+trait ExternalTickerFetcher {
 
-  def fetchExchangeRates(fiat: Seq[String]): Future[Seq[TokenTickerRecord]]
-
+  def fetchExternalTickers(): Future[Seq[TokenTickerRecord]]
 }

@@ -326,9 +326,14 @@ message ChainReorganizationImpact {
 enum Currency {
     NOT_USE = 0;
 
+    // fiat currency
     USD = 1;
     RMB = 2;
+    JPY = 3; // 日元
+    EUR = 4; // 欧元
+    GBP = 5; // 英镑
 
+    // quote token
     BTC = 100;
     ETH = 101;
 }

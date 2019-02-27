@@ -18,7 +18,6 @@ package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
 import io.lightcone.core.MetadataManager
-
 import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,28 +36,6 @@ final class MetadataManagerValidator(
   import ErrorCode._
 
   def validate = {
-    case req: SaveTokenMetadatas.Req =>
-      Future {
-        if (req.tokens.isEmpty)
-          throw ErrorException(
-            ERR_INVALID_ARGUMENT,
-            "Parameter tokens could not be empty"
-          )
-        // address toLowerCase, symbol toUpperCase
-        val tokens = req.tokens.map(MetadataManager.normalize)
-        req.copy(tokens = tokens)
-      }
-
-    case req: UpdateTokenMetadata.Req =>
-      Future {
-        if (req.token.isEmpty)
-          throw ErrorException(
-            ERR_INVALID_ARGUMENT,
-            "Parameter token could not be empty"
-          )
-        // address toLowerCase, symbol toUpperCase
-        req.copy(token = Some(MetadataManager.normalize(req.token.get)))
-      }
 
     case req: UpdateTokenBurnRate.Req =>
       Future {

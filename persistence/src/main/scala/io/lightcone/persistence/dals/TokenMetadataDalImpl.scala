@@ -74,8 +74,8 @@ class TokenMetadataDalImpl @Inject()(
   def getTokens() =
     db.run(query.take(Int.MaxValue).result)
 
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]] =
-    db.run(query.filter(_.address inSet tokens).result)
+  def getTokens(addresses: Seq[String]): Future[Seq[TokenMetadata]] =
+    db.run(query.filter(_.address inSet addresses).result)
 
   def updateBurnRate(
       token: String,
