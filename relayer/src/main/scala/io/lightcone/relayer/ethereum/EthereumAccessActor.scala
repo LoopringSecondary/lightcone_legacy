@@ -18,17 +18,21 @@ package io.lightcone.relayer.ethereum
 
 import akka.actor._
 import akka.cluster.singleton._
+import akka.pattern._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.google.protobuf.ByteString
 import com.typesafe.config.Config
-import io.lightcone.relayer.base._
-import io.lightcone.lib._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.lib._
+import io.lightcone.relayer.actors.PendingTxListenerActor
 import io.lightcone.relayer.base._
-import akka.pattern._
+import io.lightcone.relayer.data._
+import org.json4s.native.JsonMethods._
+import org.web3j.crypto._
+import org.json4s.DefaultFormats
+
 import scala.concurrent._
-import scala.util.Random
 
 // Owner: Yadong
 object EthereumAccessActor {
@@ -75,7 +79,9 @@ class EthereumAccessActor(
     val actors: Lookup[ActorRef])
     extends InitializationRetryActor {
 
+  implicit val formats = DefaultFormats
   private def monitor = actors.get(EthereumClientMonitor.name)
+  private def txListener = actors.get(PendingTxListenerActor.name)
 
   var connectionPools: Seq[ActorRef] = HttpConnector
     .connectorNames(config)
@@ -123,21 +129,17 @@ class EthereumAccessActor(
         .sortWith(_.height > _.height)
         .map(node => actors.get(node.nodeName))
 
-    case req: JsonRpc.RequestWithHeight =>
-      val validPools = nodes.filter(_.height >= req.height)
-      if (validPools.nonEmpty) {
-        val nodeName = validPools(Random.nextInt(validPools.size)).nodeName
-        actors.get(nodeName) forward req.req
-      } else {
-        sender ! ErrorException(
-          code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
-          message = "No accessible Ethereum node service"
-        )
-      }
-
     case msg: JsonRpc.Request => {
       if (connectionPools.nonEmpty) {
-        connectionPools.head forward msg
+        val req = parse(msg.json).extract[JsonRpcReqWrapped]
+        if (req.method.equalsIgnoreCase("eth_sendRawTransaction")) {
+          val res = (connectionPools.head ? msg)
+            .mapAs[JsonRpc.Response]
+          res.sendTo(sender)
+          decodeRawTransaction(req, res)
+        } else {
+          connectionPools.head forward msg
+        }
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -156,5 +158,43 @@ class EthereumAccessActor(
         )
       }
     }
+  }
+
+  def decodeRawTransaction(
+      req: JsonRpcReqWrapped,
+      res: Future[JsonRpc.Response]
+    ) = {
+    res.map(resp => {
+      val response = parse(resp.json).extract[JsonRpcResWrapped]
+      if (response.error.isEmpty) {
+        val rawTransaction = TransactionDecoder
+          .decode(req.params.asInstanceOf[Seq[String]].head)
+          .asInstanceOf[SignedRawTransaction]
+        val transaction = Transaction(
+          hash = response.result.toString,
+          nonce = NumericConversion
+            .toHexString(BigInt(rawTransaction.getNonce)),
+          from = rawTransaction.getFrom,
+          to = rawTransaction.getTo,
+          value = NumericConversion
+            .toHexString(BigInt(rawTransaction.getValue)),
+          gas = NumericConversion
+            .toHexString(BigInt(rawTransaction.getGasLimit)),
+          gasPrice = NumericConversion
+            .toHexString(BigInt(rawTransaction.getGasPrice)),
+          input = rawTransaction.getData,
+          r = NumericConversion.toHexString(
+            ByteString.copyFrom(rawTransaction.getSignatureData.getR)
+          ),
+          s = NumericConversion.toHexString(
+            ByteString.copyFrom(rawTransaction.getSignatureData.getS)
+          ),
+          v = NumericConversion.toHexString(
+            BigInt(rawTransaction.getSignatureData.getV.toInt)
+          )
+        )
+        txListener ! transaction
+      }
+    })
   }
 }

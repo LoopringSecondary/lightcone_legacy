@@ -92,7 +92,7 @@ class PendingTxListenerActor @Inject()(
         })
         .map(res => res.filter(_._2.result.nonEmpty))
         .map(resp => resp.map(node => node._1 -> node._2.result).toSeq)
-      txs <- Future
+      txs: Seq[Transaction] <- Future
         .sequence(hashSeqs.map { hashSeq =>
           val batchReq = BatchGetTransactions.Req(
             hashSeq._2.map(hash => GetTransactionByHash.Req(hash))
@@ -103,9 +103,13 @@ class PendingTxListenerActor @Inject()(
         })
         .map(_.flatten)
         .map(_.filter(_.nonEmpty).distinct.map(_.get))
-    } yield txs
+    } yield txs.foreach(self ! _)
   }
 
-  def ready: Receive = super.receiveRepeatdJobs
+  def ready: Receive = super.receiveRepeatdJobs orElse {
+    case tx: Transaction =>
+    //TODO(yadong) 解析Transaction，把事件发送到对应的Actor
+
+  }
 
 }

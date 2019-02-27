@@ -31,11 +31,6 @@ message JsonRpc {
         string json = 1;
     }
 
-    message RequestWithHeight{
-        Request req = 1;
-        uint32 height = 2;
-    }
-
     message Error {
         int32 code = 1;
         string message = 2;
