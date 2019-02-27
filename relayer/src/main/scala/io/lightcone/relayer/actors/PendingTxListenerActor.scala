@@ -16,33 +16,34 @@
 
 package io.lightcone.relayer.actors
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data.NewPendingTransactionFilter
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum.HttpConnector
 import javax.inject.Inject
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object PendingTxListenerActor extends DeployedAsSingleton{
+object PendingTxListenerActor extends DeployedAsSingleton {
 
   val name = "pending_transaction_listener"
 
   def start(
-             implicit
-             system: ActorSystem,
-             ec: ExecutionContext,
-             timeout: Timeout,
-             deployActorsIgnoringRoles: Boolean
-           ): ActorRef = {
-    startSingleton(Props(new PendingTxListenerActor()()))
+      implicit
+      config: Config,
+      system: ActorSystem,
+      ec: ExecutionContext,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
+    startSingleton(Props(new PendingTxListenerActor()))
   }
 
 }
-
 
 class PendingTxListenerActor @Inject()(
     implicit
@@ -53,13 +54,13 @@ class PendingTxListenerActor @Inject()(
     extends InitializationRetryActor
     with RepeatedJobActor {
 
-  val selfConfig = config.getConfig(E.name)
-  val checkInterval =
+  val selfConfig = config.getConfig(PendingTxListenerActor.name)
+  val checkInterval = selfConfig.getInt("check-interval-seconds")
   val nodeNames: Seq[String] = HttpConnector.connectorNames(config).keys.toSeq
   var filters: Map[String, String] = Map.empty
 
   override def initialize(): Future[Unit] = {
-    if (nodes.forall(actors.contains)) {
+    if (nodeNames.forall(actors.contains)) {
       Future
         .sequence(nodeNames.map { nodeName =>
           (actors.get(nodeName) ? NewPendingTransactionFilter.Req())
@@ -70,30 +71,41 @@ class PendingTxListenerActor @Inject()(
     } else Future.failed(new Exception("Ethereum is not ready"))
   }
 
-  override val repeatedJobs: Seq[Job] = {
-      Seq(
-        Job(
-          name = pending_transaction_listener,
-
-        )
+  val repeatedJobs: Seq[Job] = {
+    Seq(
+      Job(
+        name = PendingTxListenerActor.name,
+        dalayInSeconds = checkInterval,
+        run = () => getPendingTxs
       )
-
-
+    )
   }
 
   def getPendingTxs = {
-
-    filters.
-
-
-
-
+    for {
+      hashSeqs <- Future
+        .sequence(filters.map { filter =>
+          (actors.get(filter._1) ? GetFilterChanges
+            .Req(filterId = filter._2))
+            .mapAs[GetFilterChanges.Res]
+            .map(res => filter._1 -> res)
+        })
+        .map(res => res.filter(_._2.result.nonEmpty))
+        .map(resp => resp.map(node => node._1 -> node._2.result).toSeq)
+      txs <- Future
+        .sequence(hashSeqs.map { hashSeq =>
+          val batchReq = BatchGetTransactions.Req(
+            hashSeq._2.map(hash => GetTransactionByHash.Req(hash))
+          )
+          (actors.get(hashSeq._1) ? batchReq)
+            .mapAs[BatchGetTransactions.Res]
+            .map(_.resps.map(_.result))
+        })
+        .map(_.flatten)
+        .map(_.filter(_.nonEmpty).distinct.map(_.get))
+    } yield txs
   }
 
-
-
   def ready: Receive = super.receiveRepeatdJobs
-
-
 
 }
