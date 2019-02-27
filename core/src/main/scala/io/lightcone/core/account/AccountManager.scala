@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.OrderStatus._
-
 import scala.concurrent._
 
 object AccountManager {
@@ -66,32 +64,33 @@ trait AccountManager {
 
   def resubmitOrder(order: Matchable): Future[(Boolean, Map[String, Matchable])]
 
-  // soft cancel an order
-  def cancelOrder(
-      orderId: String,
-      status: OrderStatus = STATUS_SOFT_CANCELLED_BY_USER
-    ): Future[(Boolean, Map[String, Matchable])]
-  def cancelOrders(orderIds: Seq[String]): Future[Map[String, Matchable]]
-  def cancelOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
-  def cancelAllOrders(): Future[Map[String, Matchable]]
-
-  // cancel an order based on onchain cancel event
+  // mark an order is cancelled on chain
   def hardCancelOrder(
       block: Long,
       orderId: String
     ): Future[Map[String, Matchable]]
 
-  // hard cancel multiple orders
-  def handleCutoff(
-      block: Long,
-      cutoff: Long
-    ): Future[Map[String, Matchable]]
+  // soft cancel an order
+  def cancelOrder(
+      orderId: String,
+      status: OrderStatus = OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+    ): Future[(Boolean, Map[String, Matchable])]
 
-  def handleCutoff(
-      block: Long,
-      cutoff: Long,
-      marketHash: String
-    ): Future[Map[String, Matchable]]
+  def cancelOrders(orderIds: Seq[String]): Future[Map[String, Matchable]]
+  def cancelOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
+  def cancelAllOrders(): Future[Map[String, Matchable]]
 
   def purgeOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
+
+  def doesOrderSatisfyCutoff(
+      orderValidSince: Long,
+      marketHash: String
+    ): Boolean
+
+  def setCutoff(
+      block: Long,
+      cutoff: Long,
+      marketHash: Option[String]
+    ): Future[Map[String, Matchable]]
+
 }

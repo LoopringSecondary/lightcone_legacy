@@ -17,7 +17,6 @@
 package io.lightcone.persistence.dals
 
 import com.google.inject.name.Named
-
 import io.lightcone.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
@@ -99,7 +98,7 @@ class TokenMetadataDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def InvalidateToken(address: String): Future[ErrorCode] =
+  def invalidateToken(address: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query

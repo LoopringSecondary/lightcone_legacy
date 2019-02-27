@@ -35,11 +35,9 @@ class TokenMetadataTable(tag: Tag)
   def address = columnAddress("address", O.PrimaryKey, O.Unique)
   def unit = column[String]("unit")
   def decimals = column[Int]("decimals")
-  def websiteUrl = column[String]("website_url")
   def precision = column[Int]("precision")
   def burnRateForMarket = column[Double]("burn_rate_for_market")
   def burnRateForP2P = column[Double]("burn_rate_for_p2p")
-  def usdPrice = column[Double]("usd_price")
   def updateAt = column[Long]("update_at")
 
   def idx_type = index("idx_type", (`type`), unique = false)
@@ -56,11 +54,9 @@ class TokenMetadataTable(tag: Tag)
       address,
       unit,
       decimals,
-      websiteUrl,
       precision,
       burnRateForMarket,
       burnRateForP2P,
-      usdPrice,
       updateAt
     ) <> ((TokenMetadata.apply _).tupled, TokenMetadata.unapply)
 }

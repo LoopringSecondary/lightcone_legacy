@@ -14,25 +14,15 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer.external
 
-import spire.math.Rational
+import scala.concurrent.Future
 
-class Token(val meta: TokenMetadata) {
-  val scaling = Rational(BigInt(10).pow(meta.decimals))
+trait FiatExchangeRateFetcher {
 
-  def fromWei(amount: BigInt): Double =
-    (Rational(amount) / scaling).doubleValue
-
-  def fromWei(
-      amount: BigInt,
-      precision: Int
-    ): Double = {
-    BigDecimal(fromWei(amount))
-      .setScale(precision, BigDecimal.RoundingMode.HALF_UP)
-      .doubleValue
-  }
-
-  def toWei(amount: Double): BigInt =
-    (Rational(amount) * scaling).toBigInt
+  //默认为：usd -> cny
+  def fetchExchangeRates(
+      baseCurrency: String = "CNY",
+      quoteCurrency: String = "USD"
+    ): Future[Double]
 }

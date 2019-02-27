@@ -77,10 +77,9 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_INVALID_SIG                        = 2010;
     ERR_ORDER_VALIDATION_INVALID                            = 2011;
     ERR_ORDER_VALIDATION_INVALID_CUTOFF                     = 2012;
-    ERR_ORDER_VALIDATION_INVALID_CUTOFF_TRADING_PAIR        = 2013;
-    ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2014;
-    ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2015;
-    ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2016;
+    ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2013;
+    ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2014;
+    ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2015;
 
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
@@ -173,12 +172,20 @@ message TokenMetadata {
     string   address                = 5;
     string   unit                   = 6;
     int32    decimals               = 7;
-    string   website_url            = 8;
-    int32    precision              = 9;
-    double   burn_rate_for_market   = 10;
-    double   burn_rate_for_p2p      = 11;
-    double   usd_price              = 12;
-    int64    updated_at             = 13;
+    int32    precision              = 8;
+    double   burn_rate_for_market   = 9;
+    double   burn_rate_for_p2p      = 10;
+    int64    updated_at             = 11;
+}
+
+message TokenInfo {
+    string symbol = 1;
+    double circulating_supply = 2;
+    double total_supply = 3;
+    double max_supply = 4;
+    int32  cmc_rank = 5;
+    string website_url = 6;
+    int64  updated_at = 7;
 }
 
 message MarketMetadata {
@@ -311,5 +318,43 @@ message ChainReorganizationImpact {
    repeated BalanceOfToken accounts  = 2;
 }
 
+enum Currency {
+    NOT_USE = 0;
 
+    USD = 1;
+    RMB = 2;
 
+    BTC = 100;
+    ETH = 101;
+}
+
+message MarketTicker {
+    string base_token_symbol = 1;  // GTO
+    string quote_token_symbol = 2; // WETH
+    double exchange_rate = 3; // exchange rate for base token to quote token
+    double price = 4; // price of quote currency
+    double volume_24h = 5; // volume of quote token
+    double percent_change_1h = 6;
+    double percent_change_24h = 7;
+    double percent_change_7d = 8;
+}
+
+message TokenTicker {
+    string symbol = 1;  // GTO
+    double price = 2; // price of current currency
+    double volume_24h = 3; // volume of current currency
+    double percent_change_1h = 4;
+    double percent_change_24h = 5;
+    double percent_change_7d = 6;
+}
+
+message Market {
+    MarketMetadata metadata = 1;
+    MarketTicker   ticker   = 2;
+}
+
+message Token {
+    TokenMetadata metadata = 1;
+    TokenInfo     info     = 2;
+    double        price    = 3; // to given quote token in request
+}

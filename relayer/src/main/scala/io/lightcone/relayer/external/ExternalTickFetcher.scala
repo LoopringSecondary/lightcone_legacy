@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.relayer.external
 
-trait AccountCutoffState {
+import io.lightcone.persistence.TokenTickerRecord
+import scala.concurrent.Future
 
-  def setTradingPairCutoff(
-      marketHash: String,
-      cutoff: Long
-    ): Unit
-  def setCutoff(cutoff: Long): Unit
-  def isOrderCutoffByOwner(validSince: Long): Boolean
-
-  def isOrderCutoffByTradingPair(
-      marketHash: String,
-      validSince: Long
-    ): Boolean
+trait ExternalTickerFetcher {
+  def fetchExternalTickers(): Future[Seq[TokenTickerRecord]]
 }
