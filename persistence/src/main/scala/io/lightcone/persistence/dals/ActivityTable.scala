@@ -80,26 +80,33 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
     ) = {
     activityType match {
       case ETHER_TRANSFER_OUT | ETHER_TRANSFER_IN =>
-        val v = Activity.EtherTransfer.parseFrom(detailBytes)
-        Activity.Detail.EtherTransfer(v)
+        Activity.Detail.EtherTransfer(
+          Activity.EtherTransfer.parseFrom(detailBytes)
+        )
       case ETHER_WRAP | ETHER_UNWRAP =>
-        val v = Activity.EtherConversion.parseFrom(detailBytes)
-        Activity.Detail.EtherConversion(v)
+        Activity.Detail.EtherConversion(
+          Activity.EtherConversion.parseFrom(detailBytes)
+        )
       case TOKEN_TRANSFER_OUT | TOKEN_TRANSFER_IN =>
-        val v = Activity.TokenTransfer.parseFrom(detailBytes)
-        Activity.Detail.TokenTransfer(v)
+        Activity.Detail.TokenTransfer(
+          Activity.TokenTransfer.parseFrom(detailBytes)
+        )
       case TOKEN_AUTH =>
-        val v = Activity.TokenAuth.parseFrom(detailBytes)
-        Activity.Detail.TokenAuth(v)
+        Activity.Detail.TokenAuth(
+          Activity.TokenAuth.parseFrom(detailBytes)
+        )
       case TRADE_SELL | TRADE_BUY =>
-        val v = Activity.Trade.parseFrom(detailBytes)
-        Activity.Detail.Trade(v)
+        Activity.Detail.Trade(
+          Activity.Trade.parseFrom(detailBytes)
+        )
       case ORDER_CANCEL =>
-        val v = Activity.OrderCancellation.parseFrom(detailBytes)
-        Activity.Detail.OrderCancellation(v)
+        Activity.Detail.OrderCancellation(
+          Activity.OrderCancellation.parseFrom(detailBytes)
+        )
       case ORDER_SUBMIT => // todo:
-        val v = Activity.OrderSubmission.parseFrom(detailBytes)
-        Activity.Detail.OrderSubmission(v)
+        Activity.Detail.OrderSubmission(
+          Activity.OrderSubmission.parseFrom(detailBytes)
+        )
       case _ =>
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
