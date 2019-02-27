@@ -295,6 +295,32 @@ message BatchGetUncle {
     }
 }
 
+message NewPendingTransactionFilter{
+    message Req {
+    }
+
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
+}
+
+message GetFilterChanges{
+    message Req {
+        string filter_id = 1;
+    }
+
+    message Res  {
+        int32 id = 1;
+        string jsonrpc = 2;
+        repeated string result = 3;
+        EthRpcError error = 4;
+    }
+
+}
+
 
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
