@@ -33,7 +33,7 @@ import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.data.Notify
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
@@ -64,13 +64,7 @@ class CoreDeployer @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
-    balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-    transactionNotifier: SocketIONotifier[SubscribeTransaction],
-    orderNotifier: SocketIONotifier[SubscribeOrder],
-    tradeNotifier: SocketIONotifier[SubscribeFill],
-    tickerNotifier: SocketIONotifier[SubscribeTicker],
-    orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
-    transferNotifier: SocketIONotifier[SubscribeTransfer],
+    socketIONotifier: SocketIONotifier,
     system: ActorSystem)
     extends Object
     with Logging {
@@ -110,10 +104,7 @@ class CoreDeployer @Inject()(
         EthereumAccessActor.name, //
         EthereumAccessActor.start
       )
-      .add(
-        EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start
-      )
+      .add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.start)
       .add(
         MissingBlocksEventExtractorActor.name,
         MissingBlocksEventExtractorActor.start

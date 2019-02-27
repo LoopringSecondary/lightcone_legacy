@@ -21,7 +21,13 @@ package io.lightcone.relayer.data;
 
 import "core.proto";
 import "relayer_common.proto";
+import "persistence.proto";
 
+message AccountUpdate {
+    string address                      = 1;
+    io.lightcone.relayer.data.AccountBalance.TokenBalance  token_balance = 2;
+    int32  nonce                        = 3;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // socketio subscription
@@ -74,18 +80,30 @@ message SocketIOSubscription {
         repeated string addresses  = 1;
         repeated string tokens = 2;
     }
-    
+
     // subscribe for message News defined in persistence.proto
     message ParamsForNews {
     }
 
-    ParamsForActivities         params_for_activities           = 1;	
-    ParamsForOrders             params_for_orders               = 2;	
-    ParamsForFills              params_for_fills                = 3;	
-    ParamsForOrderbook          params_for_orderbook_           = 4;	
-    ParamsForTokens             params_for_tokens               = 5;	
-    ParamsForMarkets            params_for_markets              = 6;	
-    ParamsForTickers            params_for_tickers              = 7;	
-    ParamsForAccounts           params_for_accounts             = 8;	
-    ParamsForNews               params_for_news                 = 9;
+    message Notification {
+        io.lightcone.persistence.Activity           activity        = 1;
+        io.lightcone.core.RawOrder                  order           = 2;
+        io.lightcone.persistence.Fill               fill            = 3;
+        io.lightcone.core.Orderbook.Update          orderbook       = 4;
+        io.lightcone.core.TokenMetadata             token_metadata  = 5;
+        io.lightcone.core.MarketMetadata            market_metadata = 6;
+        io.lightcone.persistence.News               news            = 7;
+        AccountUpdate                               account         = 8;
+    }
+
+    ParamsForActivities           params_for_activities           = 1;
+    ParamsForOrders               params_for_orders               = 2;
+    ParamsForFills                params_for_fills                = 3;
+    ParamsForOrderbook            params_for_orderbook            = 4;
+    ParamsForTokens               params_for_tokens               = 5;
+    ParamsForMarkets              params_for_markets              = 6;
+    ParamsForTickers              params_for_tickers              = 7;
+    ParamsForNews                 params_for_news                 = 8;
+    ParamsForAccounts             params_for_accounts             = 9;
+
 }
