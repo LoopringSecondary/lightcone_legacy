@@ -19,6 +19,7 @@ package io.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.core._
+import io.lightcone.lib.NumericConversion
 import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
@@ -53,26 +54,37 @@ class ActivityDalImpl @Inject()(
 
   def getActivities(
       owner: String,
-      token: String,
+      token: Option[String],
       paging: Paging
     ): Future[Seq[Activity]] = {
-    val filters = query
-      .filter(_.owner === owner)
-      .filter(_.token === token)
+    val filters = createActivityFilters(owner, token)
+    db.run(
+      filters
       .sortBy(c => c.timestamp.desc)
       .drop(paging.skip)
       .take(paging.size)
-    db.run(filters.result)
+        .result
+    )
   }
 
   def countActivities(
       owner: String,
-      token: String
+      token: Option[String]
     ): Future[Int] = {
-    val filters = query
-      .filter(_.owner === owner)
-      .filter(_.token === token)
+    val filters = createActivityFilters(owner, token)
     db.run(filters.size.result)
+  }
+
+  private def createActivityFilters(owner:String, token:Option[String]) = {
+    token match {
+      case None => query.filter(_.owner === owner)
+      case Some("") =>
+        query.filter(_.owner === owner)
+          .filter(_.token === NumericConversion.toHexString(BigInt(0))) //以0地址表示以太坊
+      case Some(value) =>
+        query.filter(_.owner === owner)
+          .filter(_.token === value)
+    }
   }
 
 }

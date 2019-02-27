@@ -33,7 +33,7 @@ class ActivityServiceImpl @Inject()(
 
   def getActivities(
       owner: String,
-      token: String,
+      token: Option[String],
       paging: Paging
     ): Future[(Seq[Activity], Int)] =
     for {

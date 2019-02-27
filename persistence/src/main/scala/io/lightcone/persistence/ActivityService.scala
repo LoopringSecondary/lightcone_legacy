@@ -25,7 +25,7 @@ trait ActivityService {
 
   def getActivities(
       owner: String,
-      token: String,
+      token: Option[String],
       paging: Paging
     ): Future[(Seq[Activity], Int)]
 }

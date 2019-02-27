@@ -24,6 +24,7 @@ import "persistence.proto";
 import "relayer_common.proto";
 import "relayer_external.proto";
 // import "relayer_ethereum.proto";
+import "google/protobuf/wrappers.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES
@@ -138,7 +139,7 @@ message GetAccount {
 message GetAccountActivities {
     message Req {
         string owner = 1;
-        string token = 2;
+        google.protobuf.StringValue token = 2;
         io.lightcone.persistence.Paging paging = 3;
     }
 

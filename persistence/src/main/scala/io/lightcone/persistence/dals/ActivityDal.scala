@@ -27,12 +27,12 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
 
   def getActivities(
       owner: String,
-      token: String,
+      token: Option[String],
       paging: Paging
     ): Future[Seq[Activity]]
 
   def countActivities(
       owner: String,
-      token: String
+      token: Option[String]
     ): Future[Int]
 }
