@@ -55,7 +55,10 @@ class MetadataManagerSpec
             "0x" + t.address.substring(2).toUpperCase()
           )
         assert(
-          meta1.nonEmpty && meta2.nonEmpty && meta1.get.meta.address == meta2.get.meta.address && meta1.get.meta.address == meta1.get.meta.address
+          meta1.nonEmpty && meta2.nonEmpty && meta1.get
+            .getAddress() == meta2.get.getAddress() && meta1.get
+            .getAddress() == meta1.get
+            .getAddress()
             .toLowerCase()
         )
       }

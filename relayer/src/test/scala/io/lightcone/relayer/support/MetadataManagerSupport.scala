@@ -60,6 +60,7 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
   metadataManager.reset(
     TOKENS.map(MetadataManager.normalize),
     Seq.empty,
+    Map.empty,
     MARKETS.map(MetadataManager.normalize)
   )
 
