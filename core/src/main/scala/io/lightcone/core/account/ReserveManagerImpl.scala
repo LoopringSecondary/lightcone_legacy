@@ -16,6 +16,7 @@
 
 package io.lightcone.core
 
+import io.lightcone.lib.TimeProvider
 import org.slf4s.Logging
 import scala.collection.mutable.ListBuffer
 import java.util.concurrent.atomic.AtomicInteger
@@ -25,9 +26,11 @@ import java.util.concurrent.atomic.AtomicInteger
 // allowPartialReserve = true
 private[core] final class ReserveManagerImpl(
     val token: String,
-    enableTracing: Boolean = false
+    val refreshIntervalSeconds: Int,
+    val enableTracing: Boolean = false
   )(
     implicit
+    timeProvider: TimeProvider,
     eventHandler: ReserveEventHandler)
     extends ReserveManager
     with Logging {
@@ -43,6 +46,7 @@ private[core] final class ReserveManagerImpl(
   protected var spendable: BigInt = 0
   protected var reserved: BigInt = 0
   protected var block: Long = 0
+  protected var lastRefreshed: Long = 0
 
   protected var reserves = List.empty[Reserve]
 
@@ -76,6 +80,9 @@ private[core] final class ReserveManagerImpl(
 
   @inline def getBlock() = block
 
+  def needRefresh() =
+    timeProvider.getTimeSeconds - lastRefreshed > refreshIntervalSeconds
+
   def getBalanceOfToken() =
     BalanceOfToken(
       token,
@@ -104,6 +111,7 @@ private[core] final class ReserveManagerImpl(
       balance: BigInt,
       allowance: BigInt
     ) = trace("setBalanceAndAllowance") {
+    this.lastRefreshed = timeProvider.getTimeSeconds
     this.block = block
     this.balance = balance
     this.allowance = allowance

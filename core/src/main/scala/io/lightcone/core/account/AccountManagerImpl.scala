@@ -16,6 +16,7 @@
 
 package io.lightcone.core
 
+import io.lightcone.lib.TimeProvider
 import org.slf4s.Logging
 import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
@@ -23,12 +24,14 @@ import io.lightcone.lib.FutureUtil._
 // This class is not thread safe.
 final class AccountManagerImpl(
     val owner: String,
-    enableTracing: Boolean = false
+    val balanceRefreshIntervalSeconds: Int,
+    val enableTracing: Boolean = false
   )(
     implicit
     updatedOrdersProcessor: UpdatedOrdersProcessor,
     updatedAccountsProcessor: UpdatedAccountsProcessor,
-    provider: BalanceAndAllowanceProvider,
+    timeProvider: TimeProvider,
+    baProvider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
     extends AccountManager
     with Logging {
@@ -364,20 +367,29 @@ final class AccountManagerImpl(
       mustReturn: Boolean
     ): Future[Map[String, ReserveManager]] = {
     val (existing, missing) = tokens_.partition(tokens.contains)
-    val existingManagers =
-      existing.map(tokens.apply).map(m => m.token -> m).toMap
+    val existingManagers = existing
+      .map(tokens.apply)
+      .map { m =>
+        m.token -> m
+      }
+      .toMap
+
     if (!mustReturn) Future.successful(existingManagers)
     else {
       for {
         balanceAndAllowances <- Future.sequence {
           missing.map { token =>
-            provider.getBalanceAndALlowance(owner, token)
+            baProvider.getBalanceAndALlowance(owner, token)
           }
         }
         tuples = missing.zip(balanceAndAllowances)
         newManagers = tuples.map {
           case (token, (block, balance, allowance)) =>
-            val manager = ReserveManager.default(token, enableTracing)
+            val manager = ReserveManager.default(
+              token,
+              balanceRefreshIntervalSeconds,
+              enableTracing
+            )
             manager.setBalanceAndAllowance(block, balance, allowance)
             tokens += token -> manager
             token -> manager
@@ -394,9 +406,10 @@ final class AccountManagerImpl(
     if (tokens.contains(token)) Future.successful(Some(tokens(token)))
     else if (!mustReturn) Future.successful(None)
     else {
-      provider.getBalanceAndALlowance(owner, token).map { result =>
+      baProvider.getBalanceAndALlowance(owner, token).map { result =>
         val (block, balance, allowance) = result
-        val manager = ReserveManager.default(token, enableTracing)
+        val manager = ReserveManager
+          .default(token, balanceRefreshIntervalSeconds, enableTracing)
         manager.setBalanceAndAllowance(block, balance, allowance)
         tokens += token -> manager
         Some(manager)

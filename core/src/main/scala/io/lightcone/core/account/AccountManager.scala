@@ -17,19 +17,23 @@
 package io.lightcone.core
 
 import scala.concurrent._
+import io.lightcone.lib.TimeProvider
 
 object AccountManager {
 
   def default(
       owner: String,
+      balanceRefreshIntervalSeconds: Int,
       enableTracing: Boolean = false
     )(
       implicit
       updatedAccountsProcessor: UpdatedAccountsProcessor,
       updatedOrdersProcessor: UpdatedOrdersProcessor,
-      provider: BalanceAndAllowanceProvider,
+      timeProvider: TimeProvider,
+      baProvider: BalanceAndAllowanceProvider,
       ec: ExecutionContext
-    ): AccountManager = new AccountManagerImpl(owner)
+    ): AccountManager =
+    new AccountManagerImpl(owner, balanceRefreshIntervalSeconds)
 }
 
 trait AccountManager {
