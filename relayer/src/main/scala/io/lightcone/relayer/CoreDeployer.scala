@@ -113,7 +113,10 @@ class CoreDeployer @Inject()(
         EthereumQueryActor.name, //
         EthereumQueryActor.start
       )
-      .add(PendingTxListenerActor.name, PendingTxListenerActor.start)
+      .add(
+        PendingTxListenerActor.name,
+        PendingTxListenerActor.start
+      )
   }
 
   def deploy(): Unit = {
