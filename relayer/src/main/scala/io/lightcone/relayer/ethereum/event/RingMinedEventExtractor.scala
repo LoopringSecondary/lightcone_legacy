@@ -229,6 +229,7 @@ trait RingMinedEventSupport {
             Map.empty
         }
 
+      //TODO 失败的环路没有抽取出来
       rings.map { ring =>
         if (ring.header.get.txStatus.isTxStatusSuccess) {
           val ringBatch = ringBatches(ring.getHeader.txHash)
