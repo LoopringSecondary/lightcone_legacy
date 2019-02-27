@@ -49,7 +49,7 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
-    val baProvider: BalanceAndAllowanceProvider)
+    val balanceProvider: BalanceAndAllowanceProvider)
     extends Actor
     with AccountManagerProcessors
     with Stash

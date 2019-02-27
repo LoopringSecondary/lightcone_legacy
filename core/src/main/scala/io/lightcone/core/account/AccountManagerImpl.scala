@@ -31,7 +31,7 @@ final class AccountManagerImpl(
     updatedOrdersProcessor: UpdatedOrdersProcessor,
     updatedAccountsProcessor: UpdatedAccountsProcessor,
     timeProvider: TimeProvider,
-    baProvider: BalanceAndAllowanceProvider,
+    balanceProvider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
     extends AccountManager
     with Logging {
@@ -366,7 +366,9 @@ final class AccountManagerImpl(
       tokens_ : Set[String],
       mustReturn: Boolean
     ): Future[Map[String, ReserveManager]] = {
-    val (existing, missing) = tokens_.partition(tokens.contains)
+    val (existing, missing) = tokens_.partition { t =>
+      tokens.contains(t) //&& tokens(t).needRefresh == false
+    }
     val existingManagers = existing
       .map(tokens.apply)
       .map { m =>
@@ -379,7 +381,7 @@ final class AccountManagerImpl(
       for {
         balanceAndAllowances <- Future.sequence {
           missing.map { token =>
-            baProvider.getBalanceAndALlowance(owner, token)
+            balanceProvider.getBalanceAndALlowance(owner, token)
           }
         }
         tuples = missing.zip(balanceAndAllowances)
@@ -398,23 +400,11 @@ final class AccountManagerImpl(
     }
   }
 
-  // Do not use getReserveManagers for best performance
-  private def getReserveManagerOption(
+  @inline private def getReserveManagerOption(
       token: String,
       mustReturn: Boolean
-    ): Future[Option[ReserveManager]] = {
-    if (tokens.contains(token)) Future.successful(Some(tokens(token)))
-    else if (!mustReturn) Future.successful(None)
-    else {
-      baProvider.getBalanceAndALlowance(owner, token).map { result =>
-        val (block, balance, allowance) = result
-        val manager = ReserveManager
-          .default(token, balanceRefreshIntervalSeconds, enableTracing)
-        manager.setBalanceAndAllowance(block, balance, allowance)
-        tokens += token -> manager
-        Some(manager)
-      }
-    }
-  }
+    ): Future[Option[ReserveManager]] =
+    getReserveManagers(Set(token), mustReturn)
+      .map(_.get(token))
 
 }

@@ -32,7 +32,7 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
   implicit val timeProvider: TimeProvider = new SystemTimeProvider
-  implicit val baProvider = stub[BalanceAndAllowanceProvider]
+  implicit val balanceProvider = stub[BalanceAndAllowanceProvider]
 
   implicit val updatdOrdersProcessor = new UpdatedOrdersProcessor()(ec) {
 
@@ -78,7 +78,7 @@ abstract class AccountManagerImplSpec extends CommonSpec {
       balance: BigInt,
       allowance: BigInt
     ) =
-    (baProvider.getBalanceAndALlowance _)
+    (balanceProvider.getBalanceAndALlowance _)
       .when(owner, token)
       .returns(Future.successful((block, balance, allowance)))
       .once

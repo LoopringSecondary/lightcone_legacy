@@ -30,7 +30,7 @@ object AccountManager {
       updatedAccountsProcessor: UpdatedAccountsProcessor,
       updatedOrdersProcessor: UpdatedOrdersProcessor,
       timeProvider: TimeProvider,
-      baProvider: BalanceAndAllowanceProvider,
+      balanceProvider: BalanceAndAllowanceProvider,
       ec: ExecutionContext
     ): AccountManager =
     new AccountManagerImpl(owner, balanceRefreshIntervalSeconds)

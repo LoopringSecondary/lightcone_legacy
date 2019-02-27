@@ -237,7 +237,7 @@ class MultiAccountManagerActor(
       )
   }
 
-  implicit private val baProvider = new BalanceAndAllowanceProvider {
+  implicit private val balanceProvider = new BalanceAndAllowanceProvider {
 
     def getBalanceAndALlowance(
         address: String,
