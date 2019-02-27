@@ -52,7 +52,7 @@ class BalanceAndTransferEventExtractorSpec
         transferLRC(account2.getAddress, "1000")(account0),
         timeout.duration
       )
-      //TODO:删除TransactionRecord，完成Activity再打开
+      //TODO:删除TransactionRecord，完成Activity再修改
 //      expectTransfersRes(
 //        GetTransactionRecords
 //          .Req(
@@ -78,6 +78,7 @@ class BalanceAndTransferEventExtractorSpec
 //      )
 //      transfers.size should be(2)
 
+      Thread.sleep(3000)
       val ba2_1 = Await.result(
         singleRequest(
           GetAccount.Req(
