@@ -18,7 +18,7 @@ package io.lightcone.relayer.entrypoint
 
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors.RingAndFillPersistenceActor
-import io.lightcone.relayer.data._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
 import io.lightcone.persistence._

@@ -21,6 +21,7 @@ package io.lightcone.relayer.data;
 
 import "core.proto";
 import "persistence.proto";
+import "ethereum_persistence.proto";
 import "relayer_common.proto";
 import "relayer_ethereum.proto";
 import "ethereum_event.proto";
@@ -43,7 +44,7 @@ message PersistOrder {
 message UpdateOrderState {
     message Req {
         string hash = 1;
-        io.lightcone.core.RawOrder .State state = 2;
+        io.lightcone.core.RawOrder.State state = 2;
         bool changeUpdatedAtField = 3;
     }
 
@@ -144,7 +145,7 @@ message GetFills {
     }
 
     message Res {
-        repeated io.lightcone.persistence.Fill fills   = 1;
+        repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
         int32   total  = 2;
     }
 }
@@ -164,7 +165,7 @@ message GetRings {
     }
 
     message Res {
-        repeated io.lightcone.persistence.Ring rings    = 1;
+        repeated io.lightcone.ethereum.persistence.Ring rings    = 1;
         int32 total                                     = 2;
     }
 }

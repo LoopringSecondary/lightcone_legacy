@@ -16,8 +16,6 @@
 
 package io.lightcone.relayer.socketio
 
-import io.lightcone.core.TokenMetadata
-import io.lightcone.relayer.actors.SocketIONotificationActor
 import io.lightcone.relayer.support._
 
 class SocketSpec

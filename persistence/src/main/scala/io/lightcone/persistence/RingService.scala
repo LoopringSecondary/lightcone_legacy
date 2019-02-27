@@ -18,6 +18,7 @@ package io.lightcone.persistence
 
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum.persistence._
 import scala.concurrent.Future
 
 trait RingService {

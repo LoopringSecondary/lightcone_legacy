@@ -21,6 +21,7 @@ package io.lightcone.relayer.data;
 
 import "core.proto";
 import "persistence.proto";
+import "ethereum_persistence.proto";
 import "relayer_common.proto";
 import "relayer_external.proto";
 // import "relayer_ethereum.proto";
@@ -140,7 +141,7 @@ message GetAccountActivities {
     }
 
     message Res {
-        repeated io.lightcone.persistence.Activity activities = 1;
+        repeated io.lightcone.ethereum.persistence.Activity activities = 1;
         int32 total = 2;
     }
 }

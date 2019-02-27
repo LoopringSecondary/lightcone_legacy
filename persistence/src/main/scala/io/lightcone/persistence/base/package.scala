@@ -21,6 +21,7 @@ import slick.jdbc.MySQLProfile.api._
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
 import io.lightcone.core.Amount
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 
 package object base {
