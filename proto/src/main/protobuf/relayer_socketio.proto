@@ -87,9 +87,9 @@ message SocketIOSubscription {
     }
 
     message Notification {
-        io.lightcone.ethereum.persistence.Activity           activity        = 1;
+        io.lightcone.ethereum.persistence.Activity  activity        = 1;
         io.lightcone.core.RawOrder                  order           = 2;
-        io.lightcone.ethereum.persistence.Fill               fill            = 3;
+        io.lightcone.ethereum.persistence.Fill      fill            = 3;
         io.lightcone.core.Orderbook.Update          orderbook       = 4;
         io.lightcone.core.TokenMetadata             token_metadata  = 5;
         io.lightcone.core.MarketMetadata            market_metadata = 6;
