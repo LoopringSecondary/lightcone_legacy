@@ -19,7 +19,7 @@ package io.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.core._
-import io.lightcone.lib.{Address, NumericConversion}
+import io.lightcone.lib.Address
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import slick.basic._
