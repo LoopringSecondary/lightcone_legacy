@@ -198,7 +198,6 @@ message Activity {
     int64  timestamp            = 5; //  (indexed) may not be unique, used in sorting
     double fiat_value           = 6;
     string token                = 7;
-    int64 sequence_id           = 8;
 
     oneof detail {
         EtherTransfer       ether_transfer      = 21;

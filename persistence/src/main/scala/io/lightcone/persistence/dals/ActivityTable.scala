@@ -37,7 +37,6 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
   def timestamp = column[Long]("timestamp")
   def fiatValue = column[Double]("fiat_value")
   def detail = column[Array[Byte]]("detail")
-  def sequenceId = column[Long]("detail")
 
   def * =
     (
@@ -48,61 +47,19 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
       activityType,
       timestamp,
       fiatValue,
-      detail,
-      sequenceId
+      detail
     ) <> ({ tuple =>
-      val t = tuple._5
-      val detailBytes = tuple._8
-      val detailValue = t match {
-        case ETHER_TRANSFER_OUT | ETHER_TRANSFER_IN =>
-          val v = Activity.EtherTransfer.parseFrom(detailBytes)
-          Activity.Detail.EtherTransfer(v)
-        case ETHER_WRAP | ETHER_UNWRAP =>
-          val v = Activity.EtherConversion.parseFrom(detailBytes)
-          Activity.Detail.EtherConversion(v)
-        case TOKEN_TRANSFER_OUT | TOKEN_TRANSFER_IN =>
-          val v = Activity.TokenTransfer.parseFrom(detailBytes)
-          Activity.Detail.TokenTransfer(v)
-        case TOKEN_AUTH =>
-          val v = Activity.TokenAuth.parseFrom(detailBytes)
-          Activity.Detail.TokenAuth(v)
-        case TRADE_SELL | TRADE_BUY =>
-          val v = Activity.Trade.parseFrom(detailBytes)
-          Activity.Detail.Trade(v)
-        case ORDER_CANCEL =>
-          val v = Activity.OrderCancellation.parseFrom(detailBytes)
-          Activity.Detail.OrderCancellation(v)
-        case ORDER_SUBMIT => // todo:
-          val v = Activity.OrderSubmission.parseFrom(detailBytes)
-          Activity.Detail.OrderSubmission(v)
-        case _ =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"invalid activity_type $t"
-          )
-      }
       Activity(
         owner = tuple._1,
         token = tuple._2,
         block = tuple._3,
         txHash = tuple._4,
-        activityType = t,
+        activityType = tuple._5,
         timestamp = tuple._6,
         fiatValue = tuple._7,
-        detail = detailValue,
-        sequenceId = tuple._9
+        detail = parseToDetail(tuple._5, tuple._8)
       )
     }, { activity: Activity =>
-      val detailBytes = activity.detail match {
-        case EtherTransfer(value)     => value.toByteArray
-        case TokenTransfer(value)     => value.toByteArray
-        case EtherConversion(value)   => value.toByteArray
-        case TokenAuth(value)         => value.toByteArray
-        case Trade(value)             => value.toByteArray
-        case OrderCancellation(value) => value.toByteArray
-        case OrderSubmission(value)   => value.toByteArray
-        case _                        => Array.empty[Byte]
-      }
       Some(
         (
           activity.owner,
@@ -112,9 +69,56 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
           activity.activityType,
           activity.timestamp,
           activity.fiatValue,
-          detailBytes,
-          activity.sequenceId
+          printToBytes(activity.detail)
         )
       )
     })
+
+  private def parseToDetail(
+      activityType: ActivityType,
+      detailBytes: Array[Byte]
+    ) = {
+    activityType match {
+      case ETHER_TRANSFER_OUT | ETHER_TRANSFER_IN =>
+        val v = Activity.EtherTransfer.parseFrom(detailBytes)
+        Activity.Detail.EtherTransfer(v)
+      case ETHER_WRAP | ETHER_UNWRAP =>
+        val v = Activity.EtherConversion.parseFrom(detailBytes)
+        Activity.Detail.EtherConversion(v)
+      case TOKEN_TRANSFER_OUT | TOKEN_TRANSFER_IN =>
+        val v = Activity.TokenTransfer.parseFrom(detailBytes)
+        Activity.Detail.TokenTransfer(v)
+      case TOKEN_AUTH =>
+        val v = Activity.TokenAuth.parseFrom(detailBytes)
+        Activity.Detail.TokenAuth(v)
+      case TRADE_SELL | TRADE_BUY =>
+        val v = Activity.Trade.parseFrom(detailBytes)
+        Activity.Detail.Trade(v)
+      case ORDER_CANCEL =>
+        val v = Activity.OrderCancellation.parseFrom(detailBytes)
+        Activity.Detail.OrderCancellation(v)
+      case ORDER_SUBMIT => // todo:
+        val v = Activity.OrderSubmission.parseFrom(detailBytes)
+        Activity.Detail.OrderSubmission(v)
+      case _ =>
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          s"invalid activity_type $activityType"
+        )
+    }
+  }
+
+  private def printToBytes(detail: Activity.Detail) = {
+    detail match {
+      case EtherTransfer(value)     => value.toByteArray
+      case TokenTransfer(value)     => value.toByteArray
+      case EtherConversion(value)   => value.toByteArray
+      case TokenAuth(value)         => value.toByteArray
+      case Trade(value)             => value.toByteArray
+      case OrderCancellation(value) => value.toByteArray
+      case OrderSubmission(value)   => value.toByteArray
+      case _                        => Array.empty[Byte]
+    }
+  }
+
 }

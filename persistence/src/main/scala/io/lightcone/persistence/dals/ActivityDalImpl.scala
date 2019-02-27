@@ -60,9 +60,9 @@ class ActivityDalImpl @Inject()(
     val filters = createActivityFilters(owner, token)
     db.run(
       filters
-      .sortBy(c => c.timestamp.desc)
-      .drop(paging.skip)
-      .take(paging.size)
+        .sortBy(c => c.timestamp.desc)
+        .drop(paging.skip)
+        .take(paging.size)
         .result
     )
   }
@@ -75,14 +75,19 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  private def createActivityFilters(owner:String, token:Option[String]) = {
+  private def createActivityFilters(
+      owner: String,
+      token: Option[String]
+    ) = {
     token match {
       case None => query.filter(_.owner === owner)
       case Some("") =>
-        query.filter(_.owner === owner)
+        query
+          .filter(_.owner === owner)
           .filter(_.token === NumericConversion.toHexString(BigInt(0))) //以0地址表示以太坊
       case Some(value) =>
-        query.filter(_.owner === owner)
+        query
+          .filter(_.owner === owner)
           .filter(_.token === value)
     }
   }

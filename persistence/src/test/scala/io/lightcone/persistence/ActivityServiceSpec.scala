@@ -80,7 +80,7 @@ class ActivityServiceSpec extends ServiceSpec[ActivityService] {
 
     val queryF = service.getActivities(
       "0xc88762dea88c2834b3cdb22bc0975c62f9ea2998",
-      "0xb88762dea88c2834b3cdb22bc0975c62f9ea2998",
+      Some("0xb88762dea88c2834b3cdb22bc0975c62f9ea2998"),
       Paging(0, 3)
     )
     val queriedActivities = Await.result(queryF, 5.second)

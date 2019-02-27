@@ -70,7 +70,7 @@ class EntryPointActor(
 
   def findDestination(msg: Any): Option[String] = msg match {
     // TODO(hongyu): implement this
-    case req: GetAccountActivities.Req => None
+    case _: GetAccountActivities.Req => None
 
     case _: GetAccount.Req | _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
