@@ -22,7 +22,6 @@ import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
 import io.lightcone.core.Amount
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data._
 
 package object base {
 
@@ -46,23 +45,6 @@ package object base {
     ): BaseColumnType[T] =
     MappedColumnType
       .base[T, Int](enum => enum.value, int => enumCompanion.fromValue(int))
-
-  @inline
-  def eventDataColumnType(): BaseColumnType[TransactionRecord.EventData] =
-    MappedColumnType
-      .base[TransactionRecord.EventData, Array[Byte]](
-        e => e.toByteArray,
-        bytes => TransactionRecord.EventData.parseFrom(bytes)
-      )
-
-  @inline
-  def eventDataOptColumnType(
-    ): BaseColumnType[Option[TransactionRecord.EventData]] =
-    MappedColumnType
-      .base[Option[TransactionRecord.EventData], Array[Byte]]({
-        case Some(e) => e.toByteArray
-        case None    => TransactionRecord.EventData().toByteArray
-      }, bytes => Some(TransactionRecord.EventData.parseFrom(bytes)))
 
   @inline
   def ringFeesOptColumnType(): BaseColumnType[Option[Ring.Fees]] =

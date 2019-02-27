@@ -148,26 +148,19 @@ class CoreModule(
       )
       .register(
         classOf[CutoffEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrderFilledEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrdersCancelledOnChainEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[TokenBurnRateChangedEvent], //
         MetadataManagerActor.name
-      )
-      .register(
-        classOf[TransferEvent], //
-        TransactionRecordActor.name
       )
       .register(
         classOf[OHLCRawDataEvent], //

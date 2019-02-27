@@ -203,67 +203,6 @@ message UpdateTxInBlock {
     }
 }
 
-message TransactionRecord {
-    enum RecordType {
-        TRANSFER        = 0;
-        ERC20_TRANSFER  = 1;
-        ORDER_FILLED    = 2;
-        ORDER_CANCELLED = 3;
-    }
-    message EventData {
-        oneof event {
-            io.lightcone.ethereum.event.TransferEvent        transfer       = 101;
-            io.lightcone.ethereum.event.OrdersCancelledOnChainEvent orderCancelled = 102;
-            io.lightcone.ethereum.event.CutoffEvent          cutoff         = 103;
-            io.lightcone.ethereum.event.OrderFilledEvent     filled         = 104;
-        }
-    }
-    io.lightcone.ethereum.event.EventHeader header       = 1;
-    string      owner        = 2;
-    RecordType  record_type  = 3;
-    int64       market_id    = 4;
-    string      market_name  = 5; // LRC-WETH
-    int64       sequence_id  = 6;
-    EventData   event_data   = 7;
-}
-
-message PersistTransactionRecord {
-    message Req {
-        TransactionRecord transaction   = 1;
-    }
-    message Res {
-        bool       already_exist = 1;
-        io.lightcone.core.ErrorCode  error         = 2;
-    }
-}
-
-message GetTransactionRecords {
-    message QueryType {
-        TransactionRecord.RecordType value  = 1;
-    }
-    message Req {
-        string        owner       = 1;
-        QueryType     query_type  = 2;
-        io.lightcone.persistence.SortingType   sort        = 3;
-        io.lightcone.persistence.CursorPaging  paging      = 4;
-    }
-
-    message Res {
-        repeated TransactionRecord transactions = 1;
-    }
-}
-
-message GetTransactionRecordCount {
-    message Req {
-        string owner                                = 1;
-        GetTransactionRecords.QueryType query_type  = 2;
-    }
-
-    message Res {
-        int32 count = 1;
-    }
-}
-
 message PersistOHLCData {
     message Req {
         io.lightcone.ethereum.event.OHLCRawDataEvent data    = 1;

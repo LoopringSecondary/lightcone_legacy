@@ -33,8 +33,7 @@ trait EthereumEventExtractorSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with DatabaseQueryMessageSupport
-    with RingAndFillPersistenceSupport
-    with EthereumTransactionRecordSupport {
+    with RingAndFillPersistenceSupport {
   me: CommonSpec =>
 
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
@@ -58,26 +57,19 @@ trait EthereumEventExtractorSupport
       )
       .register(
         classOf[CutoffEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrderFilledEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrdersCancelledOnChainEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[TokenBurnRateChangedEvent], //
         MetadataManagerActor.name
-      )
-      .register(
-        classOf[TransferEvent], //
-        TransactionRecordActor.name
       )
       .register(
         classOf[OHLCRawDataEvent], //
