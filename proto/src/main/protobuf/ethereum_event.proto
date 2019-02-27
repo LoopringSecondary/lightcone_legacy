@@ -20,32 +20,15 @@ option java_multiple_files = true;
 package io.lightcone.ethereum.event;
 
 import "core.proto";
+import "ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ETHEREUM EVENT
 /////////////////////////////////////////////////////////////////////
 
-enum TxStatus {
-    TX_STATUS_PENDING = 0;
-    TX_STATUS_SUCCESS = 1;
-    TX_STATUS_FAILED = 2;
-}
-
-//TODO:搞明白几个ethereum文件的关系，放置到合适的位置
-message BlockHeader {
-    int64 height = 1;
-    string hash = 2;
-    string  miner = 3;
-    int64 timestamp = 4;
-    repeated string uncles = 5;
-}
-
 message EventHeader {
     string tx_hash = 1;
-    TxStatus tx_status = 2;
-    //string block_hash = 3;
-    //int64  block_number = 4;
-    //int64  block_timestamp   = 5;
+    io.lightcone.ethereum.TxStatus tx_status = 2;
     BlockHeader block_header = 3;
     string tx_from = 6;
     string tx_to = 7;

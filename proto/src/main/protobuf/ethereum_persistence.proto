@@ -22,6 +22,17 @@ package io.lightcone.ethereum.persistence;
 import "core.proto";
 
 //struct that will be persisted
+
+//反应账户活动，
+//1、转账 时间、类型、金额，       （油费的情况不显示或者再增加类型）    法币金额
+//2、ETH转换，
+//3、授权：没有任何转账的，显示金额为0，(不涉及金额改变时)
+//4、交易：进账
+//5、手续费：增加类型
+//6、取消订单，可以区分开order和cutoff
+//7、trade附加的信息，如环路id等信息， 交易类型 与transfer只有一个即可，前端也会显示成转账
+//
+//解析可以直接生成Activity
 message Activity {
 
     enum ActivityType {
@@ -71,7 +82,7 @@ message Activity {
     }
 
     message OrderCancellation {
-        string order_id         = 1;
+        repeated string order_id         = 1;
         int64  cutoff           = 2; // if order_id is not "", this must be not 0.
         string market_pair      = 3; // dispaly as "LRC/ETH", if missing, means all markets.
         string broker           = 4; // optional
@@ -81,17 +92,17 @@ message Activity {
         // Support in the future
     }
 
-
     // To query Tx records for a address "ABC", either owner or target will be ABC.
     // if owner == target == ABC, we treat  owner == ABC and ignore target.
     string owner                = 1; // (indexed) the related address
     int64  block                = 2; // (indexed)  0 indiciate pending
-    int64  tx_hash              = 3; // (indexed) the transaction hash, multiple Tx record may
+    string tx_hash             = 3; // (indexed) the transaction hash, multiple Tx record may
     // share the same tx hash, the wallet may choose to group
     // those records to display.
     ActivityType activity_type  = 4; //  (indexed)
     int64  timestamp            = 5; //  (indexed) may not be unique, used in sorting
     double fiat_value           = 6;
+    string token                = 7;
 
     oneof detail {
         EtherTransfer       ether_transfer      = 21;
@@ -99,11 +110,10 @@ message Activity {
         TokenTransfer       token_transfer      = 23;
         TokenAuth           token_auth          = 24;
         Trade               trade               = 25;
-        OrderCancellation   order_concellation  = 26;
+        OrderCancellation   order_cancellation  = 26;
         OrderSubmission     order_submission    = 27;
     }
 }
-
 
 // TODO(yongfeng): simply this.
 // For the fontend, we only need to display:

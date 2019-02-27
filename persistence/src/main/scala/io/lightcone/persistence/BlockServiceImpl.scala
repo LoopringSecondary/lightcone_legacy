@@ -19,6 +19,7 @@ package io.lightcone.persistence
 import com.google.inject.Inject
 import io.lightcone.persistence.dals._
 import io.lightcone.core._
+import io.lightcone.ethereum._
 import scala.concurrent.{ExecutionContext, Future}
 
 class BlockServiceImpl @Inject()(

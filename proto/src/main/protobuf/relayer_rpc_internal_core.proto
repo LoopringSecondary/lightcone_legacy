@@ -20,11 +20,11 @@ option java_multiple_files = true;
 package io.lightcone.relayer.data;
 
 import "core.proto";
-import "persistence.proto";
+import "ethereum.proto";
 import "ethereum_persistence.proto";
+import "persistence.proto";
 import "relayer_common.proto";
 import "relayer_external.proto";
-// import "relayer_ethereum.proto";
 import "google/protobuf/wrappers.proto";
 
 /////////////////////////////////////////////////////////////////////
@@ -259,7 +259,7 @@ message SetGasPrice {
 
 message SaveBlock {
     message Req {
-        io.lightcone.persistence.BlockData block_data = 1;
+        io.lightcone.ethereum.BlockData block_data = 1;
     }
 
     message Res {
