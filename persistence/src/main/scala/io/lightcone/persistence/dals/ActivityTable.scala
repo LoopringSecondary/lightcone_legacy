@@ -103,7 +103,7 @@ class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
         Activity.Detail.OrderCancellation(
           Activity.OrderCancellation.parseFrom(detailBytes)
         )
-      case ORDER_SUBMIT => // TODO:
+      case ORDER_SUBMIT => // TODO:需要确定实现
         Activity.Detail.OrderSubmission(
           Activity.OrderSubmission.parseFrom(detailBytes)
         )
