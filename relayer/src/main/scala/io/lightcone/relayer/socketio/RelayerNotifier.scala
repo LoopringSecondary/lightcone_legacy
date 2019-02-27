@@ -85,53 +85,63 @@ class RelayerNotifier() extends SocketIONotifier {
       subscription: SocketIOSubscription
     ): Option[Notification] = evt match {
     case e: AccountUpdate =>
-      if (subscription.paramsForAccounts.isDefined &&
-          subscription.getParamsForAccounts.addresses.contains(e.address) &&
-          (subscription.getParamsForAccounts.tokens.isEmpty || e.tokenBalance.isEmpty ||
-          subscription.getParamsForAccounts.tokens
-            .contains(e.getTokenBalance.token)))
-        Some(Notification(account = Some(e)))
-      else None
+      subscription.paramsForAccounts match {
+        case Some(params)
+            if params.addresses.contains(e.address) &&
+              (params.tokens.isEmpty || e.tokenBalance.isEmpty ||
+                params.tokens.contains(e.getTokenBalance.token)) =>
+          Some(Notification(account = Some(e)))
+        case _ => None
+      }
 
     case e: Activity =>
-      if (subscription.paramsForActivities.isDefined &&
-          subscription.getParamsForActivities.addresses.contains(e.owner))
-        Some(Notification(activity = Some(e)))
-      else None
+      subscription.paramsForActivities match {
+        case Some(params) if params.addresses.contains(e.owner) =>
+          Some(Notification(activity = Some(e)))
+        case _ => None
+      }
 
     case e: Fill =>
-      if (subscription.paramsForFills.isDefined &&
-          (subscription.getParamsForFills.address.isEmpty ||
-          subscription.getParamsForFills.address == e.owner)
-          && (MarketHash(subscription.getParamsForFills.getMarket) ==
-            MarketHash(MarketPair(e.tokenB, e.tokenS))))
-        Some(Notification(fill = Some(e)))
-      else None
+      subscription.paramsForFills match {
+        case Some(params)
+            if (params.address.isEmpty || params.address == e.owner)
+              && (MarketHash(params.getMarket) == MarketHash(
+                MarketPair(e.tokenB, e.tokenS)
+              )) =>
+          Some(Notification(fill = Some(e)))
+        case _ => None
+      }
 
     case e: Orderbook.Update =>
-      if (subscription.paramsForOrderbook.isDefined &&
-          subscription.getParamsForOrderbook.market == e.marketPair)
-        Some(Notification(orderbook = Some(e)))
-      else None
+      subscription.paramsForOrderbook match {
+        case Some(params) if params.market == e.marketPair =>
+          Some(Notification(orderbook = Some(e)))
+        case _ => None
+      }
 
     case order: RawOrder =>
-      if (subscription.paramsForOrders.isDefined && subscription.getParamsForOrders.addresses
-            .contains(order.owner) && (subscription.getParamsForOrders.market.isEmpty || MarketHash(
-            subscription.getParamsForOrders.getMarket
-          ) == MarketHash(MarketPair(order.tokenB, order.tokenS))))
-        Some(Notification(order = Some(order)))
-      else None
+      subscription.paramsForOrders match {
+        case Some(params)
+            if params.addresses.contains(order.owner) && (params.market.isEmpty
+              || MarketHash(params.getMarket) == MarketHash(
+                MarketPair(order.tokenB, order.tokenS)
+              )) =>
+          Some(Notification(order = Some(order)))
+        case _ => None
+      }
 
     case e: TokenMetadata =>
-      if (subscription.paramsForTokens.isDefined)
-        Some(Notification(tokenMetadata = Some(e)))
-      else None
+      subscription.paramsForTokens match {
+        case Some(_) => Some(Notification(tokenMetadata = Some(e)))
+        case _       => None
+      }
 
     case e: MarketMetadata =>
-      if (subscription.paramsForMarkets.isDefined)
-        Some(Notification(marketMetadata = Some(e)))
-      else None
-
+      subscription.paramsForMarkets match {
+        case Some(_) =>
+          Some(Notification(marketMetadata = Some(e)))
+        case _ => None
+      }
     case ticker: AnyRef => None // TODO(yadong) 等待永丰的PR合并
     case _              => None
   }
