@@ -19,6 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor.ActorRef
 import akka.pattern._
 import akka.util.Timeout
+import io.lightcone.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._

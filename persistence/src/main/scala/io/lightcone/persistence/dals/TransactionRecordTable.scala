@@ -17,6 +17,7 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.ethereum.event._
+import io.lightcone.ethereum._
 import io.lightcone.persistence.base._
 import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._

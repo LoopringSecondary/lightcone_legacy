@@ -17,6 +17,7 @@
 package io.lightcone.relayer.ethereum.event
 
 import io.lightcone.core._
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._

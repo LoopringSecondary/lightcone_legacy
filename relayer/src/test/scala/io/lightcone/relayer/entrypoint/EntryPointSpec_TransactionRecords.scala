@@ -16,8 +16,8 @@
 
 package io.lightcone.relayer.entrypoint
 
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator.TransactionRecordMessageValidator
 import io.lightcone.relayer.data.TransactionRecord.EventData

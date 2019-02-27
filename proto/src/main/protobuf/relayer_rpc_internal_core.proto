@@ -219,9 +219,8 @@ message GetBurnRate {
         string tag  = 2;
     }
     message Res {
-        double for_market = 1;
-        double for_p2p = 2;
-        int64 block = 3;
+        io.lightcone.core.BurnRate burn_rate = 1;
+        int64 block = 2;
     }
 }
 

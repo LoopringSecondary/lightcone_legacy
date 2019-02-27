@@ -106,13 +106,10 @@ message OrderSubmittedOnChainEvent {
 }
 
 message TokenBurnRateChangedEvent {
-    message BurnRate {
-        double for_market = 1;
-        double for_p2p = 2;
-    }
+
     EventHeader header = 1;
     string      token = 2;
-    BurnRate    burn_rate = 3;
+    io.lightcone.core.BurnRate    burn_rate = 3;
 }
 
 //LOOPRING RINGMINED

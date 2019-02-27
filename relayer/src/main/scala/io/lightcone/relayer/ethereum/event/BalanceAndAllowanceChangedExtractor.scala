@@ -23,6 +23,7 @@ import akka.util.Timeout
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event
 import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.relayer.base.Lookup
@@ -76,7 +77,7 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   override def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] = {
     for {
       changedEvents1 <- super.extractEvents(block)
-      changedEvents2 <- extractEventOfMiner(event.BlockHeader())
+      changedEvents2 <- extractEventOfMiner(BlockHeader())
       changedEvents = changedEvents1 ++ changedEvents2
       eventsWithState <- Future.sequence(
         changedEvents.map(extractEventWithState)
@@ -319,7 +320,7 @@ trait TransferEventSupport {
     )
   }
 
-  def extractEventOfMiner(blockHeader: event.BlockHeader): Future[Seq[AnyRef]] =
+  def extractEventOfMiner(blockHeader: BlockHeader): Future[Seq[AnyRef]] =
     Future {
       //TODO: 需要确定奖励金额以及txhash等值
       //    blockHeader.uncles

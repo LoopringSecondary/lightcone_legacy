@@ -22,7 +22,7 @@ import io.lightcone.lib._
 import io.lightcone.ethereum.abi._
 import io.lightcone.relayer.data._
 import io.lightcone.ethereum.event._
-import io.lightcone.ethereum.event.TokenBurnRateChangedEvent._
+import io.lightcone.core._
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
