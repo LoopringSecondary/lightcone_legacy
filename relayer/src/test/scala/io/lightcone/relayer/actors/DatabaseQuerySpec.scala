@@ -70,7 +70,7 @@ class DatabaseQuerySpec
       val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
       val tradesReq = GetFills.Req(
         owner = owner,
-        marketFilter = Some(GetFills.Req.MarketFilter(tokenS, tokenB, true)),
+        market = Some(GetFills.Req.Market(tokenS, tokenB, true)),
         skip = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )
