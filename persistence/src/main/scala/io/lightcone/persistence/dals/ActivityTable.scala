@@ -24,7 +24,8 @@ import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 
-class ActivityTable(tag: Tag) extends BaseTable[Activity](tag, "T_ACTIVITIES") {
+class ActivityTable(shardId: String)(tag: Tag)
+    extends BaseTable[Activity](tag, s"T_ACTIVITIES_${shardId.toUpperCase}") {
 
   implicit val activityTypeCxolumnType = enumColumnType(ActivityType)
 

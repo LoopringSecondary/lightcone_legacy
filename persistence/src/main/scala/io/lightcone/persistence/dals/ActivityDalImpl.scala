@@ -36,7 +36,7 @@ class ActivityDalImpl @Inject()(
     val ec: ExecutionContext)
     extends ActivityDal {
 
-  val query = TableQuery[ActivityTable]
+  val query = TableQuery(new ActivityTable(shardId)(_))
 
   def saveActivity(activity: Activity): Future[ErrorCode] =
     db.run(
