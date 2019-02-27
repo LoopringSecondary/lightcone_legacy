@@ -45,6 +45,10 @@ package object core {
     NumericConversion.toBigInt(amount)
 
   @inline
+  implicit def amount2HexString(amount: Amount): String =
+    NumericConversion.toHexString(amount)
+
+  @inline
   implicit def bigInt2Amount(b: BigInt): Amount =
     NumericConversion.toAmount(b)
 

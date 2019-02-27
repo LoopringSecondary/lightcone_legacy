@@ -18,49 +18,117 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.listener.DataListener
+import io.lightcone.core.ErrorCode
+import io.lightcone.lib.Address
+import io.lightcone.relayer.data._
 import org.slf4s.Logging
 
-abstract class SocketIONotifier[R] extends DataListener[R] with Logging {
+abstract class SocketIONotifier
+    extends DataListener[SocketIOSubscription]
+    with Logging {
 
-  val eventName: String
+  import SocketIOSubscription._
 
-  def shouldNotifyClient(
-      subscription: R,
-      event: AnyRef
-    ): Boolean
+  val eventName = "lightcone"
 
-  def wrapClient(
-      client: SocketIOClient,
-      subscription: R
-    ): SocketIOSubscriber[R]
+  def generateNotification(
+      evt: AnyRef,
+      subscription: SocketIOSubscription
+    ): Option[Notification]
 
-  private var clients = Seq.empty[SocketIOSubscriber[R]]
+  def checkSubscriptionValidation(
+      subscription: SocketIOSubscription
+    ): Option[String]
+
+  private var clients = Seq.empty[SocketIOSubscriber]
 
   def notifyEvent(event: AnyRef): Unit = {
     clients = clients.filter(_.client.isChannelOpen)
 
-    val e = transformEvent(event)
-    val targets = clients
-      .filter(client => shouldNotifyClient(client.subscription, e))
+    val targets = clients.map { client =>
+      client -> generateNotification(event, client.subscription)
+    }
 
-    targets.foreach(_.sendEvent(eventName, e))
+    targets.foreach {
+      case (client, Some(notification)) =>
+        client.sendEvent(eventName, notification)
+      case _ =>
+    }
 
-    log.debug(s"socketio notify: $e to ${targets.size} subscribers")
+    log.debug(s"socketio notify: $event to ${targets.size} subscribers")
   }
+
+  def normalizeSubscription(
+      subscription: SocketIOSubscription
+    ): SocketIOSubscription =
+    subscription.copy(
+      paramsForAccounts = subscription.paramsForAccounts.map(
+        params =>
+          params.copy(
+            addresses = params.addresses.map(Address.normalize),
+            tokens = params.tokens.map(Address.normalize)
+          )
+      ),
+      paramsForActivities = subscription.paramsForActivities.map(
+        params =>
+          params.copy(addresses = params.addresses.map(Address.normalize))
+      ),
+      paramsForFills = subscription.paramsForFills.map { params =>
+        params.copy(
+          address =
+            if (params.address.isEmpty) params.address
+            else Address.normalize(params.address),
+          market = params.market.map(_.normalize())
+        )
+      },
+      paramsForOrderbook = subscription.paramsForOrderbook.map(
+        params =>
+          params.copy(
+            market = params.market.map(_.normalize())
+          )
+      ),
+      paramsForOrders = subscription.paramsForOrders.map(
+        params =>
+          params.copy(
+            addresses = params.addresses.map(Address.normalize),
+            market = params.market.map(_.normalize())
+          )
+      ),
+      paramsForTickers = subscription.paramsForTickers.map(
+        params =>
+          params.copy(
+            market = params.market.map(_.normalize())
+          )
+      )
+    )
 
   def onData(
       client: SocketIOClient,
-      subscription: R,
+      subscription: SocketIOSubscription,
       ackSender: AckRequest
-    ): Unit = {
+    ) = {
+
+    val error = checkSubscriptionValidation(subscription)
+
     if (ackSender.isAckRequested) {
-      ackSender.sendAckData(s"$eventName:$subscription events subscribed")
+      val ack =
+        if (error.isEmpty) {
+          SocketIOSubscription.Ack(
+            message = s"$subscription successfully subscribed $eventName"
+          )
+        } else {
+          SocketIOSubscription.Ack(
+            message = error.get,
+            error = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION
+          )
+        }
+      ackSender.sendAckData(ack)
     }
 
-    val wrapped = wrapClient(client, subscription)
-    clients = wrapped +: clients.filterNot(_ == wrapped)
+    if (error.isEmpty) {
+      val wrapped =
+        new SocketIOSubscriber(client, normalizeSubscription(subscription))
+      clients = wrapped +: clients.filterNot(_ == wrapped)
+    }
   }
-
-  // Override this method to change the event. Normally we should not do this.
-  def transformEvent(event: AnyRef): AnyRef = event
 }
