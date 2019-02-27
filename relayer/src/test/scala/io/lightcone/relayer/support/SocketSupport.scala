@@ -16,18 +16,15 @@
 
 package io.lightcone.relayer.support
 
+import io.lightcone.relayer.actors.SocketIONotificationActor
 import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.socketio.notifiers._
 
 trait SocketSupport {
   com: CommonSpec =>
-  implicit val balancelistener = new BalanceNotifier()
-  implicit val transactionNotifier = new TransactionNotifier()
-  implicit val orderNotifier = new OrderNotifier()
-  implicit val orderBookNotifier = new OrderBookNotifier()
-  implicit val tickerNotifier = new TickerNotifier()
-  implicit val tradeNotifier = new FillNotifier()
-  implicit val transferNotifier = new TransferNotifier()
+
+  implicit val relayerNotifier = new RelayerNotifier()
+
+  actors.add(SocketIONotificationActor.name, SocketIONotificationActor.start)
 
   val socketServer = new SocketServer()
   socketServer.start()

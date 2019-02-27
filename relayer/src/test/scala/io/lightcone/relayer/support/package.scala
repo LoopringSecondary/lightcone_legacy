@@ -37,7 +37,6 @@ package object support {
     burnRateForP2P = 0.5,
     symbol = "WETH",
     name = "WETH",
-    usdPrice = 1000,
     status = TokenMetadata.Status.VALID
   )
 
@@ -48,7 +47,6 @@ package object support {
     burnRateForP2P = 0.5,
     symbol = "LRC",
     name = "LRC",
-    usdPrice = 1000,
     status = TokenMetadata.Status.VALID
   )
 
@@ -59,7 +57,6 @@ package object support {
     burnRateForP2P = 0.5,
     symbol = "GTO",
     name = "GTO",
-    usdPrice = 1000,
     status = TokenMetadata.Status.VALID
   )
 

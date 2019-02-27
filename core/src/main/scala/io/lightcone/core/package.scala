@@ -45,6 +45,10 @@ package object core {
     NumericConversion.toBigInt(amount)
 
   @inline
+  implicit def amount2HexString(amount: Amount): String =
+    NumericConversion.toHexString(amount)
+
+  @inline
   implicit def bigInt2Amount(b: BigInt): Amount =
     NumericConversion.toAmount(b)
 
@@ -85,4 +89,7 @@ package object core {
   @inline
   implicit class Rich_MatchableRing(raw: MatchableRing)
       extends RichMatchableRing(raw)
+
+  @inline
+  implicit class Rich_Token(token: Token) extends RichToken(token)
 }

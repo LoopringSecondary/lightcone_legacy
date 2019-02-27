@@ -15,6 +15,7 @@
  */
 
 package io.lightcone.relayer.ethereum.event
+
 import akka.actor.ActorRef
 import akka.pattern._
 import io.lightcone.relayer.base._
@@ -28,7 +29,6 @@ import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.core._
-
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,7 +50,17 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
   def wethAddress =
-    Address(metadataManager.getTokenWithSymbol("weth").get.meta.address)
+    Address(
+      metadataManager
+        .getTokenWithSymbol("weth")
+        .getOrElse(
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not found token: WETH"
+          )
+        )
+        .getAddress()
+    )
   @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   def extractEventsFromTx(

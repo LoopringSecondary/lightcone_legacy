@@ -58,13 +58,7 @@ class CoreDeployerForTest @Inject()(
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
-    balanceNotifier: SocketIONotifier[SubscribeBalanceAndAllowance],
-    transactionNotifier: SocketIONotifier[SubscribeTransaction],
-    orderNotifier: SocketIONotifier[SubscribeOrder],
-    tradeNotifier: SocketIONotifier[SubscribeFill],
-    tickerNotifier: SocketIONotifier[SubscribeTicker],
-    orderBookNotifier: SocketIONotifier[SubscribeOrderBook],
-    transferNotifier: SocketIONotifier[SubscribeTransfer],
+    socketIONotifier: SocketIONotifier,
     system: ActorSystem)
     extends CoreDeployer {
 

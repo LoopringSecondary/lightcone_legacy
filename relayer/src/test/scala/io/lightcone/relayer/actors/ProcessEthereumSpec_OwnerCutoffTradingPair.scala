@@ -61,7 +61,11 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       )
       val cutoff = CutoffEvent(
         header = Some(
-          EventHeader(txHash = "0x1111", txStatus = TxStatus.TX_STATUS_SUCCESS)
+          EventHeader(
+            blockHeader = Some(BlockHeader(height = 100)),
+            txHash = "0x1111",
+            txStatus = TxStatus.TX_STATUS_SUCCESS
+          )
         ),
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
@@ -70,11 +74,9 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
         ).toString,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
-      val sendCutoffF = Future.sequence(
-        Seq(
-          actors.get(MultiAccountManagerActor.name) ? cutoff
-        )
-      )
+
+      val sendCutoffF =
+        Future.sequence(Seq(actors.get(MultiAccountManagerActor.name) ? cutoff))
       info("orderbook should empty after process cutoff")
       val res1 = expectOrderbookRes(
         getOrderBook,

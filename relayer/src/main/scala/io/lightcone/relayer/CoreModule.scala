@@ -33,10 +33,9 @@ import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
 
-import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.socketio.notifiers._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -105,6 +104,8 @@ class CoreModule(
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
     bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton
 
+    bind[SocketIONotifier].to[RelayerNotifier].asEagerSingleton
+
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
     bind[MetadataManager].toInstance(new MetadataManagerImpl(0.6, 0.06))
@@ -120,23 +121,6 @@ class CoreModule(
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
-
-    //bind socket listener
-    bind[SocketIONotifier[SubscribeBalanceAndAllowance]]
-      .to[BalanceNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SubscribeTransaction]]
-      .to[TransactionNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SubscribeOrder]].to[OrderNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeFill]].to[FillNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeTicker]].to[TickerNotifier].asEagerSingleton
-    bind[SocketIONotifier[SubscribeOrderBook]]
-      .to[OrderBookNotifier]
-      .asEagerSingleton
-    bind[SocketIONotifier[SubscribeTransfer]]
-      .to[TransferNotifier]
-      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
