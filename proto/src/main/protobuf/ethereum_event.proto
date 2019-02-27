@@ -57,6 +57,7 @@ message ApprovalEvent {
     int64 block     = 6;
 }
 
+//TODO:以下三个Event类似，如何处理
 message AddressBalanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
@@ -86,17 +87,6 @@ message GasPriceUpdatedEvent {
 message BlockGasPricesExtractedEvent {
     int64 height = 1;
     repeated int64 gas_prices = 2;
-}
-
-// TODO(yangli): rename to SpotPrice???
-message OHLCRawDataEvent {
-    int64      ring_index     = 1;
-    string     tx_hash        = 2;
-    string     market_hash     = 3;
-    int64      time           = 4;
-    double     base_amount    = 6;
-    double     quote_amount   = 7;
-    double     price          = 8;
 }
 
 message OrderSubmittedOnChainEvent {

@@ -32,6 +32,7 @@ import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
@@ -163,7 +164,7 @@ class CoreModule(
         MetadataManagerActor.name
       )
       .register(
-        classOf[OHLCRawDataEvent], //
+        classOf[OHLCRawData], //
         MarketHistoryActor.name
       )
       .register(

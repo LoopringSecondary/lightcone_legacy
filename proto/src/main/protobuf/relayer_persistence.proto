@@ -205,10 +205,10 @@ message UpdateTxInBlock {
 
 message PersistOHLCData {
     message Req {
-        io.lightcone.ethereum.event.OHLCRawDataEvent data    = 1;
+        io.lightcone.ethereum.persistence.OHLCRawData data    = 1;
     }
     message Res {
-        io.lightcone.ethereum.event.OHLCRawDataEvent record  = 1;
+        io.lightcone.ethereum.persistence.OHLCRawData record  = 1;
         io.lightcone.core.ErrorCode error     = 2;
     }
 }

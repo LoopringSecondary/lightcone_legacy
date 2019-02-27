@@ -20,6 +20,7 @@ import io.lightcone.ethereum.{RawOrderValidator, RawOrderValidatorImpl}
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.ethereum._
 
 trait EthereumEventExtractorSupport
@@ -72,7 +73,7 @@ trait EthereumEventExtractorSupport
         MetadataManagerActor.name
       )
       .register(
-        classOf[OHLCRawDataEvent], //
+        classOf[OHLCRawData], //
         MarketHistoryActor.name
       )
       .register(

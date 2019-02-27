@@ -19,7 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
@@ -59,7 +59,7 @@ class MarketHistoryActor(
   val selfConfig = config.getConfig(MarketHistoryActor.name)
 
   def ready: Receive = {
-    case data: OHLCRawDataEvent =>
+    case data: OHLCRawData =>
       (for {
         saveRes <- dbModule.ohlcDataDal.saveData(data)
       } yield {

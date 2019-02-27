@@ -27,6 +27,7 @@ import scala.concurrent._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.persistence._
 
 class RingMinedEventExtractor @Inject()(
     implicit
@@ -98,7 +99,7 @@ trait OHLCRawDataSupport {
             val (baseAmount, quoteAmount) =
               getAmounts(fill, baseToken, quoteToken, marketMetadata)
             Some(
-              OHLCRawDataEvent(
+              OHLCRawData(
                 ringIndex = ring.ringIndex,
                 txHash = ring.header.get.txHash,
                 marketHash = marketHash,
