@@ -114,8 +114,8 @@ class CoreDeployer @Inject()(
         EthereumQueryActor.start
       )
       .add(
-        PendingTxListenerActor.name,
-        PendingTxListenerActor.start
+        PendingTxEventExtractActor.name,
+        PendingTxEventExtractActor.start
       )
   }
 

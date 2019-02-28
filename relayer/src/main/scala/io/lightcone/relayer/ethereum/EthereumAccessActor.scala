@@ -25,7 +25,7 @@ import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.lib._
-import io.lightcone.relayer.actors.PendingTxListenerActor
+import io.lightcone.relayer.actors.PendingTxEventExtractActor
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import org.json4s.native.JsonMethods._
@@ -81,7 +81,7 @@ class EthereumAccessActor(
 
   implicit val formats = DefaultFormats
   private def monitor = actors.get(EthereumClientMonitor.name)
-  private def txListener = actors.get(PendingTxListenerActor.name)
+  private def txListener = actors.get(PendingTxEventExtractActor.name)
 
   var connectionPools: Seq[ActorRef] = HttpConnector
     .connectorNames(config)
