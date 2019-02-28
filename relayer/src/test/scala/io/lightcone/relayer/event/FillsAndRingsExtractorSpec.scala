@@ -16,12 +16,7 @@
 
 package io.lightcone.relayer.event
 
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 class FillsAndRingsExtractorSpec
     extends CommonSpec

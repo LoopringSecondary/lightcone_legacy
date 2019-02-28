@@ -120,6 +120,7 @@ class MarketManagerActor(
   import OrderStatus._
   import MarketMetadata.Status._
   import MarketManager.MatchResult
+  import TxStatus._
 
   val selfConfig = config.getConfig(MarketManagerActor.name)
 
@@ -323,29 +324,34 @@ class MarketManagerActor(
       histo.refine("label" -> "num_orders").record(numOfOrders)
       count.refine("label" -> "rematch").increment()
 
-    case RingMinedEvent(Some(header), orderIds, _) =>
-      blocking(timer, "handle_ring_mind_event") {
-        Future {
-          val ringhash =
-            createRingIdByOrderHash(orderIds(0), orderIds(1))
+    case req @ RingMinedEvent(Some(header), orderIds, _) =>
+      if ((header.txStatus != TX_STATUS_SUCCESS &&
+          header.txStatus != TX_STATUS_FAILED) && orderIds.size <= 1) {
+        log.error(s"unexpected msg : $req")
+      } else {
+        blocking(timer, "handle_ring_mind_event") {
+          Future {
+            val ringhash =
+              createRingIdByOrderHash(orderIds(0), orderIds(1))
 
-          val result = if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
-            manager.deleteRing(ringhash, true)
-          } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
-            val matchResults = manager.deleteRing(ringhash, false)
-            if (matchResults.nonEmpty) {
-              matchResults.foreach { matchResult =>
-                updateOrderbookAndSettleRings(matchResult)
+            val result = if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
+              manager.deleteRing(ringhash, true)
+            } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
+              val matchResults = manager.deleteRing(ringhash, false)
+              if (matchResults.nonEmpty) {
+                matchResults.foreach { matchResult =>
+                  updateOrderbookAndSettleRings(matchResult)
+                }
               }
             }
-          }
 
-          val numOfOrders = manager.getNumOfOrders
-          gauge.refine("label" -> "num_orders").set(numOfOrders)
-          histo.refine("label" -> "num_orders").record(numOfOrders)
-          count.refine("label" -> "ring_mined_evnet").increment()
+            val numOfOrders = manager.getNumOfOrders
+            gauge.refine("label" -> "num_orders").set(numOfOrders)
+            histo.refine("label" -> "num_orders").record(numOfOrders)
+            count.refine("label" -> "ring_mined_evnet").increment()
 
-        } sendTo sender
+          } sendTo sender
+        }
       }
 
     case req: MetadataChanged =>

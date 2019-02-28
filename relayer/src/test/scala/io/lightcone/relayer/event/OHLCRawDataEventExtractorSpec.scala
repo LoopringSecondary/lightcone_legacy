@@ -16,11 +16,6 @@
 
 package io.lightcone.relayer.event
 
-import akka.pattern._
-import io.lightcone.core._
-import io.lightcone.relayer.actors.MarketHistoryActor
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
 
 import scala.concurrent.Await

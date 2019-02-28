@@ -91,22 +91,22 @@ message OrderSubmittedOnChainEvent {
 }
 
 message TokenBurnRateChangedEvent {
-    EventHeader header = 1;
-    string      token = 2;
-    io.lightcone.core.BurnRate    burn_rate = 3;
+    EventHeader header                      = 1;
+    string token                            = 2;
+    io.lightcone.core.BurnRate burn_rate    = 3;
 }
 
 //LOOPRING RINGMINED
 message OrderFilledEvent {
-    EventHeader header = 1;
-    string owner = 2;
-    string order_hash = 3;
+    EventHeader header  = 1;
+    string owner        = 2;
+    string order_hash   = 3;
 }
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
-    EventHeader header = 1;
-    repeated string order_ids = 3;
-    io.lightcone.core.MarketPair market_pair = 4;
+    EventHeader header                          = 1;
+    repeated string order_ids                   = 3;
+    io.lightcone.core.MarketPair market_pair    = 4;
 }
 
 //LOOPRING Cutoff
@@ -119,8 +119,8 @@ message CutoffEvent {
 }
 
 message OrdersCancelledOnChainEvent {
-    EventHeader header = 1;
-    string owner  = 2;
-    string broker = 3;
-    repeated string order_hashes = 4;
+    EventHeader header              = 1;
+    string owner                    = 2;
+    string broker                   = 3;
+    repeated string order_hashes    = 4;
 }

@@ -20,11 +20,9 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.core._
-import io.lightcone.ethereum.persistence._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import scala.concurrent._
