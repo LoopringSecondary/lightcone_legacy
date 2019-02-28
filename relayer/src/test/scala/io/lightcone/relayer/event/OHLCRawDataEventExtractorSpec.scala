@@ -18,8 +18,6 @@ package io.lightcone.relayer.event
 
 import io.lightcone.relayer.support._
 
-import scala.concurrent.Await
-
 class OHLCRawDataEventExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport
