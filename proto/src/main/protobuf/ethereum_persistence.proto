@@ -48,7 +48,7 @@ message Activity {
         TOKEN_TRANSFER_IN            = 5;
         TOKEN_AUTH                   = 6;
         TRADE_SELL                   = 7;
-        TRADE_BUY                    = 8; //交易类型，P2P
+        TRADE_BUY                    = 8; //交易类型，P2P的如何处理，是否需要单独的类型标志
         ORDER_CANCEL                 = 9;
         ORDER_SUBMIT                 = 10; // order submission onchain
     }
