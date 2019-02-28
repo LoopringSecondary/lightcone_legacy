@@ -80,8 +80,10 @@ private[core] final class ReserveManagerImpl(
 
   @inline def getBlock() = block
 
-  def needRefresh() =
-    timeProvider.getTimeSeconds - lastRefreshed > refreshIntervalSeconds
+  def needRefresh() = {
+    if (refreshIntervalSeconds <= 0) false
+    else timeProvider.getTimeSeconds - lastRefreshed > refreshIntervalSeconds
+  }
 
   def getBalanceOfToken() =
     BalanceOfToken(
