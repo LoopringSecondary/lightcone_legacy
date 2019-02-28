@@ -27,12 +27,16 @@ import "core.proto";
 //1、转账 时间、类型、金额，       （油费的情况不显示或者再增加类型）    法币金额
 //2、ETH转换，
 //3、授权：没有任何转账的，显示金额为0，(不涉及金额改变时)
-//4、交易：进账
+//4、交易：
 //5、手续费：增加类型
 //6、取消订单，可以区分开order和cutoff
 //7、trade附加的信息，如环路id等信息， 交易类型 与transfer只有一个即可，前端也会显示成转账
 //
 //解析可以直接生成Activity
+
+//油费和撮合手续费在列表里面都不单独显示。用户可以通过etherscan看交易记录，得知具体的油费信息。我们APP的设计以简洁为主。
+//
+//前端可以做基于cursor的加载，不翻页。一直滑动就不断加载下N条记录。
 message Activity {
 
     enum ActivityType {
@@ -44,7 +48,7 @@ message Activity {
         TOKEN_TRANSFER_IN            = 5;
         TOKEN_AUTH                   = 6;
         TRADE_SELL                   = 7;
-        TRADE_BUY                    = 8;
+        TRADE_BUY                    = 8; //交易类型，P2P
         ORDER_CANCEL                 = 9;
         ORDER_SUBMIT                 = 10; // order submission onchain
     }
@@ -82,7 +86,7 @@ message Activity {
     }
 
     message OrderCancellation {
-        repeated string order_id         = 1;
+        repeated string order_ids         = 1;
         int64  cutoff           = 2; // if order_id is not "", this must be not 0.
         string market_pair      = 3; // dispaly as "LRC/ETH", if missing, means all markets.
         string broker           = 4; // optional
@@ -103,6 +107,7 @@ message Activity {
     int64  timestamp            = 5; //  (indexed) may not be unique, used in sorting
     double fiat_value           = 6;
     string token                = 7;
+    int64  sequence_id          = 8;
 
     oneof detail {
         EtherTransfer       ether_transfer      = 21;
