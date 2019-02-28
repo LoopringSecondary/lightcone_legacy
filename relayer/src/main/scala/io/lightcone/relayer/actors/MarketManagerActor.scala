@@ -82,7 +82,8 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
 
     case req: RingMinedEvent
         if req.header.nonEmpty &&
-          req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS &&
+          (req.getHeader.txStatus == TX_STATUS_SUCCESS ||
+            req.getHeader.txStatus == TX_STATUS_FAILED) &&
           req.marketPair.nonEmpty &&
           req.orderIds.size > 1 =>
       req.getMarketPair
