@@ -55,13 +55,13 @@ class ActivityDalImpl @Inject()(
   def getActivities(
       owner: String,
       token: Option[String],
-      paging: Paging
+      paging: CursorPaging
     ): Future[Seq[Activity]] = {
     val filters = createActivityFilters(owner, token)
     db.run(
       filters
+        .filter(_.sequenceId > paging.cursor)
         .sortBy(c => c.timestamp.desc)
-        .drop(paging.skip)
         .take(paging.size)
         .result
     )

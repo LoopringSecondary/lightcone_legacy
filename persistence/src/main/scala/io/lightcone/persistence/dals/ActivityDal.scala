@@ -28,7 +28,7 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
   def getActivities(
       owner: String,
       token: Option[String],
-      paging: Paging
+      paging: CursorPaging
     ): Future[Seq[Activity]]
 
   def countActivities(

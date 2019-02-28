@@ -22,7 +22,6 @@ package io.lightcone.relayer.data;
 import "core.proto";
 import "persistence.proto";
 import "relayer_common.proto";
-import "relayer_ethereum.proto";
 import "ethereum_event.proto";
 
 /////////////////////////////////////////////////////////////////////

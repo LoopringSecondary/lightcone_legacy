@@ -37,7 +37,8 @@ class ActivityTable(shardId: String)(tag: Tag)
   def activityType = column[ActivityType]("activity_type")
   def timestamp = column[Long]("timestamp")
   def fiatValue = column[Double]("fiat_value")
-  def detail = column[Array[Byte]]("detail")
+  def details = column[Array[Byte]]("details")
+  def sequenceId = column[Long]("sequence_id")
 
   def * =
     (
@@ -48,7 +49,8 @@ class ActivityTable(shardId: String)(tag: Tag)
       activityType,
       timestamp,
       fiatValue,
-      detail
+      details,
+      sequenceId
     ) <> ({ tuple =>
       Activity(
         owner = tuple._1,
@@ -58,7 +60,8 @@ class ActivityTable(shardId: String)(tag: Tag)
         activityType = tuple._5,
         timestamp = tuple._6,
         fiatValue = tuple._7,
-        detail = parseToDetail(tuple._5, tuple._8)
+        detail = parseToDetail(tuple._5, tuple._8),
+        sequenceId = tuple._9
       )
     }, { activity: Activity =>
       Some(
@@ -70,7 +73,8 @@ class ActivityTable(shardId: String)(tag: Tag)
           activity.activityType,
           activity.timestamp,
           activity.fiatValue,
-          printToBytes(activity.detail)
+          printToBytes(activity.detail),
+          activity.sequenceId
         )
       )
     })
@@ -125,7 +129,11 @@ class ActivityTable(shardId: String)(tag: Tag)
       case Trade(value)             => value.toByteArray
       case OrderCancellation(value) => value.toByteArray
       case OrderSubmission(value)   => value.toByteArray
-      case _                        => Array.empty[Byte]
+      case value =>
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          s"invalid data of Activity.Detail: $value"
+        )
     }
   }
 
