@@ -54,7 +54,7 @@ message ApprovalEvent {
     int64 block     = 6;
 }
 
-//TODO:以下三个Event类似，如何处理
+//TODO(hongyu):以下三个Event类似，考虑如何处理
 message AddressBalanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
@@ -101,17 +101,12 @@ message OrderFilledEvent {
     EventHeader header = 1;
     string owner = 2;
     string order_hash = 3;
-    string delegate_address  = 4;
-    string token_s = 11;
 }
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     EventHeader header = 1;
-    int64       ring_index = 2;
-    string      ring_hash = 3;
-    string      fee_recipient = 4;
-    repeated    OrderFilledEvent fills = 5;
-    string      miner = 6;
+    repeated string order_ids = 3;
+    io.lightcone.core.MarketPair market_pair = 4;
 }
 
 //LOOPRING Cutoff

@@ -78,8 +78,12 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
         ) =>
       req.getMarketPair
 
-    case req: RingMinedEvent if req.fills.size >= 2 =>
-      MarketPair(req.fills(0).tokenS, req.fills(1).tokenS)
+    case req: RingMinedEvent
+        if req.header.nonEmpty &&
+          req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS &&
+          req.marketPair.nonEmpty &&
+          req.orderIds.size > 1 =>
+      req.getMarketPair
 
     case Notify(KeepAliveActor.NOTIFY_MSG, marketPairStr) =>
       val tokens = marketPairStr.split("-")
@@ -316,11 +320,11 @@ class MarketManagerActor(
       histo.refine("label" -> "num_orders").record(numOfOrders)
       count.refine("label" -> "rematch").increment()
 
-    case RingMinedEvent(Some(header), _, _, _, fills, _) =>
+    case RingMinedEvent(Some(header), orderIds, _) =>
       blocking(timer, "handle_ring_mind_event") {
         Future {
           val ringhash =
-            createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)
+            createRingIdByOrderHash(orderIds(0), orderIds(1))
 
           val result = if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
             manager.deleteRing(ringhash, true)

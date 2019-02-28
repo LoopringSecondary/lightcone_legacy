@@ -87,10 +87,7 @@ class ProcessEthereumSpec_RingMinedEvent
       info("send a RingMinedEvent that it's txStatus is success ")
       val successEvent = RingMinedEvent(
         header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_SUCCESS)),
-        fills = Seq(
-          OrderFilledEvent(orderHash = order0.hash, tokenS = order0.tokenS),
-          OrderFilledEvent(orderHash = order1.hash, tokenS = order1.tokenS)
-        )
+        orderIds = Seq(order0.hash, order1.hash)
       )
       val eventF1 = actors.get(MarketManagerActor.name) ? successEvent
 
@@ -123,10 +120,7 @@ class ProcessEthereumSpec_RingMinedEvent
       info("send a RingMinedEvent that it's txStatus is failed.")
       val failedEvent = RingMinedEvent(
         header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_FAILED)),
-        fills = Seq(
-          OrderFilledEvent(orderHash = order3.hash, tokenS = order3.tokenS),
-          OrderFilledEvent(orderHash = order4.hash, tokenS = order4.tokenS)
-        )
+        orderIds = Seq(order3.hash, order4.hash)
       )
       val eventF2 = actors.get(MarketManagerActor.name) ? failedEvent
       Await.result(eventF2, timeout.duration)
