@@ -16,6 +16,7 @@
 
 package io.lightcone.core
 
+import io.lightcone.lib._
 import io.lightcone.core.testing._
 
 class ReserveManagerImplSpec extends CommonSpec {
@@ -26,6 +27,9 @@ class ReserveManagerImplSpec extends CommonSpec {
   implicit def int2bigInt(i: Int) = BigInt(i)
 
   var proccssedOrderIds = Seq.empty[(String, BigInt)]
+  var refreshIntervalSeconds = 100
+
+  implicit val timeProvider = new SystemTimeProvider
 
   implicit val reh = new ReserveEventHandler {
 
@@ -41,7 +45,7 @@ class ReserveManagerImplSpec extends CommonSpec {
   }
 
   override def beforeEach(): Unit = {
-    manager = new ReserveManagerImpl(token)
+    manager = new ReserveManagerImpl(token, refreshIntervalSeconds)
     proccssedOrderIds = Seq.empty
   }
 

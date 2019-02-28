@@ -38,7 +38,8 @@ import scala.util.{Failure, Success}
 // Owner: Hongyu
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
-    val owner: String
+    val owner: String,
+    val balanceRefreshIntervalSeconds: Int
   )(
     implicit
     val config: Config,
@@ -49,7 +50,7 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
-    val baProvider: BalanceAndAllowanceProvider)
+    val balanceProvider: BalanceAndAllowanceProvider)
     extends Actor
     with AccountManagerProcessors
     with Stash
@@ -66,7 +67,8 @@ class AccountManagerActor(
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
 
-  val manager = AccountManager.default(owner)
+  val manager =
+    AccountManager.default(owner, balanceRefreshIntervalSeconds, false)
 
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
