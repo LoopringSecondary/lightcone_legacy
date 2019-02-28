@@ -16,23 +16,20 @@
 
 package io.lightcone.relayer.entrypoint
 
-import io.lightcone.relayer.actors.RingAndFillPersistenceActor
-import io.lightcone.relayer.support._
+//class EntryPointSpec_DatabaseQuery
+//    extends CommonSpec
+//    with DatabaseModuleSupport
+//    with JsonrpcSupport
+//    with HttpSupport
+//    with OrderHandleSupport
+//    with OrderGenerateSupport
+//    with DatabaseQueryMessageSupport
+//    with RingAndFillPersistenceSupport {
 
-class EntryPointSpec_DatabaseQuery
-    extends CommonSpec
-    with DatabaseModuleSupport
-    with JsonrpcSupport
-    with HttpSupport
-    with OrderHandleSupport
-    with OrderGenerateSupport
-    with DatabaseQueryMessageSupport
-    with RingAndFillPersistenceSupport {
+//  @inline val ringAndFillPersistActor =
+//    actors.get(RingAndFillPersistenceActor.name)
 
-  @inline val ringAndFillPersistActor =
-    actors.get(RingAndFillPersistenceActor.name)
-
-  //TODO(hongyu): reopen after refactor struct of event
+//TODO(hongyu): reopen after refactor struct of event
 //  "DatabaseQueryActor Entrypoint" must {
 //    "init" in {
 //      info("save some ring and fills")
@@ -368,4 +365,4 @@ class EntryPointSpec_DatabaseQuery
 //    ringAndFillPersistActor ! e3
 //  }
 
-}
+//}
