@@ -190,6 +190,15 @@ package object support {
      }
     """.stripMargin
 
+  val activityConfigStr = s"""
+     db.activity.entity_0 {
+         $mysqlConfigStr
+     }
+     db.activity.entity_1 {
+         $mysqlConfigStr
+     }
+    """.stripMargin
+
   val ethNodesConfigStr = s"""|nodes:[
                               | {
                               |  host = "${ethContainer.containerIpAddress}"

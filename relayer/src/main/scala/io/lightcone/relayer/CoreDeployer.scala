@@ -37,7 +37,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
-
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent._
 
@@ -174,6 +173,14 @@ class CoreDeployer @Inject()(
           MetadataManagerValidator.name
         )
       )
+      .add(
+        ActivityValidator.name,
+        MessageValidationActor(
+          new ActivityValidator(),
+          ActivityActor.name,
+          ActivityValidator.name
+        )
+      )
 
     //-----------deploy local actors-----------
     // TODO: OnMemberUp执行有时间限制，超时会有TimeoutException
@@ -246,6 +253,7 @@ class CoreDeployer @Inject()(
           TransactionRecordActor.name, //
           TransactionRecordActor.start
         )
+        .add(ActivityActor.name, ActivityActor.start)
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors
