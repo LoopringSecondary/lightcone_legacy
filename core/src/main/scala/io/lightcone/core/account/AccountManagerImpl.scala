@@ -366,38 +366,55 @@ final class AccountManagerImpl(
       tokens_ : Set[String],
       mustReturn: Boolean
     ): Future[Map[String, ReserveManager]] = {
-    val (existing, missing) = tokens_.partition { t =>
-      tokens.contains(t) //&& tokens(t).needRefresh == false
-    }
-    val existingManagers = existing
-      .map(tokens.apply)
-      .map { m =>
-        m.token -> m
-      }
-      .toMap
+    val (existing, missing) = tokens_.partition(tokens.contains)
+    val existingManagers =
+      existing.map(tokens.apply).map(m => m.token -> m).toMap
 
     if (!mustReturn) Future.successful(existingManagers)
-    else {
+    else
       for {
         balanceAndAllowances <- Future.sequence {
           missing.map { token =>
             balanceProvider.getBalanceAndALlowance(owner, token)
           }
         }
-        tuples = missing.zip(balanceAndAllowances)
-        newManagers = tuples.map {
-          case (token, (block, balance, allowance)) =>
-            val manager = ReserveManager.default(
-              token,
-              balanceRefreshIntervalSeconds,
-              enableTracing
-            )
-            manager.setBalanceAndAllowance(block, balance, allowance)
-            tokens += token -> manager
-            token -> manager
-        }.toMap
+        newManagers = missing
+          .zip(balanceAndAllowances)
+          .map {
+            case (token, (block, balance, allowance)) =>
+              log.debug(
+                s"fetched balance and allowance for new reserve manager for token: $token => " +
+                  s"block: $block, balance: $balance, allowance: $allowance"
+              )
+              val manager = ReserveManager.default(
+                token,
+                balanceRefreshIntervalSeconds,
+                enableTracing
+              )
+              manager.setBalanceAndAllowance(block, balance, allowance)
+              tokens += token -> manager
+              token -> manager
+          }
+          .toMap
+
+        expiredManagers = existingManagers.filter(_._2.needRefresh)
+
+        _ <- Future.sequence {
+          expiredManagers.map {
+            case (token, manager) =>
+              for {
+                (block, balance, allowance) <- balanceProvider
+                  .getBalanceAndALlowance(owner, token)
+                _ = log.debug(
+                  s"fetched balance and allowance for expired reserve manager for token: $token =>" +
+                    s"block: $block, balance: $balance, allowance: $allowance"
+                )
+                _ = manager.setBalanceAndAllowance(block, balance, allowance)
+              } yield Unit
+          }
+        }
+
       } yield newManagers ++ existingManagers
-    }
   }
 
   @inline private def getReserveManagerOption(
