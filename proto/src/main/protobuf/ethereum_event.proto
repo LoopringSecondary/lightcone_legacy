@@ -54,7 +54,7 @@ message ApprovalEvent {
     int64 block     = 6;
 }
 
-//TODO(hongyu):以下三个Event类似，考虑如何处理
+//TODO(hongyu):以下三个Event类似，考虑合并处理
 message AddressBalanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
