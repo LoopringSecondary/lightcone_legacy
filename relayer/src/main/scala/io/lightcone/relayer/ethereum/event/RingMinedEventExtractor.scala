@@ -195,13 +195,12 @@ trait RingMinedEventSupport {
                     receipt,
                     Some(
                       eventHeader
-                        .copy(logIndex = index, eventIndex = eventIndex)
                     )
                   )
               }
               Some(
                 PRingMinedEvent(
-                  header = Some(eventHeader.withLogIndex(index)),
+                  header = Some(eventHeader),
                   ringIndex = event._ringIndex.longValue,
                   ringHash = event._ringHash,
                   fills = orderFilledEvents
@@ -284,7 +283,6 @@ trait RingMinedEventSupport {
       tokenB = Address.normalize(_data.substring(64 * 2, 64 * 3)),
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue,
-      fillIndex = header.get.eventIndex,
       filledAmountS = NumericConversion.toBigInt(data.substring(64 * 3, 64 * 4)),
       filledAmountB =
         NumericConversion.toBigInt(_data.substring(64 * 3, 64 * 4)),

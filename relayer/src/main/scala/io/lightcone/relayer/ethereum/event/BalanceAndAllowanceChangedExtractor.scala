@@ -162,7 +162,7 @@ trait TransferEventSupport {
             case Some(transfer: TransferEvent.Result) =>
               transfers.append(
                 event.TransferEvent(
-                  Some(eventHeader.withLogIndex(index)),
+                  Some(eventHeader),
                   from = transfer.from,
                   to = transfer.receiver,
                   token = log.address,
@@ -172,14 +172,14 @@ trait TransferEventSupport {
             case Some(withdraw: WithdrawalEvent.Result) =>
               transfers.append(
                 event.TransferEvent(
-                  Some(eventHeader.withLogIndex(index)),
+                  Some(eventHeader),
                   from = withdraw.src,
                   to = log.address,
                   token = log.address,
                   amount = withdraw.wad
                 ),
                 event.TransferEvent(
-                  Some(eventHeader.withLogIndex(index)),
+                  Some(eventHeader),
                   from = log.address,
                   to = withdraw.src,
                   token = Address.ZERO.toString(),
@@ -189,14 +189,14 @@ trait TransferEventSupport {
             case Some(deposit: DepositEvent.Result) =>
               transfers.append(
                 event.TransferEvent(
-                  Some(eventHeader.withLogIndex(index)),
+                  Some(eventHeader),
                   from = log.address,
                   to = deposit.dst,
                   token = log.address,
                   amount = deposit.wad
                 ),
                 event.TransferEvent(
-                  Some(eventHeader.withLogIndex(index)),
+                  Some(eventHeader),
                   from = deposit.dst,
                   to = log.address,
                   token = Address.ZERO.toString(),
@@ -307,14 +307,14 @@ trait TransferEventSupport {
             to = Address.normalize(event.to),
             token = Address.normalize(event.token),
             owner = Address.normalize(event.from),
-            header = event.header.map(_.withEventIndex(0))
+            header = event.header
           ),
           event.copy(
             from = Address.normalize(event.from),
             to = Address.normalize(event.to),
             token = Address.normalize(event.token),
             owner = Address.normalize(event.to),
-            header = event.header.map(_.withEventIndex(1))
+            header = event.header
           )
         )
     )

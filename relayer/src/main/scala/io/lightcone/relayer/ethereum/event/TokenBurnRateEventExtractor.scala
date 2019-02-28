@@ -58,7 +58,7 @@ class TokenBurnRateEventExtractor @Inject()(
             val rates = rateMap(event.tier.intValue)
             Some(
               TokenBurnRateChangedEvent(
-                header = Some(eventHeader.withLogIndex(index)),
+                header = Some(eventHeader),
                 token = Address.normalize(event.add),
                 burnRate = Some(
                   BurnRate(

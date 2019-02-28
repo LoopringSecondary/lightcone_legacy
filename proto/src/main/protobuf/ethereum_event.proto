@@ -33,9 +33,6 @@ message EventHeader {
     string tx_from = 6;
     string tx_to = 7;
     io.lightcone.core.Amount tx_value = 8;
-    int32  tx_index = 9;
-    int32  log_index = 10;
-    int32  event_index = 11; // ringMinedEvent解析出所有filled事件的固定顺序
 }
 
 //TODO:TransferEvent和ApprovalEvent不会作为消息进行传递，但是在作为中间计算存在，考虑如何处理
