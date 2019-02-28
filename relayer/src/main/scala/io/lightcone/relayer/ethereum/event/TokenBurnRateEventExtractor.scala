@@ -46,7 +46,7 @@ class TokenBurnRateEventExtractor @Inject()(
   val base = config.getInt("loopring_protocol.burn-rate-table.base")
 
   //TODO: 需要验证地址
-  def extractEventsFromTx(
+  def extractEvents(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader

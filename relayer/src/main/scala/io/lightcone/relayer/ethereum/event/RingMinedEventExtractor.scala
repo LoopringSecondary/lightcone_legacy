@@ -60,7 +60,7 @@ class RingMinedEventExtractor @Inject()(
   )
   val fillLength: Int = 8 * 64
 
-  def extractEventsFromTx(
+  def extractEvents(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader

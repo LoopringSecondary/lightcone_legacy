@@ -26,12 +26,6 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class AbstractEventExtractor extends EventExtractor {
   implicit val ec: ExecutionContext
 
-  def extractEventsFromTx(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      eventHeader: EventHeader
-    ): Future[Seq[AnyRef]]
-
   def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] =
     for {
       events <- Future.sequence {
@@ -49,7 +43,7 @@ abstract class AbstractEventExtractor extends EventExtractor {
                 uncles = block.uncles
               )
             ) //TODO: 确定blockHeader放置在哪里
-            extractEventsFromTx(tx, receipt, eventHeader)
+            extractEvents(tx, receipt, eventHeader)
           case _ => Future.successful(Seq.empty)
         }
       }

@@ -36,7 +36,7 @@ class CutoffEventExtractor @Inject()(
     config.getString("loopring_protocol.order-cancel-address")
   ).toString()
 
-  def extractEventsFromTx(
+  def extractEvents(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader

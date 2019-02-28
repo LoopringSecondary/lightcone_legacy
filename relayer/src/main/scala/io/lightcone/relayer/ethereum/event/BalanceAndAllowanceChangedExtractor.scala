@@ -64,7 +64,7 @@ class BalanceAndAllowanceChangedExtractor @Inject()(
     )
   @inline def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  def extractEventsFromTx(
+  def extractEvents(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: event.EventHeader
