@@ -90,13 +90,11 @@ class EntryPointSpec_CancelOrderAfterManyRingFailures
           fills = Seq(
             OrderFilledEvent(
               orderHash = order2.hash,
-              tokenS = order2.tokenS,
-              tokenB = order2.tokenB
+              tokenS = order2.tokenS
             ),
             OrderFilledEvent(
               orderHash = order1.hash,
-              tokenS = order1.tokenS,
-              tokenB = order1.tokenB
+              tokenS = order1.tokenS
             )
           )
         )

@@ -102,23 +102,7 @@ message OrderFilledEvent {
     string owner = 2;
     string order_hash = 3;
     string delegate_address  = 4;
-    string ring_hash         = 5;
-    int64  ring_index        = 6;
-    int32  fill_index        = 7;
-    io.lightcone.core.Amount filled_amount_s     = 8;
-    io.lightcone.core.Amount filled_amount_b     = 9;
-    io.lightcone.core.Amount split = 10;
     string token_s = 11;
-    string token_b = 12;
-    string wallet = 13;
-    int32  waive_fee_percentage    = 14; // miner waive
-    int32  wallet_split_percentage = 15;
-    // fee for market
-    string token_fee  = 16;
-    io.lightcone.core.Amount filled_amount_fee = 17;
-    // fee for p2p
-    io.lightcone.core.Amount fee_amount_s = 18;
-    io.lightcone.core.Amount fee_amount_b = 19;
 }
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
