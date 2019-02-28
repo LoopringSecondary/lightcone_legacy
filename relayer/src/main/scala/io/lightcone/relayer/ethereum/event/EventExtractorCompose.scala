@@ -37,12 +37,14 @@ class EventExtractorCompose(
       }
     } yield events.flatten
 
-  def extractEvents(tx: Transaction,
-                          receipt: TransactionReceipt,
-                          eventHeader: EventHeader): Future[Seq[AnyRef]] =
+  def extractEvents(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader
+    ): Future[Seq[AnyRef]] =
     for {
       events <- Future.sequence {
-        extractors.map(_.extractEvents(tx,receipt, eventHeader))
+        extractors.map(_.extractEvents(tx, receipt, eventHeader))
       }
     } yield events.flatten
 
