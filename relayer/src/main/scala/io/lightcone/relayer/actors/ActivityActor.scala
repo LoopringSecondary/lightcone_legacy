@@ -43,7 +43,7 @@ object ActivityActor extends DeployedAsShardedByAddress {
       databaseConfigManager: DatabaseConfigManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    startSharding(Props(new TransactionRecordActor()))
+    startSharding(Props(new ActivityActor()))
   }
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
@@ -88,7 +88,13 @@ class ActivityActor(
       activityDal.saveActivity(req)
 
     case req: GetAccountActivities.Req =>
-      activityDal.getActivities(req.owner, req.token, req.paging.get)
+      (for {
+        activities <- activityDal.getActivities(
+          req.owner,
+          req.token,
+          req.paging.get
+        )
+      } yield GetAccountActivities.Res(activities)).sendTo(sender)
 
   }
 

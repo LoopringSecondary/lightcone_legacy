@@ -71,7 +71,7 @@ trait RpcBinding extends JsonRpcModule {
 
   method("get_account_activities")
     .accepts[GetAccountActivities.Req]
-      .replies[GetAccountActivities.Res]
+    .replies[GetAccountActivities.Res]
 
   //Ethereum Query
   method("get_account")

@@ -16,6 +16,10 @@
 
 package io.lightcone.relayer.validator
 
+import io.lightcone.core.ErrorCode.ERR_INVALID_ARGUMENT
+import io.lightcone.core.{ErrorCode, ErrorException}
+import io.lightcone.lib.Address
+import io.lightcone.persistence.{CursorPaging, Paging}
 import scala.concurrent.Future
 
 // Example:
@@ -33,3 +37,79 @@ trait MessageValidator {
   // Throw exceptions if validation failed.
   def validate: PartialFunction[Any, Future[Any]]
 }
+
+object MessageValidator {
+
+  def normalizeAddress(address: String) = {
+    if (address.nonEmpty) Address.normalize(address) else ""
+  }
+
+  def normalizeHash(hash: String) = {
+    if (hash.nonEmpty) hash.toLowerCase else ""
+  }
+
+  def isValidNumber(str: String) = {
+    try {
+      str.toLong
+      true
+    } catch {
+      case _: Throwable => false
+    }
+  }
+
+  def getValidPaging(
+      paging: Option[Paging]
+    )(
+      implicit
+      pageConfig: PageConfig
+    ) = {
+    paging match {
+      case Some(s) if s.size > pageConfig.maxItemsPerPage =>
+        throw ErrorException(
+          ERR_INVALID_ARGUMENT,
+          s"Parameter size of paging is larger than ${pageConfig.maxItemsPerPage}"
+        )
+
+      case Some(s) if s.skip < 0 =>
+        throw ErrorException(
+          ERR_INVALID_ARGUMENT,
+          s"Invalid parameter skip of paging:${s.skip}"
+        )
+
+      case Some(s) => paging
+
+      case None =>
+        Some(Paging(size = pageConfig.defaultItemsPerPage))
+    }
+  }
+
+  def getValidCursorPaging(
+      paging: Option[CursorPaging]
+    )(
+      implicit
+      pageConfig: PageConfig
+    ) = {
+    paging match {
+      case Some(s) if s.size > pageConfig.maxItemsPerPage =>
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          s"Parameter size of paging is larger than ${pageConfig.maxItemsPerPage}"
+        )
+
+      case Some(s) if s.cursor < 0 =>
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          s"Invalid parameter cursor of paging:${s.cursor}"
+        )
+
+      case Some(s) => paging
+
+      case None =>
+        Some(CursorPaging(size = pageConfig.defaultItemsPerPage))
+    }
+  }
+}
+
+case class PageConfig(
+    defaultItemsPerPage: Int,
+    maxItemsPerPage: Int) {}

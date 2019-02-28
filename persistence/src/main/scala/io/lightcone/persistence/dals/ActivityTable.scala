@@ -38,7 +38,16 @@ class ActivityTable(shardId: String)(tag: Tag)
   def timestamp = column[Long]("timestamp")
   def fiatValue = column[Double]("fiat_value")
   def details = column[Array[Byte]]("details")
-  def sequenceId = column[Long]("sequence_id")
+  def sequenceId = column[Long]("sequence_id", O.PrimaryKey)
+
+  // indexes
+  def idx_owner_token_sequence =
+    index(
+      "idx_owner_token_sequence",
+      (owner, token, sequenceId),
+      unique = false
+    )
+  def idx_timestamp = index("idx_timestamp", (timestamp), unique = false)
 
   def * =
     (

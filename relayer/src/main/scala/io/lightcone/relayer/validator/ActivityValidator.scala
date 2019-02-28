@@ -19,7 +19,8 @@ package io.lightcone.relayer.validator
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.lib._
-import io.lightcone.persistence._
+import io.lightcone.persistence.Activity
+import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,12 +35,23 @@ final class ActivityValidator(
     ec: ExecutionContext)
     extends MessageValidator {
 
-  val activityConfig = config.getConfig(ActivityValidator.name)
+  val activityConfig = config.getConfig(ActivityActor.name)
 
   val defaultItemsPerPage = activityConfig.getInt("default-items-per-page")
   val maxItemsPerPage = activityConfig.getInt("max-items-per-page")
+  implicit val pageConfig = PageConfig(defaultItemsPerPage, maxItemsPerPage)
 
   def validate = {
+
+    case req: Activity =>
+      Future {
+        if (req.owner.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter owner could not be empty"
+          )
+        req
+      }
 
     case req: GetAccountActivities.Req =>
       Future {
@@ -53,30 +65,9 @@ final class ActivityValidator(
         GetAccountActivities.Req(
           owner,
           req.token,
-          getValidSkip(req.paging)
+          MessageValidator.getValidCursorPaging(req.paging)
         )
       }
 
-  }
-
-  private def getValidSkip(paging: Option[CursorPaging]) = {
-    paging match {
-      case Some(s) if s.size > maxItemsPerPage =>
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          s"Parameter size of paging is larger than $maxItemsPerPage"
-        )
-
-      case Some(s) if s.cursor < 0 =>
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          s"Invalid parameter cursor of paging:${s.cursor}"
-        )
-
-      case Some(s) => paging
-
-      case None =>
-        Some(CursorPaging(size = defaultItemsPerPage))
-    }
   }
 }
