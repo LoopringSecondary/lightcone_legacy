@@ -18,6 +18,7 @@ package io.lightcone.relayer.entrypoint
 
 import akka.pattern._
 import akka.testkit.TestProbe
+import io.lightcone.core.MarketPair
 import io.lightcone.core.OrderStatus._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
@@ -87,7 +88,8 @@ class EntryPointSpec_CancelOrderAfterManyRingFailures
         Thread.sleep(500)
         val f = actors.get(MarketManagerActor.name) ? RingMinedEvent(
           header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_FAILED)),
-          orderIds = Seq(order2.hash, order1.hash)
+          orderIds = Seq(order2.hash, order1.hash),
+          marketPair = Some(MarketPair(order1.tokenS, order2.tokenS))
         )
         Await.result(
           f,
