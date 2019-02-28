@@ -117,16 +117,17 @@ class SinaFiatExchangeRateFetcher @Inject()(
         )
         .toOption
         .getOrElse(0.0)
+      val currencies = k._1.split("-")
       val currency = Currency
-        .fromName(k._1)
+        .fromName(currencies(1))
         .getOrElse(
           throw ErrorException(
             ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found Currency of name:$k"
+            s"not found Currency of name:${currencies(1)}"
           )
         )
       new TokenTickerRecord(
-        symbol = k._1.split("-")(1),
+        symbol = currencies(1),
         tokenAddress = currency.getAddress(),
         price = price,
         dataSource = "Sina"

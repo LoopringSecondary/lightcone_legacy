@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer.support
 
+import io.lightcone.core.TokenInfo
 import io.lightcone.relayer.actors._
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
@@ -71,8 +72,8 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   dbModule.createTables()
 
   tokenMetadataDal.saveTokens(TOKENS)
-  tokenTickerRecordDal.saveTickers(TOKENS.map { t =>
-    TokenTickerRecord(t.address, t.symbol)
+  tokenInfoDal.saveTokens(TOKENS.map { t =>
+    TokenInfo(t.symbol)
   })
   marketMetadataDal.saveMarkets(MARKETS)
 

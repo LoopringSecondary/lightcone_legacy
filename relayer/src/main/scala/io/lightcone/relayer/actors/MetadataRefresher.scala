@@ -29,6 +29,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.util._
+import io.lightcone.relayer.implicits._
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -63,26 +64,16 @@ class MetadataRefresher(
     with Stash
     with ActorLogging {
 
-  @inline def externalCrawlerActor = actors.get(ExternalCrawlerActor.name)
   @inline def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
 
-  private var tokenMetadatas = Seq.empty[TokenMetadata]
-  private var tokenInfos = Seq.empty[TokenInfo]
-  private var markets = Seq.empty[MarketMetadata]
-
-  private var tickerRecords: Seq[TokenTickerRecord] =
-    Seq.empty[TokenTickerRecord]
-  private var tokenTickersInUSD: Seq[TokenTicker] =
-    Seq.empty[TokenTicker] // USD price
-  private var marketTickers: Seq[MarketTicker] =
-    Seq.empty[MarketTicker] // price represent exchange rate of market (price of market LRC-WETH is 0.01)
+  private var tokens = Seq.empty[Token]
+  private var markets = Seq.empty[Market]
 
   override def initialize() = {
     val f = for {
       _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
-      _ <- mediator ? Subscribe(ExternalCrawlerActor.pubsubTopic, self)
       _ <- refreshMetadata()
     } yield {}
 
@@ -101,37 +92,42 @@ class MetadataRefresher(
         _ = getLocalActors().foreach(_ ! req)
       } yield Unit
 
-    case req: TokenTickerChanged =>
-      for {
-        _ <- refreshTicker()
-        _ = getLocalActors().foreach(_ ! req)
-      } yield Unit
-
-    case _: GetMarkets.Req =>
+    case req: GetMarkets.Req =>
       //TODO(du):
       sender ! GetMarkets.Res()
 
-    case _: GetTokens.Req =>
-      //TODO(du):tickers待cmc分支实现
-      sender ! GetTokens.Res()
+    case req: GetTokens.Req => {
+      val eth = tokens.find(t => t.metadata.get.symbol == Currency.ETH.name).getOrElse(throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, "not found ticker ETH"))
+      val currencySymbols = Currency.values.map(_.name)
+      val tokens_ = tokens
+        .filter(t => !currencySymbols.contains(t.metadata.get.symbol))
+        .:+(eth)
+      val res = tokens_.map{t=>
+        val metadata = if(req.requireMetadata) t.metadata else None
+        val info = if(req.requireInfo) t.info else None
+        val price = if(req.requirePrice) t.price else 0.0
+        Token(metadata, info, price)
+      }
+      sender ! GetTokens.Res(res)
+    }
+
   }
 
   private def refreshMetadata() =
     for {
-      tokens_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
-        .mapTo[LoadTokenMetadata.Res]
-      markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
-        .mapTo[LoadMarketMetadata.Res]
+      tokens_ <- (metadataManagerActor ? GetTokens.Req())
+        .mapTo[GetTokens.Res]
+        .map(_.tokens)
+      markets_ <- (metadataManagerActor ? GetMarkets.Req())
+        .mapTo[GetMarkets.Res]
         .map(_.markets)
     } yield {
-      assert(tokens_.metadatas.nonEmpty)
-      assert(tokens_.infos.nonEmpty)
+      assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokenMetadatas = tokens_.metadatas.map(MetadataManager.normalize)
-      tokenInfos = tokens_.infos
-      markets = markets_.map(MetadataManager.normalize)
+      tokens = tokens_
+      markets = markets_
 
-      checkAndRest()
+      metadataManager.reset(tokens, markets)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
@@ -145,28 +141,11 @@ class MetadataRefresher(
     )
   }
 
-  private def refreshTicker() =
-    for {
-      tickers <- (externalCrawlerActor ? GetTokenTickers.Req())
-        .mapTo[GetTokenTickers.Res]
-    } yield {
-      assert(tickers.tickerRecords.nonEmpty)
-      assert(tickers.tokenTickers.nonEmpty)
-      assert(tickers.marketTickers.nonEmpty)
-      tickerRecords = tickers.tickerRecords
-      tokenTickersInUSD = tickers.tokenTickers
-      marketTickers = tickers.marketTickers
-
-      checkAndRest()
-    }
-
-  private def checkAndRest(): Unit = {
-    assert(tokenMetadatas.nonEmpty)
-    assert(tokenInfos.nonEmpty)
-    assert(markets.nonEmpty)
-    assert(tokenTickersInUSD.nonEmpty)
-    val tickerMap = tokenTickersInUSD.map(t => (t.symbol, t.price)).toMap
-    metadataManager.reset(tokenMetadatas, tokenInfos, tickerMap, markets)
+  private def getPriceWithQuoteToken(fromToken:Token, toCurrency: Currency) = {
+    val toToken = tokens.find(t=> t.metadata.get.address == toCurrency.getAddress()).getOrElse(throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, s"not found ticker from currency:$toCurrency"))
+    scala.util
+      .Try((BigDecimal(fromToken.price)/ BigDecimal(toToken.price)).setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .toOption
+      .getOrElse(0)
   }
-
 }

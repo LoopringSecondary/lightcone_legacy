@@ -29,34 +29,25 @@ final class MetadataManagerImpl(
 
   private var tokenAddressMap = Map.empty[String, Token]
   private var tokenSymbolMap = Map.empty[String, Token]
-  private var marketMap = Map.empty[String, MarketMetadata]
+  private var marketMap = Map.empty[String, Market]
 
   def reset(
-      tokenMetadatas: Seq[TokenMetadata],
-      tokenInfos: Seq[TokenInfo],
-      tickerMap: Map[String, Double],
-      markets: Seq[MarketMetadata]
+      tokens: Seq[Token],
+      markets: Seq[Market]
     ) = {
     tokenAddressMap = Map.empty
     tokenSymbolMap = Map.empty
 
-    val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
-
-    tokenMetadatas.foreach { meta =>
-      val m = MetadataManager.normalize(meta)
-      val t = new Token(
-        Some(m),
-        tokenInfoMap.get(m.symbol),
-        tickerMap.getOrElse(m.symbol, 0.0)
-      )
-      tokenAddressMap += m.address -> t
-      tokenSymbolMap += m.symbol -> t
+    tokens.foreach { token =>
+      val m = token.metadata.get
+      tokenAddressMap += m.address -> token
+      tokenSymbolMap += m.symbol -> token
     }
 
     marketMap = Map.empty
-    markets.foreach { meta =>
-      val m = MetadataManager.normalize(meta)
-      marketMap += m.marketHash -> m
+    markets.foreach { market =>
+      val m = market.metadata.get
+      marketMap += m.marketHash -> market
     }
   }
 
@@ -66,7 +57,7 @@ final class MetadataManagerImpl(
     ): Boolean =
     marketMap
       .get(marketHash)
-      .map(m => statuses.contains(m.status))
+      .map(m => statuses.contains(m.metadata.get.status))
       .getOrElse(false)
 
   def getTokenWithAddress(addr: String): Option[Token] = {
@@ -91,7 +82,7 @@ final class MetadataManagerImpl(
 
   def getTokens = tokenAddressMap.values.toSeq
 
-  def getMarket(marketHash: String): MarketMetadata =
+  def getMarket(marketHash: String): Market =
     marketMap
       .getOrElse(
         marketHash.toLowerCase,
@@ -101,10 +92,10 @@ final class MetadataManagerImpl(
         )
       )
 
-  def getMarkets(): Seq[MarketMetadata] = marketMap.values.toSeq
+  def getMarkets(): Seq[Market] = marketMap.values.toSeq
 
-  def getMarkets(status: MarketMetadata.Status*): Seq[MarketMetadata] = {
-    marketMap.values.filter(m => status.contains(m.status)).toSeq
+  def getMarkets(status: MarketMetadata.Status*): Seq[Market] = {
+    marketMap.values.filter(m => status.contains(m.metadata.get.status)).toSeq
   }
 
 }

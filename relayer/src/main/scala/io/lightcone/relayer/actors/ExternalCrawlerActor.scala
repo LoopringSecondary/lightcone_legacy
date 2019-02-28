@@ -17,8 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -31,6 +29,7 @@ import io.lightcone.relayer.external._
 import scala.concurrent.{ExecutionContext, Future}
 import io.lightcone.relayer.jsonrpc._
 import scala.util.{Failure, Success}
+import io.lightcone.relayer.implicits._
 
 // Owner: Yongfeng
 object ExternalCrawlerActor extends DeployedAsSingleton {
@@ -77,19 +76,16 @@ class ExternalCrawlerActor(
 
   private def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
-  val mediator = DistributedPubSub(context.system).mediator
-
   val selfConfig = config.getConfig(ExternalCrawlerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   private val tokens = metadataManager.getTokens()
-  private val effectiveMarkets = metadataManager
+  private val effectiveMarketMetadatas = metadataManager
     .getMarkets()
-    .filter(_.status != MarketMetadata.Status.TERMINATED)
+    .filter(_.metadata.get.status != MarketMetadata.Status.TERMINATED)
+    .map(_.metadata.get)
 
-  private var tickerRecords: Seq[TokenTickerRecord] =
-    Seq.empty[TokenTickerRecord]
   private var tokenTickersInUSD: Seq[TokenTicker] =
     Seq.empty[TokenTicker] // USD price
   private var marketTickers: Seq[MarketTicker] =
@@ -117,8 +113,7 @@ class ExternalCrawlerActor(
       }
     } yield {
       if (tickers_.nonEmpty) {
-        tickerRecords = tickers_
-        refreshTickers()
+        refreshTickers(tickers_)
       }
     }
     f onComplete {
@@ -131,9 +126,8 @@ class ExternalCrawlerActor(
   }
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
-    case _: GetTokenTickers.Req =>
-      sender ! GetTokenTickers
-        .Res(tickerRecords, tokenTickersInUSD, marketTickers)
+    case _: LoadTickers.Req =>
+      sender ! LoadTickers.Res(tokenTickersInUSD, marketTickers)
   }
 
   private def syncTickers() = this.synchronized {
@@ -151,34 +145,35 @@ class ExternalCrawlerActor(
       )
     } yield {
       assert(persistTickers.nonEmpty)
-      tickerRecords = persistTickers
 
-      refreshTickers()
-      mediator ! Publish(ExternalCrawlerActor.pubsubTopic, TokenTickerChanged())
+      refreshTickers(persistTickers)
+      metadataManagerActor ! TokenTickerChanged(
+        tokenTickersInUSD,
+        marketTickers
+      )
     }
   }
 
-  private def refreshTickers() = this.synchronized {
+  private def refreshTickers(tickerRecords: Seq[TokenTickerRecord]) =
+    this.synchronized {
 //    val cnyToUsd = tickerRecords.find(_.tokenAddress == Currency.RMB.getAddress())
 //    assert(cnyToUsd.nonEmpty)
 //    assert(cnyToUsd.get.price > 0)
-    // except currency and quote tokens
-    val effectiveTokens = tickerRecords.filter(isEffectiveToken)
-    tokenTickersInUSD = effectiveTokens
-      .map(convertPersistToExternal)
-    marketTickers = fillAllMarketTickers(effectiveTokens, effectiveMarkets)
-  }
+      // except currency and quote tokens
+      val effectiveTokens = tickerRecords.filter(isEffectiveToken)
+      tokenTickersInUSD = effectiveTokens
+        .map(convertPersistToExternal)
+      marketTickers =
+        fillAllMarketTickers(effectiveTokens, effectiveMarketMetadatas)
+    }
 
   private def isEffectiveToken(ticker: TokenTickerRecord): Boolean = {
-    tokens.exists(_.metadata.get.address == ticker.tokenAddress)
+    tokens
+      .map(_.metadata.get.address)
+      .:+(Currency.values.map(_.getAddress()))
+      .contains(ticker.tokenAddress)
   }
 
-  /**
-    *
-    * @param currencyTickersInUsd: currency tickers
-    * @param tokenTickersInUsd: erc20 and quote token tickers
-    * @return
-    */
   private def persistTickers(
       currencyTickersInUsd: Seq[TokenTickerRecord],
       tokenTickersInUsd: Seq[TokenTickerRecord]

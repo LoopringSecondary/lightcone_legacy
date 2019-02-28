@@ -61,10 +61,8 @@ object MetadataManager {
 trait MetadataManager {
 
   def reset(
-      tokenMetadatas: Seq[TokenMetadata],
-      tokenInfos: Seq[TokenInfo],
-      tickerMap: Map[String, Double],
-      markets: Seq[MarketMetadata]
+      tokens: Seq[Token],
+      markets: Seq[Market]
     ): Unit
 
   def getTokenWithAddress(addr: String): Option[Token]
@@ -72,14 +70,14 @@ trait MetadataManager {
 
   def getTokens(): Seq[Token]
 
-  def getMarket(marketHash: String): MarketMetadata
+  def getMarket(marketHash: String): Market
 
-  def getMarket(marketPair: MarketPair): MarketMetadata =
+  def getMarket(marketPair: MarketPair): Market =
     getMarket(MarketHash(marketPair).toString)
 
-  def getMarkets(): Seq[MarketMetadata]
+  def getMarkets(): Seq[Market]
 
-  def getMarkets(status: MarketMetadata.Status*): Seq[MarketMetadata]
+  def getMarkets(status: MarketMetadata.Status*): Seq[Market]
 
   def getBurnRate(addr: String): BurnRate
 

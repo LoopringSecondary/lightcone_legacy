@@ -41,9 +41,9 @@ class CMCCrawlerSpec
   var tickers: Seq[TokenTicker] = Seq.empty[TokenTicker]
 
   private val tokens = metadataManager.getTokens
-  private val effectiveMarkets = metadataManager
+  private val effectiveMarketMetadatas = metadataManager
     .getMarkets()
-    .filter(_.status != MarketMetadata.Status.TERMINATED)
+    .filter(_.metadata.get.status != MarketMetadata.Status.TERMINATED).map(_.metadata.get)
 
   private var tickerRecords: Seq[TokenTickerRecord] =
     Seq.empty[TokenTickerRecord]
@@ -58,18 +58,19 @@ class CMCCrawlerSpec
         Await.result(
           fiatExchangeRateFetcher
             .fetchExchangeRates(CURRENCY_EXCHANGE_PAIR)
-            .mapTo[Map[String, Double]],
+            .mapTo[Seq[TokenTickerRecord]],
           5.second
         )
       r.nonEmpty should be(true)
-      r.contains(USD_RMB) should be(true)
-      r(USD_RMB) > 0 should be(true)
-      r.contains(USD_JPY) should be(true)
-      r(USD_JPY) > 0 should be(true)
-      r.contains(USD_EUR) should be(true)
-      r(USD_EUR) > 0 should be(true)
-      r.contains(USD_GBP) should be(true)
-      r(USD_GBP) > 0 should be(true)
+      val map = r.map(t => t.symbol -> t.price).toMap
+      map.contains(Currency.RMB.name) should be(true)
+      map(Currency.RMB.name) > 0 should be(true)
+      map.contains(Currency.JPY.name) should be(true)
+      map(Currency.JPY.name) > 0 should be(true)
+      map.contains(Currency.EUR.name) should be(true)
+      map(Currency.EUR.name) > 0 should be(true)
+      map.contains(Currency.GBP.name) should be(true)
+      map(Currency.GBP.name) > 0 should be(true)
     }
 
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
@@ -96,14 +97,13 @@ class CMCCrawlerSpec
         50.second
       )
       tickerRecords = q1._3
-      q1._1.length should be(tokens.length)
-      q1._2.length should be(Currency.values.length)
-      q1._3.length should be(tokens.length + Currency.values.length)
+      q1._1.length should be(1099)
+      q1._2.length should be(CURRENCY_EXCHANGE_PAIR.length)
+      q1._3.length should be(1099 + CURRENCY_EXCHANGE_PAIR.length)
     }
 
     "convert USD tickers to all quote markets (ExternalDataRefresher)" in {
       refreshTickers()
-
       // get a random position
       assert(tokenTickersInUSD.length == tokens.length)
       val p = (new util.Random).nextInt(tokenTickersInUSD.size)
@@ -111,9 +111,9 @@ class CMCCrawlerSpec
       assert(tickerInUsd.price > 0)
       assert(tickerInUsd.volume24H > 0)
       assert(tickerInUsd.symbol.nonEmpty)
-      assert(tickerInUsd.percentChange1H > 0)
-      assert(tickerInUsd.percentChange24H > 0)
-      assert(tickerInUsd.percentChange7D > 0)
+      assert(tickerInUsd.percentChange1H != 0)
+      assert(tickerInUsd.percentChange24H != 0)
+      assert(tickerInUsd.percentChange7D != 0)
     }
   }
 
@@ -144,7 +144,7 @@ class CMCCrawlerSpec
     val effectiveTokens = tickerRecords.filter(isEffectiveToken)
     tokenTickersInUSD = effectiveTokens
       .map(convertPersistToExternal)
-    marketTickers = fillAllMarketTickers(effectiveTokens, effectiveMarkets)
+    marketTickers = fillAllMarketTickers(effectiveTokens, effectiveMarketMetadatas)
   }
 
   private def isEffectiveToken(ticker: TokenTickerRecord): Boolean = {
@@ -283,20 +283,29 @@ class CMCCrawlerSpec
       .map { t =>
         val q = getQuote(t)
         val p = t.platform.get
-        TokenTickerRecord(
-          p.tokenAddress,
-          t.symbol,
-          q.price,
-          q.volume24H,
-          q.percentChange1H,
-          q.percentChange24H,
-          q.percentChange7D,
-          q.marketCap,
-          0,
-          false,
-          "CMC"
+        normalize(
+          TokenTickerRecord(
+            p.tokenAddress,
+            t.symbol,
+            q.price,
+            q.volume24H,
+            q.percentChange1H,
+            q.percentChange24H,
+            q.percentChange7D,
+            q.marketCap,
+            0,
+            false,
+            "CMC"
+          )
         )
       }
+  }
+
+  private def normalize(record: TokenTickerRecord) = {
+    record.copy(
+      tokenAddress = record.tokenAddress.toLowerCase,
+      symbol = record.symbol.toUpperCase
+    )
   }
 
   private def getQuote(ticker: CMCTickerData) = {
@@ -331,12 +340,19 @@ class CMCCrawlerSpec
             s"not found Currency of name:$t"
           )
         )
-      new TokenTickerRecord(
-        symbol = t,
-        tokenAddress = currency.getAddress(),
-        price = quote.price,
-        dataSource = "CMC"
-      )
+      normalize(TokenTickerRecord(
+        currency.getAddress(),
+        t,
+        quote.price,
+        quote.volume24H,
+        quote.percentChange1H,
+        quote.percentChange24H,
+        quote.percentChange7D,
+        quote.marketCap,
+        0,
+        false,
+        "CMC"
+      ))
     }
   }
 

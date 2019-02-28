@@ -2143,7 +2143,7 @@
                 "name": "Ethereum",
                 "symbol": "ETH",
                 "slug": "ethereum",
-                "token_address": "0x97241525fe425C90eBe5A41127816dcFA5954b06"
+                "token_address": "0x97241525fe425c90ebe5a41127816dcfa5954b06"
             },
             "cmc_rank": 74,
             "last_updated": "2019-02-15T02:17:03.000Z",

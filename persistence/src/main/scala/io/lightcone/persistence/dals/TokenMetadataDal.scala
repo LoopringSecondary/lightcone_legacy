@@ -22,15 +22,17 @@ import scala.concurrent._
 
 trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
-  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def saveTokenMetadata(tokenMetadata: TokenMetadata): Future[ErrorCode]
 
-  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]]
+  def saveTokenMetadatas(
+      tokenMetadatas: Seq[TokenMetadata]
+    ): Future[Seq[String]]
 
-  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def updateTokenMetadata(tokenMetadata: TokenMetadata): Future[ErrorCode]
 
-  def getTokens(addresses: Seq[String]): Future[Seq[TokenMetadata]]
+  def getTokenMetadatas(addresses: Seq[String]): Future[Seq[TokenMetadata]]
 
-  def getTokens(): Future[Seq[TokenMetadata]]
+  def getTokenMetadatas(): Future[Seq[TokenMetadata]]
 
   def updateBurnRate(
       token: String,
@@ -38,5 +40,5 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
       burnRateForP2P: Double
     ): Future[ErrorCode]
 
-  def invalidateToken(address: String): Future[ErrorCode]
+  def invalidateTokenMetadata(address: String): Future[ErrorCode]
 }

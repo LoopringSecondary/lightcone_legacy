@@ -118,18 +118,20 @@ class CMCExternalTickerFetcher @Inject()(
       .map { t =>
         val q = getQuote(t)
         val p = t.platform.get
-        TokenTickerRecord(
-          p.tokenAddress,
-          t.symbol,
-          q.price,
-          q.volume24H,
-          q.percentChange1H,
-          q.percentChange24H,
-          q.percentChange7D,
-          q.marketCap,
-          0,
-          false,
-          "CMC"
+        normalize(
+          TokenTickerRecord(
+            p.tokenAddress,
+            t.symbol,
+            q.price,
+            q.volume24H,
+            q.percentChange1H,
+            q.percentChange24H,
+            q.percentChange7D,
+            q.marketCap,
+            0,
+            false,
+            "CMC"
+          )
         )
       }
   }
@@ -143,6 +145,13 @@ class CMCExternalTickerFetcher @Inject()(
       )
     }
     ticker.quote("USD")
+  }
+
+  private def normalize(record: TokenTickerRecord) = {
+    record.copy(
+      tokenAddress = record.tokenAddress.toLowerCase,
+      symbol = record.symbol.toUpperCase
+    )
   }
 
   private def fillQuoteTickersToPersistence(
@@ -166,11 +175,20 @@ class CMCExternalTickerFetcher @Inject()(
             s"not found Currency of name:$t"
           )
         )
-      new TokenTickerRecord(
-        symbol = t,
-        tokenAddress = currency.getAddress(),
-        price = quote.price,
-        dataSource = "CMC"
+      normalize(
+        TokenTickerRecord(
+          currency.getAddress(),
+          t,
+          quote.price,
+          quote.volume24H,
+          quote.percentChange1H,
+          quote.percentChange24H,
+          quote.percentChange7D,
+          quote.marketCap,
+          0,
+          false,
+          "CMC"
+        )
       )
     }
   }

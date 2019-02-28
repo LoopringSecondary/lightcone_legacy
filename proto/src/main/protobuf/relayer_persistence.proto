@@ -322,17 +322,6 @@ message InvalidateToken {
     }
 }
 
-message LoadTokenMetadata {
-    message Req {
-
-    }
-
-    message Res {
-        repeated io.lightcone.core.TokenMetadata metadatas = 1;
-        repeated io.lightcone.core.TokenInfo infos = 2;
-    }
-}
-
 message SaveMarketMetadatas {
     message Req {
         repeated io.lightcone.core.MarketMetadata markets = 1;
@@ -363,26 +352,18 @@ message TerminateMarket {
     }
 }
 
-message LoadMarketMetadata {
+message LoadTickers {
     message Req {
 
     }
 
     message Res {
-        repeated io.lightcone.core.MarketMetadata markets = 1;
+        repeated io.lightcone.core.TokenTicker token_tickers = 1;
+        repeated io.lightcone.core.MarketTicker market_tickers = 2;
     }
 }
 
-message GetTokenTickers {
-    message Req {
-
-    }
-
-    message Res {
-        repeated io.lightcone.persistence.TokenTickerRecord ticker_records = 1;
-        repeated io.lightcone.core.TokenTicker token_tickers = 2;
-        repeated io.lightcone.core.MarketTicker market_tickers = 3;
-    }
+message TokenTickerChanged {
+    repeated io.lightcone.core.TokenTicker token_tickers = 1;
+    repeated io.lightcone.core.MarketTicker market_tickers = 2;
 }
-
-message TokenTickerChanged {}
