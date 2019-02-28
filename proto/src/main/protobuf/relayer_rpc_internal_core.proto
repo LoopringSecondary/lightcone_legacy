@@ -22,8 +22,8 @@ package io.lightcone.relayer.data;
 import "core.proto";
 import "persistence.proto";
 import "relayer_common.proto";
-import "relayer_external.proto";
 // import "relayer_ethereum.proto";
+import "google/protobuf/wrappers.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES
@@ -137,6 +137,9 @@ message GetAccount {
 // TODO(hongyu): support this (waiting for dals finished by yongfeng)
 message GetAccountActivities {
     message Req {
+        string owner = 1;
+        google.protobuf.StringValue token = 2;
+        io.lightcone.persistence.CursorPaging paging = 3;
     }
 
     message Res {
