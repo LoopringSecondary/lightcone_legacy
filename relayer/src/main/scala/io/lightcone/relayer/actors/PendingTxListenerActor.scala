@@ -16,6 +16,9 @@
 
 package io.lightcone.relayer.actors
 
+import java.net.URI
+import java.util
+
 import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
@@ -24,6 +27,10 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum.HttpConnector
 import javax.inject.Inject
+import org.web3j.protocol.core.Request
+import org.web3j.protocol.core.methods.response.EthSubscribe
+import org.web3j.protocol.websocket._
+import org.web3j.protocol.websocket.events.PendingTransactionNotification
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,62 +58,44 @@ class PendingTxListenerActor @Inject()(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
-    extends InitializationRetryActor
-    with RepeatedJobActor {
+    extends InitializationRetryActor {
 
-  val selfConfig = config.getConfig(PendingTxListenerActor.name)
-  val checkInterval = selfConfig.getInt("check-interval-seconds")
-  val nodeNames: Seq[String] = HttpConnector.connectorNames(config).keys.toSeq
-  var filters: Map[String, String] = Map.empty
+  val nodes = HttpConnector.connectorNames(config)
 
-  override def initialize(): Future[Unit] = {
-    if (nodeNames.forall(actors.contains)) {
-      Future
-        .sequence(nodeNames.map { nodeName =>
-          (actors.get(nodeName) ? NewPendingTransactionFilter.Req())
-            .mapAs[NewPendingTransactionFilter.Res]
-            .map(res => nodeName -> res.result)
-        })
-        .map(res => filters = res.toMap)
-    } else Future.failed(new Exception("Ethereum is not ready"))
-  }
-
-  val repeatedJobs: Seq[Job] = {
-    Seq(
-      Job(
-        name = PendingTxListenerActor.name,
-        dalayInSeconds = checkInterval,
-        run = () => getPendingTxs
+  override def initialize(): Future[Unit] = Future {
+    nodes.foreach { node =>
+      val client =
+        new WebSocketClient(new URI(s"ws://${node._2.host}:${node._2.wsPort}"))
+      val webSocketService =
+        new WebSocketService(client, false)
+      webSocketService.connect()
+      val subscribeRequest = new Request[AnyRef, EthSubscribe](
+        "eth_subscribe",
+        util.Arrays.asList("newPendingTransactions"),
+        webSocketService,
+        classOf[EthSubscribe]
       )
-    )
-  }
-
-  def getPendingTxs = {
-    for {
-      hashSeqs <- Future
-        .sequence(filters.map { filter =>
-          (actors.get(filter._1) ? GetFilterChanges
-            .Req(filterId = filter._2))
-            .mapAs[GetFilterChanges.Res]
-            .map(res => filter._1 -> res)
-        })
-        .map(res => res.filter(_._2.result.nonEmpty))
-        .map(resp => resp.map(node => node._1 -> node._2.result).toSeq)
-      txs: Seq[Transaction] <- Future
-        .sequence(hashSeqs.map { hashSeq =>
-          val batchReq = BatchGetTransactions.Req(
-            hashSeq._2.map(hash => GetTransactionByHash.Req(hash))
+      val events = webSocketService.subscribe(
+        subscribeRequest,
+        "eth_unsubscribe",
+        classOf[PendingTransactionNotification]
+      )
+      events.subscribe((t: PendingTransactionNotification) => {
+        (actors.get(node._1) ? GetTransactionByHash.Req(
+          hash = t.getParams.getResult
+        )).mapAs[GetTransactionByHash.Res]
+          .map(
+            res =>
+              if (res.result.nonEmpty && actors.contains(node._1)) {
+                self ! actors.get(node._1)
+              }
           )
-          (actors.get(hashSeq._1) ? batchReq)
-            .mapAs[BatchGetTransactions.Res]
-            .map(_.resps.map(_.result))
-        })
-        .map(_.flatten)
-        .map(_.filter(_.nonEmpty).distinct.map(_.get))
-    } yield txs.foreach(self ! _)
+      })
+    }
+    becomeReady()
   }
 
-  def ready: Receive = super.receiveRepeatdJobs orElse {
+  def ready: Receive = {
     case tx: Transaction =>
     //TODO(yadong) 解析Transaction，把事件发送到对应的Actor
 

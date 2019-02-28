@@ -54,7 +54,11 @@ object HttpConnector {
       .map {
         case (c, index) =>
           val node = EthereumProxySettings
-            .Node(host = c.getString("host"), port = c.getInt("port"))
+            .Node(
+              host = c.getString("host"),
+              port = c.getInt("port"),
+              wsPort = c.getInt("ws-port")
+            )
           s"${name}_$index" -> node
       }
       .toMap
@@ -417,17 +421,6 @@ class HttpConnector(
           BatchGetEthBalance.Res(txResps)
       } sendTo sender
     }
-    case _: NewPendingTransactionFilter.Req =>
-      sendMessage("eth_newPendingTransactionFilter") {
-        Seq.empty
-      } map JsonFormat
-        .fromJsonString[NewPendingTransactionFilter.Res] sendTo sender
-
-    case req: GetFilterChanges.Req =>
-      sendMessage("eth_getFilterChanges") {
-        Seq(req.filterId)
-      } map JsonFormat.fromJsonString[GetFilterChanges.Res] sendTo sender
-
     case req @ Notify("init", _) =>
       sender ! req
   }
