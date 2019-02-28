@@ -47,6 +47,12 @@ class ActivityTable(shardId: String)(tag: Tag)
       (owner, token, sequenceId),
       unique = false
     )
+  def idx_owner_txhash =
+    index(
+      "idx_owner_txhash",
+      (owner, txHash),
+      unique = false
+    )
   def idx_timestamp = index("idx_timestamp", (timestamp), unique = false)
 
   def * =

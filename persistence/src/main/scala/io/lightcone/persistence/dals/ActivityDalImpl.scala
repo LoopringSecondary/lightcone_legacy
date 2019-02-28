@@ -74,6 +74,14 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
+  def deleteByTxHash(
+      owner: String,
+      txHash: String
+    ): Future[Boolean] =
+    db.run(query.filter(_.owner === owner).filter(_.txHash === txHash).delete)
+      .map(_ > 0)
+
+  // TODO (yongfeng) 等分叉处理时确认逻辑 > or >=
   def obsolete(block: Long): Future[Boolean] =
     db.run(query.filter(_.block >= block).delete).map(_ > 0)
 

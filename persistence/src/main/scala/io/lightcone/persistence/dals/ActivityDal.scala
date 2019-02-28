@@ -35,5 +35,10 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       token: Option[String]
     ): Future[Int]
 
+  def deleteByTxHash(
+      owner: String,
+      txHash: String
+    ): Future[Boolean]
+
   def obsolete(block: Long): Future[Boolean]
 }

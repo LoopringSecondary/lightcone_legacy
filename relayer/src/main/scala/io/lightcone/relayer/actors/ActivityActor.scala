@@ -96,6 +96,7 @@ class ActivityActor(
         )
       } yield GetAccountActivities.Res(activities)).sendTo(sender)
 
+      //TODO (yongfeng) obsolete, pending -> failed & success
   }
 
 }
