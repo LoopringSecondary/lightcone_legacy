@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.lib.TimeProvider
+
 trait ReserveEventHandler {
 
   def onTokenReservedForOrder(
@@ -30,12 +32,14 @@ object ReserveManager {
 
   def default(
       token: String,
+      refreshIntervalSeconds: Int,
       enableTracing: Boolean = false
     )(
       implicit
+      timeProvider: TimeProvider,
       eventHandler: ReserveEventHandler
     ): ReserveManager =
-    new ReserveManagerImpl(token, enableTracing)
+    new ReserveManagerImpl(token, refreshIntervalSeconds, enableTracing)
 }
 
 private[core] trait ReserveManager {
@@ -44,6 +48,8 @@ private[core] trait ReserveManager {
   def getBlock(): Long // return the last block number
 
   def getBalanceOfToken(): BalanceOfToken
+
+  def needRefresh(): Boolean
 
   def setBalance(
       block: Long,

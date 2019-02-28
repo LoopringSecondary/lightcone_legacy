@@ -16,6 +16,7 @@
 
 package io.lightcone.core
 
+import io.lightcone.lib.TimeProvider
 import org.slf4s.Logging
 import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
@@ -23,12 +24,14 @@ import io.lightcone.lib.FutureUtil._
 // This class is not thread safe.
 final class AccountManagerImpl(
     val owner: String,
-    enableTracing: Boolean = false
+    val balanceRefreshIntervalSeconds: Int,
+    val enableTracing: Boolean = false
   )(
     implicit
     updatedOrdersProcessor: UpdatedOrdersProcessor,
     updatedAccountsProcessor: UpdatedAccountsProcessor,
-    provider: BalanceAndAllowanceProvider,
+    timeProvider: TimeProvider,
+    balanceProvider: BalanceAndAllowanceProvider,
     ec: ExecutionContext)
     extends AccountManager
     with Logging {
@@ -366,42 +369,59 @@ final class AccountManagerImpl(
     val (existing, missing) = tokens_.partition(tokens.contains)
     val existingManagers =
       existing.map(tokens.apply).map(m => m.token -> m).toMap
+
     if (!mustReturn) Future.successful(existingManagers)
-    else {
+    else
       for {
         balanceAndAllowances <- Future.sequence {
           missing.map { token =>
-            provider.getBalanceAndALlowance(owner, token)
+            balanceProvider.getBalanceAndALlowance(owner, token)
           }
         }
-        tuples = missing.zip(balanceAndAllowances)
-        newManagers = tuples.map {
-          case (token, (block, balance, allowance)) =>
-            val manager = ReserveManager.default(token, enableTracing)
-            manager.setBalanceAndAllowance(block, balance, allowance)
-            tokens += token -> manager
-            token -> manager
-        }.toMap
+        newManagers = missing
+          .zip(balanceAndAllowances)
+          .map {
+            case (token, (block, balance, allowance)) =>
+              log.debug(
+                s"fetched balance and allowance for new reserve manager for token: $token => " +
+                  s"block: $block, balance: $balance, allowance: $allowance"
+              )
+              val manager = ReserveManager.default(
+                token,
+                balanceRefreshIntervalSeconds,
+                enableTracing
+              )
+              manager.setBalanceAndAllowance(block, balance, allowance)
+              tokens += token -> manager
+              token -> manager
+          }
+          .toMap
+
+        expiredManagers = existingManagers.filter(_._2.needRefresh)
+
+        _ <- Future.sequence {
+          expiredManagers.map {
+            case (token, manager) =>
+              for {
+                (block, balance, allowance) <- balanceProvider
+                  .getBalanceAndALlowance(owner, token)
+                _ = log.debug(
+                  s"fetched balance and allowance for expired reserve manager for token: $token =>" +
+                    s"block: $block, balance: $balance, allowance: $allowance"
+                )
+                _ = manager.setBalanceAndAllowance(block, balance, allowance)
+              } yield Unit
+          }
+        }
+
       } yield newManagers ++ existingManagers
-    }
   }
 
-  // Do not use getReserveManagers for best performance
-  private def getReserveManagerOption(
+  @inline private def getReserveManagerOption(
       token: String,
       mustReturn: Boolean
-    ): Future[Option[ReserveManager]] = {
-    if (tokens.contains(token)) Future.successful(Some(tokens(token)))
-    else if (!mustReturn) Future.successful(None)
-    else {
-      provider.getBalanceAndALlowance(owner, token).map { result =>
-        val (block, balance, allowance) = result
-        val manager = ReserveManager.default(token, enableTracing)
-        manager.setBalanceAndAllowance(block, balance, allowance)
-        tokens += token -> manager
-        Some(manager)
-      }
-    }
-  }
+    ): Future[Option[ReserveManager]] =
+    getReserveManagers(Set(token), mustReturn)
+      .map(_.get(token))
 
 }
