@@ -27,6 +27,6 @@ trait ActivityService {
   def getActivities(
       owner: String,
       token: Option[String],
-      paging: Paging
+      paging: CursorPaging
     ): Future[(Seq[Activity], Int)]
 }

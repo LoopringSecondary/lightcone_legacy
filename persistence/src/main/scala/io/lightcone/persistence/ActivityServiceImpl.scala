@@ -35,7 +35,7 @@ class ActivityServiceImpl @Inject()(
   def getActivities(
       owner: String,
       token: Option[String],
-      paging: Paging
+      paging: CursorPaging
     ): Future[(Seq[Activity], Int)] =
     for {
       activities <- activityDal.getActivities(owner, token, paging)
