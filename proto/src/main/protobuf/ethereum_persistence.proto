@@ -83,6 +83,7 @@ message Activity {
         string  price                           = 4;  // == _amountquote / _amountbase
         io.lightcone.core.Amount amount_base    = 5;
         io.lightcone.core.Amount amount_quote   = 6;
+        bool is_p2p = 7; //TODO(hongyu):确认逻辑
     }
 
     message OrderCancellation {

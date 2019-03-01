@@ -24,7 +24,7 @@ import "core.proto";
 /////////////////////////////////////////////////////////////////////
 // ETHEREUM RAW DATA TYPES
 /////////////////////////////////////////////////////////////////////
-
+//TODO(hongyu):迁移到ethereum中，不应该再relayer.data下
 message Transaction {
     string hash = 1;
     string nonce = 2;
@@ -166,24 +166,6 @@ message EventLogData {
     string name                 = 6;
     bytes  data                 = 7;
     bytes  topics               = 8;
-}
-
-message TransactionData {
-    // string id                = 1;
-    string hash                 = 2;
-    int64  height               = 3;
-    string block_hash           = 4;
-    int64  timestamp            = 5;
-    string from                 = 6;
-    string to                   = 7;
-    io.lightcone.core.Amount amount               = 8;
-    int32  tx_receipt_status    = 9;
-    io.lightcone.core.Amount gas_used             = 10;
-    io.lightcone.core.Amount gas_limit            = 11;
-    int64  gas_price            = 12;
-    io.lightcone.core.Amount tx_fee               = 13;
-    int64  nonce                = 14;
-    bytes  input_data           = 15;
 }
 
 message AddressData {
