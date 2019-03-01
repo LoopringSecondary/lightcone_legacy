@@ -64,6 +64,7 @@ class KeepAliveActor @Inject()(
 
   import MarketMetadata.Status._
   val numsOfAccountShards = config.getInt("multi_account_manager.num-of-shards")
+  val numsOfActivityShards = config.getInt("activity.num-of-shards")
 
   @inline @inline def orderbookManagerActor =
     actors.get(OrderbookManagerActor.name)
@@ -71,6 +72,9 @@ class KeepAliveActor @Inject()(
 
   @inline def multiAccountManagerActor =
     actors.get(MultiAccountManagerActor.name)
+
+  @inline def activityActor =
+    actors.get(ActivityActor.name)
 
   val repeatedJobs = Seq(
     Job(
@@ -83,7 +87,8 @@ class KeepAliveActor @Inject()(
             initEtherHttpConnector(),
             initOrderbookManager(),
             initMarketManager(),
-            initAccountManager()
+            initAccountManager(),
+            initActivityManager()
           )
         )
     )
@@ -132,5 +137,13 @@ class KeepAliveActor @Inject()(
           actors.get(nodeName) ? Notify(KeepAliveActor.NOTIFY_MSG)
       })
     } yield Unit
+
+  private def initActivityManager(): Future[Unit] = {
+    for {
+      _ <- Future.sequence((0 until numsOfActivityShards) map { i =>
+        activityActor ? Notify(KeepAliveActor.NOTIFY_MSG, i.toString)
+      })
+    } yield Unit
+  }
 
 }

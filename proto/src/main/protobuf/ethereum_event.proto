@@ -124,3 +124,21 @@ message OrdersCancelledOnChainEvent {
     string broker                   = 3;
     repeated string order_hashes    = 4;
 }
+
+// TODO (yongfeng) 先定义一个结构为了实现功能，后续等亚东确定
+message BlockForkedEvent {
+    int64  forked_block_num = 1;
+    int64  latest_block_num = 2;
+}
+
+// TODO (yongfeng) 先定义一个基础结果，后续再完善
+message BlockEvent {
+    message Tx {
+        string from = 1;
+        int32  nonce = 2;
+        string tx_hash = 3;
+        int64  block_no = 4;
+    }
+
+    repeated Tx txs = 1;
+}

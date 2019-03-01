@@ -19,12 +19,15 @@ package io.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.core._
+import io.lightcone.ethereum.persistence.Activity.ActivityStatus
 import io.lightcone.lib.Address
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
+import io.lightcone.persistence.base.enumColumnType
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
+
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -37,6 +40,7 @@ class ActivityDalImpl @Inject()(
     extends ActivityDal {
 
   val query = TableQuery(new ActivityTable(shardId)(_))
+  implicit val activityStatusCxolumnType = enumColumnType(ActivityStatus)
 
   def saveActivity(activity: Activity): Future[ErrorCode] =
     db.run(
@@ -67,6 +71,9 @@ class ActivityDalImpl @Inject()(
     )
   }
 
+  def getPendingActivities(from: Set[String]): Future[Seq[Activity]] =
+    db.run(query.filter(_.block === 0L).filter(_.from inSet from).result)
+
   def countActivities(
       owner: String,
       token: Option[String]
@@ -75,15 +82,45 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def deleteByTxHash(
+  def deleteBySequenceId(
       owner: String,
-      txHash: String
+      sequenceId: Long
     ): Future[Boolean] =
-    db.run(query.filter(_.owner === owner).filter(_.txHash === txHash).delete)
+    db.run(
+        query
+          .filter(_.owner === owner)
+          .filter(_.sequenceId === sequenceId)
+          .delete
+      )
       .map(_ > 0)
 
   def obsoleteDataSinceBlock(block: Long): Future[Boolean] =
     db.run(query.filter(_.block >= block).delete).map(_ > 0)
+
+  def clearBlockDataSinceBlock(block: Long): Future[Boolean] =
+    db.run(
+        query
+          .filter(_.block >= block)
+          .map(c => (c.block, c.activityStatus))
+          .update(0L, ActivityStatus.PENDING)
+      )
+      .map(_ > 0)
+
+  def updatePendingActivityFailed(
+      from: String,
+      nonce: Int,
+      txHash: String
+    ): Future[Boolean] =
+    db.run(
+        query
+          .filter(_.from === from)
+          .filter(_.block === 0L)
+          .filter(_.nonce <= nonce)
+          .filterNot(_.txHash === txHash)
+          .map(_.activityStatus)
+          .update(ActivityStatus.PENDING)
+      )
+      .map(_ > 0)
 
   private def createActivityFilters(
       owner: String,

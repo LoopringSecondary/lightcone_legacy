@@ -86,8 +86,7 @@ class EntryPointSpec_Activity
       )
       r1.activities.length should be(2)
       r1.activities.foreach { a =>
-        val a1 = r1.activities.head
-        a1.owner should be(owner1)
+        a.owner should be(owner1)
         a.activityType match {
           case ActivityType.ETHER_TRANSFER_IN =>
             a.detail should be(detail1)
