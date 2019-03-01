@@ -128,8 +128,14 @@ class ActivityActor(
 
     // TODO (yongfeng) 订阅tx被打入块消息通知，更新当前分区fromAddress pending失效
     // update status = failed where from = ?, blockNum = 0, from nonce <= ? and txHash != ? (更新nonce小的pending为失败)
-      // 或者先从pending activity里查询出需要更新失败的再更新
-    case req: BlockEvent => Future.sequence(req.txs.map(t=> activityDal.updatePendingActivityFailed(t.from, t.nonce, t.txHash)))
+    // 或者先从pending activity里查询出需要更新失败的再更新
+    case req: BlockEvent =>
+      Future.sequence(
+        req.txs.map(
+          t =>
+            activityDal.updatePendingActivityFailed(t.from, t.nonce, t.txHash)
+        )
+      )
 
     // TODO (yongfeng) 订阅分叉事件，更新当前分区所有影响块的activity为pending
     // 1. update activity set block = 0, status = PENDING where block >= ?
