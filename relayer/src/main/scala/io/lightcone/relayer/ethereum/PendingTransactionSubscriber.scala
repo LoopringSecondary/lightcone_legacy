@@ -55,9 +55,7 @@ class PendingTransactionSubscriber(
     config.getInt("ethereum_client_monitor.socket-check-interval-seconds")
   val count = KamonSupport.counter(s"websocket_$connectorActorName")
 
-  def start(
-      process: PendingTransactionNotification => Unit = defaultProcess
-    ) = {
+  def start(process: Transaction => Unit = defaultProcess) = {
     system.scheduler.schedule(
       0 second,
       interval second,
@@ -78,9 +76,7 @@ class PendingTransactionSubscriber(
     )
   }
 
-  def subscribe(
-      process: PendingTransactionNotification => Unit = defaultProcess
-    ) = {
+  def subscribe(process: Transaction => Unit = defaultProcess) = {
 
     client = new WebSocketClient(
       new URI(s"ws://${settings.host}:${settings.wsPort}")
@@ -103,23 +99,25 @@ class PendingTransactionSubscriber(
       classOf[PendingTransactionNotification]
     )
     events.subscribe(new Consumer[PendingTransactionNotification] {
-      def accept(t: PendingTransactionNotification): Unit = process(t)
+      def accept(t: PendingTransactionNotification): Unit = {
+        if (actors.contains(connectorActorName)) {
+          (actors.get(connectorActorName) ? GetTransactionByHash.Req(
+            hash = t.getParams.getResult
+          )).mapAs[GetTransactionByHash.Res]
+            .foreach(
+              res =>
+                if (res.result.nonEmpty)
+                  process(res.result.get)
+            )
+        }
+      }
     })
   }
 
-  def defaultProcess = (t: PendingTransactionNotification) => {
-    if (actors.contains(connectorActorName)) {
-      (actors.get(connectorActorName) ? GetTransactionByHash.Req(
-        hash = t.getParams.getResult
-      )).mapAs[GetTransactionByHash.Res]
-        .foreach(
-          res =>
-            if (res.result.nonEmpty && actors
-                  .contains(PendingTxEventExtractorActor.name)) {
-              actors.get(PendingTxEventExtractorActor.name) ! res.result.get
-            }
-        )
-    }
+  def defaultProcess = (t: Transaction) => {
+    if (actors.contains(PendingTxEventExtractorActor.name))
+      actors.get(PendingTxEventExtractorActor.name) ! t
+
   }
 
 }
