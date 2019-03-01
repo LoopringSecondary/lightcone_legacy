@@ -159,6 +159,11 @@ message Orderbook {
     repeated Item buys = 3;
 }
 
+message BurnRate {
+    double for_market = 1;
+    double for_p2p = 2;
+}
+
 message TokenMetadata {
     enum Type {
         TOKEN_TYPE_ERC20       = 0;
@@ -178,7 +183,7 @@ message TokenMetadata {
     string   unit                   = 6;
     int32    decimals               = 7;
     int32    precision              = 8;
-    double   burn_rate_for_market   = 9;
+    double   burn_rate_for_market   = 9; //TODO(yongfeng):使用BurnRate替换该属性
     double   burn_rate_for_p2p      = 10;
     int64    updated_at             = 11;
 }

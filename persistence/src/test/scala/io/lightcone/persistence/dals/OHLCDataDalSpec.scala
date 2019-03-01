@@ -17,7 +17,7 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core._
-import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.persistence._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -28,7 +28,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
   def getDal = new OHLCDataDalImpl()
 
   "saveOHLCData" must "save a OHLC raw data with ringIndex 1000" in {
-    val data1 = OHLCRawDataEvent(
+    val data1 = OHLCRawData(
       ringIndex = 1000,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf51",
@@ -43,7 +43,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
     res1.error should be(ErrorCode.ERR_NONE)
     res1.record.get should be(data1)
 
-    val data2 = OHLCRawDataEvent(
+    val data2 = OHLCRawData(
       ringIndex = 1001,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
@@ -58,7 +58,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
     res2.error should be(ErrorCode.ERR_NONE)
     res2.record.get should be(data2)
 
-    val data3 = OHLCRawDataEvent(
+    val data3 = OHLCRawData(
       ringIndex = 1002,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf65",

@@ -16,29 +16,17 @@
 
 package io.lightcone.persistence
 
-import com.google.inject.Inject
-import io.lightcone.persistence.dals._
 import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data._
-import scala.concurrent.{ExecutionContext, Future}
 
-class FillServiceImpl @Inject()(
-    implicit
-    val ec: ExecutionContext,
-    fillDal: FillDal)
-    extends FillService {
+import scala.concurrent.Future
 
-  def saveFill(fill: Fill): Future[ErrorCode] =
-    fillDal.saveFill(fill)
+trait ActivityService {
+  def saveActivity(activity: Activity): Future[ErrorCode]
 
-  def saveFills(fills: Seq[Fill]) = fillDal.saveFills(fills)
-
-  def getFills(request: GetFills.Req): Future[Seq[Fill]] =
-    fillDal.getFills(request)
-
-  def countFills(request: GetFills.Req): Future[Int] =
-    fillDal.countFills(request)
-
-  def obsolete(height: Long): Future[Unit] = fillDal.obsolete(height)
+  def getActivities(
+      owner: String,
+      token: Option[String],
+      paging: CursorPaging
+    ): Future[(Seq[Activity], Int)]
 }

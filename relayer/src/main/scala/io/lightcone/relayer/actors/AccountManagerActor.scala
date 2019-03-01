@@ -24,6 +24,7 @@ import akka.util.Timeout
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.core._
 import io.lightcone.lib._
@@ -37,7 +38,8 @@ import scala.util.{Failure, Success}
 // Owner: Hongyu
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
-    val owner: String
+    val owner: String,
+    val balanceRefreshIntervalSeconds: Int
   )(
     implicit
     val config: Config,
@@ -48,7 +50,7 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
-    val baProvider: BalanceAndAllowanceProvider)
+    val balanceProvider: BalanceAndAllowanceProvider)
     extends Actor
     with AccountManagerProcessors
     with Stash
@@ -65,7 +67,8 @@ class AccountManagerActor(
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
 
-  val manager = AccountManager.default(owner)
+  val manager =
+    AccountManager.default(owner, balanceRefreshIntervalSeconds, false)
 
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -323,7 +326,7 @@ class AccountManagerActor(
     case evt: CutoffEvent if evt.header.nonEmpty =>
       val header = evt.header.get
       if (header.txStatus != TX_STATUS_SUCCESS) {
-        log.error(s"unexpeted cutoffEvent status: ${header.txStatus}")
+        log.error(s"unexpected cutoffEvent status: ${header.txStatus}")
       } else if (evt.broker == evt.owner) {
         val block = try {
           evt.header.get.blockHeader.get.height

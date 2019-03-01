@@ -16,7 +16,6 @@
 
 package io.lightcone.core
 
-import io.lightcone.ethereum.event.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 
 final class MetadataManagerImpl(

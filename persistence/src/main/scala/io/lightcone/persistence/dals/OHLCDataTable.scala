@@ -18,14 +18,14 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
-import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.persistence._
 
 object OHLCDataTable {
   val tableName = "T_OHLC_DATA"
 }
 
 class OHLCDataTable(tag: Tag)
-    extends BaseTable[OHLCRawDataEvent](tag, OHLCDataTable.tableName) {
+    extends BaseTable[OHLCRawData](tag, OHLCDataTable.tableName) {
 
   def id = txHash
   def ringIndex = column[Long]("ring_index")
@@ -39,7 +39,7 @@ class OHLCDataTable(tag: Tag)
   def price = column[Double]("price", O.SqlType("DOUBLE PRECISION"))
 
   def * =
-    (ringIndex, txHash, marketHash, time, baseAmount, quoteAmount, price) <> ((OHLCRawDataEvent.apply _).tupled, OHLCRawDataEvent.unapply)
+    (ringIndex, txHash, marketHash, time, baseAmount, quoteAmount, price) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
 
   def pk = primaryKey("pk", (ringIndex, txHash, time))
   def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)

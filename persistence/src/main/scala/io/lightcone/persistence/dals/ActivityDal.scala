@@ -16,29 +16,30 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.persistence.base._
+import io.lightcone.core._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
+import io.lightcone.persistence.base._
 import scala.concurrent._
-import io.lightcone.relayer.data._
 
-// TODO(yongfeng): delete this?
+trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
+  def saveActivity(activity: Activity): Future[ErrorCode]
 
-trait TransactionRecordDal
-    extends BaseDalImpl[TransactionRecordTable, TransactionRecord] {
-
-  def saveRecord(
-      record: TransactionRecord
-    ): Future[PersistTransactionRecord.Res]
-
-  def getRecordsByOwner(
+  def getActivities(
       owner: String,
-      queryType: Option[GetTransactionRecords.QueryType],
-      sort: SortingType,
+      token: Option[String],
       paging: CursorPaging
-    ): Future[Seq[TransactionRecord]]
+    ): Future[Seq[Activity]]
 
-  def getRecordsCountByOwner(
+  def countActivities(
       owner: String,
-      queryType: Option[GetTransactionRecords.QueryType]
+      token: Option[String]
     ): Future[Int]
+
+  def deleteByTxHash(
+      owner: String,
+      txHash: String
+    ): Future[Boolean]
+
+  def obsoleteDataSinceBlock(block: Long): Future[Boolean]
 }

@@ -21,7 +21,7 @@ import io.lightcone.relayer._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.validator._
 
-trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
+trait ActivitySupport extends DatabaseModuleSupport {
   me: CommonSpec =>
 
   override def afterAll: Unit = {
@@ -30,14 +30,14 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
   }
 
   val config1 = ConfigFactory
-    .parseString(transactionRecordConfigStr)
+    .parseString(activityConfigStr)
     .withFallback(ConfigFactory.load())
 
   val dcm = new DatabaseConfigManager(config1)
 
   actors.add(
-    TransactionRecordActor.name,
-    TransactionRecordActor
+    ActivityActor.name,
+    ActivityActor
       .start(
         system,
         config1,
@@ -52,11 +52,11 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
   )
 
   actors.add(
-    TransactionRecordMessageValidator.name,
+    ActivityValidator.name,
     MessageValidationActor(
-      new TransactionRecordMessageValidator(),
-      TransactionRecordActor.name,
-      TransactionRecordMessageValidator.name
+      new ActivityValidator(),
+      ActivityActor.name,
+      ActivityValidator.name
     )
   )
 }

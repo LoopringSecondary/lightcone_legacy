@@ -16,6 +16,7 @@
 
 package io.lightcone.core
 
+import io.lightcone.lib._
 import scala.concurrent._
 import io.lightcone.core.testing._
 
@@ -25,9 +26,13 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   // TODO(dongw): add more tests to verify these two numbers.
   var numOfOrdersProcessed = 0
   var numOfAccountsProcessed = 0
+
+  var balanceRefreshIntervalSeconds = 1000
+
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
-  implicit val baProvider = stub[BalanceAndAllowanceProvider]
+  implicit val timeProvider: TimeProvider = new SystemTimeProvider
+  implicit val balanceProvider = stub[BalanceAndAllowanceProvider]
 
   implicit val updatdOrdersProcessor = new UpdatedOrdersProcessor()(ec) {
 
@@ -62,7 +67,8 @@ abstract class AccountManagerImplSpec extends CommonSpec {
   override def beforeEach(): Unit = {
     numOfOrdersProcessed = 0
     numOfAccountsProcessed = 0
-    manager = AccountManager.default(owner, true)
+
+    manager = AccountManager.default(owner, balanceRefreshIntervalSeconds, true)
   }
 
   def setBalanceAllowance(
@@ -72,7 +78,7 @@ abstract class AccountManagerImplSpec extends CommonSpec {
       balance: BigInt,
       allowance: BigInt
     ) =
-    (baProvider.getBalanceAndALlowance _)
+    (balanceProvider.getBalanceAndALlowance _)
       .when(owner, token)
       .returns(Future.successful((block, balance, allowance)))
       .once

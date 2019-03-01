@@ -17,6 +17,7 @@
 package io.lightcone.relayer.order
 
 import akka.pattern._
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._

@@ -17,10 +17,7 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
-
 import io.lightcone.core._
-import io.lightcone.lib._
-import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
@@ -41,6 +38,7 @@ final class DatabaseQueryMessageValidator(
   val defaultItemsPerPage =
     config.getInt("default-items-per-page")
   val maxItemsPerPage = config.getInt("max-items-per-page")
+  implicit val pageConfig = PageConfig(defaultItemsPerPage, maxItemsPerPage)
 
   def validate = {
     case req: GetOrders.Req =>
@@ -51,37 +49,41 @@ final class DatabaseQueryMessageValidator(
               ERR_INVALID_ARGUMENT,
               "Parameter owner could not be empty"
             )
-          else normalizeAddress(req.owner)
+          else MessageValidator.normalizeAddress(req.owner)
         val marketOpt = req.market match {
           case Some(m) =>
-            val tokenS = normalizeAddress(m.tokenS)
-            val tokenB = normalizeAddress(m.tokenB)
+            val tokenS = MessageValidator.normalizeAddress(m.tokenS)
+            val tokenB = MessageValidator.normalizeAddress(m.tokenB)
             Some(GetOrders.Req.Market(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
         req.copy(
           owner = owner,
           market = marketOpt,
-          skip = getValidSkip(req.skip)
+          skip = MessageValidator.getValidPaging(req.skip)
         )
       }
 
     case req: GetFills.Req =>
       Future {
-        val owner = normalizeAddress(req.owner)
+        val owner = MessageValidator.normalizeAddress(req.owner)
         val ringOpt = req.ring match {
           case Some(r) =>
             val ringHash =
-              normalizeHash(r.ringHash)
+              MessageValidator.normalizeHash(r.ringHash)
             val ringIndex =
-              if (r.ringIndex.nonEmpty && !isValidNumber(r.ringIndex))
+              if (r.ringIndex.nonEmpty && !MessageValidator.isValidNumber(
+                    r.ringIndex
+                  ))
                 throw ErrorException(
                   ERR_INVALID_ARGUMENT,
                   s"invalid ringIndex:${r.ringIndex}"
                 )
               else r.ringIndex
             val fillIndex =
-              if (r.fillIndex.nonEmpty && !isValidNumber(r.fillIndex))
+              if (r.fillIndex.nonEmpty && !MessageValidator.isValidNumber(
+                    r.fillIndex
+                  ))
                 throw ErrorException(
                   ERR_INVALID_ARGUMENT,
                   s"invalid fillIndex:${r.fillIndex}"
@@ -92,65 +94,28 @@ final class DatabaseQueryMessageValidator(
         }
         val marketOpt = req.market match {
           case Some(m) =>
-            val tokenS = normalizeAddress(m.tokenS)
-            val tokenB = normalizeAddress(m.tokenB)
+            val tokenS = MessageValidator.normalizeAddress(m.tokenS)
+            val tokenB = MessageValidator.normalizeAddress(m.tokenB)
             Some(GetFills.Req.Market(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
         GetFills.Req(
           owner,
-          normalizeHash(req.txHash),
-          normalizeHash(req.orderHash),
+          MessageValidator.normalizeHash(req.txHash),
+          MessageValidator.normalizeHash(req.orderHash),
           ringOpt,
           marketOpt,
-          normalizeAddress(req.wallet),
-          normalizeAddress(req.miner),
+          MessageValidator.normalizeAddress(req.wallet),
+          MessageValidator.normalizeAddress(req.miner),
           req.sort,
-          getValidSkip(req.skip)
+          MessageValidator.getValidPaging(req.skip)
         )
       }
 
     case req: GetRings.Req =>
       Future {
-        req.copy(skip = getValidSkip(req.skip))
+        req.copy(skip = MessageValidator.getValidPaging(req.skip))
       }
   }
 
-  private def normalizeAddress(address: String) = {
-    if (address.nonEmpty) Address.normalize(address) else ""
-  }
-
-  private def normalizeHash(hash: String) = {
-    if (hash.nonEmpty) hash.toLowerCase else ""
-  }
-
-  private def isValidNumber(str: String) = {
-    try {
-      str.toLong
-      true
-    } catch {
-      case _: Throwable => false
-    }
-  }
-
-  private def getValidSkip(paging: Option[Paging]) = {
-    paging match {
-      case Some(s) if s.size > maxItemsPerPage =>
-        throw ErrorException(
-          ERR_INVALID_ARGUMENT,
-          s"Parameter size of paging is larger than $maxItemsPerPage"
-        )
-
-      case Some(s) if s.skip < 0 =>
-        throw ErrorException(
-          ERR_INVALID_ARGUMENT,
-          s"Invalid parameter skip of paging:${s.skip}"
-        )
-
-      case Some(s) => paging
-
-      case None =>
-        Some(Paging(size = defaultItemsPerPage))
-    }
-  }
 }

@@ -21,6 +21,7 @@ import akka.pattern.ask
 import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
@@ -58,6 +59,8 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
     startSharding(Props(new MarketManagerActor()))
   }
 
+  import TxStatus._
+
   // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”
   //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractShardingObject: PartialFunction[Any, MarketPair] = {
@@ -77,8 +80,13 @@ object MarketManagerActor extends DeployedAsShardedByMarket {
         ) =>
       req.getMarketPair
 
-    case req: RingMinedEvent if req.fills.size >= 2 =>
-      MarketPair(req.fills(0).tokenS, req.fills(1).tokenS)
+    case req: RingMinedEvent
+        if req.header.nonEmpty &&
+          (req.getHeader.txStatus == TX_STATUS_SUCCESS ||
+            req.getHeader.txStatus == TX_STATUS_FAILED) &&
+          req.marketPair.nonEmpty &&
+          req.orderIds.size > 1 =>
+      req.getMarketPair
 
     case Notify(KeepAliveActor.NOTIFY_MSG, marketPairStr) =>
       val tokens = marketPairStr.split("-")
@@ -112,6 +120,7 @@ class MarketManagerActor(
   import OrderStatus._
   import MarketMetadata.Status._
   import MarketManager.MatchResult
+  import TxStatus._
 
   val selfConfig = config.getConfig(MarketManagerActor.name)
 
@@ -315,29 +324,34 @@ class MarketManagerActor(
       histo.refine("label" -> "num_orders").record(numOfOrders)
       count.refine("label" -> "rematch").increment()
 
-    case RingMinedEvent(Some(header), _, _, _, fills, _) =>
-      blocking(timer, "handle_ring_mind_event") {
-        Future {
-          val ringhash =
-            createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)
+    case req @ RingMinedEvent(Some(header), orderIds, _) =>
+      if ((header.txStatus != TX_STATUS_SUCCESS &&
+          header.txStatus != TX_STATUS_FAILED) && orderIds.size <= 1) {
+        log.error(s"unexpected msg : $req")
+      } else {
+        blocking(timer, "handle_ring_mind_event") {
+          Future {
+            val ringhash =
+              createRingIdByOrderHash(orderIds(0), orderIds(1))
 
-          val result = if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
-            manager.deleteRing(ringhash, true)
-          } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
-            val matchResults = manager.deleteRing(ringhash, false)
-            if (matchResults.nonEmpty) {
-              matchResults.foreach { matchResult =>
-                updateOrderbookAndSettleRings(matchResult)
+            val result = if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
+              manager.deleteRing(ringhash, true)
+            } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
+              val matchResults = manager.deleteRing(ringhash, false)
+              if (matchResults.nonEmpty) {
+                matchResults.foreach { matchResult =>
+                  updateOrderbookAndSettleRings(matchResult)
+                }
               }
             }
-          }
 
-          val numOfOrders = manager.getNumOfOrders
-          gauge.refine("label" -> "num_orders").set(numOfOrders)
-          histo.refine("label" -> "num_orders").record(numOfOrders)
-          count.refine("label" -> "ring_mined_evnet").increment()
+            val numOfOrders = manager.getNumOfOrders
+            gauge.refine("label" -> "num_orders").set(numOfOrders)
+            histo.refine("label" -> "num_orders").record(numOfOrders)
+            count.refine("label" -> "ring_mined_evnet").increment()
 
-        } sendTo sender
+          } sendTo sender
+        }
       }
 
     case req: MetadataChanged =>

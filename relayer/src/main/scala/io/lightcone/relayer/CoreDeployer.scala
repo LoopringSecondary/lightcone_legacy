@@ -37,7 +37,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
-
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent._
 
@@ -163,19 +162,19 @@ class CoreDeployer @Inject()(
         )
       )
       .add(
-        TransactionRecordMessageValidator.name,
-        MessageValidationActor(
-          new TransactionRecordMessageValidator(),
-          TransactionRecordActor.name,
-          TransactionRecordMessageValidator.name
-        )
-      )
-      .add(
         MetadataManagerValidator.name,
         MessageValidationActor(
           new MetadataManagerValidator(),
           MetadataManagerActor.name,
           MetadataManagerValidator.name
+        )
+      )
+      .add(
+        ActivityValidator.name,
+        MessageValidationActor(
+          new ActivityValidator(),
+          ActivityActor.name,
+          ActivityValidator.name
         )
       )
 
@@ -246,10 +245,7 @@ class CoreDeployer @Inject()(
           MarketHistoryActor.name, //
           MarketHistoryActor.start
         )
-        .add(
-          TransactionRecordActor.name, //
-          TransactionRecordActor.start
-        )
+        .add(ActivityActor.name, ActivityActor.start)
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors

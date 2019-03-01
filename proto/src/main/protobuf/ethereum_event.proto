@@ -20,44 +20,22 @@ option java_multiple_files = true;
 package io.lightcone.ethereum.event;
 
 import "core.proto";
+import "ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ETHEREUM EVENT
 /////////////////////////////////////////////////////////////////////
 
-enum TxStatus {
-    TX_STATUS_PENDING = 0;
-    TX_STATUS_SUCCESS = 1;
-    TX_STATUS_FAILED = 2;
-}
-
-//TODO:搞明白几个ethereum文件的关系，放置到合适的位置
-message BlockHeader {
-    int64 height = 1;
-    string hash = 2;
-    string  miner = 3;
-    int64 timestamp = 4;
-    repeated string uncles = 5;
-}
-
 message EventHeader {
     string tx_hash = 1;
-    TxStatus tx_status = 2;
-    //string block_hash = 3;
-    //int64  block_number = 4;
-    //int64  block_timestamp   = 5;
+    io.lightcone.ethereum.TxStatus tx_status = 2;
     BlockHeader block_header = 3;
     string tx_from = 6;
     string tx_to = 7;
     io.lightcone.core.Amount tx_value = 8;
-    int32  tx_index = 9;
-    int32  log_index = 10;
-    int32  event_index = 11; // ringMinedEvent解析出所有filled事件的固定顺序
-    int64  gas_price = 12;
-    int32  gas_limit = 13;
-    int32  gas_used = 14;
 }
 
+//TODO:TransferEvent和ApprovalEvent不会作为消息进行传递，但是在作为中间计算存在，考虑如何处理
 message TransferEvent {
     EventHeader header = 1;
     string owner = 2;
@@ -76,6 +54,7 @@ message ApprovalEvent {
     int64 block     = 6;
 }
 
+//TODO(hongyu):以下三个Event类似，考虑合并处理
 message AddressBalanceUpdatedEvent {
     string address  = 1;
     string token    = 2;
@@ -107,63 +86,27 @@ message BlockGasPricesExtractedEvent {
     repeated int64 gas_prices = 2;
 }
 
-// TODO(yangli): rename to SpotPrice???
-message OHLCRawDataEvent {
-    int64      ring_index     = 1;
-    string     tx_hash        = 2;
-    string     market_hash     = 3;
-    int64      time           = 4;
-    double     base_amount    = 6;
-    double     quote_amount   = 7;
-    double     price          = 8;
-}
-
 message OrderSubmittedOnChainEvent {
     io.lightcone.core.RawOrder raw_order = 1;
 }
 
 message TokenBurnRateChangedEvent {
-    message BurnRate {
-        double for_market = 1;
-        double for_p2p = 2;
-    }
-    EventHeader header = 1;
-    string      token = 2;
-    BurnRate    burn_rate = 3;
+    EventHeader header                      = 1;
+    string token                            = 2;
+    io.lightcone.core.BurnRate burn_rate    = 3;
 }
 
 //LOOPRING RINGMINED
 message OrderFilledEvent {
-    EventHeader header = 1;
-    string owner = 2;
-    string order_hash = 3;
-    string delegate_address  = 4;
-    string ring_hash         = 5;
-    int64  ring_index        = 6;
-    int32  fill_index        = 7;
-    io.lightcone.core.Amount filled_amount_s     = 8;
-    io.lightcone.core.Amount filled_amount_b     = 9;
-    io.lightcone.core.Amount split = 10;
-    string token_s = 11;
-    string token_b = 12;
-    string wallet = 13;
-    int32  waive_fee_percentage    = 14; // miner waive
-    int32  wallet_split_percentage = 15;
-    // fee for market
-    string token_fee  = 16;
-    io.lightcone.core.Amount filled_amount_fee = 17;
-    // fee for p2p
-    io.lightcone.core.Amount fee_amount_s = 18;
-    io.lightcone.core.Amount fee_amount_b = 19;
+    EventHeader header  = 1;
+    string owner        = 2;
+    string order_hash   = 3;
 }
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
-    EventHeader header = 1;
-    int64       ring_index = 2;
-    string      ring_hash = 3;
-    string      fee_recipient = 4;
-    repeated    OrderFilledEvent fills = 5;
-    string      miner = 6;
+    EventHeader header                          = 1;
+    repeated string order_ids                   = 3;
+    io.lightcone.core.MarketPair market_pair    = 4;
 }
 
 //LOOPRING Cutoff
@@ -176,8 +119,8 @@ message CutoffEvent {
 }
 
 message OrdersCancelledOnChainEvent {
-    EventHeader header = 1;
-    string owner  = 2;
-    string broker = 3;
-    repeated string order_hashes = 4;
+    EventHeader header              = 1;
+    string owner                    = 2;
+    string broker                   = 3;
+    repeated string order_hashes    = 4;
 }
