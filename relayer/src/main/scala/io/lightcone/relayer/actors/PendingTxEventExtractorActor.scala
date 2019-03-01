@@ -26,7 +26,7 @@ import javax.inject.Inject
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object PendingTxEventExtractActor extends DeployedAsSingleton {
+object PendingTxEventExtractorActor extends DeployedAsSingleton {
 
   val name = "pending_transaction_listener"
 
@@ -39,14 +39,15 @@ object PendingTxEventExtractActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    startSingleton(Props(new PendingTxEventExtractActor()))
+    startSingleton(Props(new PendingTxEventExtractorActor()))
   }
 
 }
 
-class PendingTxEventExtractActor @Inject()(
+class PendingTxEventExtractorActor @Inject()(
     implicit
     val config: Config,
+    val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])

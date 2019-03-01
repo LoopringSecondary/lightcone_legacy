@@ -25,7 +25,7 @@ import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.lib._
-import io.lightcone.relayer.actors.PendingTxEventExtractActor
+import io.lightcone.relayer.actors.PendingTxEventExtractorActor
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import org.json4s.native.JsonMethods._
@@ -81,7 +81,7 @@ class EthereumAccessActor(
 
   implicit val formats = DefaultFormats
   private def monitor = actors.get(EthereumClientMonitor.name)
-  private def txListener = actors.get(PendingTxEventExtractActor.name)
+  private def txListener = actors.get(PendingTxEventExtractorActor.name)
 
   var connectionPools: Seq[ActorRef] = HttpConnector
     .connectorNames(config)
@@ -133,10 +133,12 @@ class EthereumAccessActor(
       if (connectionPools.nonEmpty) {
         val req = parse(msg.json).extract[JsonRpcReqWrapped]
         if (req.method.equalsIgnoreCase("eth_sendRawTransaction")) {
-          val res = (connectionPools.head ? msg)
-            .mapAs[JsonRpc.Response]
-          res.sendTo(sender)
-          decodeRawTransaction(req, res)
+          (for {
+            res <- (connectionPools.head ? msg)
+              .mapAs[JsonRpc.Response]
+
+            _ = decodeRawTransaction(req, res)
+          } yield res) sendTo sender
         } else {
           connectionPools.head forward msg
         }
@@ -162,39 +164,37 @@ class EthereumAccessActor(
 
   def decodeRawTransaction(
       req: JsonRpcReqWrapped,
-      res: Future[JsonRpc.Response]
+      res: JsonRpc.Response
     ) = {
-    res.map(resp => {
-      val response = parse(resp.json).extract[JsonRpcResWrapped]
-      if (response.error.isEmpty) {
-        val rawTransaction = TransactionDecoder
-          .decode(req.params.asInstanceOf[Seq[String]].head)
-          .asInstanceOf[SignedRawTransaction]
-        val transaction = Transaction(
-          hash = response.result.toString,
-          nonce = NumericConversion
-            .toHexString(BigInt(rawTransaction.getNonce)),
-          from = rawTransaction.getFrom,
-          to = rawTransaction.getTo,
-          value = NumericConversion
-            .toHexString(BigInt(rawTransaction.getValue)),
-          gas = NumericConversion
-            .toHexString(BigInt(rawTransaction.getGasLimit)),
-          gasPrice = NumericConversion
-            .toHexString(BigInt(rawTransaction.getGasPrice)),
-          input = rawTransaction.getData,
-          r = NumericConversion.toHexString(
-            ByteString.copyFrom(rawTransaction.getSignatureData.getR)
-          ),
-          s = NumericConversion.toHexString(
-            ByteString.copyFrom(rawTransaction.getSignatureData.getS)
-          ),
-          v = NumericConversion.toHexString(
-            BigInt(rawTransaction.getSignatureData.getV.toInt)
-          )
+    val response = parse(res.json).extract[JsonRpcResWrapped]
+    if (response.error.isEmpty) {
+      val rawTransaction = TransactionDecoder
+        .decode(req.params.asInstanceOf[Seq[String]].head)
+        .asInstanceOf[SignedRawTransaction]
+      val transaction = Transaction(
+        hash = response.result.toString,
+        nonce = NumericConversion
+          .toHexString(BigInt(rawTransaction.getNonce)),
+        from = rawTransaction.getFrom,
+        to = rawTransaction.getTo,
+        value = NumericConversion
+          .toHexString(BigInt(rawTransaction.getValue)),
+        gas = NumericConversion
+          .toHexString(BigInt(rawTransaction.getGasLimit)),
+        gasPrice = NumericConversion
+          .toHexString(BigInt(rawTransaction.getGasPrice)),
+        input = rawTransaction.getData,
+        r = NumericConversion.toHexString(
+          ByteString.copyFrom(rawTransaction.getSignatureData.getR)
+        ),
+        s = NumericConversion.toHexString(
+          ByteString.copyFrom(rawTransaction.getSignatureData.getS)
+        ),
+        v = NumericConversion.toHexString(
+          BigInt(rawTransaction.getSignatureData.getV.toInt)
         )
-        txListener ! transaction
-      }
-    })
+      )
+      txListener ! transaction
+    }
   }
 }

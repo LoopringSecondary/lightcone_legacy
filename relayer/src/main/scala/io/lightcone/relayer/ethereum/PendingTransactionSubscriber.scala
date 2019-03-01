@@ -19,10 +19,10 @@ package io.lightcone.relayer.ethereum
 import java.net.URI
 import java.util
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern._
 import akka.util.Timeout
-import io.lightcone.relayer.actors.PendingTxEventExtractActor
+import io.lightcone.relayer.actors.PendingTxEventExtractorActor
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
 import org.web3j.protocol.core.Request
@@ -30,21 +30,35 @@ import org.web3j.protocol.core.methods.response.EthSubscribe
 import org.web3j.protocol.websocket.events.PendingTransactionNotification
 import org.web3j.protocol.websocket._
 import io.lightcone.relayer.base._
+import scala.concurrent.duration._
 
 import scala.concurrent.ExecutionContext
 
 class PendingTransactionSubscriber(
-    nodeName: String,
+    connectorActorName: String,
     settings: EthereumProxySettings.Node
   )(
     implicit
+    val system: ActorSystem,
     val ec: ExecutionContext,
     actors: Lookup[ActorRef],
     val timeout: Timeout) {
 
+  var client: WebSocketClient = null
+
   def start() = {
-    val client =
-      new WebSocketClient(new URI(s"ws://${settings.host}:${settings.wsPort}"))
+    system.scheduler.schedule(0 second, 5 second, new Runnable {
+      override def run(): Unit = if (client == null || !client.isOpen) {
+        subscribe()
+      }
+    })
+  }
+
+  def subscribe() = {
+
+    client = new WebSocketClient(
+      new URI(s"ws://${settings.host}:${settings.wsPort}")
+    )
 
     val webSocketService =
       new WebSocketService(client, false)
@@ -63,15 +77,15 @@ class PendingTransactionSubscriber(
       classOf[PendingTransactionNotification]
     )
     events.subscribe((t: PendingTransactionNotification) => {
-      if (actors.contains(nodeName)) {
-        (actors.get(nodeName) ? GetTransactionByHash.Req(
+      if (actors.contains(connectorActorName)) {
+        (actors.get(connectorActorName) ? GetTransactionByHash.Req(
           hash = t.getParams.getResult
         )).mapAs[GetTransactionByHash.Res]
           .map(
             res =>
               if (res.result.nonEmpty && actors
-                    .contains(PendingTxEventExtractActor.name)) {
-                actors.get(PendingTxEventExtractActor.name) ! res.result.get
+                    .contains(PendingTxEventExtractorActor.name)) {
+                actors.get(PendingTxEventExtractorActor.name) ! res.result.get
               }
           )
       }
