@@ -125,13 +125,13 @@ message OrdersCancelledOnChainEvent {
     repeated string order_hashes    = 4;
 }
 
-// TODO (yongfeng) 先定义一个结构为了实现功能，后续等亚东确定
+// TODO (yongfeng) 先定义一个结构为了实现功能，后续和亚东确定
 message BlockForkedEvent {
     int64  forked_block_num = 1;
     int64  latest_block_num = 2;
 }
 
-// TODO (yongfeng) 先定义一个基础结果，后续再完善
+// TODO (yongfeng) 先定义一个基础结果，如果这个方式可以就继续完善
 message BlockEvent {
     message Tx {
         string from = 1;
