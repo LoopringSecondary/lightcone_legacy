@@ -56,8 +56,6 @@ class RingAndFillPersistenceActor(
     dbModule: DatabaseModule)
     extends InitializationRetryActor {
 
-  import ErrorCode._
-
   val selfConfig = config.getConfig(RingAndFillPersistenceActor.name)
 
   def ready: Receive = LoggingReceive {
