@@ -81,7 +81,7 @@ class EthereumAccessActor(
 
   implicit val formats = DefaultFormats
   private def monitor = actors.get(EthereumClientMonitor.name)
-  private def txListener = actors.get(PendingTxEventExtractorActor.name)
+  private def pendingTxListener = actors.get(PendingTxEventExtractorActor.name)
 
   var connectionPools: Seq[ActorRef] = HttpConnector
     .connectorNames(config)
@@ -136,8 +136,14 @@ class EthereumAccessActor(
           (for {
             res <- (connectionPools.head ? msg)
               .mapAs[JsonRpc.Response]
-
-            _ = decodeRawTransaction(req, res)
+            rawData = req.params.asInstanceOf[Seq[String]].head
+            response = parse(res.json).extract[JsonRpcResWrapped]
+            _ = if (response.error.isEmpty) {
+              pendingTxListener ! decodeRawTransaction(
+                rawData,
+                response.result.toString
+              )
+            }
           } yield res) sendTo sender
         } else {
           connectionPools.head forward msg
@@ -163,38 +169,34 @@ class EthereumAccessActor(
   }
 
   def decodeRawTransaction(
-      req: JsonRpcReqWrapped,
-      res: JsonRpc.Response
+      rawTransactionData: String,
+      hash: String
     ) = {
-    val response = parse(res.json).extract[JsonRpcResWrapped]
-    if (response.error.isEmpty) {
-      val rawTransaction = TransactionDecoder
-        .decode(req.params.asInstanceOf[Seq[String]].head)
-        .asInstanceOf[SignedRawTransaction]
-      val transaction = Transaction(
-        hash = response.result.toString,
-        nonce = NumericConversion
-          .toHexString(BigInt(rawTransaction.getNonce)),
-        from = rawTransaction.getFrom,
-        to = rawTransaction.getTo,
-        value = NumericConversion
-          .toHexString(BigInt(rawTransaction.getValue)),
-        gas = NumericConversion
-          .toHexString(BigInt(rawTransaction.getGasLimit)),
-        gasPrice = NumericConversion
-          .toHexString(BigInt(rawTransaction.getGasPrice)),
-        input = rawTransaction.getData,
-        r = NumericConversion.toHexString(
-          ByteString.copyFrom(rawTransaction.getSignatureData.getR)
-        ),
-        s = NumericConversion.toHexString(
-          ByteString.copyFrom(rawTransaction.getSignatureData.getS)
-        ),
-        v = NumericConversion.toHexString(
-          BigInt(rawTransaction.getSignatureData.getV.toInt)
-        )
+    val rawTransaction = TransactionDecoder
+      .decode(rawTransactionData)
+      .asInstanceOf[SignedRawTransaction]
+    Transaction(
+      hash = hash,
+      nonce = NumericConversion
+        .toHexString(BigInt(rawTransaction.getNonce)),
+      from = rawTransaction.getFrom,
+      to = rawTransaction.getTo,
+      value = NumericConversion
+        .toHexString(BigInt(rawTransaction.getValue)),
+      gas = NumericConversion
+        .toHexString(BigInt(rawTransaction.getGasLimit)),
+      gasPrice = NumericConversion
+        .toHexString(BigInt(rawTransaction.getGasPrice)),
+      input = rawTransaction.getData,
+      r = NumericConversion.toHexString(
+        ByteString.copyFrom(rawTransaction.getSignatureData.getR)
+      ),
+      s = NumericConversion.toHexString(
+        ByteString.copyFrom(rawTransaction.getSignatureData.getS)
+      ),
+      v = NumericConversion.toHexString(
+        BigInt(rawTransaction.getSignatureData.getV.toInt)
       )
-      txListener ! transaction
-    }
+    )
   }
 }
