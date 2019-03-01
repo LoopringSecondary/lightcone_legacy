@@ -5,6 +5,7 @@ package io.lightcone.relayer.data.ext;
 
 import "core.proto";
 import "persistence.proto";
+import "ethereum_persistence.proto";
 import "relayer_common.proto";
 
 message GetBalances{
@@ -60,7 +61,7 @@ message GetFills{
         int32 page_num = 1;
         int32 page_size = 2;
         int32 total = 3;
-        repeated io.lightcone.persistence.Fill fills = 4;
+        repeated io.lightcone.ethereum.persistence.Fill fills = 4;
     }
 }
 
@@ -76,7 +77,7 @@ message GetActivities{
         int32 page_num = 1;
         int32 page_size = 2;
         int32 total = 3;
-        repeated io.lightcone.persistence.Activity activities = 4;
+        repeated io.lightcone.ethereum.persistence.Activity activities = 4;
     }
 }
 
@@ -91,7 +92,7 @@ message GetRings{
         int32 page_num = 1;
         int32 page_size = 2;
         int32 total  = 3;
-        repeated io.lightcone.persistence.Ring rings = 4;
+        repeated io.lightcone.ethereum.persistence.Ring rings = 4;
     }
 }
 

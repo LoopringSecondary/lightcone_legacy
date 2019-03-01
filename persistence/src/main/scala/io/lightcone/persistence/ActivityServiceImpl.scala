@@ -18,6 +18,7 @@ package io.lightcone.persistence
 
 import com.google.inject.Inject
 import io.lightcone.core._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence.dals._
 
 import scala.concurrent.{ExecutionContext, Future}

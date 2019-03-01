@@ -51,7 +51,7 @@ class CutoffEventExtractor @Inject()(
             case Some(event: AllOrdersCancelledEvent.Result) =>
               Some(
                 CutoffEvent(
-                  header = Some(eventHeader.withLogIndex(index)),
+                  header = Some(eventHeader),
                   cutoff = event._cutoff.longValue,
                   broker = Address.normalize(event._broker),
                   owner = Address.normalize(event._broker)
@@ -60,7 +60,7 @@ class CutoffEventExtractor @Inject()(
             case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
               Some(
                 CutoffEvent(
-                  header = Some(eventHeader.withLogIndex(index)),
+                  header = Some(eventHeader),
                   cutoff = event._cutoff.longValue,
                   broker = Address.normalize(event._broker),
                   owner = Address.normalize(event._owner)
@@ -71,7 +71,7 @@ class CutoffEventExtractor @Inject()(
                 ) =>
               Some(
                 CutoffEvent(
-                  header = Some(eventHeader.withLogIndex(index)),
+                  header = Some(eventHeader),
                   cutoff = event._cutoff.longValue,
                   broker = Address.normalize(event._broker),
                   owner = Address.normalize(event._owner),
@@ -83,7 +83,7 @@ class CutoffEventExtractor @Inject()(
             case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
               Some(
                 CutoffEvent(
-                  header = Some(eventHeader.withLogIndex(index)),
+                  header = Some(eventHeader),
                   cutoff = event._cutoff.longValue,
                   broker = Address.normalize(event._broker),
                   owner = Address.normalize(event._broker),

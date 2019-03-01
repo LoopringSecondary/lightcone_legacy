@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.ethereum.event
 
-import io.lightcone.core._
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
@@ -65,15 +65,8 @@ abstract class AbstractEventExtractor extends EventExtractor {
       txFrom = Address.normalize(tx.from),
       txTo = Address.normalize(tx.to),
       txValue = NumericConversion.toBigInt(tx.value),
-      txIndex = NumericConversion.toBigInt(tx.transactionIndex).intValue,
       txStatus = getStatus(receipt.status),
-      //      blockHash = tx.blockHash,
-      //      blockTimestamp = NumericConversion.toBigInt(blockTime).longValue,
-      //      blockNumber = NumericConversion.toBigInt(tx.blockNumber).longValue,
-      blockHeader = Some(blockHeader),
-      gasPrice = NumericConversion.toBigInt(tx.gasPrice).longValue,
-      gasLimit = NumericConversion.toBigInt(tx.gas).intValue,
-      gasUsed = NumericConversion.toBigInt(receipt.gasUsed).intValue
+      blockHeader = Some(blockHeader)
     )
 
   //TODO: 需要确定pending的status是什么

@@ -176,13 +176,8 @@ class RingSettlementActor(
             val header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_FAILED))
             marketManagerActor ! PRingMinedEvent(
               header = header,
-              fills = orders.map { order =>
-                OrderFilledEvent(
-                  header = header,
-                  orderHash = order.hash,
-                  tokenS = order.tokenS
-                )
-              }
+              orderIds = orders.map(_.hash),
+              marketPair = Some(MarketPair(orders(0).tokenS, orders(1).tokenS))
             )
           })
         }

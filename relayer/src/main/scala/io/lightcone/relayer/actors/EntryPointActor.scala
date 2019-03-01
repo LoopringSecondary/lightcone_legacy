@@ -88,10 +88,6 @@ class EntryPointActor(
 
     case _: GetMarkets.Req | _: GetTokens.Req => Some(MetadataRefresher.name)
 
-    // TODO(hongyu): remove all of the folloiwng
-    case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
-      Some(TransactionRecordMessageValidator.name)
-
     case _: GetMarketHistory.Req => Some(MarketHistoryActor.name)
 
     case _ => None

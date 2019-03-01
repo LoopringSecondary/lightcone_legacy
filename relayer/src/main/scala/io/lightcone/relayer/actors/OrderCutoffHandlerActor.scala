@@ -25,6 +25,8 @@ import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum.TxStatus
+
 import scala.concurrent.{ExecutionContext, Future}
 import io.lightcone.persistence.DatabaseModule
 
@@ -72,23 +74,31 @@ class OrderCutoffHandlerActor(
     // TODO du: 收到任务后先存入db，一批处理完之后删除。
     // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
     case req: OrdersCancelledOnChainEvent =>
-      dbModule.orderService
-        .getOrders(req.orderHashes)
-        .map(cancelOrders(_, STATUS_ONCHAIN_CANCELLED_BY_USER))
-        .sendTo(sender)
+      if (req.header.isEmpty || req.getHeader.txStatus != TxStatus.TX_STATUS_SUCCESS) {
+        log.error(s"unexpected ordersCancelledOnChainEvent status: $req")
+      } else {
+        dbModule.orderService
+          .getOrders(req.orderHashes)
+          .map(cancelOrders(_, STATUS_ONCHAIN_CANCELLED_BY_USER))
+          .sendTo(sender)
+      }
 
     case req: CutoffEvent =>
-      if (req.owner.isEmpty)
+      if (req.header.isEmpty || req.getHeader.txStatus != TxStatus.TX_STATUS_SUCCESS) {
+        log.error(s"unexpected cutoffEvent status: $req")
+      } else if (req.owner.isEmpty) {
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
           "owner in CutoffEvent is empty"
         )
-      log.debug(s"Deal with cutoff:$req")
-      self ! RetrieveOrdersToCancel(
-        broker = req.broker,
-        owner = req.owner,
-        cutoff = req.cutoff
-      )
+      } else {
+        log.debug(s"Deal with cutoff:$req")
+        self ! RetrieveOrdersToCancel(
+          broker = req.broker,
+          owner = req.owner,
+          cutoff = req.cutoff
+        )
+      }
 
     case req: RetrieveOrdersToCancel =>
       val cancelStatus = if (req.marketHash.nonEmpty) {

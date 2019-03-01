@@ -17,7 +17,8 @@
 package io.lightcone.persistence
 
 import io.lightcone.core._
-import io.lightcone.persistence.Activity.ActivityType
+import io.lightcone.ethereum.persistence._
+import io.lightcone.ethereum.persistence.Activity.ActivityType._
 import io.lightcone.persistence.dals._
 
 import scala.concurrent._
@@ -42,7 +43,7 @@ class ActivityServiceSpec extends ServiceSpec[ActivityService] {
         token = "0xb88762dea88c2834b3cdb22bc0975c62f9ea2998",
         block = 100,
         txHash = "0xc88762dea88c2834b3cdb22bc0975c62f9ea299811111",
-        activityType = ActivityType.TOKEN_TRANSFER_OUT,
+        activityType = TOKEN_TRANSFER_OUT,
         timestamp = timeProvider.getTimeSeconds(),
         detail = Activity.Detail.TokenTransfer(
           Activity.TokenTransfer(
@@ -57,7 +58,7 @@ class ActivityServiceSpec extends ServiceSpec[ActivityService] {
         token = "0xb98762dea88c2834b3cdb22bc0975c62f9ea2998",
         block = 100,
         txHash = "0xc88762dea88c2834b3cdb22bc0975c62f9ea299811111",
-        activityType = ActivityType.TOKEN_TRANSFER_OUT,
+        activityType = TOKEN_TRANSFER_OUT,
         timestamp = timeProvider.getTimeSeconds(),
         detail = Activity.Detail.TokenTransfer(
           Activity.TokenTransfer(

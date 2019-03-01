@@ -32,6 +32,7 @@ import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
@@ -148,17 +149,14 @@ class CoreModule(
       )
       .register(
         classOf[CutoffEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrderFilledEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrdersCancelledOnChainEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
@@ -166,11 +164,7 @@ class CoreModule(
         MetadataManagerActor.name
       )
       .register(
-        classOf[TransferEvent], //
-        TransactionRecordActor.name
-      )
-      .register(
-        classOf[OHLCRawDataEvent], //
+        classOf[OHLCRawData], //
         MarketHistoryActor.name
       )
       .register(

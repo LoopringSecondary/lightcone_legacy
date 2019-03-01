@@ -24,6 +24,7 @@ import akka.util.Timeout
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.core._
 import io.lightcone.lib._
@@ -325,7 +326,7 @@ class AccountManagerActor(
     case evt: CutoffEvent if evt.header.nonEmpty =>
       val header = evt.header.get
       if (header.txStatus != TX_STATUS_SUCCESS) {
-        log.error(s"unexpeted cutoffEvent status: ${header.txStatus}")
+        log.error(s"unexpected cutoffEvent status: ${header.txStatus}")
       } else if (evt.broker == evt.owner) {
         val block = try {
           evt.header.get.blockHeader.get.height

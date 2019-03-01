@@ -20,9 +20,10 @@ option java_multiple_files = true;
 package io.lightcone.relayer.data;
 
 import "core.proto";
+import "ethereum.proto";
+import "ethereum_persistence.proto";
 import "persistence.proto";
 import "relayer_common.proto";
-// import "relayer_ethereum.proto";
 import "google/protobuf/wrappers.proto";
 
 /////////////////////////////////////////////////////////////////////
@@ -143,7 +144,7 @@ message GetAccountActivities {
     }
 
     message Res {
-        repeated io.lightcone.persistence.Activity activities = 1;
+        repeated io.lightcone.ethereum.persistence.Activity activities = 1;
         int32 total = 2;
     }
 }
@@ -217,9 +218,8 @@ message GetBurnRate {
         string tag  = 2;
     }
     message Res {
-        double for_market = 1;
-        double for_p2p = 2;
-        int64 block = 3;
+        io.lightcone.core.BurnRate burn_rate = 1;
+        int64 block = 2;
     }
 }
 
@@ -257,7 +257,7 @@ message SetGasPrice {
 
 message SaveBlock {
     message Req {
-        io.lightcone.persistence.BlockData block_data = 1;
+        io.lightcone.ethereum.BlockData block_data = 1;
     }
 
     message Res {

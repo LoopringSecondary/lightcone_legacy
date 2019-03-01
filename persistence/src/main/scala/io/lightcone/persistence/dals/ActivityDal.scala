@@ -17,6 +17,7 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 

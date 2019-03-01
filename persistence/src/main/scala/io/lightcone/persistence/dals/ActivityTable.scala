@@ -17,10 +17,10 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core.{ErrorCode, ErrorException}
-import io.lightcone.persistence.Activity.ActivityType
-import io.lightcone.persistence.Activity.ActivityType._
-import io.lightcone.persistence.Activity.Detail._
-import io.lightcone.persistence._
+import io.lightcone.ethereum.persistence.Activity.ActivityType
+import io.lightcone.ethereum.persistence.Activity.ActivityType._
+import io.lightcone.ethereum.persistence.Activity.Detail._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 

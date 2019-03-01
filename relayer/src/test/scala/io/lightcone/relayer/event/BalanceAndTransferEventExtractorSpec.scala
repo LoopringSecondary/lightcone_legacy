@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.event
 
-import io.lightcone.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
@@ -53,31 +52,33 @@ class BalanceAndTransferEventExtractorSpec
         transferLRC(account2.getAddress, "1000")(account0),
         timeout.duration
       )
-      expectTransfersRes(
-        GetTransactionRecords
-          .Req(
-            owner = account2.getAddress,
-            sort = SortingType.DESC,
-            paging = Some(CursorPaging(cursor = 0, size = 50))
-          ),
-        (res: GetTransactionRecords.Res) => {
-          res.transactions.size == 2
-        }
-      )
-      val transfers = Await.result(
-        singleRequest(
-          GetTransactionRecords
-            .Req(
-              owner = account2.getAddress,
-              sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))
-            ),
-          "get_transactions"
-        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration
-      )
-      transfers.size should be(2)
+      //TODO:删除TransactionRecord，完成Activity再修改
+//      expectTransfersRes(
+//        GetTransactionRecords
+//          .Req(
+//            owner = account2.getAddress,
+//            sort = SortingType.DESC,
+//            paging = Some(CursorPaging(cursor = 0, size = 50))
+//          ),
+//        (res: GetTransactionRecords.Res) => {
+//          res.transactions.size == 2
+//        }
+//      )
+//      val transfers = Await.result(
+//        singleRequest(
+//          GetTransactionRecords
+//            .Req(
+//              owner = account2.getAddress,
+//              sort = SortingType.DESC,
+//              paging = Some(CursorPaging(cursor = 0, size = 50))
+//            ),
+//          "get_transactions"
+//        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
+//        timeout.duration
+//      )
+//      transfers.size should be(2)
 
+      Thread.sleep(3000)
       val ba2_1 = Await.result(
         singleRequest(
           GetAccount.Req(
@@ -98,46 +99,46 @@ class BalanceAndTransferEventExtractorSpec
         transferWETH(account3.getAddress, "10")(account2),
         timeout.duration
       )
-      expectTransfersRes(
-        GetTransactionRecords
-          .Req(
-            owner = account3.getAddress,
-            sort = SortingType.DESC,
-            paging = Some(CursorPaging(cursor = 0, size = 50))
-          ),
-        (res: GetTransactionRecords.Res) => {
-          res.transactions.size == 1
-        }
-      )
-      val transfers3 = Await.result(
-        singleRequest(
-          GetTransactionRecords
-            .Req(
-              owner = account3.getAddress,
-              sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))
-            ),
-          "get_transactions"
-        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration
-      )
+//      expectTransfersRes(
+//        GetTransactionRecords
+//          .Req(
+//            owner = account3.getAddress,
+//            sort = SortingType.DESC,
+//            paging = Some(CursorPaging(cursor = 0, size = 50))
+//          ),
+//        (res: GetTransactionRecords.Res) => {
+//          res.transactions.size == 1
+//        }
+//      )
+//      val transfers3 = Await.result(
+//        singleRequest(
+//          GetTransactionRecords
+//            .Req(
+//              owner = account3.getAddress,
+//              sort = SortingType.DESC,
+//              paging = Some(CursorPaging(cursor = 0, size = 50))
+//            ),
+//          "get_transactions"
+//        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
+//        timeout.duration
+//      )
+//
+//      transfers3.size should be(1)
+//      transfers3.head.header.get.txStatus.isTxStatusFailed should be(true)
 
-      transfers3.size should be(1)
-      transfers3.head.header.get.txStatus.isTxStatusFailed should be(true)
-
-      val transfers_2 = Await.result(
-        singleRequest(
-          GetTransactionRecords
-            .Req(
-              owner = account2.getAddress,
-              sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))
-            ),
-          "get_transactions"
-        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration
-      )
-      transfers_2.size should be(3)
+//      val transfers_2 = Await.result(
+//        singleRequest(
+//          GetTransactionRecords
+//            .Req(
+//              owner = account2.getAddress,
+//              sort = SortingType.DESC,
+//              paging = Some(CursorPaging(cursor = 0, size = 50))
+//            ),
+//          "get_transactions"
+//        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
+//        timeout.duration
+//      )
+//      transfers_2.size should be(3)
     }
   }
 

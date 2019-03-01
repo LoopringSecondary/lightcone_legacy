@@ -159,14 +159,6 @@ class CoreDeployer @Inject()(
         )
       )
       .add(
-        TransactionRecordMessageValidator.name,
-        MessageValidationActor(
-          new TransactionRecordMessageValidator(),
-          TransactionRecordActor.name,
-          TransactionRecordMessageValidator.name
-        )
-      )
-      .add(
         MetadataManagerValidator.name,
         MessageValidationActor(
           new MetadataManagerValidator(),
@@ -241,10 +233,6 @@ class CoreDeployer @Inject()(
         .add(
           MarketHistoryActor.name, //
           MarketHistoryActor.start
-        )
-        .add(
-          TransactionRecordActor.name, //
-          TransactionRecordActor.start
         )
 
       //-----------deploy local actors that depend on cluster aware actors-----------
