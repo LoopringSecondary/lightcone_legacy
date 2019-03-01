@@ -30,7 +30,7 @@ class BlockGasPriceExtractor @Inject()(
     val ec: ExecutionContext)
     extends AbstractEventExtractor {
 
-  def extractEvents(
+  def extractEventsFromTx(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader

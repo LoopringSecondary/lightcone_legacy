@@ -16,18 +16,9 @@
 
 package io.lightcone.relayer.ethereum.event
 
-import io.lightcone.ethereum.event.EventHeader
 import io.lightcone.relayer.data._
-
 import scala.concurrent.Future
 
 trait EventExtractor {
   def extractEvents(block: RawBlockData): Future[Seq[AnyRef]]
-
-  def extractEvents(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      eventHeader: EventHeader
-    ): Future[Seq[AnyRef]]
-
 }
