@@ -19,8 +19,9 @@ package io.lightcone.relayer.actors
 import akka.actor.{Address => _, _}
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.persistence.Activity
 import io.lightcone.lib._
-import io.lightcone.persistence.{Activity, DatabaseModule}
+import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer._
 import io.lightcone.relayer.base._
@@ -48,8 +49,8 @@ object ActivityActor extends DeployedAsShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractShardingObject: PartialFunction[Any, String] = {
-    case req: Activity                 => req.owner
-    case req: GetAccountActivities.Req => req.owner
+    case req: Activity          => req.owner
+    case req: GetActivities.Req => req.owner
   }
 }
 
@@ -87,14 +88,15 @@ class ActivityActor(
     case req: Activity =>
       activityDal.saveActivity(req)
 
-    case req: GetAccountActivities.Req =>
+    case req: GetActivities.Req =>
       (for {
         activities <- activityDal.getActivities(
           req.owner,
           req.token,
           req.paging.get
         )
-      } yield GetAccountActivities.Res(activities)).sendTo(sender)
+        res = GetActivities.Res(activities)
+      } yield res).sendTo(sender)
 
     //TODO (yongfeng) obsolete, pending -> failed & success
   }

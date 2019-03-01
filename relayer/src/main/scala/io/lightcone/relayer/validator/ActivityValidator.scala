@@ -19,7 +19,6 @@ package io.lightcone.relayer.validator
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.lib._
-import io.lightcone.persistence.Activity
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,17 +42,7 @@ final class ActivityValidator(
 
   def validate = {
 
-    case req: Activity =>
-      Future {
-        if (req.owner.isEmpty)
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "Parameter owner could not be empty"
-          )
-        req
-      }
-
-    case req: GetAccountActivities.Req =>
+    case req: GetActivities.Req =>
       Future {
         val owner =
           if (req.owner.isEmpty)
@@ -62,7 +51,7 @@ final class ActivityValidator(
               "Parameter owner could not be empty"
             )
           else Address.normalize(req.owner)
-        GetAccountActivities.Req(
+        GetActivities.Req(
           owner,
           req.token,
           MessageValidator.getValidCursorPaging(req.paging)

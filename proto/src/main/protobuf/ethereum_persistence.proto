@@ -1,0 +1,190 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+package io.lightcone.ethereum.persistence;
+
+import "core.proto";
+
+//struct that will be persisted
+
+//反应账户活动，
+//1、转账 时间、类型、金额，       （油费的情况不显示或者再增加类型）    法币金额
+//2、ETH转换，
+//3、授权：没有任何转账的，显示金额为0，(不涉及金额改变时)
+//4、交易：
+//5、手续费：增加类型
+//6、取消订单，可以区分开order和cutoff
+//7、trade附加的信息，如环路id等信息， 交易类型 与transfer只有一个即可，前端也会显示成转账
+//
+//解析可以直接生成Activity
+
+//油费和撮合手续费在列表里面都不单独显示。用户可以通过etherscan看交易记录，得知具体的油费信息。我们APP的设计以简洁为主。
+//
+//前端可以做基于cursor的加载，不翻页。一直滑动就不断加载下N条记录。
+message Activity {
+
+    enum ActivityType {
+        ETHER_TRANSFER_OUT           = 0;
+        ETHER_TRANSFER_IN            = 1;
+        ETHER_WRAP                   = 2;
+        ETHER_UNWRAP                 = 3;
+        TOKEN_TRANSFER_OUT           = 4;
+        TOKEN_TRANSFER_IN            = 5;
+        TOKEN_AUTH                   = 6;
+        TRADE_SELL                   = 7; //一个Trade需要生成两个买入和卖出
+        TRADE_BUY                    = 8; //交易类型，P2P的如何处理，是否需要单独的类型标志
+        ORDER_CANCEL                 = 9;
+        ORDER_SUBMIT                 = 10; // order submission onchain
+    }
+
+    message EtherTransfer {
+        string  address                 = 1;  // 'to' or 'from'
+        io.lightcone.core.Amount amount = 2;  // can be 0
+    }
+
+    message EtherConversion {
+        io.lightcone.core.Amount amount = 1;  // can be 0
+    }
+
+    message TokenTransfer {
+        string  address                 = 1;  // 'to' or 'from'
+        string  token                   = 2;  // symbol (if we know)or) or address (otherwise)
+        io.lightcone.core.Amount amount = 3;  // can be 0
+    }
+
+    message TokenAuth {
+        string  token                   = 1;  // symbol (if we know)or) or address (otherwise)
+        string  target                  = 2;
+        io.lightcone.core.Amount amount = 3;
+    }
+
+
+    // If the txType is TRADE_BUY:
+    message Trade {
+        string  address                         = 1;
+        string  token_base                      = 2;  // symbol (if we know)or) or address (otherwise)
+        string  token_quote                     = 3;  // symbol (if we know)or) or address (otherwise)
+        string  price                           = 4;  // == _amountquote / _amountbase
+        io.lightcone.core.Amount amount_base    = 5;
+        io.lightcone.core.Amount amount_quote   = 6;
+    }
+
+    message OrderCancellation {
+        repeated string order_ids         = 1;
+        int64  cutoff           = 2; // if order_id is not "", this must be not 0.
+        string market_pair      = 3; // dispaly as "LRC/ETH", if missing, means all markets.
+        string broker           = 4; // optional
+    }
+
+    message OrderSubmission {
+        // Support in the future
+    }
+
+    // To query Tx records for a address "ABC", either owner or target will be ABC.
+    // if owner == target == ABC, we treat  owner == ABC and ignore target.
+    string owner                = 1; // (indexed) the related address
+    int64  block                = 2; // (indexed)  0 indiciate pending
+    string tx_hash             = 3; // (indexed) the transaction hash, multiple Tx record may
+    // share the same tx hash, the wallet may choose to group
+    // those records to display.
+    ActivityType activity_type  = 4; //  (indexed)
+    int64  timestamp            = 5; //  (indexed) may not be unique, used in sorting
+    double fiat_value           = 6;
+    string token                = 7;
+    int64  sequence_id          = 8; //唯一、排序(pending在最前面)、可重复性 -- block_txIndex_eventIdex (4000000+txHash.code)_eventIdx
+
+    oneof detail {
+        EtherTransfer       ether_transfer      = 21;
+        EtherConversion     ether_conversion    = 22;
+        TokenTransfer       token_transfer      = 23;
+        TokenAuth           token_auth          = 24;
+        Trade               trade               = 25;
+        OrderCancellation   order_cancellation  = 26;
+        OrderSubmission     order_submission    = 27;
+    }
+}
+
+// TODO(yongfeng): simply this.
+// For the fontend, we only need to display:
+// time, base-amount, quote-amount
+// we may also want to give back order-id and market-pair,
+// and tx-id.
+message Fill {
+    message Fee {
+        // for market
+        string token_fee                        = 1;
+        io.lightcone.core.Amount amount_fee     = 2;
+        // for p2p
+        io.lightcone.core.Amount fee_amount_s   = 3;
+        io.lightcone.core.Amount fee_amount_b   = 4;
+
+        string fee_recipient                    = 5;
+        int32  waive_fee_percentage             = 6; // miner waive
+        int32  wallet_split_percentage          = 7;
+    }
+
+    string owner                                = 1;
+    string order_hash                           = 2;
+    string ring_hash                            = 3;
+    int64  ring_index                           = 4;
+    int32  fill_index                           = 5;
+    string tx_hash                              = 6;
+    io.lightcone.core.Amount amount_s           = 7;
+    io.lightcone.core.Amount amount_b           = 8;
+    string token_s                              = 9;
+    string token_b                              = 10;
+    int64  market_id                            = 11;
+    io.lightcone.core.Amount split              = 12; // tokenS
+    Fee    fee                                  = 13;
+    string wallet                               = 14;
+    string miner                                = 15;
+    int64  block_height                         = 16;
+    int64  block_timestamp                      = 17;
+}
+
+// TODO(yangli): rename to SpotPrice???
+message OHLCRawData {
+    int64      ring_index     = 1;
+    string     tx_hash        = 2;
+    string     market_hash     = 3;
+    int64      time           = 4;
+    double     base_amount    = 6;
+    double     quote_amount   = 7;
+    double     price          = 8;
+}
+
+message Ring {
+    message Fees {
+        repeated Fill.Fee fees = 1;
+    }
+    string   ring_hash         = 1;
+    int64    ring_index        = 2;
+    int32    fills_amount      = 3;
+    string   miner             = 4;
+    string   tx_hash           = 5;
+    Fees     fees              = 6;
+    int64    block_height      = 7;
+    int64    block_timestamp   = 8;
+}
+
+
+
+
+
+

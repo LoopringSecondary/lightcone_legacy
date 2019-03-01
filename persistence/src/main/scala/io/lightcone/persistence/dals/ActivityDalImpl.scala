@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.core._
 import io.lightcone.lib.Address
+import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
@@ -81,8 +82,7 @@ class ActivityDalImpl @Inject()(
     db.run(query.filter(_.owner === owner).filter(_.txHash === txHash).delete)
       .map(_ > 0)
 
-  // TODO (yongfeng) 等分叉处理时确认逻辑 > or >=
-  def obsolete(block: Long): Future[Boolean] =
+  def obsoleteDataSinceBlock(block: Long): Future[Boolean] =
     db.run(query.filter(_.block >= block).delete).map(_ > 0)
 
   private def createActivityFilters(

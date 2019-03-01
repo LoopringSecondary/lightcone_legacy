@@ -17,6 +17,7 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import scala.concurrent._
@@ -40,5 +41,5 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       txHash: String
     ): Future[Boolean]
 
-  def obsolete(block: Long): Future[Boolean]
+  def obsoleteDataSinceBlock(block: Long): Future[Boolean]
 }

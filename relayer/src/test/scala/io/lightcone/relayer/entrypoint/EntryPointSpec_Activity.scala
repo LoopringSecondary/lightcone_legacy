@@ -18,13 +18,14 @@ package io.lightcone.relayer.entrypoint
 
 import com.google.protobuf.ByteString
 import io.lightcone.core.Amount
-import io.lightcone.persistence.Activity
-import io.lightcone.persistence.Activity.ActivityType
-import io.lightcone.relayer.data.GetAccountActivities
+import io.lightcone.relayer.data.GetActivities
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator.ActivityValidator
 import scala.concurrent.Await
 import akka.pattern._
+import io.lightcone.ethereum.persistence.Activity
+import io.lightcone.ethereum.persistence.Activity.ActivityType
+import io.lightcone.relayer.actors.ActivityActor
 
 class EntryPointSpec_Activity
     extends CommonSpec
@@ -37,7 +38,8 @@ class EntryPointSpec_Activity
 
   "save & query some activities" must {
     "save some activities" in {
-      def actor = actors.get(ActivityValidator.name)
+      def actor = actors.get(ActivityActor.name)
+      def validatorActor = actors.get(ActivityValidator.name)
       val owner1 = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
       val detail1 = Activity.Detail.EtherTransfer(
         Activity.EtherTransfer(
@@ -78,8 +80,8 @@ class EntryPointSpec_Activity
 
       Thread.sleep(1000)
       val r1 = Await.result(
-        (actor ? GetAccountActivities.Req(owner1))
-          .mapTo[GetAccountActivities.Res],
+        (validatorActor ? GetActivities.Req(owner1))
+          .mapTo[GetActivities.Res],
         timeout.duration
       )
       r1.activities.length should be(2)
@@ -96,8 +98,8 @@ class EntryPointSpec_Activity
       }
 
       val r2 = Await.result(
-        (actor ? GetAccountActivities.Req(owner2))
-          .mapTo[GetAccountActivities.Res],
+        (validatorActor ? GetActivities.Req(owner2))
+          .mapTo[GetActivities.Res],
         timeout.duration
       )
       r2.activities.length should be(1)

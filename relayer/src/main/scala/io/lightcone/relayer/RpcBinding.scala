@@ -49,14 +49,6 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetRings.Req]
     .replies[GetRings.Res]
 
-  method("get_transactions")
-    .accepts[GetTransactionRecords.Req]
-    .replies[GetTransactionRecords.Res]
-
-  method("get_transaction_count")
-    .accepts[GetTransactionRecordCount.Req]
-    .replies[GetTransactionRecordCount.Res]
-
   method("get_tokens")
     .accepts[GetTokens.Req]
     .replies[GetTokens.Res]
@@ -69,9 +61,9 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetMarketHistory.Req]
     .replies[GetMarketHistory.Res]
 
-  method("get_account_activities")
-    .accepts[GetAccountActivities.Req]
-    .replies[GetAccountActivities.Res]
+  method("get_activities")
+    .accepts[GetActivities.Req]
+    .replies[GetActivities.Res]
 
   //Ethereum Query
   method("get_account")

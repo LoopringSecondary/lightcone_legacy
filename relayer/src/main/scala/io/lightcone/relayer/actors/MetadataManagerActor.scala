@@ -86,18 +86,19 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
-          _ <- if (token.burnRateForMarket != burnRateRes.forMarket || token.burnRateForP2P != burnRateRes.forP2P)
+          burnRate = burnRateRes.getBurnRate
+          _ <- if (token.burnRateForMarket != burnRate.forMarket || token.burnRateForP2P != burnRate.forP2P)
             dbModule.tokenMetadataDal
               .updateBurnRate(
                 token.address,
-                burnRateRes.forMarket,
-                burnRateRes.forP2P
+                burnRate.forMarket,
+                burnRate.forP2P
               )
           else Future.unit
         } yield
           token.copy(
-            burnRateForMarket = burnRateRes.forMarket,
-            burnRateForP2P = burnRateRes.forP2P
+            burnRateForMarket = burnRate.forMarket,
+            burnRateForP2P = burnRate.forP2P
           )
       })
     } yield {
@@ -145,11 +146,12 @@ class MetadataManagerActor(
         burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
           token = req.token.get.address
         )).mapTo[GetBurnRate.Res]
+        burnRate = burnRateRes.getBurnRate
         result <- dbModule.tokenMetadataDal
           .updateToken(
             req.token.get.copy(
-              burnRateForMarket = burnRateRes.forMarket,
-              burnRateForP2P = burnRateRes.forP2P
+              burnRateForMarket = burnRate.forMarket,
+              burnRateForP2P = burnRate.forP2P
             )
           )
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
@@ -166,11 +168,12 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = req.token
           )).mapTo[GetBurnRate.Res]
+          burnRate = burnRateRes.getBurnRate
           result <- dbModule.tokenMetadataDal
             .updateBurnRate(
               req.token,
-              burnRateRes.forMarket,
-              burnRateRes.forP2P
+              burnRate.forMarket,
+              burnRate.forP2P
             )
           tokens_ <- dbModule.tokenMetadataDal.getTokens()
         } yield {
