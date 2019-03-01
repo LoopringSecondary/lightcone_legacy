@@ -46,10 +46,12 @@ class EventExtractorCompose @Inject()(
     this
   }
 
-  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]] =
-    Future.sequence {
-      blockExtractors.map(_.extractEvents(block))
-    }
+  def extractEvents(block: RawBlockData): Future[Seq[Any]] =
+    for {
+      events <- Future.sequence {
+        blockExtractors.map(_.extractEvents(block))
+      }
+    } yield events.flatten
 
   def extractEvents(
       tx: Transaction,
