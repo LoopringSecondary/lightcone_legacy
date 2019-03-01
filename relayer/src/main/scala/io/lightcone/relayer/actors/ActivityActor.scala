@@ -118,7 +118,7 @@ class ActivityActor(
       if (req.block > 0) {
         val pendingSequenceId = 0L
         for {
-          _ <- activityDal.deleteBySequenceId(req.owner, pendingSequenceId)
+          _ <- activityDal.deleteBySequenceId(pendingSequenceId)
           _ <- activityDal.saveActivity(req)
         } yield {}
       } else {
@@ -130,12 +130,26 @@ class ActivityActor(
     // update status = failed where from = ?, blockNum = 0, from nonce <= ? and txHash != ? (更新nonce小的pending为失败)
     // 或者先从pending activity里查询出需要更新失败的再更新
     case req: BlockEvent =>
-      Future.sequence(
-        req.txs.map(
-          t =>
-            activityDal.updatePendingActivityFailed(t.from, t.nonce, t.txHash)
+      for {
+        pendingActivities <- activityDal.getPendingActivities(
+          req.txs.map(_.from).toSet
         )
-      )
+
+        successTxHashes = req.txs.map(_.txHash)
+
+        toUpdateFailed = req.txs.map { t =>
+          pendingActivities.find(
+            p =>
+              (p.from == t.from && p.nonce == t.nonce && p.txHash != t.txHash) || (p.from == t.from && p.nonce < t.nonce && !successTxHashes
+                .contains(p.txHash))
+          )
+        }.filter(_.isDefined)
+
+        updated <- Future.sequence(toUpdateFailed.map { t =>
+          val activity = t.get
+          activityDal.updatePendingActivityFailed(activity.sequenceId)
+        })
+      } yield {}
 
     // TODO (yongfeng) 订阅分叉事件，更新当前分区所有影响块的activity为pending
     // 1. update activity set block = 0, status = PENDING where block >= ?

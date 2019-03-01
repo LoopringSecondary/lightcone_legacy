@@ -31,17 +31,14 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       paging: CursorPaging
     ): Future[Seq[Activity]]
 
-  def getPendingActivities(from: Seq[String]): Future[Seq[Activity]]
+  def getPendingActivities(from: Set[String]): Future[Seq[Activity]]
 
   def countActivities(
       owner: String,
       token: Option[String]
     ): Future[Int]
 
-  def deleteBySequenceId(
-      owner: String,
-      sequenceId: Long
-    ): Future[Boolean]
+  def deleteBySequenceId(sequenceId: Long): Future[Boolean]
 
   def obsoleteDataSinceBlock(block: Long): Future[Boolean]
 
@@ -52,4 +49,6 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       nonce: Int,
       txHash: String
     ): Future[Boolean]
+
+  def updatePendingActivityFailed(sequenceId: Long): Future[Boolean]
 }

@@ -27,7 +27,6 @@ import io.lightcone.persistence.base.enumColumnType
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
-
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -82,13 +81,9 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def deleteBySequenceId(
-      owner: String,
-      sequenceId: Long
-    ): Future[Boolean] =
+  def deleteBySequenceId(sequenceId: Long): Future[Boolean] =
     db.run(
         query
-          .filter(_.owner === owner)
           .filter(_.sequenceId === sequenceId)
           .delete
       )
@@ -117,6 +112,15 @@ class ActivityDalImpl @Inject()(
           .filter(_.block === 0L)
           .filter(_.nonce <= nonce)
           .filterNot(_.txHash === txHash)
+          .map(_.activityStatus)
+          .update(ActivityStatus.PENDING)
+      )
+      .map(_ > 0)
+
+  def updatePendingActivityFailed(sequenceId: Long): Future[Boolean] =
+    db.run(
+        query
+          .filter(_.sequenceId === sequenceId)
           .map(_.activityStatus)
           .update(ActivityStatus.PENDING)
       )
