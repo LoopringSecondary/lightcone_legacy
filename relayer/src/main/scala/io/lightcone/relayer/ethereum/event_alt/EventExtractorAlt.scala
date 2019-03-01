@@ -16,7 +16,8 @@
 
 */
 
-package io.lightcone.relayer.ethereum.event
+package io.lightcone.relayer.ethereum.event_alt
+
 import io.lightcone.ethereum.BlockData
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data.Transaction
