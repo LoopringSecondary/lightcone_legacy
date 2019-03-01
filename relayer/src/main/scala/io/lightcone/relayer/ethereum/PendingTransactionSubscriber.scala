@@ -31,6 +31,7 @@ import org.web3j.protocol.core.methods.response.EthSubscribe
 import org.web3j.protocol.websocket.events.PendingTransactionNotification
 import org.web3j.protocol.websocket._
 import io.lightcone.relayer.base._
+import io.reactivex.functions.Consumer
 import org.slf4s.Logging
 
 import scala.concurrent.duration._
@@ -54,14 +55,16 @@ class PendingTransactionSubscriber(
     config.getInt("ethereum_client_monitor.socket-check-interval-seconds")
   val count = KamonSupport.counter(s"websocket_$connectorActorName")
 
-  def start() = {
+  def start(
+      process: PendingTransactionNotification => Unit = defaultProcess
+    ) = {
     system.scheduler.schedule(
       0 second,
       interval second,
       new Runnable {
         override def run(): Unit = if (client == null || !client.isOpen) {
           try {
-            subscribe()
+            subscribe(process)
             count.remove("label" -> "reconnect")
           } catch {
             case e: Throwable =>
@@ -75,7 +78,9 @@ class PendingTransactionSubscriber(
     )
   }
 
-  def subscribe() = {
+  def subscribe(
+      process: PendingTransactionNotification => Unit = defaultProcess
+    ) = {
 
     client = new WebSocketClient(
       new URI(s"ws://${settings.host}:${settings.wsPort}")
@@ -97,20 +102,24 @@ class PendingTransactionSubscriber(
       "eth_unsubscribe",
       classOf[PendingTransactionNotification]
     )
-    events.subscribe((t: PendingTransactionNotification) => {
-      if (actors.contains(connectorActorName)) {
-        (actors.get(connectorActorName) ? GetTransactionByHash.Req(
-          hash = t.getParams.getResult
-        )).mapAs[GetTransactionByHash.Res]
-          .map(
-            res =>
-              if (res.result.nonEmpty && actors
-                    .contains(PendingTxEventExtractorActor.name)) {
-                actors.get(PendingTxEventExtractorActor.name) ! res.result.get
-              }
-          )
-      }
+    events.subscribe(new Consumer[PendingTransactionNotification] {
+      def accept(t: PendingTransactionNotification): Unit = process(t)
     })
+  }
+
+  def defaultProcess = (t: PendingTransactionNotification) => {
+    if (actors.contains(connectorActorName)) {
+      (actors.get(connectorActorName) ? GetTransactionByHash.Req(
+        hash = t.getParams.getResult
+      )).mapAs[GetTransactionByHash.Res]
+        .foreach(
+          res =>
+            if (res.result.nonEmpty && actors
+                  .contains(PendingTxEventExtractorActor.name)) {
+              actors.get(PendingTxEventExtractorActor.name) ! res.result.get
+            }
+        )
+    }
   }
 
 }
