@@ -22,6 +22,7 @@ import java.util
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
 import io.lightcone.relayer.actors.PendingTxEventExtractorActor
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
@@ -30,8 +31,9 @@ import org.web3j.protocol.core.methods.response.EthSubscribe
 import org.web3j.protocol.websocket.events.PendingTransactionNotification
 import org.web3j.protocol.websocket._
 import io.lightcone.relayer.base._
-import scala.concurrent.duration._
+import org.slf4s.Logging
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 
 class PendingTransactionSubscriber(
@@ -39,19 +41,38 @@ class PendingTransactionSubscriber(
     settings: EthereumProxySettings.Node
   )(
     implicit
+    val config: Config,
     val system: ActorSystem,
     val ec: ExecutionContext,
     actors: Lookup[ActorRef],
-    val timeout: Timeout) {
+    val timeout: Timeout)
+    extends Logging {
 
   var client: WebSocketClient = null
 
+  val interval =
+    config.getInt("ethereum_client_monitor.socket-check-interval-seconds")
+  val count = KamonSupport.counter(s"websocket_$connectorActorName")
+
   def start() = {
-    system.scheduler.schedule(0 second, 5 second, new Runnable {
-      override def run(): Unit = if (client == null || !client.isOpen) {
-        subscribe()
+    system.scheduler.schedule(
+      0 second,
+      interval second,
+      new Runnable {
+        override def run(): Unit = if (client == null || !client.isOpen) {
+          try {
+            subscribe()
+            count.remove("label" -> "reconnect")
+          } catch {
+            case e: Throwable =>
+              count.refine("label" -> "reconnect").increment()
+              log.error(
+                s"$connectorActorName reconnect:${e.getLocalizedMessage}"
+              )
+          }
+        }
       }
-    })
+    )
   }
 
   def subscribe() = {
