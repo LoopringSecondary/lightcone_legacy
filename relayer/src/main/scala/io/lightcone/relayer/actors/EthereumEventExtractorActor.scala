@@ -75,6 +75,7 @@ class EthereumEventExtractorActor(
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
         .map(res => NumericConversion.toBigInt(res.result).longValue)
+      currentBlockData <- getBlockData(currentBlock)
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = currentBlock > blockStart + 1
       _ = if (missing) {
@@ -84,7 +85,7 @@ class EthereumEventExtractorActor(
         )
       }
     } yield {
-      blockData = RawBlockData(height = currentBlock - 1)
+      blockData = currentBlockData.get
     }
     f onComplete {
       case Success(value) =>

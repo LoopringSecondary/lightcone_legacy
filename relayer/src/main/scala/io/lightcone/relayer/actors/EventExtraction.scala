@@ -45,6 +45,7 @@ trait EventExtraction {
   val GET_BLOCK = Notify("get_block")
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
   val PROCESS_EVENTS = Notify("process_events")
+  val DETECT_FORK_HEIGHT = Notify("detect_fork_height")
 
   var untilBlock: Long
 
@@ -56,8 +57,12 @@ trait EventExtraction {
 
       getBlockData(blockData.height + 1).map {
         case Some(block) =>
-          blockData = block
-          self ! RETRIEVE_RECEIPTS
+          if (block.parentHash == blockData.hash) {
+            blockData = block
+            self ! RETRIEVE_RECEIPTS
+          } else {
+            self ! DETECT_FORK_HEIGHT
+          }
         case None =>
           context.system.scheduler
             .scheduleOnce(1 seconds, self, GET_BLOCK)
@@ -82,6 +87,16 @@ trait EventExtraction {
           log.error(
             s" Actor: ${self.path} extracts ethereum events failed with error:${e.getMessage}"
           )
+      }
+
+    case DETECT_FORK_HEIGHT =>
+      getBlockData(blockData.height - 1).map { blockOpt =>
+        if (blockOpt.get.hash == blockData.parentHash) {
+          //TODO (yadong) 等待永丰定义的分叉事件结构，通知系统内部分叉事件
+        } else {
+          blockData = blockOpt.get
+          self ! DETECT_FORK_HEIGHT
+        }
       }
   }
 
@@ -113,6 +128,7 @@ trait EventExtraction {
         block =>
           RawBlockData(
             hash = block.hash,
+            parentHash = block.parentHash,
             height = NumericConversion.toBigInt(block.number).longValue,
             timestamp = block.timestamp,
             miner = block.miner,
