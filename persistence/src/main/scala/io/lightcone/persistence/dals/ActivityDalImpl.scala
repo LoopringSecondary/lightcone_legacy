@@ -25,7 +25,6 @@ import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
-
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -75,6 +74,16 @@ class ActivityDalImpl @Inject()(
     val filters = createActivityFilters(owner, token)
     db.run(filters.size.result)
   }
+
+  def deleteByTxHash(
+      owner: String,
+      txHash: String
+    ): Future[Boolean] =
+    db.run(query.filter(_.owner === owner).filter(_.txHash === txHash).delete)
+      .map(_ > 0)
+
+  def obsoleteDataSinceBlock(block: Long): Future[Boolean] =
+    db.run(query.filter(_.block >= block).delete).map(_ > 0)
 
   private def createActivityFilters(
       owner: String,

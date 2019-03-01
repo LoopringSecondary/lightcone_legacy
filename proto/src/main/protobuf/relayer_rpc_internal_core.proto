@@ -135,8 +135,7 @@ message GetAccount {
     }
 }
 
-// TODO(hongyu): support this (waiting for dals finished by yongfeng)
-message GetAccountActivities {
+message GetActivities {
     message Req {
         string owner = 1;
         google.protobuf.StringValue token = 2;
@@ -145,7 +144,6 @@ message GetAccountActivities {
 
     message Res {
         repeated io.lightcone.ethereum.persistence.Activity activities = 1;
-        int32 total = 2;
     }
 }
 

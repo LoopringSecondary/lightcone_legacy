@@ -20,7 +20,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
-
 import scala.concurrent._
 
 trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
@@ -36,4 +35,11 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       owner: String,
       token: Option[String]
     ): Future[Int]
+
+  def deleteByTxHash(
+      owner: String,
+      txHash: String
+    ): Future[Boolean]
+
+  def obsoleteDataSinceBlock(block: Long): Future[Boolean]
 }

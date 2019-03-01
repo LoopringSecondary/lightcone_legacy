@@ -71,11 +71,9 @@ class CoreModule(
     // --- bind db configs ---------------------
     bind[DatabaseConfigManager].toInstance(dbConfigManager)
 
-    //TODO(yongfeng):去除trade和tx的dal时，同时去除该部分
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
-      "dbconfig-dal-trade",
       "dbconfig-dal-ring",
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
