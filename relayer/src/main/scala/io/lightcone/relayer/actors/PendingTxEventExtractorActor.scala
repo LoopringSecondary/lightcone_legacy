@@ -55,6 +55,7 @@ class PendingTxEventExtractorActor @Inject()(
 
   val subscribers = HttpConnector
     .connectorNames(config)
+    .filter(node => node._2.wsPort > 0)
     .map(node => new PendingTransactionSubscriber(node._1, node._2))
 
   override def initialize(): Future[Unit] = Future {
