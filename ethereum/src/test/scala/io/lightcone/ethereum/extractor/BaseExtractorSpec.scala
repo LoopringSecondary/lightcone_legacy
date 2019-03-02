@@ -59,26 +59,19 @@ class BaseExtractorSpec extends FlatSpec with Matchers {
   }
 
   val blockRes = deserializeToProto[GetBlockWithTxObjectByNumber.Res](resStr)
-//    JsonFormat.fromJsonString[GetBlockWithTxObjectByNumber.Res](resStr)
 
   val block = blockRes.get.result.get
 
-  info(s"${block}")
 
   val receiptStr = Source
     .fromFile("ethereum/src/test/resources/event/receipts")
     .getLines()
     .next()
-//
   val resps = parse(receiptStr).values.asInstanceOf[List[Map[String, Any]]]
-//
-
-//
   val receiptResps = resps.map(resp => {
     val respJson = ser.write(resp)
     deserializeToProto[GetTransactionReceipt.Res](respJson)
   })
-//
   val blockData = block.withReceipts(receiptResps.map(_.get.result.get))
   info(s"### ${blockData.receipts(0).status}")
 
@@ -92,5 +85,6 @@ class BaseExtractorSpec extends FlatSpec with Matchers {
     extractor.registerTxExtractor(transferExtractor)
     val events = Await.result(extractor.extractEvents(blockData), 5.second)
     info(s"${events}")
+    events.size > 0 should be(true)
   }
 }
