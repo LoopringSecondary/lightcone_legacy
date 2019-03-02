@@ -101,21 +101,7 @@ class ActivityActor(
 
     case req: BlockEvent =>
       (for {
-        // delete activities with txHashes in block
-        _ <- activityDal.deleteByTxHashes(req.txs.map(_.txHash).toSet)
-
-        // update all activities with the same request block height to pending
-        _ <- activityDal.updateBlockActivitiesToPending(req.blockNumber)
-
-        // delete pending when nonce is low for each tx with from address
-        txsWithMaxNonce = req.txs
-          .groupBy(_.from)
-          .values
-          .map(t => t.maxBy(_.nonce))
-        _ <- Future.sequence(txsWithMaxNonce.map { r =>
-          activityDal
-            .deletePendingActivitiesWhenFromNonceTooLow(r.from, r.nonce)
-        })
+        _ <- activityDal.clearBlockActivities(req)
       } yield {}).sendTo(sender)
 
     case req: GetActivities.Req =>

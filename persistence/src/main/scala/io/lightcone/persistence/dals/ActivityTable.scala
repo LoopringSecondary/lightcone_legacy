@@ -34,7 +34,7 @@ class ActivityTable(shardId: String)(tag: Tag)
   def id = ""
   def owner = columnAddress("owner")
   def token = columnAddress("token")
-  def block = column[Long]("order_hash")
+  def block = column[Long]("block")
   def txHash = columnHash("tx_hash")
   def activityType = column[ActivityType]("activity_type")
   def timestamp = column[Long]("timestamp")

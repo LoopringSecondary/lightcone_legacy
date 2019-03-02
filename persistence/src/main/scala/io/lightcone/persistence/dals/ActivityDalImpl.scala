@@ -20,13 +20,17 @@ import com.google.inject.Inject
 import io.lightcone.core.ErrorCode.{ERR_NONE, ERR_PERSISTENCE_INTERNAL}
 import io.lightcone.core._
 import io.lightcone.ethereum.TxStatus
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.lib.Address
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base.enumColumnType
 import slick.basic._
+import slick.dbio.Effect
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
+import slick.sql.FixedSqlAction
+
 import scala.concurrent._
 
 class ActivityDalImpl @Inject()(
@@ -78,35 +82,48 @@ class ActivityDalImpl @Inject()(
   }
 
   def deleteByTxHashes(txHashes: Set[String]): Future[Boolean] =
-    db.run(
-        query
-          .filter(_.txHash inSet txHashes)
-          .delete
-      )
-      .map(_ > 0)
+    db.run(deleteByTxHashesDBIO(txHashes)).map(_ > 0)
 
-  def updateBlockActivitiesToPending(block: Long): Future[Boolean] =
-    db.run(
-        query
-          .filter(_.block === block)
-          .map(c => (c.block, c.sequenceId, c.txStatus))
-          //TODO (yongfeng) create pending sequenceId with from and nonce
-          .update(0L, 0L, TxStatus.TX_STATUS_PENDING)
-      )
-      .map(_ > 0)
+  private def deleteByTxHashesDBIO(
+      txHashes: Set[String]
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.txHash inSet txHashes)
+      .delete
 
-  def deletePendingActivitiesWhenFromNonceTooLow(
+  private def updateBlockActivitiesToPendingDBIO(
+      block: Long
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.block === block)
+      .map(c => (c.block, c.sequenceId, c.txStatus))
+      //TODO (yongfeng) create pending sequenceId with from and nonce
+      .update(0L, 0L, TxStatus.TX_STATUS_PENDING)
+
+  private def deletePendingActivitiesWhenFromNonceTooLowDBIO(
       fromOfTx: String,
       nonceWithFrom: Int
-    ): Future[Boolean] =
-    db.run(
-        query
-          .filter(_.from === fromOfTx)
-          .filter(_.block === 0L)
-          .filter(_.nonce <= nonceWithFrom)
-          .delete
-      )
-      .map(_ > 0)
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.from === fromOfTx)
+      .filter(_.block === 0L)
+      .filter(_.nonce <= nonceWithFrom)
+      .delete
+
+  def clearBlockActivities(req: BlockEvent): Future[Unit] = {
+    val a = (for {
+      _ <- deleteByTxHashesDBIO(req.txs.map(_.txHash).toSet)
+      _ <- updateBlockActivitiesToPendingDBIO(req.blockNumber)
+      txsWithMaxNonce = req.txs
+        .groupBy(_.from)
+        .values
+        .map(t => t.maxBy(_.nonce))
+      _ <- DBIO.sequence(txsWithMaxNonce.map { r =>
+        deletePendingActivitiesWhenFromNonceTooLowDBIO(r.from, r.nonce)
+      })
+    } yield {}).transactionally
+    db.run(a)
+  }
 
   private def createActivityFilters(
       owner: String,
