@@ -125,13 +125,11 @@ message OrdersCancelledOnChainEvent {
     repeated string order_hashes    = 4;
 }
 
-// TODO (yongfeng) 先定义一个基础结果
 message BlockEvent {
     message Tx {
         string from = 1;
         int32  nonce = 2;
         string tx_hash = 3;
-        int64  block_no = 4;
     }
 
     int64 block_number = 1;

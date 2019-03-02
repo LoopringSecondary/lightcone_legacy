@@ -40,7 +40,7 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
 
   def deleteByTxHashes(txHashes: Set[String]): Future[Boolean]
 
-  def deletePendingActivitiesWhenFromNonceToLow(
+  def deletePendingActivitiesWhenFromNonceTooLow(
       fromOfTx: String,
       nonceWithFrom: Int
     ): Future[Boolean]

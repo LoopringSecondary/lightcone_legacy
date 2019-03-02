@@ -114,7 +114,7 @@ class ActivityActor(
           .map(t => t.maxBy(_.nonce))
         _ <- Future.sequence(txsWithMaxNonce.map { r =>
           activityDal
-            .deletePendingActivitiesWhenFromNonceToLow(r.from, r.nonce)
+            .deletePendingActivitiesWhenFromNonceTooLow(r.from, r.nonce)
         })
       } yield {}).sendTo(sender)
 

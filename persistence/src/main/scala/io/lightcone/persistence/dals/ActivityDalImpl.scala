@@ -95,7 +95,7 @@ class ActivityDalImpl @Inject()(
       )
       .map(_ > 0)
 
-  def deletePendingActivitiesWhenFromNonceToLow(
+  def deletePendingActivitiesWhenFromNonceTooLow(
       fromOfTx: String,
       nonceWithFrom: Int
     ): Future[Boolean] =
