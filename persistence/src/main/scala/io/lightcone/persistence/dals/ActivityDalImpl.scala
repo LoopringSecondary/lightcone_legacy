@@ -17,7 +17,7 @@
 package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
+import io.lightcone.core.ErrorCode.{ERR_NONE, ERR_PERSISTENCE_INTERNAL}
 import io.lightcone.core._
 import io.lightcone.ethereum.persistence.Activity.ActivityStatus
 import io.lightcone.lib.Address
@@ -28,7 +28,6 @@ import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
-import scala.util.{Failure, Success}
 
 class ActivityDalImpl @Inject()(
     val shardId: String,
@@ -42,18 +41,15 @@ class ActivityDalImpl @Inject()(
   implicit val activityStatusCxolumnType = enumColumnType(ActivityStatus)
 
   def saveActivity(activity: Activity): Future[ErrorCode] =
-    db.run(
-        (query += activity).asTry
-      )
-      .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) =>
-          ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
-        case Failure(ex) => {
-          logger.error(s"error : ${ex.getMessage}")
-          ErrorCode.ERR_PERSISTENCE_INTERNAL
-        }
-        case Success(x) => ErrorCode.ERR_NONE
+    for {
+      result <- db.run(query.insertOrUpdate(activity))
+    } yield {
+      if (result == 1) {
+        ERR_NONE
+      } else {
+        ERR_PERSISTENCE_INTERNAL
       }
+    }
 
   def getActivities(
       owner: String,
@@ -64,7 +60,7 @@ class ActivityDalImpl @Inject()(
     db.run(
       filters
         .filter(_.sequenceId > paging.cursor)
-        .sortBy(c => c.timestamp.desc)
+        .sortBy(c => c.sequenceId.desc)
         .take(paging.size)
         .result
     )
@@ -81,48 +77,34 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def deleteBySequenceId(sequenceId: Long): Future[Boolean] =
+  def deleteByTxHashes(txHashes: Set[String]): Future[Boolean] =
     db.run(
         query
-          .filter(_.sequenceId === sequenceId)
+          .filter(_.txHash inSet txHashes)
           .delete
       )
       .map(_ > 0)
 
-  def obsoleteDataSinceBlock(block: Long): Future[Boolean] =
-    db.run(query.filter(_.block >= block).delete).map(_ > 0)
-
-  def clearBlockDataSinceBlock(block: Long): Future[Boolean] =
+  def updateBlockActivitiesToPending(block: Long): Future[Boolean] =
     db.run(
         query
-          .filter(_.block >= block)
-          .map(c => (c.block, c.activityStatus))
-          .update(0L, ActivityStatus.PENDING)
+          .filter(_.block === block)
+          .map(c => (c.block, c.sequenceId, c.activityStatus))
+          //TODO (yongfeng) create pending sequenceId with from and nonce
+          .update(0L, 0L, ActivityStatus.PENDING)
       )
       .map(_ > 0)
 
-  def updatePendingActivityFailed(
-      from: String,
-      nonce: Int,
-      txHash: String
+  def deletePendingActivitiesWhenFromNonceToLow(
+      fromOfTx: String,
+      nonceWithFrom: Int
     ): Future[Boolean] =
     db.run(
         query
-          .filter(_.from === from)
+          .filter(_.from === fromOfTx)
           .filter(_.block === 0L)
-          .filter(_.nonce <= nonce)
-          .filterNot(_.txHash === txHash)
-          .map(_.activityStatus)
-          .update(ActivityStatus.PENDING)
-      )
-      .map(_ > 0)
-
-  def updatePendingActivityFailed(sequenceId: Long): Future[Boolean] =
-    db.run(
-        query
-          .filter(_.sequenceId === sequenceId)
-          .map(_.activityStatus)
-          .update(ActivityStatus.PENDING)
+          .filter(_.nonce <= nonceWithFrom)
+          .delete
       )
       .map(_ > 0)
 

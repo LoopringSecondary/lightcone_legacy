@@ -40,7 +40,7 @@ class ActivityTable(shardId: String)(tag: Tag)
   def timestamp = column[Long]("timestamp")
   def fiatValue = column[Double]("fiat_value")
   def details = column[Array[Byte]]("details")
-  def sequenceId = column[Long]("sequence_id", O.PrimaryKey)
+  def sequenceId = column[Long]("sequence_id")
   def from = columnAddress("from")
   def nonce = column[Int]("nonce")
   def activityStatus = column[ActivityStatus]("activity_status")
@@ -53,14 +53,10 @@ class ActivityTable(shardId: String)(tag: Tag)
       unique = false
     )
 
-  def idx_owner_txhash =
-    index(
-      "idx_owner_txhash",
-      (owner, txHash),
-      unique = false
-    )
+  def idx_txhash = index("idx_txhash", (txHash), unique = false)
   def idx_timestamp = index("idx_timestamp", (timestamp), unique = false)
-  //TODO (yongfeng) index from
+  def idx_block = index("idx_block", (block), unique = false)
+  def pk = primaryKey("pk", (from, block, nonce))
 
   def * =
     (

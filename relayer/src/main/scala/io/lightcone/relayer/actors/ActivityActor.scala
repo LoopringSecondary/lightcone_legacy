@@ -17,11 +17,9 @@
 package io.lightcone.relayer.actors
 
 import akka.actor.{Address => _, _}
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.event.{BlockEvent, BlockForkedEvent}
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.persistence.Activity
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
@@ -31,7 +29,6 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
 import scala.concurrent._
-import scala.util.{Failure, Success}
 
 // main owner: 杜永丰
 object ActivityActor extends DeployedAsShardedByAddress {
@@ -56,8 +53,15 @@ object ActivityActor extends DeployedAsShardedByAddress {
   val extractShardingObject: PartialFunction[Any, String] = {
     case req: Activity          => req.owner
     case req: GetActivities.Req => req.owner
-    case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
-      Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
+    case req: BlockEvent        => req.shardKey
+  }
+
+  // 生成给外部调用所有分片时的分片key
+  def getShardKeys(implicit config: Config) = {
+    val numsOfShards = config.getInt("activity.num-of-shards")
+    (0 until numsOfShards).map(
+      i => Numeric.toHexStringWithPrefix(BigInt(i).bigInteger)
+    )
   }
 }
 
@@ -71,8 +75,6 @@ class ActivityActor(
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
     with ShardingEntityAware {
-
-  val mediator = DistributedPubSub(context.system).mediator
 
   val selfConfig = config.getConfig(ActivityActor.name)
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
@@ -92,71 +94,29 @@ class ActivityActor(
 
   activityDal.createTable()
 
-  override def initialize() = {
-    val f = for {
-      // TODO (yongfeng) 等亚东pub出分叉事件后sub BlockForkedEvent
-      _ <- Future.successful()
-    } yield {}
-
-    f onComplete {
-      case Success(_) =>
-        becomeReady()
-      case Failure(e) => throw e
-    }
-    f
-  }
-
   def ready: Receive = {
 
-    // TODO (yongfeng) 处理存储owner的activity（sequenceId需要保证唯一）
-    // 新增字段 from, nonce, status，
-    // 1 如果activity是pending，直接存
-    // 2 如果activity在块中
-    //    1. delete pending where owner, sequenceId (删除当前这一条的pending)
-    //    3. insert blocked activity (打入块activity)
-    case req: Activity => {
-      if (req.block > 0) {
-        val pendingSequenceId = 0L
-        for {
-          _ <- activityDal.deleteBySequenceId(pendingSequenceId)
-          _ <- activityDal.saveActivity(req)
-        } yield {}
-      } else {
-        activityDal.saveActivity(req)
-      }
-    }
+    case req: Activity =>
+      activityDal.saveActivity(req)
 
-    // TODO (yongfeng) 订阅tx被打入块消息通知，更新当前分区fromAddress pending失效
-    // update status = failed where from = ?, blockNum = 0, from nonce <= ? and txHash != ? (更新nonce小的pending为失败)
-    // 或者先从pending activity里查询出需要更新失败的再更新
     case req: BlockEvent =>
-      for {
-        pendingActivities <- activityDal.getPendingActivities(
-          req.txs.map(_.from).toSet
-        )
+      (for {
+        // delete activities with txHashes in block
+        _ <- activityDal.deleteByTxHashes(req.txs.map(_.txHash).toSet)
 
-        successTxHashes = req.txs.map(_.txHash)
+        // update all activities with the same request block height to pending
+        _ <- activityDal.updateBlockActivitiesToPending(req.blockNumber)
 
-        toUpdateFailed = req.txs.map { t =>
-          pendingActivities.find(
-            p =>
-              (p.from == t.from && p.nonce == t.nonce && p.txHash != t.txHash) || (p.from == t.from && p.nonce < t.nonce && !successTxHashes
-                .contains(p.txHash))
-          )
-        }.filter(_.isDefined)
-
-        updated <- Future.sequence(toUpdateFailed.map { t =>
-          val activity = t.get
-          activityDal.updatePendingActivityFailed(activity.sequenceId)
+        // delete pending when nonce is low for each tx with from address
+        txsWithMaxNonce = req.txs
+          .groupBy(_.from)
+          .values
+          .map(t => t.maxBy(_.nonce))
+        _ <- Future.sequence(txsWithMaxNonce.map { r =>
+          activityDal
+            .deletePendingActivitiesWhenFromNonceToLow(r.from, r.nonce)
         })
-      } yield {}
-
-    // TODO (yongfeng) 订阅分叉事件，更新当前分区所有影响块的activity为pending
-    // 1. update activity set block = 0, status = PENDING where block >= ?
-    // 2. 新链上块的activity由Activity事件重新处理
-    // 3. fromAddress pending nonce过小的由BlockEvent事件处理
-    case req: BlockForkedEvent =>
-      activityDal.clearBlockDataSinceBlock(req.forkedBlockNum)
+      } yield {}).sendTo(sender)
 
     case req: GetActivities.Req =>
       (for {
@@ -169,5 +129,27 @@ class ActivityActor(
       } yield res).sendTo(sender)
 
   }
+
+//  private def clearPendingWithBlock(req: BlockEvent) =
+//    for {
+//      pendingActivities <- activityDal.getPendingActivities(
+//        req.txs.map(_.from).toSet
+//      )
+//
+//      successTxHashes = req.txs.map(_.txHash)
+//
+//      inLowerNonce = req.txs.map { t =>
+//        pendingActivities.find(
+//          p =>
+//            (p.from == t.from && p.nonce == t.nonce && p.txHash != t.txHash) || (p.from == t.from && p.nonce < t.nonce && !successTxHashes
+//              .contains(p.txHash))
+//        )
+//      }.filter(_.isDefined)
+//
+//      _ <- Future.sequence(inLowerNonce.map { t =>
+//        val activity = t.get
+//        activityDal.deleteBySequenceId(activity.sequenceId)
+//      })
+//    } yield {}
 
 }

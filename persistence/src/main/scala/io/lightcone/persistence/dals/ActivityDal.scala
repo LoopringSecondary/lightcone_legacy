@@ -38,17 +38,13 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       token: Option[String]
     ): Future[Int]
 
-  def deleteBySequenceId(sequenceId: Long): Future[Boolean]
+  def deleteByTxHashes(txHashes: Set[String]): Future[Boolean]
 
-  def obsoleteDataSinceBlock(block: Long): Future[Boolean]
-
-  def clearBlockDataSinceBlock(block: Long): Future[Boolean]
-
-  def updatePendingActivityFailed(
-      from: String,
-      nonce: Int,
-      txHash: String
+  def deletePendingActivitiesWhenFromNonceToLow(
+      fromOfTx: String,
+      nonceWithFrom: Int
     ): Future[Boolean]
 
-  def updatePendingActivityFailed(sequenceId: Long): Future[Boolean]
+  def updateBlockActivitiesToPending(block: Long): Future[Boolean]
+
 }
