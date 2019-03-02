@@ -22,10 +22,10 @@ import io.lightcone.ethereum.event.EventHeader
 import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
-class DefaultEventExtractor @Inject() ()(implicit val ec: ExecutionContext)
-  extends EventExtractor[BlockWithTxObject, AnyRef] {
+class DefaultEventExtractor @Inject()()(implicit val ec: ExecutionContext)
+    extends EventExtractor[BlockWithTxObject, AnyRef] {
 
   // TODO(hongyu): we can also inject these individual extractors in the constructor of
   // DefaultEventExtractor
@@ -51,12 +51,16 @@ class DefaultEventExtractor @Inject() ()(implicit val ec: ExecutionContext)
                   block.hash,
                   block.miner,
                   NumericConversion.toBigInt(block.timestamp).longValue(),
-                  block.uncles)))
+                  block.uncles
+                )
+              )
+            )
           TransactionData(tx, Some(receipt, eventHeader))
       }
 
       txEvents <- Future.sequence(
-        transactions.map(txEventExtractor.extractEvents))
+        transactions.map(txEventExtractor.extractEvents)
+      )
       events = blockEvents ++ txEvents.flatten
     } yield events
 }

@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.support
 
-import io.lightcone.ethereum.{ RawOrderValidator, RawOrderValidatorImpl }
+import io.lightcone.ethereum.{RawOrderValidator, RawOrderValidatorImpl}
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum.event._
@@ -24,17 +24,17 @@ import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.ethereum._
 
 trait EthereumEventExtractorSupport
-  extends DatabaseModuleSupport
-  with EthereumSupport
-  with MetadataManagerSupport
-  with JsonrpcSupport
-  with HttpSupport
-  with OrderHandleSupport
-  with MultiAccountManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport
-  with DatabaseQueryMessageSupport
-  with RingAndFillPersistenceSupport {
+    extends DatabaseModuleSupport
+    with EthereumSupport
+    with MetadataManagerSupport
+    with JsonrpcSupport
+    with HttpSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with DatabaseQueryMessageSupport
+    with RingAndFillPersistenceSupport {
   me: CommonSpec =>
 
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
@@ -46,48 +46,55 @@ trait EthereumEventExtractorSupport
     new OnchainOrderExtractor(),
     new OrdersCancelledEventExtractor(),
     new RingMinedEventExtractor(),
-    new TokenBurnRateEventExtractor())
+    new TokenBurnRateEventExtractor()
+  )
 
   implicit val eventDispatcher: EventDispatcher =
     new EventDispatcherImpl(actors)
       .register(
         classOf[RingMinedEvent],
         MarketManagerActor.name,
-        RingAndFillPersistenceActor.name)
-      .register(
-        classOf[CutoffEvent],
-        MultiAccountManagerActor.name)
-      .register(
-        classOf[OrderFilledEvent],
-        MultiAccountManagerActor.name)
+        RingAndFillPersistenceActor.name
+      )
+      .register(classOf[CutoffEvent], MultiAccountManagerActor.name)
+      .register(classOf[OrderFilledEvent], MultiAccountManagerActor.name)
       .register(
         classOf[OrdersCancelledOnChainEvent],
-        MultiAccountManagerActor.name)
+        MultiAccountManagerActor.name
+      )
       .register(
         classOf[TokenBurnRateChangedEvent], //
-        MetadataManagerActor.name)
+        MetadataManagerActor.name
+      )
       .register(
         classOf[OHLCRawData], //
-        MarketHistoryActor.name)
+        MarketHistoryActor.name
+      )
       .register(
         classOf[BlockGasPricesExtractedEvent], //
-        GasPriceActor.name)
+        GasPriceActor.name
+      )
       .register(
         classOf[AddressAllowanceUpdatedEvent],
-        MultiAccountManagerActor.name)
+        MultiAccountManagerActor.name
+      )
       .register(
         classOf[AddressBalanceUpdatedEvent],
         MultiAccountManagerActor.name,
-        RingSettlementManagerActor.name)
+        RingSettlementManagerActor.name
+      )
 
   actors
     .add(
       MarketHistoryActor.name, //
-      MarketHistoryActor.start)
+      MarketHistoryActor.start
+    )
     .add(
       EthereumEventExtractorActor.name, //
-      EthereumEventExtractorActor.start)
+      EthereumEventExtractorActor.start
+    )
     .add(
       MissingBlocksEventExtractorActor.name,
-      MissingBlocksEventExtractorActor.start)
+      MissingBlocksEventExtractorActor.start
+    )
 }
