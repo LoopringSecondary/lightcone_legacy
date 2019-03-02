@@ -23,13 +23,6 @@ import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object EventExtractorCompose {
-
-  def default()(implicit ec: ExecutionContext): EventExtractorCompose = {
-    new EventExtractorCompose()
-  }
-}
-
 class EventExtractorCompose @Inject()(
     implicit
     val ec: ExecutionContext) {
