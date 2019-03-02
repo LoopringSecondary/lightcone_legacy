@@ -110,6 +110,7 @@ message Activity {
     string token                = 7;
     int64  sequence_id          = 8; //唯一、排序(pending在最前面)、可重复性 -- block_txIndex_eventIdex (4000000+txHash.code)_eventIdx
 
+    //Activity不汇总了，但是要发送新块通知事件(事件包含所有的txhash)，并且不能直接notify，而是直接发送到对应的shard
     oneof detail {
         EtherTransfer       ether_transfer      = 21;
         EtherConversion     ether_conversion    = 22;

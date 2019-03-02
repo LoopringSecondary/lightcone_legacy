@@ -15,9 +15,9 @@
  */
 
 package io.lightcone.ethereum.extractor
+
 import io.lightcone.ethereum.event.EventHeader
-import io.lightcone.ethereum.extractor.EventExtractor
-import io.lightcone.relayer.data.{Transaction, TransactionReceipt}
+import io.lightcone.relayer.data._
 
 import scala.concurrent.Future
 

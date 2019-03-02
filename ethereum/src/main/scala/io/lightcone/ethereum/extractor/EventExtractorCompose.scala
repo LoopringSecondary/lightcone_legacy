@@ -16,8 +16,10 @@
 
 package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
+import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.event.EventHeader
-import io.lightcone.relayer.data.{RawBlockData, Transaction, TransactionReceipt}
+import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,9 +34,9 @@ class EventExtractorCompose @Inject()(
     implicit
     val ec: ExecutionContext) {
 
-  var txExtractors = Seq.empty[TxEventExtractor[_]]
+  private var txExtractors = Seq.empty[TxEventExtractor[_]]
 
-  var blockExtractors = Seq.empty[BlockEventExtractor[_]]
+  private var blockExtractors = Seq.empty[BlockEventExtractor[_]]
 
   def registerTxExtractor(extractors: TxEventExtractor[_]*) = {
     txExtractors = txExtractors ++ extractors
@@ -46,12 +48,36 @@ class EventExtractorCompose @Inject()(
     this
   }
 
-  def extractEvents(block: RawBlockData): Future[Seq[Any]] =
+  def extractEvents(block: BlockWithTxObject): Future[Seq[Any]] =
     for {
-      events <- Future.sequence {
+      blockEvents <- Future.sequence {
         blockExtractors.map(_.extractEvents(block))
       }
-    } yield events.flatten
+      transactions = block.transactions zip block.receipts
+      txEvents <- Future.sequence(transactions.map {
+        case (tx, receipt) =>
+          val eventHeader =
+            EventHeader(
+              blockHeader = Some(
+                BlockHeader(
+                  NumericConversion.toBigInt(block.number).longValue(),
+                  block.hash,
+                  block.miner,
+                  NumericConversion.toBigInt(block.timestamp).longValue(),
+                  block.uncles
+                )
+              )
+            )
+          val txData = TransactionData(tx, receipt, eventHeader)
+          for {
+            events <- Future.sequence(
+              txExtractors.map { extractor =>
+                extractor.extractEvents(txData)
+              }
+            )
+          } yield events.flatten
+      })
+    } yield blockEvents.flatten ++ txEvents.flatten
 
   def extractEvents(
       tx: Transaction,

@@ -19,7 +19,7 @@ package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event
-import io.lightcone.ethereum.event.{TransferEvent => PTransferEvent, _}
+import io.lightcone.ethereum.event.{TransferEvent => PTransferEvent}
 import io.lightcone.lib.{Address, NumericConversion}
 
 import scala.collection.mutable.ListBuffer

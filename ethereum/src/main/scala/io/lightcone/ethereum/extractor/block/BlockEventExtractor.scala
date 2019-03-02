@@ -15,10 +15,11 @@
  */
 
 package io.lightcone.ethereum.extractor
-import io.lightcone.relayer.data.RawBlockData
+
+import io.lightcone.relayer.data.BlockWithTxObject
 
 import scala.concurrent.Future
 
-trait BlockEventExtractor[R] extends EventExtractor[RawBlockData, R] {
-  def extractEvents(t: RawBlockData): Future[Seq[R]]
+trait BlockEventExtractor[R] extends EventExtractor[BlockWithTxObject, R] {
+  def extractEvents(t: BlockWithTxObject): Future[Seq[R]]
 }

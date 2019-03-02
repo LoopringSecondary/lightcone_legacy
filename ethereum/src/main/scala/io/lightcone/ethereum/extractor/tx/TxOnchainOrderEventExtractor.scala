@@ -21,7 +21,6 @@ import io.lightcone.core.{RawOrder, TokenStandard}
 import io.lightcone.ethereum.abi.{loopringProtocolAbi, OrderSubmittedEvent}
 import io.lightcone.ethereum.event._
 import io.lightcone.lib.{Address, NumericConversion}
-import io.lightcone.ethereum.extractor.{TransactionData, TxEventExtractor}
 import org.web3j.utils.Numeric
 
 import scala.concurrent.{ExecutionContext, Future}

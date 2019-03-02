@@ -31,12 +31,12 @@ class BlockGasPriceExtractor @Inject()(
     extends BlockEventExtractor[BlockGasPricesExtractedEvent] {
 
   def extractEvents(
-      block: RawBlockData
+      block: BlockWithTxObject
     ): Future[Seq[BlockGasPricesExtractedEvent]] = Future {
     Seq(
       BlockGasPricesExtractedEvent(
-        height = block.height,
-        gasPrices = block.txs.map { tx =>
+        height = NumericConversion.toBigInt(block.number).longValue,
+        gasPrices = block.transactions.map { tx =>
           NumericConversion.toBigInt(tx.gasPrice).longValue
         }
       )

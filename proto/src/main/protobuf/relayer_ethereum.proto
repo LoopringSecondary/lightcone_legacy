@@ -111,7 +111,8 @@ message BlockWithTxObject {
     string gasUsed = 16;
     string timestamp = 17;
     repeated Transaction transactions = 18;
-    repeated string uncles = 19;
+    repeated TransactionReceipt receipts = 19;
+    repeated string uncles = 20;
 }
 
 message TraceCall {
