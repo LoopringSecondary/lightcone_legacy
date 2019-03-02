@@ -312,15 +312,6 @@ message BatchGetUncle {
 // ETHEREUM EVENT EXTRACT MESSAGES
 /////////////////////////////////////////////////////////////////////
 
-message RawBlockData{
-    int64 height = 1;
-    string hash = 2;
-    string  miner = 3;
-    string timestamp = 4;
-    repeated string uncles = 5;
-    repeated Transaction txs = 6;
-    repeated TransactionReceipt receipts = 7;
-}
 
 
 
