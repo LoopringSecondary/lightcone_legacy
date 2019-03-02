@@ -63,12 +63,15 @@ class PendingTransactionSubscriber(
         override def run(): Unit = if (client == null || !client.isOpen) {
           try {
             subscribe(process)
-            count.remove("label" -> "reconnect")
+            log.info(
+              s"succeed to subscribe for pending tx of ethereum node :${settings.host}"
+            )
+            count.remove("label" -> "failed")
           } catch {
             case e: Throwable =>
-              count.refine("label" -> "reconnect").increment()
+              count.refine("label" -> "failed").increment()
               log.error(
-                s"$connectorActorName reconnect:${e.getLocalizedMessage}"
+                s"$connectorActorName: ${settings.host} subscribe failed:${e.getLocalizedMessage}"
               )
           }
         }
@@ -104,20 +107,17 @@ class PendingTransactionSubscriber(
           (actors.get(connectorActorName) ? GetTransactionByHash.Req(
             hash = t.getParams.getResult
           )).mapAs[GetTransactionByHash.Res]
-            .foreach(
-              res =>
-                if (res.result.nonEmpty)
-                  process(res.result.get)
-            )
+            .foreach(_.result.foreach(process))
         }
       }
     })
   }
 
-  def defaultProcess = (t: Transaction) => {
+  val defaultProcess = (t: Transaction) => {
     if (actors.contains(PendingTxEventExtractorActor.name))
       actors.get(PendingTxEventExtractorActor.name) ! t
-
+    else
+      log.error(s"can't find ActorRef :${PendingTxEventExtractorActor.name} ")
   }
 
 }
