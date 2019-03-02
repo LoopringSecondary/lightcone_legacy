@@ -21,6 +21,7 @@ import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event
 import io.lightcone.ethereum.event.{TransferEvent => PTransferEvent}
 import io.lightcone.lib.{Address, NumericConversion}
+import io.lightcone.relayer.data.Transaction
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -30,7 +31,9 @@ class TransferEventExtractor @Inject()(
     val ec: ExecutionContext)
     extends TxEventExtractor[PTransferEvent] {
 
-  def extractEvents(params: TransactionData): Future[Seq[PTransferEvent]] =
+  def extractBlockedEvents(
+      params: TransactionData
+    ): Future[Seq[PTransferEvent]] =
     Future {
       val (tx, receipt, eventHeader) =
         (params.tx, params.receipt, params.eventHeader)
@@ -38,52 +41,16 @@ class TransferEventExtractor @Inject()(
       val transfers = ListBuffer.empty[event.TransferEvent]
       receipt.logs.zipWithIndex.foreach {
         case (log, index) =>
-          wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-            case Some(transfer: TransferEvent.Result) =>
-              transfers.append(
-                event.TransferEvent(
-                  Some(eventHeader),
-                  from = transfer.from,
-                  to = transfer.receiver,
-                  token = log.address,
-                  amount = transfer.amount
-                )
+          if (txValue > 0) {
+            transfers.append(
+              event.TransferEvent(
+                header = Some(eventHeader),
+                from = tx.from,
+                to = tx.to,
+                token = Address.ZERO.toString(),
+                amount = txValue
               )
-            case Some(withdraw: WithdrawalEvent.Result) =>
-              transfers.append(
-                event.TransferEvent(
-                  Some(eventHeader),
-                  from = withdraw.src,
-                  to = log.address,
-                  token = log.address,
-                  amount = withdraw.wad
-                ),
-                event.TransferEvent(
-                  Some(eventHeader),
-                  from = log.address,
-                  to = withdraw.src,
-                  token = Address.ZERO.toString(),
-                  amount = withdraw.wad
-                )
-              )
-            case Some(deposit: DepositEvent.Result) =>
-              transfers.append(
-                event.TransferEvent(
-                  Some(eventHeader),
-                  from = log.address,
-                  to = deposit.dst,
-                  token = log.address,
-                  amount = deposit.wad
-                ),
-                event.TransferEvent(
-                  Some(eventHeader),
-                  from = deposit.dst,
-                  to = log.address,
-                  token = Address.ZERO.toString(),
-                  amount = deposit.wad
-                )
-              )
-            case _ =>
+            )
           }
       }
 
@@ -108,4 +75,6 @@ class TransferEventExtractor @Inject()(
       )
     }
 
+  def extractPendingEvents(tx: Transaction): Future[Seq[PTransferEvent]] =
+    Future.successful(Seq.empty)
 }
