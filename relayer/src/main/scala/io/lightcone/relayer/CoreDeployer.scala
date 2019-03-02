@@ -112,6 +112,10 @@ class CoreDeployer @Inject()(
         EthereumQueryActor.name, //
         EthereumQueryActor.start
       )
+      .add(
+        PendingTxEventExtractorActor.name,
+        PendingTxEventExtractorActor.start
+      )
   }
 
   def deploy(): Unit = {

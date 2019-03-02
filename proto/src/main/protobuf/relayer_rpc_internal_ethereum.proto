@@ -31,11 +31,6 @@ message JsonRpc {
         string json = 1;
     }
 
-    message RequestWithHeight{
-        Request req = 1;
-        uint32 height = 2;
-    }
-
     message Error {
         int32 code = 1;
         string message = 2;
@@ -294,9 +289,6 @@ message BatchGetUncle {
         repeated GetBlockWithTxHashByHash.Res resps = 1;
     }
 }
-
-
-
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：
 
