@@ -16,7 +16,6 @@
 
 package io.lightcone.ethereum.extractor
 
-import akka.util.Timeout
 import com.google.inject.Inject
 import io.lightcone.ethereum.event._
 import io.lightcone.lib._
@@ -26,7 +25,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class BlockGasPriceExtractor @Inject()(
     implicit
-    val timeout: Timeout,
     val ec: ExecutionContext)
     extends BlockEventExtractor[BlockGasPricesExtractedEvent] {
 
