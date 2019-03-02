@@ -67,6 +67,8 @@ class EthereumEventExtractorActor(
 
   val selfConfig = config.getConfig(EthereumEventExtractorActor.name)
 
+  val preBlockNumber = selfConfig.getInt("pre-block")
+
   def missingBlockEventExtractorActor =
     actors.get(MissingBlocksEventExtractorActor.name)
 
@@ -79,17 +81,18 @@ class EthereumEventExtractorActor(
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
         .map(res => NumericConversion.toBigInt(res.result).longValue)
-      currentBlockData <- getBlockData(currentBlock)
+      preBlock = Math.max(currentBlock - 1 - preBlockNumber, 0)
+      preBlockData <- getBlockData(preBlock)
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
-      missing = currentBlock > blockStart + 1
+      missing = preBlock > blockStart
       _ = if (missing) {
-        dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
+        dbModule.blockService.saveBlock(BlockData(height = preBlock))
         dbModule.missingBlocksRecordDal.saveMissingBlock(
           MissingBlocksRecord(blockStart + 1, currentBlock, blockStart)
         )
       }
     } yield {
-      blockData = currentBlockData.get
+      blockData = preBlockData.get
     }
     f onComplete {
       case Success(value) =>

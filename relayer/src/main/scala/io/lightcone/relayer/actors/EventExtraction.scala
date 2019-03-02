@@ -57,7 +57,7 @@ trait EventExtraction {
 
       getBlockData(blockData.height + 1).map {
         case Some(block) =>
-          if (block.parentHash == blockData.hash) {
+          if (block.parentHash == blockData.hash || blockData.height == -1) {
             blockData = block
             self ! RETRIEVE_RECEIPTS
           } else {

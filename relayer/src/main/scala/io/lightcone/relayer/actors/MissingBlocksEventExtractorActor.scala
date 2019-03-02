@@ -79,13 +79,16 @@ class MissingBlocksEventExtractorActor(
     case NEXT_RANGE =>
       for {
         missingBlocksOpt <- dbModule.missingBlocksRecordDal.getOldestOne()
-        lastBlockData <- if (missingBlocksOpt.isDefined)
+        lastBlockData <- if (missingBlocksOpt.isDefined && missingBlocksOpt.get.lastHandledBlock >= 0)
           getBlockData(missingBlocksOpt.get.lastHandledBlock)
         else Future.successful(None)
       } yield {
         if (missingBlocksOpt.isDefined) {
+          if (missingBlocksOpt.get.lastHandledBlock >= 0)
+            blockData = lastBlockData.get
+          else
+            blockData = RawBlockData(height = -1L)
           val missingBlocks = missingBlocksOpt.get
-          blockData = lastBlockData.get
           untilBlock = missingBlocks.blockEnd
           sequenceId = missingBlocks.sequenceId
           self ! GET_BLOCK
