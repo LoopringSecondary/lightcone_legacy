@@ -20,13 +20,12 @@ import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum._
-import io.lightcone.ethereum.event.ForkEvent
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
+import io.lightcone.ethereum.BlockData
 import io.lightcone.lib._
 import io.lightcone.persistence._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.ethereum.event._
 
 import scala.concurrent._
@@ -69,9 +68,6 @@ class EthereumEventExtractorActor(
 
   val preBlockNumber = selfConfig.getInt("pre-block")
 
-  def missingBlockEventExtractorActor =
-    actors.get(MissingBlocksEventExtractorActor.name)
-
   var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 
   override def initialize(): Future[Unit] = {
@@ -82,17 +78,19 @@ class EthereumEventExtractorActor(
         .mapAs[GetBlockNumber.Res]
         .map(res => NumericConversion.toBigInt(res.result).longValue)
       preBlock = Math.max(currentBlock - 1 - preBlockNumber, 0)
-      preBlockData <- getBlockData(preBlock)
+      preBlockData <- getBlockData(preBlock).map(_.get)
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = preBlock > blockStart
+      _ <- dbModule.blockService.saveBlock(
+        BlockData(hash = preBlockData.hash, height = preBlockData.height)
+      )
       _ = if (missing) {
-        dbModule.blockService.saveBlock(BlockData(height = preBlock))
         dbModule.missingBlocksRecordDal.saveMissingBlock(
           MissingBlocksRecord(blockStart + 1, currentBlock, blockStart)
         )
       }
     } yield {
-      blockData = preBlockData.get
+      blockData = preBlockData
     }
     f onComplete {
       case Success(value) =>
@@ -108,15 +106,15 @@ class EthereumEventExtractorActor(
 
   def handleFork: Receive = {
     case DETECT_FORK_HEIGHT =>
-      getBlockData(blockData.height - 1).map { blockOpt =>
-        if (blockOpt.get.hash == blockData.parentHash) {
-          blockData = blockOpt.get
-          missingBlockEventExtractorActor ! ForkEvent(blockData.height)
+      for {
+        dbBlock <- dbModule.blockDal.findByHeight(blockData.height - 1)
+        onlineBlock <- getBlockData(blockData.height - 1)
+      } yield {
+        blockData = onlineBlock.get
+        if (dbBlock.get.hash == onlineBlock.get.hash)
           self ! GET_BLOCK
-        } else {
-          blockData = blockOpt.get
+        else
           self ! DETECT_FORK_HEIGHT
-        }
       }
   }
 

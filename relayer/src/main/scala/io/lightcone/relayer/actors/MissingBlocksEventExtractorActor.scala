@@ -19,12 +19,11 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.event.ForkEvent
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.ethereum.event._
 
 import scala.concurrent.duration._
@@ -101,18 +100,7 @@ class MissingBlocksEventExtractorActor(
 
   def handleFork: Receive = {
     case DETECT_FORK_HEIGHT =>
-    case ForkEvent(forkHeight) =>
-      if (forkHeight <= blockData.height) {
-        for {
-          _ <- dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
-          //TODO delete all records after
-        } yield self ! NEXT_RANGE
-
-      } else if (forkHeight < untilBlock) {
-        //TODO delete all records after
-        untilBlock = forkHeight
-        self ! GET_BLOCK
-      }
+    //This Actor will never receive this message
   }
 
   override def postProcessEvents =
