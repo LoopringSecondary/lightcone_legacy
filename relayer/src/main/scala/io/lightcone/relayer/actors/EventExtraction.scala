@@ -51,7 +51,7 @@ trait EventExtraction {
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  def handleMessage: Receive = {
+  def handleMessage: Receive = handleFork orElse {
     case GET_BLOCK =>
       assert(blockData != null)
 
@@ -88,17 +88,9 @@ trait EventExtraction {
             s" Actor: ${self.path} extracts ethereum events failed with error:${e.getMessage}"
           )
       }
-
-    case DETECT_FORK_HEIGHT =>
-      getBlockData(blockData.height - 1).map { blockOpt =>
-        if (blockOpt.get.hash == blockData.parentHash) {
-          //TODO (yadong) 等待永丰定义的分叉事件结构，通知系统内部分叉事件
-        } else {
-          blockData = blockOpt.get
-          self ! DETECT_FORK_HEIGHT
-        }
-      }
   }
+
+  def handleFork:Receive
 
   def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
     for {

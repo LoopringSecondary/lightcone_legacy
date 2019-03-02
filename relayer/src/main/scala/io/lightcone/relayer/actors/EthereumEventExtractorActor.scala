@@ -99,4 +99,22 @@ class EthereumEventExtractorActor(
 
   def ready = handleMessage
 
+   def handleFork: Receive = {
+     case DETECT_FORK_HEIGHT =>
+       getBlockData(blockData.height - 1).map { blockOpt =>
+         if (blockOpt.get.hash == blockData.parentHash) {
+           //TODO (yadong) 等待永丰定义的分叉事件结构，通知系统内部分叉事件
+         } else {
+           blockData = blockOpt.get
+           self ! DETECT_FORK_HEIGHT
+         }
+       }
+
+       //TODO（yadong） 等待永丰定义的分叉事件结构
+     case Notify("fork-event") =>
+
+
+   }
+
+
 }
