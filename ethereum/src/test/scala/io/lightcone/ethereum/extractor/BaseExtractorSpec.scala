@@ -18,10 +18,10 @@ package io.lightcone.ethereum.extractor
 
 import io.lightcone.relayer.data._
 import io.lightcone.ethereum.abi._
-import org.json4s.{CustomSerializer, DefaultFormats, JNothing, JNull}
+import io.lightcone.lib.ProtoSerializer
+import org.json4s.DefaultFormats
 import org.json4s.native.JsonMethods.parse
 import org.scalatest._
-import scalapb.json4s.JsonFormat
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -42,36 +42,45 @@ class BaseExtractorSpec extends FlatSpec with Matchers {
     .mkString
   val wethAbi1 = wethAbi
 
-  val blockRes =
-    JsonFormat.fromJsonString[GetBlockWithTxObjectByNumber.Res](resStr)
+  val ps = new ProtoSerializer
+  val ser = org.json4s.jackson.Serialization
 
-  val block = blockRes.result.get
+  val parser = org.json4s.native.JsonParser
+
+  private def deserializeToProto[
+      T <: scalapb.GeneratedMessage with scalapb.Message[T]
+    ](json: String
+    )(
+      implicit
+      pa: scalapb.GeneratedMessageCompanion[T]
+    ): Option[T] = {
+    val jv = parser.parse(json)
+    ps.deserialize[T](jv)
+  }
+
+  val blockRes = deserializeToProto[GetBlockWithTxObjectByNumber.Res](resStr)
+//    JsonFormat.fromJsonString[GetBlockWithTxObjectByNumber.Res](resStr)
+
+  val block = blockRes.get.result.get
+
+  info(s"${block}")
 
   val receiptStr = Source
     .fromFile("ethereum/src/test/resources/event/receipts")
     .getLines()
     .next()
-
+//
   val resps = parse(receiptStr).values.asInstanceOf[List[Map[String, Any]]]
+//
 
-  val ser = org.json4s.jackson.Serialization
-
+//
   val receiptResps = resps.map(resp => {
     val respJson = ser.write(resp)
-    JsonFormat.fromJsonString[GetTransactionReceipt.Res](respJson)
+    deserializeToProto[GetTransactionReceipt.Res](respJson)
   })
-
-  val blockData = block.withReceipts(receiptResps.map(_.result.get))
-
-  private class EmptyValueSerializer
-      extends CustomSerializer[String](
-        _ =>
-          ({
-            case JNull => ""
-          }, {
-            case "" => JNothing
-          })
-      )
+//
+  val blockData = block.withReceipts(receiptResps.map(_.get.result.get))
+  info(s"### ${blockData.receipts(0).status}")
 
   "extract block" should "get events correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global

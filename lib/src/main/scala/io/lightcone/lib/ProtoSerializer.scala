@@ -42,6 +42,8 @@ private object ProtoSerializerMacro {
             import scalapb.json4s._
             import com.google.protobuf.ByteString
             import io.lightcone.core.Amount
+            import io.lightcone.ethereum.TxStatus
+            import io.lightcone.ethereum.TxStatus._
             import io.lightcone.lib.NumericConversion
             import org.json4s.JsonAST.{JString, JValue}
             import scalapb.json4s.{JsonFormat, JsonFormatException}
@@ -61,6 +63,27 @@ private object ProtoSerializerMacro {
                         case _ => throw new JsonFormatException("Expected a string.")
                       }
                     )
+                    .registerEnumFormatter[TxStatus](
+                                (printer, txStatusValue) => {
+                                  val hex = TxStatus.fromName(txStatusValue.name) match {
+                                    case Some(txStatus) =>
+                                      if (txStatus == TX_STATUS_SUCCESS) "0x1"
+                                      else if (txStatus == TX_STATUS_FAILED) "0x0"
+                                      else ""
+                                    case _ => ""
+                                  }
+                                  JString(hex)
+                                }, {
+                                  case (parser, JString(str)) =>
+                                    val txStatus =
+                                      if (str == "") TX_STATUS_PENDING
+                                      else if (NumericConversion.toBigInt(str) > 0)
+                                        TX_STATUS_SUCCESS
+                                      else TX_STATUS_FAILED
+                                    txStatus.scalaValueDescriptor
+                                  case _ => throw new JsonFormatException("Expected a string.")
+                                }
+                              )
             scala.util.Try(new Printer(formatRegistry = formatRegistry)
             .toJson($value))
             .toOption
@@ -80,6 +103,8 @@ private object ProtoSerializerMacro {
             import scalapb.json4s._
             import com.google.protobuf.ByteString
             import io.lightcone.core.Amount
+            import io.lightcone.ethereum.TxStatus
+            import io.lightcone.ethereum.TxStatus._
             import io.lightcone.lib.NumericConversion
             import org.json4s.JsonAST.{JString, JValue}
             import scalapb.json4s.{JsonFormat, JsonFormatException}
@@ -99,6 +124,27 @@ private object ProtoSerializerMacro {
                        case _ => throw new JsonFormatException("Expected a string.")
                      }
                    )
+                   .registerEnumFormatter[TxStatus](
+                               (printer, txStatusValue) => {
+                                 val hex = TxStatus.fromName(txStatusValue.name) match {
+                                   case Some(txStatus) =>
+                                     if (txStatus == TX_STATUS_SUCCESS) "0x1"
+                                     else if (txStatus == TX_STATUS_FAILED) "0x0"
+                                     else ""
+                                   case _ => ""
+                                 }
+                                 JString(hex)
+                               }, {
+                                 case (parser, JString(str)) =>
+                                   val txStatus =
+                                     if (str == "") TX_STATUS_PENDING
+                                     else if (NumericConversion.toBigInt(str) > 0)
+                                       TX_STATUS_SUCCESS
+                                     else TX_STATUS_FAILED
+                                   txStatus.scalaValueDescriptor
+                                 case _ => throw new JsonFormatException("Expected a string.")
+                               }
+                             )
             scala.util.Try(new Parser(formatRegistry = formatRegistry)
               .fromJson[$deserializeType]($json))
               .toOption
