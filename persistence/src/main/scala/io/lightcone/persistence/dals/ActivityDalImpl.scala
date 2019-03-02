@@ -19,7 +19,7 @@ package io.lightcone.persistence.dals
 import com.google.inject.Inject
 import io.lightcone.core.ErrorCode.{ERR_NONE, ERR_PERSISTENCE_INTERNAL}
 import io.lightcone.core._
-import io.lightcone.ethereum.persistence.Activity.ActivityStatus
+import io.lightcone.ethereum.TxStatus
 import io.lightcone.lib.Address
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
@@ -38,7 +38,7 @@ class ActivityDalImpl @Inject()(
     extends ActivityDal {
 
   val query = TableQuery(new ActivityTable(shardId)(_))
-  implicit val activityStatusCxolumnType = enumColumnType(ActivityStatus)
+  implicit val activityStatusCxolumnType = enumColumnType(TxStatus)
 
   def saveActivity(activity: Activity): Future[ErrorCode] =
     for {
@@ -89,9 +89,9 @@ class ActivityDalImpl @Inject()(
     db.run(
         query
           .filter(_.block === block)
-          .map(c => (c.block, c.sequenceId, c.activityStatus))
+          .map(c => (c.block, c.sequenceId, c.txStatus))
           //TODO (yongfeng) create pending sequenceId with from and nonce
-          .update(0L, 0L, ActivityStatus.PENDING)
+          .update(0L, 0L, TxStatus.TX_STATUS_PENDING)
       )
       .map(_ > 0)
 

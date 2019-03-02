@@ -20,6 +20,7 @@ option java_multiple_files = true;
 package io.lightcone.ethereum.persistence;
 
 import "core.proto";
+import "ethereum.proto";
 
 //struct that will be persisted
 
@@ -96,12 +97,6 @@ message Activity {
         // Support in the future
     }
 
-    enum ActivityStatus {
-        PENDING   = 0;
-        SUCCESS   = 1;
-        FAILED    = 2;
-    }
-
     // To query Tx records for a address "ABC", either owner or target will be ABC.
     // if owner == target == ABC, we treat  owner == ABC and ignore target.
     string owner                = 1; // (indexed) the related address
@@ -116,7 +111,7 @@ message Activity {
     int64  sequence_id          = 8; //唯一、排序(pending在最前面)、可重复性 -- block_txIndex_eventIdex (4000000+txHash.code)_eventIdx
     string from                 = 9;
     int32  nonce                = 10;
-    ActivityStatus  activity_status  = 11;
+    io.lightcone.ethereum.TxStatus tx_status  = 11;
 
     oneof detail {
         EtherTransfer       ether_transfer      = 21;

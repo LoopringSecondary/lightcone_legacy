@@ -134,5 +134,5 @@ message BlockEvent {
 
     int64 block_number = 1;
     repeated Tx txs = 2;
-    string shardKey = 3;
+    string shardKey = 3; // for messages sending to all shard
 }

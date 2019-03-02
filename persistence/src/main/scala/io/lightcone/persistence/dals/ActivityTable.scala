@@ -17,7 +17,7 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core.{ErrorCode, ErrorException}
-import io.lightcone.ethereum.persistence.Activity.ActivityStatus
+import io.lightcone.ethereum.TxStatus
 import io.lightcone.ethereum.persistence.Activity.ActivityType
 import io.lightcone.ethereum.persistence.Activity.ActivityType._
 import io.lightcone.ethereum.persistence.Activity.Detail._
@@ -29,7 +29,7 @@ class ActivityTable(shardId: String)(tag: Tag)
     extends BaseTable[Activity](tag, s"T_ACTIVITIES_${shardId.toUpperCase}") {
 
   implicit val activityTypeCxolumnType = enumColumnType(ActivityType)
-  implicit val activityStatusCxolumnType = enumColumnType(ActivityStatus)
+  implicit val txStatusCxolumnType = enumColumnType(TxStatus)
 
   def id = ""
   def owner = columnAddress("owner")
@@ -43,7 +43,7 @@ class ActivityTable(shardId: String)(tag: Tag)
   def sequenceId = column[Long]("sequence_id")
   def from = columnAddress("from")
   def nonce = column[Int]("nonce")
-  def activityStatus = column[ActivityStatus]("activity_status")
+  def txStatus = column[TxStatus]("tx_status")
 
   // indexes
   def idx_owner_token_sequence =
@@ -56,7 +56,7 @@ class ActivityTable(shardId: String)(tag: Tag)
   def idx_txhash = index("idx_txhash", (txHash), unique = false)
   def idx_timestamp = index("idx_timestamp", (timestamp), unique = false)
   def idx_block = index("idx_block", (block), unique = false)
-  def pk = primaryKey("pk", (from, block, nonce))
+  def idx_from_block_nonce = index("idx_from_block_nonce", (from, block, nonce))
 
   def * =
     (
@@ -71,7 +71,7 @@ class ActivityTable(shardId: String)(tag: Tag)
       sequenceId,
       from,
       nonce,
-      activityStatus
+      txStatus
     ) <> ({ tuple =>
       Activity(
         owner = tuple._1,
@@ -85,7 +85,7 @@ class ActivityTable(shardId: String)(tag: Tag)
         sequenceId = tuple._9,
         from = tuple._10,
         nonce = tuple._11,
-        activityStatus = tuple._12
+        txStatus = tuple._12
       )
     }, { activity: Activity =>
       Some(
@@ -101,7 +101,7 @@ class ActivityTable(shardId: String)(tag: Tag)
           activity.sequenceId,
           activity.from,
           activity.nonce,
-          activity.activityStatus
+          activity.txStatus
         )
       )
     })
