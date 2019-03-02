@@ -108,6 +108,10 @@ class PendingTransactionSubscriber(
             hash = t.getParams.getResult
           )).mapAs[GetTransactionByHash.Res]
             .foreach(_.result.foreach(process))
+        } else {
+          log.error(
+            s"Can't find EthHttpConnector ActorRef: ${connectorActorName}"
+          )
         }
       }
     })
@@ -117,7 +121,7 @@ class PendingTransactionSubscriber(
     if (actors.contains(PendingTxEventExtractorActor.name))
       actors.get(PendingTxEventExtractorActor.name) ! t
     else
-      log.error(s"can't find ActorRef :${PendingTxEventExtractorActor.name} ")
+      log.error(s"Can't find ActorRef :${PendingTxEventExtractorActor.name} ")
   }
 
 }
