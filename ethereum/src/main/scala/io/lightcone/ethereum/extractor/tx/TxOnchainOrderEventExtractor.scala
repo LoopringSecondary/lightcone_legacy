@@ -21,6 +21,7 @@ import io.lightcone.core.{RawOrder, TokenStandard}
 import io.lightcone.ethereum.abi.{loopringProtocolAbi, OrderSubmittedEvent}
 import io.lightcone.ethereum.event._
 import io.lightcone.lib.{Address, NumericConversion}
+import io.lightcone.relayer.data.Transaction
 import org.web3j.utils.Numeric
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,7 +35,11 @@ class TxOnchainOrderEventExtractor @Inject()(
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
-  def extractEvents(params: TransactionData): Future[Seq[
+  def extractPendingEvents(tx: Transaction): Future[Seq[
+    OrderSubmittedOnChainEvent
+  ]] = ???
+
+  def extractBlockedEvents(params: TransactionData): Future[Seq[
     OrderSubmittedOnChainEvent
   ]] = Future {
     val (tx, receipt, eventHeader) =

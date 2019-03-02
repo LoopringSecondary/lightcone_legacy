@@ -22,6 +22,7 @@ import io.lightcone.core._
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
 import io.lightcone.lib._
+import io.lightcone.relayer.data.Transaction
 
 import scala.concurrent._
 
@@ -35,7 +36,10 @@ class TxCutoffEventExtractor @Inject()(
     config.getString("loopring_protocol.order-cancel-address")
   ).toString()
 
-  def extractEvents(params: TransactionData): Future[Seq[CutoffEvent]] =
+  def extractPendingEvents(tx: Transaction): Future[Seq[CutoffEvent]] =
+    Future.successful(Seq.empty)
+
+  def extractBlockedEvents(params: TransactionData): Future[Seq[CutoffEvent]] =
     Future {
       val (tx, receipt, eventHeader) =
         (params.tx, params.receipt, params.eventHeader)

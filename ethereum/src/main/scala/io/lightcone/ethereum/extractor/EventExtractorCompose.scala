@@ -17,6 +17,7 @@
 package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
 import io.lightcone.ethereum.BlockHeader
+import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
 import io.lightcone.ethereum.event.EventHeader
 import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data._
@@ -51,6 +52,8 @@ class EventExtractorCompose @Inject()(
         case (tx, receipt) =>
           val eventHeader =
             EventHeader(
+              txHash = tx.hash,
+              txStatus = TX_STATUS_SUCCESS,
               blockHeader = Some(
                 BlockHeader(
                   NumericConversion.toBigInt(block.number).longValue(),

@@ -16,6 +16,7 @@
 
 package io.lightcone.ethereum.extractor
 
+import io.lightcone.ethereum.TxStatus.TX_STATUS_PENDING
 import io.lightcone.ethereum.event.EventHeader
 import io.lightcone.relayer.data._
 
@@ -27,5 +28,16 @@ case class TransactionData(
     eventHeader: EventHeader)
 
 trait TxEventExtractor[R] extends EventExtractor[TransactionData, R] {
-  def extractEvents(t: TransactionData): Future[Seq[R]]
+
+  final def extractEvents(tx: TransactionData): Future[Seq[R]] = {
+    if (tx.eventHeader.txStatus == TX_STATUS_PENDING) {
+      extractPendingEvents(tx.tx)
+    } else {
+      extractBlockedEvents(tx)
+    }
+  }
+
+  def extractPendingEvents(tx: Transaction): Future[Seq[R]]
+
+  def extractBlockedEvents(tx: TransactionData): Future[Seq[R]]
 }
