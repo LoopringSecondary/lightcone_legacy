@@ -90,7 +90,7 @@ trait EventExtraction {
       }
   }
 
-  def handleFork:Receive
+  def handleFork: Receive
 
   def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
     for {

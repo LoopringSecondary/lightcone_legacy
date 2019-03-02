@@ -124,3 +124,7 @@ message OrdersCancelledOnChainEvent {
     string broker                   = 3;
     repeated string order_hashes    = 4;
 }
+
+message ForkEvent {
+    int64 block  = 1;
+}
