@@ -25,12 +25,12 @@ import com.google.inject.name.Named
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.extractor.EventExtractorCompose
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.ethereum._
-import io.lightcone.relayer.ethereum.event.EventExtractor
 import io.lightcone.relayer.socketio._
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -57,7 +57,7 @@ class CoreDeployerForTest @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
-    eventExtractor: EventExtractor,
+    eventExtractor: EventExtractorCompose,
     socketIONotifier: SocketIONotifier,
     system: ActorSystem)
     extends CoreDeployer {

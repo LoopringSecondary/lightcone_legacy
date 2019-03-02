@@ -114,6 +114,7 @@ message BlockWithTxObject {
     repeated Transaction transactions = 18;
     repeated TransactionReceipt receipts = 19;
     repeated string uncles = 20;
+    repeated string uncle_miners = 21; //TODO(hongyu):需要继续优化
 }
 
 message TraceCall {
