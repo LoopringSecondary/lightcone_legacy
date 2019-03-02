@@ -57,6 +57,7 @@ class ActivityTable(shardId: String)(tag: Tag)
   def idx_timestamp = index("idx_timestamp", (timestamp), unique = false)
   def idx_block = index("idx_block", (block), unique = false)
   def idx_from_block_nonce = index("idx_from_block_nonce", (from, block, nonce))
+  def pk = primaryKey("pk", (owner, from, nonce))
 
   def * =
     (

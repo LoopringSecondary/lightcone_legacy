@@ -62,7 +62,8 @@ class EntryPointSpec_Activity
           "0x116331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4",
         activityType = ActivityType.ETHER_TRANSFER_IN,
         detail = detail1,
-        sequenceId = 1
+        sequenceId = 1,
+        nonce = 1
       )
       val activity2 = Activity(
         owner = owner1,
@@ -71,7 +72,8 @@ class EntryPointSpec_Activity
           "0x216331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4",
         activityType = ActivityType.ORDER_CANCEL,
         detail = detail2,
-        sequenceId = 2
+        sequenceId = 2,
+        nonce = 2
       )
       actor ! activity2
 
