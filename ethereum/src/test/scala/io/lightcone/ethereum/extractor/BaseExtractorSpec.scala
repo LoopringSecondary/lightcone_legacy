@@ -18,7 +18,6 @@ package io.lightcone.ethereum.extractor
 
 import io.lightcone.relayer.data._
 import io.lightcone.ethereum.abi._
-import org.ethereum.solidity.Abi
 import org.json4s.{CustomSerializer, DefaultFormats, JNothing, JNull}
 import org.json4s.native.JsonMethods.parse
 import org.scalatest._
