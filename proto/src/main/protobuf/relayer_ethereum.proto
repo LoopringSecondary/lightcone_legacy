@@ -148,24 +148,3 @@ message TransactionParams {
     string data = 6;
 }
 
-//message TokenTransferData {
-//    string id                   = 1;
-//    int64  height               = 2;
-//    string tx_hash              = 3;
-//    int64  timestamp            = 4;
-//    string from                 = 5;
-//    string to                   = 6;
-//    io.lightcone.core.Amount amount               = 7;
-//    string token                = 8;
-//}
-
-message EventLogData {
-    string id                   = 1;
-    int64  height               = 2;
-    string tx_hash              = 3;
-    int64  timestamp            = 4;
-    string address              = 5;
-    string name                 = 6;
-    bytes  data                 = 7;
-    bytes  topics               = 8;
-}

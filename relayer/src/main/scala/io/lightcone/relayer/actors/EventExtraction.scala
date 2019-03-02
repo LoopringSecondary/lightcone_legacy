@@ -88,7 +88,7 @@ trait EventExtraction {
   def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
     for {
       blockOpt <- (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-        Numeric.toHexString(BigInt(blockNum).toByteArray)
+        BigInt(blockNum)
       )).mapAs[GetBlockWithTxObjectByNumber.Res]
         .map(_.result)
 
@@ -98,7 +98,7 @@ trait EventExtraction {
             index =>
               GetUncle.Req(
                 blockOpt.get.number,
-                Numeric.prependHexPrefix(index.toHexString)
+                BigInt(index)
               )
           )
         )
@@ -114,7 +114,7 @@ trait EventExtraction {
           RawBlockData(
             hash = block.hash,
             height = NumericConversion.toBigInt(block.number).longValue,
-            timestamp = block.timestamp,
+            timestamp = NumericConversion.toHexString(block.timestamp),
             miner = block.miner,
             uncles = uncles,
             txs = block.transactions

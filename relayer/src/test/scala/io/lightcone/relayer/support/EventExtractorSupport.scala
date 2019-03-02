@@ -55,7 +55,7 @@ trait EventExtractorSupport {
     txs = block.transactions,
     uncles = block.uncles,
     miner = block.miner,
-    timestamp = block.timestamp,
+    timestamp = NumericConversion.toHexString(block.timestamp),
     receipts = receiptResps.map(_.result.get)
   )
 

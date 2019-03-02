@@ -65,7 +65,7 @@ abstract class AbstractEventExtractor extends EventExtractor {
       txFrom = Address.normalize(tx.from),
       txTo = Address.normalize(tx.to),
       txValue = NumericConversion.toBigInt(tx.value),
-      txStatus = getStatus(receipt.status),
+      txStatus = receipt.status,
       blockHeader = Some(blockHeader)
     )
 

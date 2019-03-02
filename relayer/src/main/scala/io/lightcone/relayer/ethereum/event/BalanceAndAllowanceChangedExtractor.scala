@@ -24,6 +24,7 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.TxStatus._
 import io.lightcone.ethereum.event
 import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.relayer.base.Lookup
@@ -124,7 +125,7 @@ trait ApprovalEventSupport {
         case _ =>
       }
     }
-    if (isSucceed(receipt.status)) {
+    if (receipt.status == TX_STATUS_SUCCESS) {
       wethAbi.unpackFunctionInput(tx.input) match {
         case Some(param: ApproveFunction.Parms)
             if Address(param.spender).equals(delegateAddress) =>
@@ -155,7 +156,7 @@ trait TransferEventSupport {
     ): Future[Seq[AnyRef]] = Future {
     val txValue = NumericConversion.toBigInt(tx.value)
     val transfers = ListBuffer.empty[event.TransferEvent]
-    if (isSucceed(receipt.status)) {
+    if (receipt.status == TX_STATUS_SUCCESS) {
       receipt.logs.zipWithIndex.foreach {
         case (log, index) =>
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
