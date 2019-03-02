@@ -17,64 +17,33 @@
 package io.lightcone.ethereum.extractor
 
 import com.google.inject.Inject
-import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.event
-import io.lightcone.ethereum.event.{TransferEvent => PTransferEvent}
+import io.lightcone.ethereum.event.TransferEvent
 import io.lightcone.lib.{Address, NumericConversion}
-import io.lightcone.relayer.data.Transaction
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 
-class TransferEventExtractor @Inject()(
-    implicit
-    val ec: ExecutionContext)
-    extends TxEventExtractor[PTransferEvent] {
+final class TransferEventExtractor @Inject()(implicit val ec: ExecutionContext)
+    extends EventExtractor[TransactionData, TransferEvent] {
 
-  def extractBlockedEvents(
-      params: TransactionData
-    ): Future[Seq[PTransferEvent]] =
-    Future {
-      val (tx, receipt, eventHeader) =
-        (params.tx, params.receipt, params.eventHeader)
-      val txValue = NumericConversion.toBigInt(tx.value)
-      val transfers = ListBuffer.empty[event.TransferEvent]
-      receipt.logs.zipWithIndex.foreach {
-        case (log, index) =>
-          if (txValue > 0) {
-            transfers.append(
-              event.TransferEvent(
-                header = Some(eventHeader),
-                from = tx.from,
-                to = tx.to,
-                token = Address.ZERO.toString(),
-                amount = txValue
-              )
-            )
-          }
-      }
+  def extractEvents(txdata: TransactionData) = Future {
+    val tx = txdata.tx
+    val txValue = NumericConversion.toBigInt(tx.value)
 
-      transfers.flatMap(
-        event =>
-          Seq(
-            event.copy(
-              from = Address.normalize(event.from),
-              to = Address.normalize(event.to),
-              token = Address.normalize(event.token),
-              owner = Address.normalize(event.from),
-              header = event.header
-            ),
-            event.copy(
-              from = Address.normalize(event.from),
-              to = Address.normalize(event.to),
-              token = Address.normalize(event.token),
-              owner = Address.normalize(event.to),
-              header = event.header
+    txdata.receiptAndHeaderOpt match {
+      case Some((receipt, header)) if txValue > 0 =>
+        receipt.logs.zipWithIndex.map {
+          case (log, index) =>
+            TransferEvent(
+              header = Some(header),
+              from = Address.normalize(tx.from),
+              to = Address.normalize(tx.to),
+              token = Address.ZERO.toString(),
+              amount = txValue
             )
-          )
-      )
+        }.flatMap { event =>
+          Seq(event.copy(owner = event.from), event.copy(owner = event.to))
+        }
+      case _ => Nil
     }
-
-  def extractPendingEvents(tx: Transaction): Future[Seq[PTransferEvent]] =
-    Future.successful(Seq.empty)
+  }
 }

@@ -16,8 +16,34 @@
 
 package io.lightcone.ethereum.extractor
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-trait EventExtractor[T, R] {
-  def extractEvents(t: T): Future[Seq[R]]
+trait EventExtractor[S, +E] {
+  def extractEvents(source: S): Future[Seq[E]]
+}
+
+object EventExtractor {
+
+  def apply[S, E](
+      extractors: EventExtractor[S, E]*
+    )(
+      implicit
+      ec: ExecutionContext
+    ): EventExtractor[S, E] =
+    new Composer[S, E](extractors)
+
+  private[extractor] class Composer[S, E](
+      extractors: Seq[EventExtractor[S, E]]
+    )(
+      implicit
+      ec: ExecutionContext)
+      extends EventExtractor[S, E] {
+
+    def extractEvents(source: S): Future[Seq[E]] =
+      for {
+        events <- Future.sequence {
+          extractors.map(_.extractEvents(source))
+        }
+      } yield events.flatten
+  }
 }

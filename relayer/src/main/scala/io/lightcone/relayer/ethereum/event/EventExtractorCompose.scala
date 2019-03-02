@@ -21,7 +21,7 @@ import io.lightcone.relayer.data.RawBlockData
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EventExtractorCompose(
+class DefaultEventExtractor(
     extractors: EventExtractor*
   )(
     implicit

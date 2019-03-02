@@ -147,14 +147,8 @@ class CoreModule(
         MarketManagerActor.name,
         RingAndFillPersistenceActor.name
       )
-      .register(
-        classOf[CutoffEvent],
-        MultiAccountManagerActor.name
-      )
-      .register(
-        classOf[OrderFilledEvent],
-        MultiAccountManagerActor.name
-      )
+      .register(classOf[CutoffEvent], MultiAccountManagerActor.name)
+      .register(classOf[OrderFilledEvent], MultiAccountManagerActor.name)
       .register(
         classOf[OrdersCancelledOnChainEvent],
         MultiAccountManagerActor.name
@@ -195,7 +189,7 @@ class CoreModule(
       metadataManager: MetadataManager,
       rawOrderValidatorArg: RawOrderValidator
     ): EventExtractor =
-    new EventExtractorCompose(
+    new DefaultEventExtractor(
       new BalanceAndAllowanceChangedExtractor(),
       new BlockGasPriceExtractor(),
       new CutoffEventExtractor(),

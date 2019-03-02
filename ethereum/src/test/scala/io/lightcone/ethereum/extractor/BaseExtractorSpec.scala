@@ -18,7 +18,7 @@ package io.lightcone.ethereum.extractor
 
 import io.lightcone.relayer.data._
 import io.lightcone.ethereum.abi._
-import org.json4s.{CustomSerializer, DefaultFormats, JNothing, JNull}
+import org.json4s.{ CustomSerializer, DefaultFormats, JNothing, JNull }
 import org.json4s.native.JsonMethods.parse
 import org.scalatest._
 import scalapb.json4s.JsonFormat
@@ -64,22 +64,20 @@ class BaseExtractorSpec extends FlatSpec with Matchers {
   val blockData = block.withReceipts(receiptResps.map(_.result.get))
 
   private class EmptyValueSerializer
-      extends CustomSerializer[String](
-        _ =>
-          ({
-            case JNull => ""
-          }, {
-            case "" => JNothing
-          })
-      )
+    extends CustomSerializer[String](
+      _ =>
+        ({
+          case JNull => ""
+        }, {
+          case "" => JNothing
+        }))
 
   "extract block" should "get events correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val extractor = new EventExtractorCompose()
+    val extractor = new DefaultEventExtractor()
     val transferExtractor = new TransferEventExtractor()
     extractor.registerBlockExtractor(
-      new BlockGasPriceExtractor
-    )
+      new BlockGasPriceExtractor)
     extractor.registerTxExtractor(transferExtractor)
     val events = Await.result(extractor.extractEvents(blockData), 5.second)
     info(s"${events}")
