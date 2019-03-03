@@ -32,6 +32,8 @@ object EventExtractor {
     ): EventExtractor[S, E] =
     new Composer[S, E](extractors)
 
+  // A Composer constructs a new EventExtractor with a given list of sub-EventExtractors and
+  // invokes them in the given order. Duplicatd events will be removed.
   private[extractor] class Composer[S, E](
       extractors: Seq[EventExtractor[S, E]]
     )(
@@ -42,6 +44,6 @@ object EventExtractor {
     def extractEvents(source: S): Future[Seq[E]] =
       Future
         .sequence(extractors.map(_.extractEvents(source)))
-        .map(_.flatten)
+        .map(_.flatten.distinct)
   }
 }

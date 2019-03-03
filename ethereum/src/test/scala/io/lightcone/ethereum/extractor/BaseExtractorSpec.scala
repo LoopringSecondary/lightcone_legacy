@@ -27,6 +27,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.Source
 
+// TODO(hongyu): We can now test each extractor seperately. No need to test DefaultEventExtractor or
+// the composer.
 class BaseExtractorSpec extends FlatSpec with Matchers {
 
   val ercAbi = erc20Abi
@@ -78,9 +80,6 @@ class BaseExtractorSpec extends FlatSpec with Matchers {
   "extract block" should "get events correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global
     val extractor = new DefaultEventExtractor()
-    // val transferExtractor = new TxTransferEventExtractor()
-    // extractor.registerBlockExtractor(new BlockGasPriceExtractor)
-    // extractor.registerTxExtractor(transferExtractor)
     val events = Await.result(extractor.extractEvents(blockData), 5.second)
     info(s"${events}")
     events.size > 0 should be(true)
