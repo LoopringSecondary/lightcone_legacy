@@ -21,7 +21,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.ethereum._
-import io.lightcone.ethereum.extractor.EventExtractorCompose
+import io.lightcone.ethereum.extractor._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
@@ -46,7 +46,7 @@ object EthereumEventExtractorActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       eventDispatcher: EventDispatcher,
-      eventExtractor: EventExtractorCompose,
+      eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new EthereumEventExtractorActor()))
@@ -60,7 +60,7 @@ class EthereumEventExtractorActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val eventDispatcher: EventDispatcher,
-    val eventExtractor: EventExtractorCompose,
+    val eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {

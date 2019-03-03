@@ -20,7 +20,7 @@ import akka.actor.ActorRef
 import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.ethereum._
-import io.lightcone.ethereum.extractor.EventExtractorCompose
+import io.lightcone.ethereum.extractor._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
@@ -35,7 +35,7 @@ trait EventExtraction {
   me: InitializationRetryActor =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
-  implicit val eventExtractor: EventExtractorCompose
+  implicit val eventExtractor: EventExtractor[BlockWithTxObject, AnyRef]
   implicit val eventDispatcher: EventDispatcher
 
   implicit val dbModule: DatabaseModule
@@ -94,13 +94,8 @@ trait EventExtraction {
 
       uncleMiners <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
         val batchGetUnclesReq = BatchGetUncle.Req(
-          blockOpt.get.uncles.indices.map(
-            index =>
-              GetUncle.Req(
-                blockOpt.get.number,
-                BigInt(index)
-              )
-          )
+          blockOpt.get.uncles.indices
+            .map(index => GetUncle.Req(blockOpt.get.number, BigInt(index)))
         )
 
         (ethereumAccessorActor ? batchGetUnclesReq)
@@ -109,12 +104,7 @@ trait EventExtraction {
       } else {
         Future.successful(Seq.empty)
       }
-      rawBlock = blockOpt.map(
-        block =>
-          block.copy(
-            uncleMiners = uncleMiners
-          )
-      )
+      rawBlock = blockOpt.map(block => block.copy(uncleMiners = uncleMiners))
     } yield rawBlock
   }
 

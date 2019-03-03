@@ -31,7 +31,7 @@ import io.lightcone.ethereum._
 import io.lightcone.relayer.jsonrpc.JsonRpcServer
 import io.lightcone.relayer.validator._
 import io.lightcone.core._
-import io.lightcone.ethereum.extractor.EventExtractorCompose
+import io.lightcone.ethereum.extractor._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
@@ -63,7 +63,7 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
-    eventExtractor: EventExtractorCompose,
+    eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     socketIONotifier: SocketIONotifier,
     system: ActorSystem)
     extends Object

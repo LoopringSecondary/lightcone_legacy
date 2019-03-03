@@ -24,31 +24,24 @@ import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EventExtractorCompose @Inject()(
-    implicit
-    val ec: ExecutionContext) {
+final class DefaultEventExtractor @Inject()()(implicit val ec: ExecutionContext)
+    extends EventExtractor[BlockWithTxObject, AnyRef] {
 
-  private var txExtractors = Seq.empty[TxEventExtractor[_]]
+  // TODO(hongyu): add more block/tx-event extractors here in the list.
+  private val blockEventExtractor: EventExtractor[BlockWithTxObject, AnyRef] =
+    EventExtractor.compose[BlockWithTxObject, AnyRef]( //
+      new BlockGasPriceExtractor() // more block event extractors
+    )
 
-  private var blockExtractors = Seq.empty[BlockEventExtractor[_]]
+  private val txEventExtractor: EventExtractor[TransactionData, AnyRef] =
+    EventExtractor.compose[TransactionData, AnyRef]( //
+      new TxTransferEventExtractor() // more tx event extractors
+    )
 
-  def registerTxExtractor(extractors: TxEventExtractor[_]*) = {
-    txExtractors = txExtractors ++ extractors
-    this
-  }
-
-  def registerBlockExtractor(extractors: BlockEventExtractor[_]*) = {
-    blockExtractors = blockExtractors ++ extractors
-    this
-  }
-
-  def extractEvents(block: BlockWithTxObject): Future[Seq[Any]] =
+  def extractEvents(block: BlockWithTxObject) =
     for {
-      blockEvents <- Future.sequence {
-        blockExtractors.map(_.extractEvents(block))
-      }
-      transactions = block.transactions zip block.receipts
-      txEvents <- Future.sequence(transactions.map {
+      blockEvents <- blockEventExtractor.extractEvents(block)
+      transactions = (block.transactions zip block.receipts).map {
         case (tx, receipt) =>
           val eventHeader =
             EventHeader(
@@ -64,26 +57,12 @@ class EventExtractorCompose @Inject()(
                 )
               )
             )
-          val txData = TransactionData(tx, receipt, eventHeader)
-          for {
-            events <- Future.sequence(
-              txExtractors.map { extractor =>
-                extractor.extractEvents(txData)
-              }
-            )
-          } yield events.flatten
-      })
-    } yield blockEvents.flatten ++ txEvents.flatten
+          TransactionData(tx, Some(receipt, eventHeader))
+      }
 
-  def extractEvents(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      eventHeader: EventHeader
-    ): Future[Seq[AnyRef]] = {
-    val txData = TransactionData(tx, receipt, eventHeader)
-    Future.sequence {
-      txExtractors.map(_.extractEvents(txData))
-    }
-  }
-
+      txEvents <- Future.sequence(
+        transactions.map(txEventExtractor.extractEvents)
+      )
+      events = blockEvents ++ txEvents.flatten
+    } yield events
 }

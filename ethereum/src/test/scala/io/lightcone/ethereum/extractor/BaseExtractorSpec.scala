@@ -27,6 +27,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.Source
 
+// TODO(hongyu): We can now test each extractor seperately. No need to test DefaultEventExtractor or
+// the composer.
 class BaseExtractorSpec extends FlatSpec with Matchers {
 
   val ercAbi = erc20Abi
@@ -62,12 +64,12 @@ class BaseExtractorSpec extends FlatSpec with Matchers {
 
   val block = blockRes.get.result.get
 
-
   val receiptStr = Source
     .fromFile("ethereum/src/test/resources/event/receipts")
     .getLines()
     .next()
   val resps = parse(receiptStr).values.asInstanceOf[List[Map[String, Any]]]
+
   val receiptResps = resps.map(resp => {
     val respJson = ser.write(resp)
     deserializeToProto[GetTransactionReceipt.Res](respJson)
@@ -77,12 +79,7 @@ class BaseExtractorSpec extends FlatSpec with Matchers {
 
   "extract block" should "get events correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val extractor = new EventExtractorCompose()
-    val transferExtractor = new TransferEventExtractor()
-    extractor.registerBlockExtractor(
-      new BlockGasPriceExtractor
-    )
-    extractor.registerTxExtractor(transferExtractor)
+    val extractor = new DefaultEventExtractor()
     val events = Await.result(extractor.extractEvents(blockData), 5.second)
     info(s"${events}")
     events.size > 0 should be(true)

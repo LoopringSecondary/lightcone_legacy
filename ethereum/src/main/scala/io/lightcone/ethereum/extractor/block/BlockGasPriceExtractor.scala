@@ -23,10 +23,8 @@ import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BlockGasPriceExtractor @Inject()(
-    implicit
-    val ec: ExecutionContext)
-    extends BlockEventExtractor[BlockGasPricesExtractedEvent] {
+class BlockGasPriceExtractor @Inject()(implicit val ec: ExecutionContext)
+    extends EventExtractor[BlockWithTxObject, BlockGasPricesExtractedEvent] {
 
   def extractEvents(
       block: BlockWithTxObject

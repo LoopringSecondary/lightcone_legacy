@@ -16,8 +16,26 @@
 
 package io.lightcone.ethereum.extractor
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-trait EventExtractor[T, R] {
-  def extractEvents(t: T): Future[Seq[R]]
+trait EventExtractor[S, +E] {
+  def extractEvents(source: S): Future[Seq[E]]
+}
+
+object EventExtractor {
+
+  // Constructs a new EventExtractor with a given list of sub-EventExtractors and
+  // invokes them in the given order. Duplicatd events will be removed.
+  def compose[S, E](
+      extractors: EventExtractor[S, E]*
+    )(
+      implicit
+      ec: ExecutionContext
+    ) = new EventExtractor[S, E] {
+
+    def extractEvents(source: S): Future[Seq[E]] =
+      Future
+        .sequence(extractors.map(_.extractEvents(source)))
+        .map(_.flatten.distinct)
+  }
 }

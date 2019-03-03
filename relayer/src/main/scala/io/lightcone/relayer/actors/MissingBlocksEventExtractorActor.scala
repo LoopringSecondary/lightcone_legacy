@@ -19,7 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.extractor.EventExtractorCompose
+import io.lightcone.ethereum.extractor._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.lib.{NumericConversion, TimeProvider}
@@ -43,7 +43,7 @@ object MissingBlocksEventExtractorActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       eventDispatcher: EventDispatcher,
-      eventExtractor: EventExtractorCompose,
+      eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new MissingBlocksEventExtractorActor()))
@@ -58,7 +58,7 @@ class MissingBlocksEventExtractorActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val eventDispatcher: EventDispatcher,
-    val eventExtractor: EventExtractorCompose,
+    val eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {
