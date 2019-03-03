@@ -21,12 +21,13 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.extractor._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence._
+import io.lightcone.relayer.data
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.ethereum.event._
 
 import scala.concurrent._
 import scala.util._
@@ -45,7 +46,7 @@ object EthereumEventExtractorActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       eventDispatcher: EventDispatcher,
-      eventExtractor: EventExtractor,
+      eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new EthereumEventExtractorActor()))
@@ -59,7 +60,7 @@ class EthereumEventExtractorActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val eventDispatcher: EventDispatcher,
-    val eventExtractor: EventExtractor,
+    val eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {
@@ -74,17 +75,23 @@ class EthereumEventExtractorActor(
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
-        .map(res => NumericConversion.toBigInt(res.result).longValue)
+        .map(res => NumericConversion.toBigInt(res.result))
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = currentBlock > blockStart + 1
       _ = if (missing) {
-        dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
+        dbModule.blockService.saveBlock(
+          BlockData(height = currentBlock.longValue() - 1)
+        )
         dbModule.missingBlocksRecordDal.saveMissingBlock(
-          MissingBlocksRecord(blockStart + 1, currentBlock, blockStart)
+          MissingBlocksRecord(
+            blockStart + 1,
+            currentBlock.longValue(),
+            blockStart
+          )
         )
       }
     } yield {
-      blockData = RawBlockData(height = currentBlock - 1)
+      blockData = data.BlockWithTxObject(number = currentBlock - 1)
     }
     f onComplete {
       case Success(value) =>

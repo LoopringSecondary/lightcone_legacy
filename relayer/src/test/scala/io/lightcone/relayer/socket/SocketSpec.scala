@@ -18,10 +18,7 @@ package io.lightcone.relayer.socketio
 
 import io.lightcone.relayer.support._
 
-class SocketSpec
-    extends CommonSpec
-    with EthereumEventExtractorSupport
-    with SocketSupport {
+class SocketSpec extends CommonSpec with SocketSupport {
 
   "socket server  test" must {
     "socket server starts normally and can subscriber and received correct data" in {

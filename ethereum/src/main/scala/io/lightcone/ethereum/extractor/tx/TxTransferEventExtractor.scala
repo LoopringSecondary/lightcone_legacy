@@ -22,7 +22,9 @@ import io.lightcone.lib.{Address, NumericConversion}
 
 import scala.concurrent._
 
-final class TransferEventExtractor @Inject()(implicit val ec: ExecutionContext)
+final class TxTransferEventExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext)
     extends EventExtractor[TransactionData, TransferEvent] {
 
   def extractEvents(txdata: TransactionData) = Future {

@@ -32,7 +32,7 @@ class BlockSpec extends CommonSpec with EthereumSupport {
       def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
       val block = Await.result(
-        (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req("0x20"))
+        (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(BigInt(32)))
           .mapAs[GetBlockWithTxObjectByNumber.Res]
           .map(_.result),
         timeout.duration

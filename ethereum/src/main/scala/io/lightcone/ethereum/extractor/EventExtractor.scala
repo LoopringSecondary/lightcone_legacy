@@ -40,10 +40,8 @@ object EventExtractor {
       extends EventExtractor[S, E] {
 
     def extractEvents(source: S): Future[Seq[E]] =
-      for {
-        events <- Future.sequence {
-          extractors.map(_.extractEvents(source))
-        }
-      } yield events.flatten
+      Future
+        .sequence(extractors.map(_.extractEvents(source)))
+        .map(_.flatten)
   }
 }
