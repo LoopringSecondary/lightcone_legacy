@@ -19,12 +19,13 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.extractor.EventExtractorCompose
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
-import io.lightcone.lib.TimeProvider
+import io.lightcone.lib.{NumericConversion, TimeProvider}
 import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer.data
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.ethereum.event._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,7 +43,7 @@ object MissingBlocksEventExtractorActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       eventDispatcher: EventDispatcher,
-      eventExtractor: EventExtractor,
+      eventExtractor: EventExtractorCompose,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new MissingBlocksEventExtractorActor()))
@@ -57,7 +58,7 @@ class MissingBlocksEventExtractorActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val eventDispatcher: EventDispatcher,
-    val eventExtractor: EventExtractor,
+    val eventExtractor: EventExtractorCompose,
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {
@@ -81,7 +82,9 @@ class MissingBlocksEventExtractorActor(
       } yield {
         if (missingBlocksOpt.isDefined) {
           val missingBlocks = missingBlocksOpt.get
-          blockData = RawBlockData(height = missingBlocks.lastHandledBlock)
+          blockData = data.BlockWithTxObject(
+            number = BigInt(missingBlocks.lastHandledBlock)
+          )
           untilBlock = missingBlocks.blockEnd
           sequenceId = missingBlocks.sequenceId
           self ! GET_BLOCK
@@ -95,8 +98,11 @@ class MissingBlocksEventExtractorActor(
   override def postProcessEvents =
     for {
       _ <- dbModule.missingBlocksRecordDal
-        .updateProgress(sequenceId, blockData.height)
-      needDelete = blockData.height >= untilBlock
+        .updateProgress(
+          sequenceId,
+          NumericConversion.toBigInt(blockData.number).longValue()
+        )
+      needDelete = blockData.number >= untilBlock
       _ <- if (!needDelete) Future.unit
       else dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
       _ = if (needDelete) {

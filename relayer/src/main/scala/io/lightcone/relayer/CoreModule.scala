@@ -32,10 +32,10 @@ import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.extractor._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.ethereum.event._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -194,16 +194,10 @@ class CoreModule(
       ec: ExecutionContext,
       metadataManager: MetadataManager,
       rawOrderValidatorArg: RawOrderValidator
-    ): EventExtractor =
-    new EventExtractorCompose(
-      new BalanceAndAllowanceChangedExtractor(),
-      new BlockGasPriceExtractor(),
-      new CutoffEventExtractor(),
-      new OnchainOrderExtractor(),
-      new OrdersCancelledEventExtractor(),
-      new RingMinedEventExtractor(),
-      new TokenBurnRateEventExtractor()
-    )
+    ): EventExtractorCompose = {
+    new EventExtractorCompose()
+      .registerBlockExtractor(new BlockGasPriceExtractor())
+  }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]
