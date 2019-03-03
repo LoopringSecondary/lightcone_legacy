@@ -24,7 +24,7 @@ import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DefaultEventExtractor @Inject()()(implicit val ec: ExecutionContext)
+final class DefaultEventExtractor @Inject()()(implicit val ec: ExecutionContext)
     extends EventExtractor[BlockWithTxObject, AnyRef] {
 
   // TODO(hongyu): add more block/tx-event extractors here in the list.

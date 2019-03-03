@@ -46,6 +46,7 @@ final class TxTransferEventExtractor @Inject()(
           Seq(event.copy(owner = event.from), event.copy(owner = event.to))
         }
       case _ => Nil
+      // TODO(hongyu): we should also extract pening activities.
     }
   }
 }
