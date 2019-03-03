@@ -26,7 +26,7 @@ object EventExtractor {
 
   // Constructs a new EventExtractor with a given list of sub-EventExtractors and
   // invokes them in the given order. Duplicatd events will be removed.
-  def apply[S, E](
+  def compose[S, E](
       extractors: EventExtractor[S, E]*
     )(
       implicit
