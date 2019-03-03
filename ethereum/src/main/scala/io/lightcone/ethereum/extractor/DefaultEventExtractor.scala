@@ -27,11 +27,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class DefaultEventExtractor @Inject()()(implicit val ec: ExecutionContext)
     extends EventExtractor[BlockWithTxObject, AnyRef] {
 
+  // TODO(hongyu): add more block/tx-event extractors here in the list.
   private val blockEventExtractor: EventExtractor[BlockWithTxObject, AnyRef] =
-    EventExtractor[BlockWithTxObject, AnyRef](new BlockGasPriceExtractor())
+    EventExtractor[BlockWithTxObject, AnyRef]( //
+      new BlockGasPriceExtractor() // more block event extractors
+    )
 
   private val txEventExtractor: EventExtractor[TransactionData, AnyRef] =
-    EventExtractor[TransactionData, AnyRef](new TxTransferEventExtractor())
+    EventExtractor[TransactionData, AnyRef]( //
+      new TxTransferEventExtractor() // more tx event extractors
+    )
 
   def extractEvents(block: BlockWithTxObject) =
     for {
