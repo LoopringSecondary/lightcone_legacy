@@ -77,20 +77,33 @@ class EthereumEventExtractorActor(
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
         .map(res => NumericConversion.toBigInt(res.result).longValue)
-      preBlock = Math.max(currentBlock - 1 - preBlockNumber, 0)
-      preBlockData <- getBlockData(preBlock).map(_.get)
-      blockStart = lastHandledBlock.getOrElse(startBlock - 1)
-      missing = preBlock > blockStart
-      _ <- dbModule.blockService.saveBlock(
-        BlockData(hash = preBlockData.hash, height = preBlockData.height)
+      lastHandledBlockNum = lastHandledBlock.getOrElse(startBlock - 1)
+      preBlockNum = Math.max(currentBlock - 1 - preBlockNumber, 0)
+      missing = preBlockNum > lastHandledBlockNum
+      preBlockData <- getBlockData(preBlockNum).map(_.get)
+      lastHandledBlockData <- dbModule.blockDal.findByHeight(
+        lastHandledBlockNum
       )
+      startBlockData <- getBlockData(startBlock).map(_.get)
       _ = if (missing) {
+        dbModule.blockService.saveBlock(
+          BlockData(hash = preBlockData.hash, height = preBlockData.height)
+        )
         dbModule.missingBlocksRecordDal.saveMissingBlock(
-          MissingBlocksRecord(blockStart + 1, currentBlock, blockStart)
+          MissingBlocksRecord(
+            lastHandledBlockNum + 1,
+            currentBlock,
+            lastHandledBlockNum
+          )
         )
       }
     } yield {
-      blockData = preBlockData
+      blockData =
+        if (missing) preBlockData
+        else
+          lastHandledBlockData
+            .map(data => RawBlockData(hash = data.hash, height = data.height))
+            .getOrElse(startBlockData)
     }
     f onComplete {
       case Success(value) =>
