@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package io.lightcone.ethereum.extractor.tx
+package io.lightcone.ethereum.extractor
 
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core.BurnRate
-import io.lightcone.ethereum.abi.{loopringProtocolAbi, TokenTierUpgradedEvent}
+import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
-import io.lightcone.ethereum.extractor.{EventExtractor, TransactionData}
-import io.lightcone.lib.{Address, NumericConversion}
-import io.lightcone.relayer.data.{Transaction, TransactionReceipt}
+import io.lightcone.lib.Address
 
 import scala.collection.JavaConverters._
 import scala.concurrent._

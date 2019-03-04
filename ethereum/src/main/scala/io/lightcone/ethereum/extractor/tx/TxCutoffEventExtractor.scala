@@ -19,7 +19,7 @@ package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core._
-import io.lightcone.ethereum.{BlockHeader, TxStatus}
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.persistence.Activity

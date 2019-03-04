@@ -35,24 +35,14 @@ package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core.MarketMetadata.Status.{ACTIVE, READONLY}
-import io.lightcone.core.{
-  MarketHash,
-  MarketMetadata,
-  MarketPair,
-  MetadataManager,
-  Token
-}
+import io.lightcone.core._
 import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.abi.{RingMinedEvent, _}
-import io.lightcone.ethereum.event.{
-  EventHeader,
-  RingMinedEvent => PRingMinedEvent
-}
+import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
 import io.lightcone.ethereum.persistence.Activity.ActivityType
 import io.lightcone.ethereum.persistence._
 import io.lightcone.ethereum.persistence.Fill.Fee
 import io.lightcone.lib._
-import io.lightcone.relayer.data.{OHLCData, TransactionReceipt}
 import org.web3j.utils._
 
 import scala.concurrent._
