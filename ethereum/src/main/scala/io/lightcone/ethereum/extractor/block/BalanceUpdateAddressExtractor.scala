@@ -17,18 +17,25 @@
 package io.lightcone.ethereum.extractor.block
 
 import akka.actor.ActorRef
+import akka.pattern._
+import akka.util.Timeout
 import com.google.inject.Inject
+import io.lightcone.core.Amount
 import io.lightcone.ethereum.BlockHeader
+import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
-import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 import io.lightcone.ethereum.extractor._
+import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 import io.lightcone.lib._
-import io.lightcone.relayer.data.BlockWithTxObject
+import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BalanceUpdateAddressExtractor @Inject(getActorRef:String => ActorRef)(
+class BalanceUpdateAddressExtractor @Inject()(
+    ethereumAccessor: () => ActorRef
+  )(
     implicit
+    val timeout: Timeout,
     val ec: ExecutionContext,
     val event: TxTransferEventExtractor)
     extends EventExtractor[BlockWithTxObject, AddressBalanceUpdatedEvent] {
@@ -43,7 +50,7 @@ class BalanceUpdateAddressExtractor @Inject(getActorRef:String => ActorRef)(
       timestamp = NumericConversion.toBigInt(source.getTimestamp).toLong,
       uncles = source.uncleMiners
     )
-    (source.transactions zip source.receipts).flatMap {
+    val addresses = (source.transactions zip source.receipts).flatMap {
       case (tx, receipt) =>
         val eventHeader = EventHeader(
           blockHeader = Some(blockHeader),
@@ -53,16 +60,72 @@ class BalanceUpdateAddressExtractor @Inject(getActorRef:String => ActorRef)(
           txStatus = receipt.status,
           txValue = tx.value
         )
-        val transferEvents = event.extractTransferEvents(
-          TransactionData(tx, Some(receipt -> eventHeader))
+        event
+          .extractTransferEvents(
+            TransactionData(tx, Some(receipt -> eventHeader))
+          )
+          .map { transfer =>
+            AddressBalanceUpdatedEvent(
+              address = transfer.owner,
+              token = transfer.token
+            )
+          }
+    }.distinct
+    val (ethAddresses, tokenAddresses) =
+      addresses.partition(_.token == Address.ZERO.toString())
+
+    val balanceCallReqs = tokenAddresses.zipWithIndex.map {
+      case (address, index) =>
+        val data = erc20Abi.balanceOf.pack(
+          BalanceOfFunction.Parms(_owner = address.address.toString)
         )
-        val (ethAddresses, tokenAddresses) =
-          transferEvents.partition(_.token == Address.ZERO.toString())
+        val param = TransactionParams(to = address.token, data = data)
+        EthCall.Req(index, Some(param), "latest")
+    }
+    val batchCallReq =
+      BatchCallContracts.Req(balanceCallReqs, returnBlockNum = true)
 
-
-
-
-      case _ => Future.successful(Nil)
+    for {
+      tokenBalances <- if (tokenAddresses.nonEmpty) {
+        (ethereumAccessor() ? batchCallReq)
+          .mapTo[BatchCallContracts.Res]
+          .map(
+            resp =>
+              resp.resps
+                .map(
+                  res =>
+                    Amount(
+                      NumericConversion.toAmount(res.result).value,
+                      block = resp.block
+                    )
+                )
+          )
+      } else {
+        Future.successful(Seq.empty)
+      }
+      ethBalances <- if (ethAddresses.nonEmpty) {
+        (ethereumAccessor() ? BatchGetEthBalance.Req(
+          ethAddresses.map(addr => EthGetBalance.Req(address = addr.address)),
+          returnBlockNum = true
+        )).mapTo[BatchGetEthBalance.Res]
+          .map(
+            resp =>
+              resp.resps.map(
+                res =>
+                  Amount(
+                    NumericConversion.toAmount(res.result).value,
+                    resp.block
+                  )
+              )
+          )
+      } else {
+        Future.successful(Seq.empty)
+      }
+    } yield {
+      (tokenAddresses zip tokenBalances).map(
+        item => item._1.withBalance(item._2)
+      ) ++
+        (ethAddresses zip ethBalances).map(item => item._1.withBalance(item._2))
     }
   }
 }
