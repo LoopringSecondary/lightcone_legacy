@@ -30,7 +30,6 @@ import slick.dbio.Effect
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
 import slick.sql.FixedSqlAction
-
 import scala.concurrent._
 
 class ActivityDalImpl @Inject()(
