@@ -46,7 +46,7 @@ class Address(val value: BigInt) {
 
   override def hashCode(): Int = value.hashCode()
 
-  override def toString() = {
+  override def toString(): String = {
     Numeric.toHexStringWithPrefixZeroPadded(value.bigInteger, 40)
   }
 
