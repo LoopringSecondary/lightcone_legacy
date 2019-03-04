@@ -32,7 +32,6 @@ class DatabaseModule @Inject()(
     val missingBlocksRecordDal: MissingBlocksRecordDal,
     val ohlcDataDal: OHLCDataDal,
     val orderService: OrderService,
-    val ringService: RingService,
     val blockService: BlockService,
     val settlementTxService: SettlementTxService,
     val ohlcDataService: OHLCDataService
