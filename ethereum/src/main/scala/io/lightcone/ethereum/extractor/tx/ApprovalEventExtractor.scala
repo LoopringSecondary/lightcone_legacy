@@ -30,7 +30,7 @@ import io.lightcone.ethereum.persistence.Activity
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ApproveEventExtractor @Inject()(
+class ApprovalEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val delegate: String,
