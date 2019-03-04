@@ -23,7 +23,6 @@ import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator.ActivityValidator
 import scala.concurrent.Await
 import akka.pattern._
-import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.persistence.Activity
 import io.lightcone.ethereum.persistence.Activity.ActivityType
 import io.lightcone.relayer.actors.ActivityActor
@@ -109,18 +108,6 @@ class EntryPointSpec_Activity
       a2.owner should be(owner2)
       a2.activityType should be(ActivityType.ORDER_CANCEL)
       a2.detail should be(detail2)
-
-      val txs = Seq(
-        BlockEvent.Tx(owner1, 1, "0x111"),
-        BlockEvent.Tx(owner1, 2, "0x222")
-      )
-      val shardKeys = ActivityActor.getShardKeys
-      shardKeys.foreach { s =>
-        val r3 = Await.result(
-          (actor ? BlockEvent(100, txs, s)).mapTo[Unit],
-          timeout.duration
-        )
-      }
     }
   }
 }

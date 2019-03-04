@@ -27,7 +27,6 @@ import io.lightcone.persistence.dals._
 import io.lightcone.relayer._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-import org.web3j.utils.Numeric
 import scala.concurrent._
 
 // main owner: 杜永丰
@@ -53,15 +52,8 @@ object ActivityActor extends DeployedAsShardedByAddress {
   val extractShardingObject: PartialFunction[Any, String] = {
     case req: Activity          => req.owner
     case req: GetActivities.Req => req.owner
+    // TODO (yongfeng)：分片逻辑待完善
     case req: BlockEvent        => req.shardKey
-  }
-
-  // 生成给外部调用所有分片时的分片key
-  def getShardKeys(implicit config: Config) = {
-    val numsOfShards = config.getInt("activity.num-of-shards")
-    (0 until numsOfShards).map(
-      i => Numeric.toHexStringWithPrefix(BigInt(i).bigInteger)
-    )
   }
 }
 
