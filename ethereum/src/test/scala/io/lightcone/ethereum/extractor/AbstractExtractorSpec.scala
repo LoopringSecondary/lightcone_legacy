@@ -29,25 +29,8 @@ import org.scalatest.{FlatSpec, Matchers}
 
 abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
 
-  implicit val formats = DefaultFormats
-
-  val ps = new ProtoSerializer
-
-  val parser = org.json4s.native.JsonParser
-
-  def deserializeToProto[T <: scalapb.GeneratedMessage with scalapb.Message[T]](
-      json: String
-    )(
-      implicit
-      pa: scalapb.GeneratedMessageCompanion[T]
-    ): Option[T] = {
-    val jv = parser.parse(json)
-    ps.deserialize[T](jv)
-  }
-
-  implicit val config = ConfigFactory.parseString(
-    "loopring_protocol {\n  protocol-address = \"0xB7101ff647ac42e776bA857907DdBE743522AA95\"}"
-  )
+  implicit val config =
+    ConfigFactory.parseResources("ethereum_protocol.conf")
   implicit val metadataManager = new MetadataManagerImpl(0.3, 0.3)
 
   val WETH_TOKEN = TokenMetadata(
@@ -91,4 +74,21 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
     Map.empty,
     Seq(LRC_WETH_MARKET)
   )
+
+  implicit val formats = DefaultFormats
+
+  val ps = new ProtoSerializer
+
+  val parser = org.json4s.native.JsonParser
+
+  def deserializeToProto[T <: scalapb.GeneratedMessage with scalapb.Message[T]](
+      json: String
+    )(
+      implicit
+      pa: scalapb.GeneratedMessageCompanion[T]
+    ): Option[T] = {
+    val jv = parser.parse(json)
+    ps.deserialize[T](jv)
+  }
+
 }
