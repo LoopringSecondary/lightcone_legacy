@@ -53,7 +53,7 @@ object ActivityActor extends DeployedAsShardedByAddress {
     case req: Activity          => req.owner
     case req: GetActivities.Req => req.owner
     // TODO (yongfeng)：分片逻辑待完善
-    case req: BlockEvent        => req.shardKey
+    case req: BlockEvent => req.shardKey
   }
 }
 
