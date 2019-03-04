@@ -71,8 +71,8 @@ class DatabaseQuerySpec
       val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
       val tradesReq = GetFills.Req(
         owner = owner,
-        market = Some(GetFills.Req.Market(tokenS, tokenB, true)),
-        skip = Some(Paging(0, 10)),
+        market = Some(GetFills.Req.MarketFilter(tokenS, tokenB, true)),
+        paging = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )
       val hashes = Set(
@@ -104,7 +104,7 @@ class DatabaseQuerySpec
       tokenB: String,
       blockHeight: Long
     ): Future[ErrorCode] = {
-    dbModule.fillService.saveFill(
+    dbModule.fillDal.saveFill(
       Fill(
         txHash = txHash,
         owner = owner,

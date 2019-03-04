@@ -40,5 +40,4 @@ class RingServiceImpl @Inject()(
   def countRings(request: GetRings.Req): Future[Int] =
     ringDal.countRings(request)
 
-  def obsolete(height: Long): Future[Unit] = ringDal.obsolete(height)
 }

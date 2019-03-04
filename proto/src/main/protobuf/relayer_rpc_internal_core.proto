@@ -337,7 +337,7 @@ message GetFills {
         string        wallet     = 6;
         string        miner      = 7;
         io.lightcone.persistence.SortingType sort       = 8;
-        io.lightcone.persistence.Paging      skip       = 9;
+        io.lightcone.persistence.Paging      paging     = 9;
     }
 
     message Res {
@@ -353,11 +353,11 @@ message GetRings {
             int64  ring_index = 2;
         }
         io.lightcone.persistence.SortingType sort       = 3;
-        io.lightcone.persistence.Paging skip            = 4;
+        io.lightcone.persistence.Paging      paging     = 4;
     }
 
     message Res {
-        repeated io.lightcone.ethereum.persistence.Ring rings    = 1;
-        int32 total                                     = 2;
+        repeated io.lightcone.ethereum.persistence.Ring rings = 1;
+        int32 total = 2;
     }
 }

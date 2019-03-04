@@ -81,7 +81,7 @@ class FillDalImpl @Inject()(
       getOptString(request.wallet),
       getOptString(request.miner),
       Some(request.sort),
-      request.skip
+      request.paging
     )
     db.run(filters.result)
   }
@@ -112,9 +112,11 @@ class FillDalImpl @Inject()(
   }
 
   def clearForkedFills(req: BlockEvent): Future[Int] =
-    db.run(query
-      .filter(_.blockHeight >= req.blockNumber)
-      .delete)
+    db.run(
+      query
+        .filter(_.blockHeight >= req.blockNumber)
+        .delete
+    )
 
   private def getOptString(str: String) = {
     if (str.nonEmpty) Some(str) else None
@@ -180,7 +182,9 @@ class FillDalImpl @Inject()(
     }
   }
 
-  private def getRingQueryParameters(ringOpt: Option[GetFills.Req.RingFilter]) = {
+  private def getRingQueryParameters(
+      ringOpt: Option[GetFills.Req.RingFilter]
+    ) = {
     ringOpt match {
       case Some(r) =>
         val ringHash = getOptString(r.ringHash)

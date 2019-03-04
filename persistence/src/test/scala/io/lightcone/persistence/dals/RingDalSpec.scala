@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence
+package io.lightcone.persistence.dals
 
-import io.lightcone.persistence.dals._
-import io.lightcone.relayer.data.GetRings._
 import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
-import scala.concurrent._
+import io.lightcone.persistence._
+import io.lightcone.relayer.data.GetRings.Req
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class RingServiceSpec extends ServiceSpec[RingService] {
+class RingDalSpec extends DalSpec[RingDal] {
 
-  implicit var dal: RingDal = _
-
-  def getService = {
-    dal = new RingDalImpl()
-    new RingServiceImpl()
-  }
-
-  def createTables(): Unit = dal.createTable()
+  def getDal = new RingDalImpl()
 
   "ringService" must "save and query correctly" in {
     info("save some rings")
@@ -46,13 +39,13 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query rings: by ringHash and ringIndex")
-    val q3 = Req(ring = Some(Req.Ring2(Req.Ring2.Filter.RingHash(hash2))))
-    val r3 = Await.result(service.getRings(q3).mapTo[Seq[Ring]], 5.second)
-    val c3 = Await.result(service.countRings(q3).mapTo[Int], 5.second)
+    val q3 = Req(filter = Req.Filter.RingHash(hash2))
+    val r3 = Await.result(dal.getRings(q3).mapTo[Seq[Ring]], 5.second)
+    val c3 = Await.result(dal.countRings(q3).mapTo[Int], 5.second)
     assert(r3.length == 1 && c3 == 1)
-    val q4 = Req(ring = Some(Req.Ring2(Req.Ring2.Filter.RingIndex(11))))
-    val r4 = Await.result(service.getRings(q4).mapTo[Seq[Ring]], 5.second)
-    val c4 = Await.result(service.countRings(q4).mapTo[Int], 5.second)
+    val q4 = Req(filter = Req.Filter.RingIndex(11))
+    val r4 = Await.result(dal.getRings(q4).mapTo[Seq[Ring]], 5.second)
+    val c4 = Await.result(dal.countRings(q4).mapTo[Int], 5.second)
     assert(r4.length == 1 && c4 == 1)
     assert(r3.head == r4.head)
     r3.head.fees match {
@@ -68,25 +61,20 @@ class RingServiceSpec extends ServiceSpec[RingService] {
 
     info("query rings: sort")
     val q5 = Req(sort = SortingType.DESC)
-    val r5 = Await.result(service.getRings(q5).mapTo[Seq[Ring]], 5.second)
-    val c5 = Await.result(service.countRings(q5).mapTo[Int], 5.second)
+    val r5 = Await.result(dal.getRings(q5).mapTo[Seq[Ring]], 5.second)
+    val c5 = Await.result(dal.countRings(q5).mapTo[Int], 5.second)
     assert(r5.length == 3 && c5 == 3)
     val q6 = Req(sort = SortingType.ASC)
-    val r6 = Await.result(service.getRings(q6).mapTo[Seq[Ring]], 5.second)
-    val c6 = Await.result(service.countRings(q6).mapTo[Int], 5.second)
+    val r6 = Await.result(dal.getRings(q6).mapTo[Seq[Ring]], 5.second)
+    val c6 = Await.result(dal.countRings(q6).mapTo[Int], 5.second)
     assert(r6.length == 3 && c6 == 3)
     assert(r5.head == r6.last)
 
     info("query rings: skip")
-    val q7 = Req(skip = Some(Paging(skip = 1, size = 10)))
-    val r7 = Await.result(service.getRings(q7).mapTo[Seq[Ring]], 5.second)
-    val c7 = Await.result(service.countRings(q7).mapTo[Int], 5.second)
+    val q7 = Req(paging = Some(Paging(skip = 1, size = 10)))
+    val r7 = Await.result(dal.getRings(q7).mapTo[Seq[Ring]], 5.second)
+    val c7 = Await.result(dal.countRings(q7).mapTo[Int], 5.second)
     assert(r7.length == 2 && c7 == 3)
-
-    info("obsolete")
-    Await.result(service.obsolete(120L).mapTo[Unit], 5.second)
-    val c11 = Await.result(service.countRings(Req()).mapTo[Int], 5.second)
-    assert(c11 == 2)
   }
 
   val hash1 =
@@ -151,11 +139,11 @@ class RingServiceSpec extends ServiceSpec[RingService] {
         blockHeight = 120
       )
     )
-    service.saveRings(rings)
+    dal.saveRings(rings)
   }
 
   private def testDuplicateSave() = {
-    service.saveRing(
+    dal.saveRing(
       Ring(
         ringHash = hash3,
         ringIndex = 12,

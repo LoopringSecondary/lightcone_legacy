@@ -26,5 +26,4 @@ trait RingService {
   def saveRings(trades: Seq[Ring]): Future[Seq[ErrorCode]]
   def getRings(request: GetRings.Req): Future[Seq[Ring]]
   def countRings(request: GetRings.Req): Future[Int]
-  def obsolete(height: Long): Future[Unit]
 }

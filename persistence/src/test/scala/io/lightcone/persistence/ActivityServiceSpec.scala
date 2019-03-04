@@ -20,7 +20,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.ethereum.persistence.Activity.ActivityType._
 import io.lightcone.persistence.dals._
-
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -51,7 +50,8 @@ class ActivityServiceSpec extends ServiceSpec[ActivityService] {
             token = "0xb88762dea88c2834b3cdb22bc0975c62f9ea2998",
             amount = BigInt(10000)
           )
-        )
+        ),
+        sequenceId = 1
       ),
       Activity(
         owner = "0xc88762dea88c2834b3cdb22bc0975c62f9ea2998",
@@ -66,7 +66,8 @@ class ActivityServiceSpec extends ServiceSpec[ActivityService] {
             token = "0xb88762dea88c2834b3cdb22bc0975c62f9ea2998",
             amount = BigInt(10000)
           )
-        )
+        ),
+        sequenceId = 2
       )
     )
 

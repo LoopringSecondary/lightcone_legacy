@@ -18,6 +18,7 @@ package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
 import io.lightcone.core._
+import io.lightcone.relayer.data.GetRings.Req.Filter._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
@@ -66,7 +67,6 @@ final class DatabaseQueryMessageValidator(
 
     case req: GetFills.Req =>
       Future {
-        val owner = MessageValidator.normalizeAddress(req.owner)
         val ringOpt = req.ring match {
           case Some(r) =>
             val ringHash =
@@ -89,32 +89,45 @@ final class DatabaseQueryMessageValidator(
                   s"invalid fillIndex:${r.fillIndex}"
                 )
               else r.fillIndex
-            Some(GetFills.Req.Ring2(ringHash, ringIndex, fillIndex))
+            Some(GetFills.Req.RingFilter(ringHash, ringIndex, fillIndex))
           case _ => None
         }
         val marketOpt = req.market match {
           case Some(m) =>
             val tokenS = MessageValidator.normalizeAddress(m.tokenS)
             val tokenB = MessageValidator.normalizeAddress(m.tokenB)
-            Some(GetFills.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+            Some(GetFills.Req.MarketFilter(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
         GetFills.Req(
-          owner,
+          MessageValidator.normalizeAddress(req.owner),
           MessageValidator.normalizeHash(req.txHash),
           MessageValidator.normalizeHash(req.orderHash),
-          ringOpt,
           marketOpt,
+          ringOpt,
           MessageValidator.normalizeAddress(req.wallet),
           MessageValidator.normalizeAddress(req.miner),
           req.sort,
-          MessageValidator.getValidPaging(req.skip)
+          MessageValidator.getValidPaging(req.paging)
         )
       }
 
     case req: GetRings.Req =>
       Future {
-        req.copy(skip = MessageValidator.getValidPaging(req.skip))
+        val filter = req.filter match {
+          case RingHash(r) => RingHash(MessageValidator.normalizeHash(r))
+          case RingIndex(i) if i < 0 =>
+            throw ErrorException(
+              ERR_INVALID_ARGUMENT,
+              s"invalid ringIndex:${i}"
+            )
+          case RingIndex(i) => req.filter
+          case Empty        => req.filter
+        }
+        req.copy(
+          paging = MessageValidator.getValidPaging(req.paging),
+          filter = filter
+        )
       }
   }
 

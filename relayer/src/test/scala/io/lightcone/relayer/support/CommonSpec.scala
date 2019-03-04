@@ -96,5 +96,4 @@ abstract class CommonSpec(configStr: String = "")
   OrderbookManagerActor.loadConfig()
   OrderPersistenceActor.loadConfig()
   OrderRecoverActor.loadConfig()
-  RingAndFillPersistenceActor.loadConfig()
 }

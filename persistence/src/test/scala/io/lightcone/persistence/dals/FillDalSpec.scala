@@ -14,27 +14,18 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence
+package io.lightcone.persistence.dals
 
 import io.lightcone.core._
+import io.lightcone.persistence._
+import io.lightcone.relayer.data.GetFills.Req
+import scala.concurrent.Await
 import io.lightcone.ethereum.persistence._
-import io.lightcone.persistence.dals._
-import io.lightcone.relayer.data._
-import scala.concurrent._
 import scala.concurrent.duration._
 
-class FillServiceSpec extends ServiceSpec[FillService] {
+class FillDalSpec extends DalSpec[FillDal] {
 
-  import GetFills._
-
-  implicit var dal: FillDal = _
-
-  def getService = {
-    dal = new FillDalImpl()
-    new FillServiceImpl()
-  }
-
-  def createTables(): Unit = dal.createTable()
+  def getDal = new FillDalImpl()
 
   "fillService" must "save and query correctly" in {
     info("save some fills")
@@ -48,44 +39,48 @@ class FillServiceSpec extends ServiceSpec[FillService] {
 
     info("query fills: by owner")
     val q3 = Req(owner = owner1)
-    val r3 = Await.result(service.getFills(q3).mapTo[Seq[Fill]], 5.second)
-    val c3 = Await.result(service.countFills(q3).mapTo[Int], 5.second)
+    val r3 = Await.result(dal.getFills(q3).mapTo[Seq[Fill]], 5.second)
+    val c3 = Await.result(dal.countFills(q3).mapTo[Int], 5.second)
     assert(r3.length == 2 && c3 == 2)
 
     info("query fills: sort")
     val q3_2 = Req(owner = owner1, sort = SortingType.DESC)
-    val r3_2 = Await.result(service.getFills(q3_2).mapTo[Seq[Fill]], 5.second)
+    val r3_2 = Await.result(dal.getFills(q3_2).mapTo[Seq[Fill]], 5.second)
     assert(r3_2.length == 2)
     assert(r3.head == r3_2.last)
 
     info("query fills: skip")
-    val q3_3 = Req(skip = Some(Paging(skip = 1, size = 10)))
-    val r3_3 = Await.result(service.getFills(q3_3).mapTo[Seq[Fill]], 5.second)
+    val q3_3 = Req(paging = Some(Paging(skip = 1, size = 10)))
+    val r3_3 = Await.result(dal.getFills(q3_3).mapTo[Seq[Fill]], 5.second)
     assert(r3_3.length == 3)
 
     info("query fills: by owner and market")
-    val q4 = Req(owner = owner1, market = Some(Req.Market(tokenS1, tokenB1)))
-    val r4 = Await.result(service.getFills(q4).mapTo[Seq[Fill]], 5.second)
-    val c4 = Await.result(service.countFills(q4).mapTo[Int], 5.second)
+    val q4 =
+      Req(owner = owner1, market = Some(Req.MarketFilter(tokenS1, tokenB1)))
+    val r4 = Await.result(dal.getFills(q4).mapTo[Seq[Fill]], 5.second)
+    val c4 = Await.result(dal.countFills(q4).mapTo[Int], 5.second)
     assert(r4.length == 1 && c4 == 1)
     val q5 =
-      Req(owner = owner1, market = Some(Req.Market(tokenS1, tokenB1, true)))
-    val r5 = Await.result(service.getFills(q5).mapTo[Seq[Fill]], 5.second)
-    val c5 = Await.result(service.countFills(q5).mapTo[Int], 5.second)
+      Req(
+        owner = owner1,
+        market = Some(Req.MarketFilter(tokenS1, tokenB1, true))
+      )
+    val r5 = Await.result(dal.getFills(q5).mapTo[Seq[Fill]], 5.second)
+    val c5 = Await.result(dal.countFills(q5).mapTo[Int], 5.second)
     assert(r5.length == 2 && c5 == 2)
 
     info("query fills: by ring")
-    val q6 = Req(ring = Some(Req.Ring2(hash2)))
-    val r6 = Await.result(service.getFills(q6).mapTo[Seq[Fill]], 5.second)
-    val c6 = Await.result(service.countFills(q6).mapTo[Int], 5.second)
+    val q6 = Req(ring = Some(Req.RingFilter(hash2)))
+    val r6 = Await.result(dal.getFills(q6).mapTo[Seq[Fill]], 5.second)
+    val c6 = Await.result(dal.countFills(q6).mapTo[Int], 5.second)
     assert(r6.length == 2 && c6 == 2)
-    val q7 = Req(ring = Some(Req.Ring2(hash2, "2", "1")))
-    val r7 = Await.result(service.getFills(q7).mapTo[Seq[Fill]], 5.second)
-    val c7 = Await.result(service.countFills(q7).mapTo[Int], 5.second)
+    val q7 = Req(ring = Some(Req.RingFilter(hash2, "2", "1")))
+    val r7 = Await.result(dal.getFills(q7).mapTo[Seq[Fill]], 5.second)
+    val c7 = Await.result(dal.countFills(q7).mapTo[Int], 5.second)
     assert(r7.length == 1 && c7 == 1)
-    val q8 = Req(ring = Some(Req.Ring2(hash2, "2", "2")))
-    val r8 = Await.result(service.getFills(q8).mapTo[Seq[Fill]], 5.second)
-    val c8 = Await.result(service.countFills(q8).mapTo[Int], 5.second)
+    val q8 = Req(ring = Some(Req.RingFilter(hash2, "2", "2")))
+    val r8 = Await.result(dal.getFills(q8).mapTo[Seq[Fill]], 5.second)
+    val c8 = Await.result(dal.countFills(q8).mapTo[Int], 5.second)
     assert(r8.isEmpty && c8 == 0)
 
     info("query fills: full parameters")
@@ -93,34 +88,26 @@ class FillServiceSpec extends ServiceSpec[FillService] {
       owner = owner1,
       txHash = hash1,
       orderHash = hash1,
-      market = Some(Req.Market(tokenS1, tokenB1)),
-      ring = Some(Req.Ring2(hash1, "1", "0")),
+      market = Some(Req.MarketFilter(tokenS1, tokenB1)),
+      ring = Some(Req.RingFilter(hash1, "1", "0")),
       wallet = wallet,
       miner = miner
     )
-    val r9 = Await.result(service.getFills(q9).mapTo[Seq[Fill]], 5.second)
-    val c9 = Await.result(service.countFills(q9).mapTo[Int], 5.second)
+    val r9 = Await.result(dal.getFills(q9).mapTo[Seq[Fill]], 5.second)
+    val c9 = Await.result(dal.countFills(q9).mapTo[Int], 5.second)
     assert(r9.length == 1 && c9 == 1)
     val q10 = Req(
       owner = owner2,
       txHash = hash1,
       orderHash = hash1,
-      market = Some(Req.Market(tokenS1, tokenB1)),
-      ring = Some(Req.Ring2(hash1, "1", "0")),
+      market = Some(Req.MarketFilter(tokenS1, tokenB1)),
+      ring = Some(Req.RingFilter(hash1, "1", "0")),
       wallet = wallet,
       miner = miner
     )
-    val r10 = Await.result(service.getFills(q10).mapTo[Seq[Fill]], 5.second)
-    val c10 = Await.result(service.countFills(q10).mapTo[Int], 5.second)
+    val r10 = Await.result(dal.getFills(q10).mapTo[Seq[Fill]], 5.second)
+    val c10 = Await.result(dal.countFills(q10).mapTo[Int], 5.second)
     assert(r10.isEmpty && c10 == 0)
-
-    info("obsolete")
-    Await.result(service.obsolete(11L).mapTo[Unit], 5.second)
-    val c11 =
-      Await.result(service.countFills(Req(owner = owner1)).mapTo[Int], 5.second)
-    val c12 =
-      Await.result(service.countFills(Req(owner = owner2)).mapTo[Int], 5.second)
-    assert(c11 == 2 && c12 == 0)
   }
 
   val owner1 = "0x4385adb3e6b88a6691ae24c8c317b7327d91a8ad"
@@ -201,11 +188,11 @@ class FillServiceSpec extends ServiceSpec[FillService] {
         wallet = wallet
       )
     )
-    service.saveFills(fills)
+    dal.saveFills(fills)
   }
 
   private def testDuplicateSave() = {
-    service.saveFill(
+    dal.saveFill(
       Fill(
         txHash = hash1,
         owner = owner1,

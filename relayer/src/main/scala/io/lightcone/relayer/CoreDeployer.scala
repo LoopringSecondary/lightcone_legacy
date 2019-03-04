@@ -206,16 +206,16 @@ class CoreDeployer @Inject()(
           RingSettlementManagerActor.name, //
           RingSettlementManagerActor.start
         )
+        .add(
+          RingAndFillPersistenceActor.name,
+          RingAndFillPersistenceActor.start
+        )
 
       //-----------deploy sharded actors-----------
       actors
         .add(
           DatabaseQueryActor.name, //
           DatabaseQueryActor.start
-        )
-        .add(
-          RingAndFillPersistenceActor.name,
-          RingAndFillPersistenceActor.start
         )
         .add(
           GasPriceActor.name, //
@@ -245,7 +245,10 @@ class CoreDeployer @Inject()(
           MarketHistoryActor.name, //
           MarketHistoryActor.start
         )
-        .add(ActivityActor.name, ActivityActor.start)
+        .add(
+          ActivityActor.name,
+          ActivityActor.start
+        )
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors
