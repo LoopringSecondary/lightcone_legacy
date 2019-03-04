@@ -64,7 +64,7 @@ class TxRingMinedEventExtractor @Inject()(
     if (!txdata.tx.to.equalsIgnoreCase(ringSubmitterAddress)) {
       Seq.empty
     } else {
-      txdata.receiptAndHeaderOpt match {
+      val events = txdata.receiptAndHeaderOpt match {
         case Some((receipt, eventHeader)) =>
           receipt.logs.zipWithIndex.map {
             case (log, index) =>
@@ -102,6 +102,8 @@ class TxRingMinedEventExtractor @Inject()(
           //TODO:Pending的如何处理
           Seq.empty
       }
+
+      events.flatten
     }
   }
 
@@ -132,7 +134,7 @@ class TxRingMinedEventExtractor @Inject()(
           if (index + 1 >= fills.size) fills.head else fills(index + 1)
 
         val marketHash =
-          MarketHash(MarketPair(fill.tokenS, nextFill.tokenB)).toString
+          MarketHash(MarketPair(fill.tokenS, nextFill.tokenS)).toString
 
         if (!metadataManager.isMarketStatus(marketHash, ACTIVE, READONLY))
           None
