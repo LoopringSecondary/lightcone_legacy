@@ -18,9 +18,10 @@ package io.lightcone.ethereum.extractor
 
 import com.google.inject.Inject
 import io.lightcone.ethereum.event.TransferEvent
-import io.lightcone.lib.{Address, NumericConversion}
-
+import io.lightcone.lib._
 import scala.concurrent._
+import io.lightcone.ethereum.abi._
+
 
 final class TxTransferEventExtractor @Inject()(
     implicit
@@ -46,7 +47,7 @@ final class TxTransferEventExtractor @Inject()(
           Seq(event.copy(owner = event.from), event.copy(owner = event.to))
         }
       case _ => Nil
-      // TODO(hongyu): we should also extract pening activities.
+
     }
   }
 }
