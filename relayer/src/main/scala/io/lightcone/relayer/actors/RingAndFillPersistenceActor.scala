@@ -56,10 +56,6 @@ class RingAndFillPersistenceActor(
     dbModule: DatabaseModule)
     extends InitializationRetryActor {
 
-  val selfConfig = config.getConfig(RingAndFillPersistenceActor.name)
-  val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
-  val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
-
   // TODO yongfeng: Ring要不要存 ?
   def ready: Receive = LoggingReceive {
     case req: Fill =>
