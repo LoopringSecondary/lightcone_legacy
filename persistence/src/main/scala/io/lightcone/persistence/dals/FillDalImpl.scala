@@ -21,6 +21,7 @@ import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.lib._
 import io.lightcone.core._
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.persistence._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
@@ -110,9 +111,10 @@ class FillDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def obsolete(height: Long): Future[Unit] = {
-    db.run(query.filter(_.blockHeight >= height).delete).map(_ >= 0)
-  }
+  def clearForkedFills(req: BlockEvent): Future[Int] =
+    db.run(query
+      .filter(_.blockHeight >= req.blockNumber)
+      .delete)
 
   private def getOptString(str: String) = {
     if (str.nonEmpty) Some(str) else None
@@ -162,7 +164,7 @@ class FillDalImpl @Inject()(
   }
 
   private def getMarketQueryParameters(
-      marketOpt: Option[GetFills.Req.Market]
+      marketOpt: Option[GetFills.Req.MarketFilter]
     ) = {
     marketOpt match {
       case Some(m)
@@ -178,7 +180,7 @@ class FillDalImpl @Inject()(
     }
   }
 
-  private def getRingQueryParameters(ringOpt: Option[GetFills.Req.Ring2]) = {
+  private def getRingQueryParameters(ringOpt: Option[GetFills.Req.RingFilter]) = {
     ringOpt match {
       case Some(r) =>
         val ringHash = getOptString(r.ringHash)
