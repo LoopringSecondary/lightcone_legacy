@@ -79,7 +79,7 @@ class MessageValidationActor(
 
         _ <- splitMergerProvider.get(req) match {
           case None =>
-            destinationActor.tell(req, _sender)
+            destinationActor.forward(req, _sender)
             Future.unit
 
           case Some(sm) =>
