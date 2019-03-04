@@ -97,15 +97,22 @@ class MetadataRefresher(
       sender ! GetMarkets.Res()
 
     case req: GetTokens.Req => {
-      val eth = tokens.find(t => t.metadata.get.symbol == Currency.ETH.name).getOrElse(throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, "not found ticker ETH"))
+      val eth = tokens
+        .find(t => t.metadata.get.symbol == Currency.ETH.name)
+        .getOrElse(
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            "not found ticker ETH"
+          )
+        )
       val currencySymbols = Currency.values.map(_.name)
       val tokens_ = tokens
         .filter(t => !currencySymbols.contains(t.metadata.get.symbol))
         .:+(eth)
-      val res = tokens_.map{t=>
-        val metadata = if(req.requireMetadata) t.metadata else None
-        val info = if(req.requireInfo) t.info else None
-        val price = if(req.requirePrice) t.price else 0.0
+      val res = tokens_.map { t =>
+        val metadata = if (req.requireMetadata) t.metadata else None
+        val info = if (req.requireInfo) t.info else None
+        val price = if (req.requirePrice) t.price else 0.0
         Token(metadata, info, price)
       }
       sender ! GetTokens.Res(res)
@@ -141,10 +148,24 @@ class MetadataRefresher(
     )
   }
 
-  private def getPriceWithQuoteToken(fromToken:Token, toCurrency: Currency) = {
-    val toToken = tokens.find(t=> t.metadata.get.address == toCurrency.getAddress()).getOrElse(throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, s"not found ticker from currency:$toCurrency"))
+  private def getPriceWithQuoteToken(
+      fromToken: Token,
+      toCurrency: Currency
+    ) = {
+    val toToken = tokens
+      .find(t => t.metadata.get.address == toCurrency.getAddress())
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found ticker from currency:$toCurrency"
+        )
+      )
     scala.util
-      .Try((BigDecimal(fromToken.price)/ BigDecimal(toToken.price)).setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .Try(
+        (BigDecimal(fromToken.price) / BigDecimal(toToken.price))
+          .setScale(8, BigDecimal.RoundingMode.HALF_UP)
+          .toDouble
+      )
       .toOption
       .getOrElse(0)
   }

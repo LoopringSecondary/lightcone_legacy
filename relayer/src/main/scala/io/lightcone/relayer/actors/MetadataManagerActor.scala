@@ -280,16 +280,23 @@ class MetadataManagerActor(
 
   private def refreshTokenAndMarket() = {
     if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickersInUsd.nonEmpty && marketMetadatas.nonEmpty) {
-      val tokenMetadataMap = tokenMetadatas.map(m=> m.symbol -> m).toMap
+      val tokenMetadataMap = tokenMetadatas.map(m => m.symbol -> m).toMap
       val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
       val tokenTickerMap = tokenTickersInUsd.map(t => t.symbol -> t.price).toMap
-      tokens = tokenTickersInUsd.map{t=>
-        val meta = if(tokenMetadataMap.contains(t.symbol)) {
+      tokens = tokenTickersInUsd.map { t =>
+        val meta = if (tokenMetadataMap.contains(t.symbol)) {
           tokenMetadataMap(t.symbol)
         } else {
           val currencyOpt = Currency.fromName(t.symbol)
-          if(currencyOpt.isEmpty) throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, s"not found Currency from symbol: ${t.symbol}")
-          TokenMetadata(symbol = t.symbol, address = currencyOpt.get.getAddress())
+          if (currencyOpt.isEmpty)
+            throw ErrorException(
+              ErrorCode.ERR_INTERNAL_UNKNOWN,
+              s"not found Currency from symbol: ${t.symbol}"
+            )
+          TokenMetadata(
+            symbol = t.symbol,
+            address = currencyOpt.get.getAddress()
+          )
         }
         val info = tokenInfoMap.getOrElse(t.symbol, TokenInfo(t.symbol))
         Token(
