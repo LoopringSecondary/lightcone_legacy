@@ -96,7 +96,7 @@ class ActivityDalImpl @Inject()(
         .values
         .map(t => t.maxBy(_.nonce))
       _ <- DBIO.sequence(txsWithMaxNonce.map { r =>
-        deletePendingActivitiesWhenFromNonceTooLowDBIO(r.from, r.nonce)
+        deletePendingActivitiesWithFromNonceDBIO(r.from, r.nonce)
       })
     } yield {}).transactionally
     db.run(a)
@@ -111,7 +111,7 @@ class ActivityDalImpl @Inject()(
       //TODO (yongfeng) create pending sequenceId with from and nonce
       .update(0L, 0L, TxStatus.TX_STATUS_PENDING)
 
-  private def deletePendingActivitiesWhenFromNonceTooLowDBIO(
+  private def deletePendingActivitiesWithFromNonceDBIO(
       fromOfTx: String,
       nonceWithFrom: Int
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
