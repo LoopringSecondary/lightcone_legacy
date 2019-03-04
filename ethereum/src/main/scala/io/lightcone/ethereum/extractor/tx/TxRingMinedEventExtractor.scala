@@ -49,7 +49,8 @@ import io.lightcone.ethereum.event.{
   OrderFilledEvent,
   RingMinedEvent => PRingMinedEvent
 }
-import io.lightcone.ethereum.persistence.{Fill, OHLCRawData}
+import io.lightcone.ethereum.persistence.Activity.ActivityType
+import io.lightcone.ethereum.persistence._
 import io.lightcone.ethereum.persistence.Fill.Fee
 import io.lightcone.lib._
 import io.lightcone.relayer.data.{OHLCData, TransactionReceipt}
@@ -107,7 +108,8 @@ class TxRingMinedEventExtractor @Inject()(
                     event._ringIndex.longValue(),
                     eventHeader
                   )
-                  fills ++ ringMinedEvents ++ ohlcDatas
+                  val activities = genereateActivity(fills, eventHeader)
+                  fills ++ ringMinedEvents ++ ohlcDatas ++ activities
                 case _ =>
                   Seq.empty
               }
@@ -119,7 +121,7 @@ class TxRingMinedEventExtractor @Inject()(
     }
   }
 
-  def generateRingMinedEvents(
+  private def generateRingMinedEvents(
       fills: Seq[Fill],
       eventHeader: EventHeader
     ): Seq[PRingMinedEvent] = {
@@ -135,7 +137,7 @@ class TxRingMinedEventExtractor @Inject()(
     }
   }
 
-  def generateOHLCDatas(
+  private def generateOHLCDatas(
       fills: Seq[Fill],
       ringIndex: Long,
       eventHeader: EventHeader
@@ -209,7 +211,47 @@ class TxRingMinedEventExtractor @Inject()(
     amount -> total
   }
 
-  def deserializeFill(
+  //generate two activity by one fill
+  private def genereateActivity(
+      fills: Seq[Fill],
+      evethHeader: EventHeader
+    ): Seq[Activity] = {
+    val activities = fills.zipWithIndex.map {
+      case (fill, index) =>
+        val nextFill =
+          if (index + 1 >= fills.size) fills.head else fills(index + 1)
+        val isP2P = fill.owner == evethHeader.txFrom || nextFill.owner == evethHeader.txFrom
+
+        //TODO(hongyu):价格等如何计算，是按照对应的计算，还是按照市场计算？
+        val trade = Activity.Trade(
+          address = fill.owner,
+          tokenBase = fill.tokenS,
+          tokenQuote = fill.tokenB,
+          amountBase = fill.amountS,
+          amountQuote = fill.amountB,
+          isP2P = isP2P
+//          price = fill.
+        )
+        val activity = Activity(
+          owner = fill.owner,
+          block = evethHeader.getBlockHeader.height,
+          txHash = evethHeader.txHash,
+          txStatus = evethHeader.txStatus,
+          activityType = ActivityType.TRADE_BUY, //TODO:
+          timestamp = evethHeader.getBlockHeader.timestamp,
+          token = fill.tokenS,
+          detail = Activity.Detail.Trade(trade)
+        )
+        Seq(
+          activity,
+          activity
+            .copy(activityType = ActivityType.TRADE_SELL, token = fill.tokenB)
+        )
+    }
+    activities.flatten
+  }
+
+  private def deserializeFill(
       fillData: Seq[String],
       eventRes: RingMinedEvent.Result,
       txHash: String,
