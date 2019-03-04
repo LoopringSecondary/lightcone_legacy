@@ -111,16 +111,15 @@ class TxRingMinedEventExtractor @Inject()(
       fills: Seq[Fill],
       eventHeader: EventHeader
     ): Seq[PRingMinedEvent] = {
-    fills.zipWithIndex map {
-      case (fill, index) =>
-        val nextFill =
-          if (index + 1 >= fills.size) fills.head else fills(index + 1)
-        PRingMinedEvent(
-          header = Some(eventHeader),
-          orderIds = Seq(fill.orderHash, nextFill.orderHash),
-          marketPair = Some(MarketPair(fill.tokenS, nextFill.tokenS))
-        )
-    }
+    val fill = fills(0)
+    val nextFill = fills(1)
+    Seq(
+      PRingMinedEvent(
+        header = Some(eventHeader),
+        orderIds = Seq(fill.orderHash, nextFill.orderHash),
+        marketPair = Some(MarketPair(fill.tokenS, nextFill.tokenS))
+      )
+    )
   }
 
   private def generateOHLCDatas(

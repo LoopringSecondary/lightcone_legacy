@@ -73,23 +73,23 @@ class RingMinedEventExtractorSpec extends AbstractExtractorSpec {
       case _: Fill => true
       case _       => false
     })
-    fills.nonEmpty should be(true)
+    fills.size should be(2)
     val activities = events.filter(_ match {
       case _: Activity => true
       case _           => false
     })
-    activities.nonEmpty should be(true)
+    activities.size should be(4)
 
     val ringMinedEvents = events.filter(_ match {
       case _: PRingMinedEvent => true
       case _                  => false
     })
-    ringMinedEvents.nonEmpty should be(true)
+    ringMinedEvents.size should be(1)
 
     val ohlcDatas = events.filter(_ match {
       case _: OHLCRawData => true
       case _              => false
     })
-    ohlcDatas.nonEmpty should be(true)
+    ohlcDatas.size should be(2)
   }
 }
