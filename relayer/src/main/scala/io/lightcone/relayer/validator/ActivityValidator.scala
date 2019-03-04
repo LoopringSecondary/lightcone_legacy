@@ -24,7 +24,7 @@ import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 
 object ActivityValidator {
-  val name = "activity_validator"
+  val name = "activity"
 }
 
 final class ActivityValidator(
