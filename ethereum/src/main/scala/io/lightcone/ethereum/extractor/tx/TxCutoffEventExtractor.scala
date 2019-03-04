@@ -19,7 +19,7 @@ package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core._
-import io.lightcone.ethereum.BlockHeader
+import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.persistence.Activity
@@ -40,14 +40,18 @@ class TxCutoffEventExtractor @Inject()(
   ).toString()
 
   def extractEvents(txdata: TransactionData) = Future {
-    val (cutoffEvents, blockHeader) = if (!txdata.tx.to.equalsIgnoreCase(orderCancelAddress)) {
-      (Seq.empty, BlockHeader())
+    var blockHeader: BlockHeader = BlockHeader()
+    var txStatus: TxStatus = TxStatus.TX_STATUS_PENDING
+    val cutoffEvents = if (!txdata.tx.to.equalsIgnoreCase(orderCancelAddress)) {
+      Seq.empty
     } else {
       txdata.receiptAndHeaderOpt match {
         case Some((receipt, eventHeader)) =>
-          (extractBlockedEvents(txdata.tx, receipt, eventHeader), eventHeader.getBlockHeader)
+          blockHeader = eventHeader.getBlockHeader
+          txStatus = receipt.status
+          extractBlockedEvents(txdata.tx, receipt, eventHeader)
         case None =>
-          (extractPendingEvents(txdata.tx), BlockHeader())
+          extractPendingEvents(txdata.tx)
       }
     }
     val activities = cutoffEvents.map {
@@ -61,11 +65,13 @@ class TxCutoffEventExtractor @Inject()(
           Activity(
             owner = evt.owner,
             block = blockHeader.height,
+            txHash = txdata.tx.hash,
             activityType = ActivityType.ORDER_CANCEL,
             timestamp = blockHeader.timestamp,
 //            fiatValue = 0.0, //TODO:(hongyu):确定法币金额是现在计算还是返回时计算
             token = Address.ZERO.toString(), //TODO(hongyu):取消订单按照ETH
-            detail = Activity.Detail(detail)
+            detail = Activity.Detail.OrderCancellation(detail),
+            txStatus = txStatus
           )
         )
       case evt: OrdersCancelledOnChainEvent =>
@@ -77,11 +83,13 @@ class TxCutoffEventExtractor @Inject()(
           Activity(
             owner = evt.owner,
             block = blockHeader.height,
+            txHash = txdata.tx.hash,
             activityType = ActivityType.ORDER_CANCEL,
             timestamp = blockHeader.timestamp,
             //            fiatValue = 0.0, //TODO:(hongyu):确定法币金额是现在计算还是返回时计算
             token = Address.ZERO.toString(), //TODO(hongyu):取消订单按照ETH
-            detail = Activity.Detail(detail)
+            detail = Activity.Detail.OrderCancellation(detail),
+            txStatus = txStatus
           )
         )
       case _ => Seq.empty
