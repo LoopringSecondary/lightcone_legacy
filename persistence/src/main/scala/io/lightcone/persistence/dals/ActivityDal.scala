@@ -41,6 +41,6 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
 
   def deleteByTxHashes(txHashes: Set[String]): Future[Boolean]
 
-  def clearBlockActivities(req: BlockEvent): Future[Unit]
+  def clearForkedActivities(req: BlockEvent): Future[Unit]
 
 }

@@ -88,7 +88,7 @@ class ActivityDalImpl @Inject()(
       )
       .map(_ > 0)
 
-  def clearBlockActivities(req: BlockEvent): Future[Unit] = {
+  def clearForkedActivities(req: BlockEvent): Future[Unit] = {
     val a = (for {
       _ <- updateBlockActivitiesToPendingDBIO(req.blockNumber)
       txsWithMaxNonce = req.txs
