@@ -23,6 +23,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.base.MapBasedLookup
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.splitmerge._
 import io.lightcone.core._
 import org.scalatest._
 import org.slf4s.Logging
@@ -73,6 +74,8 @@ abstract class CommonSpec(configStr: String = "")
   implicit val actors = new MapBasedLookup[ActorRef]()
   implicit val rie: RingIncomeEvaluator =
     new RingIncomeEvaluatorImpl()
+
+  implicit val splitMergerProvider = new DefaultSplitMergerProvider
 
   //actors
   //  val refresher = system.actorOf(

@@ -16,20 +16,13 @@
 
 package io.lightcone.relayer.splitmerge
 
-class DefaultSplitMergerProvider extends SplitMergerProvider {
+// TODO(hongyu): implement the SplitMerger for GetAccounts
+class DefaultSplitMergerProvider extends RegisterableSplitMergerProvider {
 
-  // private var registry = Map.empty[ClassOf[_], SplitMerger[_, _, _, _]]
+  // The following are demo code
+  register(new SplitMerger[String, String, String, String] {
+    def split(req: String) = Seq(req)
+    def merge(resps: Seq[String]) = resps.reduce(_ + _)
+  })
 
-  private val getAccounts = new SplitMerger[String, String, String, String] {
-    def splitRequest(req: String) = Seq(req)
-    def mergeResponses(resps: Seq[String]) = resps.reduce(_ + _)
-  }
-
-  def get(msg: Any): Option[SplitMerger[_, _, _, _]] = {
-    msg match {
-      case _: String => Some(getAccounts)
-
-      case _ => None
-    }
-  }
 }

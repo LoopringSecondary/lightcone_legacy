@@ -18,13 +18,13 @@ package io.lightcone.relayer.splitmerge
 
 trait SplitMerger[REQ, SUB_REQ, SUB_RES, RES] {
 
-  final def split(req: Any) =
-    splitRequest(req.asInstanceOf[REQ])
+  final def splitRequest(req: Any) =
+    split(req.asInstanceOf[REQ])
 
-  final def merge(resps: Seq[Any]) =
-    mergeResponses(resps.asInstanceOf[Seq[SUB_RES]])
+  final def mergeResponses(resps: Seq[Any]) =
+    merge(resps.asInstanceOf[Seq[SUB_RES]])
 
-  def splitRequest(req: REQ): Seq[SUB_REQ]
+  def split(req: REQ): Seq[SUB_REQ]
 
-  def mergeResponses(resps: Seq[SUB_RES]): RES
+  def merge(resps: Seq[SUB_RES]): RES
 }

@@ -85,9 +85,9 @@ class MessageValidationActor(
           case Some(sm) =>
             for {
               subResponses <- Future.sequence {
-                sm.split(req).map(destinationActor ? _)
+                sm.splitRequest(req).map(destinationActor ? _)
               }
-              res = sm.merge(subResponses)
+              res = sm.mergeResponses(subResponses)
               _ = _sender ! res
             } yield Unit
         }
