@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package io.lightcone.ethereum.extractor
+package io.lightcone.ethereum.extractor.tx
 
 import com.google.inject.Inject
+import io.lightcone.core.MetadataManager
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event.{
   EventHeader,
   TransferEvent => PTransferEvent
 }
+import io.lightcone.ethereum.extractor.{EventExtractor, TransactionData}
 import io.lightcone.ethereum.persistence.Activity
 import io.lightcone.lib._
 import io.lightcone.relayer.data.Transaction
@@ -32,11 +34,12 @@ import scala.concurrent._
 final class TxTransferEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
-    val weth: String,
+    val metadataManager: MetadataManager,
     val protocol: String)
     extends EventExtractor[TransactionData, AnyRef] {
 
-  val wethAddress = Address.normalize(weth)
+  val wethAddress =
+    metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
   val protocolAddress = Address.normalize(protocol)
 
   // TODO(yadong) sequenceId 需要计算
@@ -81,9 +84,9 @@ final class TxTransferEventExtractor @Inject()(
       case _ =>
         val tx = txdata.tx
         val eventHeader = EventHeader(
-          txFrom = tx.from,
+          txFrom = Address.normalize(tx.from),
           txHash = tx.hash,
-          txTo = tx.to,
+          txTo = Address.normalize(tx.to),
           txStatus = TxStatus.TX_STATUS_PENDING,
           txValue = Some(NumericConversion.toAmount(tx.value))
         )

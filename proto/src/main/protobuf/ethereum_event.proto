@@ -50,8 +50,7 @@ message ApprovalEvent {
     string owner    = 2;
     string spender  = 3;
     string token    = 4;
-    bytes amount    = 5;
-    int64 block     = 6;
+    io.lightcone.core.Amount amount    = 5;
 }
 
 //TODO(hongyu):以下三个Event类似，考虑合并处理
