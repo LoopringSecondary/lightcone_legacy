@@ -46,7 +46,6 @@ import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.abi.{RingMinedEvent, _}
 import io.lightcone.ethereum.event.{
   EventHeader,
-  OrderFilledEvent,
   RingMinedEvent => PRingMinedEvent
 }
 import io.lightcone.ethereum.persistence.Activity.ActivityType
@@ -57,11 +56,6 @@ import io.lightcone.relayer.data.{OHLCData, TransactionReceipt}
 import org.web3j.utils._
 
 import scala.concurrent._
-
-case class RingMinedEvents(
-    fills: Seq[Fill],
-    minedEvents: Seq[PRingMinedEvent],
-    ohlcs: Seq[OHLCData])
 
 class TxRingMinedEventExtractor @Inject()(
     implicit
@@ -222,7 +216,7 @@ class TxRingMinedEventExtractor @Inject()(
           if (index + 1 >= fills.size) fills.head else fills(index + 1)
         val isP2P = fill.owner == evethHeader.txFrom || nextFill.owner == evethHeader.txFrom
 
-        //TODO(hongyu):价格等如何计算，是按照对应的计算，还是按照市场计算？
+        //TODO(hongyu):价格等如何计算，是按照对应的计算，还是按照市场计算？包括tokenBase和tokenQuote
         val trade = Activity.Trade(
           address = fill.owner,
           tokenBase = fill.tokenS,
