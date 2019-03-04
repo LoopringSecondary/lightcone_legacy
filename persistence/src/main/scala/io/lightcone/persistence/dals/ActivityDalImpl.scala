@@ -95,7 +95,7 @@ class ActivityDalImpl @Inject()(
       block: Long
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query
-      .filter(_.block === block)
+      .filter(_.block >= block)
       .map(c => (c.block, c.sequenceId, c.txStatus))
       //TODO (yongfeng) create pending sequenceId with from and nonce
       .update(0L, 0L, TxStatus.TX_STATUS_PENDING)
