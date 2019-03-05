@@ -19,6 +19,7 @@ package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core._
+import io.lightcone.ethereum.TxStatus._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
@@ -47,11 +48,15 @@ class TxCutoffEventExtractor @Inject()(
     } else {
       txdata.receiptAndHeaderOpt match {
         case Some((receipt, eventHeader)) =>
-          blockHeader = eventHeader.getBlockHeader
-          txStatus = receipt.status
-          extractConfirmedEvents(txdata.tx, receipt, eventHeader)
+          if (receipt.status == TX_STATUS_FAILED) {
+            extractEventsFromInput(txdata.tx)
+          } else {
+            blockHeader = eventHeader.getBlockHeader
+            txStatus = receipt.status
+            extractConfirmedEvents(txdata.tx, receipt, eventHeader)
+          }
         case None =>
-          extractPendingEvents(txdata.tx)
+          extractEventsFromInput(txdata.tx)
       }
     }
     val activities = cutoffEvents.map {
@@ -101,7 +106,6 @@ class TxCutoffEventExtractor @Inject()(
       receipt: TransactionReceipt,
       eventHeader: EventHeader
     ): Seq[AnyRef] = {
-
     receipt.logs.zipWithIndex.map {
       case (log, index) =>
         loopringProtocolAbi
@@ -165,7 +169,7 @@ class TxCutoffEventExtractor @Inject()(
     }.filter(_.nonEmpty).map(_.get)
   }
 
-  def extractPendingEvents(tx: Transaction): Seq[AnyRef] =
+  def extractEventsFromInput(tx: Transaction): Seq[AnyRef] =
     loopringProtocolAbi.unpackFunctionInput(tx.input) match {
       case Some(params: CancelAllOrdersForTradingPairFunction.Params) =>
         Seq(

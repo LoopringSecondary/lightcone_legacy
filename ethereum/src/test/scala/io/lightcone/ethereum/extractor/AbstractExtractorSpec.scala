@@ -16,16 +16,16 @@
 
 package io.lightcone.ethereum.extractor
 import com.typesafe.config.ConfigFactory
-import io.lightcone.core.{
-  MarketHash,
-  MarketMetadata,
-  MarketPair,
-  MetadataManagerImpl,
-  TokenMetadata
-}
-import io.lightcone.lib.{Address, ProtoSerializer}
+import io.lightcone.core._
+import io.lightcone.ethereum.BlockHeader
+import io.lightcone.ethereum.TxStatus._
+import io.lightcone.ethereum.event.EventHeader
+import io.lightcone.lib._
+import io.lightcone.relayer.data.BlockWithTxObject
 import org.json4s.DefaultFormats
 import org.scalatest.{FlatSpec, Matchers}
+
+import scala.io.Source
 
 abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
 
@@ -89,6 +89,33 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
     ): Option[T] = {
     val jv = parser.parse(json)
     ps.deserialize[T](jv)
+  }
+
+  def getTransactionDatas(source: String): Seq[TransactionData] = {
+    val resStr: String = Source
+      .fromFile(source)
+      .getLines()
+      .next()
+
+    val block = deserializeToProto[BlockWithTxObject](resStr).get
+    (block.transactions zip block.receipts).map {
+      case (tx, receipt) =>
+        val eventHeader =
+          EventHeader(
+            txHash = tx.hash,
+            txStatus = TX_STATUS_SUCCESS,
+            blockHeader = Some(
+              BlockHeader(
+                NumericConversion.toBigInt(block.number).longValue(),
+                block.hash,
+                block.miner,
+                NumericConversion.toBigInt(block.timestamp).longValue(),
+                block.uncles
+              )
+            )
+          )
+        TransactionData(tx, Some(receipt, eventHeader))
+    }
   }
 
 }

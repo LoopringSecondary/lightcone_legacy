@@ -17,50 +17,22 @@
 package io.lightcone.ethereum.extractor
 
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.{BlockHeader, RawOrderValidatorImpl}
-import io.lightcone.ethereum.TxStatus._
-import io.lightcone.ethereum.event.EventHeader
+import io.lightcone.ethereum.RawOrderValidatorImpl
 import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
 import io.lightcone.ethereum.persistence._
-import io.lightcone.lib.NumericConversion
-import io.lightcone.relayer.data._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.io.Source
 
 class RingMinedEventExtractorSpec extends AbstractExtractorSpec {
 
-  "extract block" should "get events correctly" in {
-    val resStr: String = Source
-      .fromFile("ethereum/src/test/resources/event/mined_block")
-      .getLines()
-      .next()
-
-    val block = deserializeToProto[BlockWithTxObject](resStr).get
-
+  "extract a block contains SubmitRing" should "get events correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     implicit val orderValidator = new RawOrderValidatorImpl()
     val ringMinedEventExtractor = new TxRingMinedEventExtractor()
-    val transactions = (block.transactions zip block.receipts).map {
-      case (tx, receipt) =>
-        val eventHeader =
-          EventHeader(
-            txHash = tx.hash,
-            txStatus = TX_STATUS_SUCCESS,
-            blockHeader = Some(
-              BlockHeader(
-                NumericConversion.toBigInt(block.number).longValue(),
-                block.hash,
-                block.miner,
-                NumericConversion.toBigInt(block.timestamp).longValue(),
-                block.uncles
-              )
-            )
-          )
-        TransactionData(tx, Some(receipt, eventHeader))
-    }
+    val transactions =
+      getTransactionDatas("ethereum/src/test/resources/event/mined_block")
     val tx = transactions(0)
     loopringProtocolAbi.unpackEvent(
       tx.receiptAndHeaderOpt.get._1.logs(0).data,
