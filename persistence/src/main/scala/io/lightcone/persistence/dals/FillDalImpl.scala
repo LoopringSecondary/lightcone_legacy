@@ -111,7 +111,7 @@ class FillDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def cleanUpForBlockReorganization(req: BlockEvent): Future[Int] =
+  def cleanActivitiesForBlockReorganization(req: BlockEvent): Future[Int] =
     db.run(
       query
         .filter(_.blockHeight >= req.blockNumber)
