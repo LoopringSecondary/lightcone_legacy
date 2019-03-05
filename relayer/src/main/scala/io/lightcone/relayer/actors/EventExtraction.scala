@@ -20,6 +20,7 @@ import akka.actor.ActorRef
 import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
@@ -59,6 +60,19 @@ trait EventExtraction {
         case Some(block) =>
           if (block.parentHash == blockData.hash || blockData.height == -1) {
             blockData = block
+            val blockEvent = BlockEvent(
+              blockNumber = blockData.height,
+              txs = blockData.txs.map(
+                tx =>
+                  BlockEvent.Tx(
+                    from = tx.from,
+                    nonce = NumericConversion.toBigInt(tx.nonce).toInt,
+                    txHash = tx.hash
+                  )
+              )
+            )
+
+            //TODO(yadong) broadcast blockEvent
             self ! RETRIEVE_RECEIPTS
           } else {
             self ! BLOCK_REORG_DETECTED
