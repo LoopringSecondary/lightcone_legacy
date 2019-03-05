@@ -235,9 +235,9 @@ class TxRingMinedEventExtractor @Inject()(
   //generate two activity by one fill
   private def genereateActivity(
       fills: Seq[Fill],
-      evethHeader: EventHeader
+      eventHeader: EventHeader
     ): Seq[Activity] = {
-    val isP2PRes = isP2P(fills, evethHeader.txFrom)
+    val isP2PRes = isP2P(fills, eventHeader.txFrom)
 
     val activities = fills.zipWithIndex.map {
       case (fill, index) =>
@@ -246,7 +246,7 @@ class TxRingMinedEventExtractor @Inject()(
 
         //p2p订单并且是失败的环路、pending的环路 不计算价格等属性
         val trade =
-          if (isP2PRes && (evethHeader.txStatus == TX_STATUS_PENDING || evethHeader.txStatus == TX_STATUS_FAILED)) {
+          if (isP2PRes && (eventHeader.txStatus == TX_STATUS_PENDING || eventHeader.txStatus == TX_STATUS_FAILED)) {
             Activity.Trade(
               address = fill.owner,
               tokenBase = fill.tokenS,
@@ -286,11 +286,11 @@ class TxRingMinedEventExtractor @Inject()(
           }
         val activity = Activity(
           owner = fill.owner,
-          block = evethHeader.getBlockHeader.height,
-          txHash = evethHeader.txHash,
-          txStatus = evethHeader.txStatus,
+          block = eventHeader.getBlockHeader.height,
+          txHash = eventHeader.txHash,
+          txStatus = eventHeader.txStatus,
           activityType = ActivityType.TRADE_BUY, //TODO:
-          timestamp = evethHeader.getBlockHeader.timestamp,
+          timestamp = eventHeader.getBlockHeader.timestamp,
           token = fill.tokenS,
           detail = Activity.Detail.Trade(trade)
         )
