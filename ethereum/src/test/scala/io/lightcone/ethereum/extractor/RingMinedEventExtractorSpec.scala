@@ -17,7 +17,7 @@
 package io.lightcone.ethereum.extractor
 
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.BlockHeader
+import io.lightcone.ethereum.{BlockHeader, RawOrderValidatorImpl}
 import io.lightcone.ethereum.TxStatus._
 import io.lightcone.ethereum.event.EventHeader
 import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
@@ -41,6 +41,7 @@ class RingMinedEventExtractorSpec extends AbstractExtractorSpec {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
+    implicit val orderValidator = new RawOrderValidatorImpl()
     val ringMinedEventExtractor = new TxRingMinedEventExtractor()
     val transactions = (block.transactions zip block.receipts).map {
       case (tx, receipt) =>
