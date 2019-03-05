@@ -43,23 +43,53 @@ class TxCutoffEventExtractor @Inject()(
   def extractEvents(txdata: TransactionData) = Future {
     var blockHeader: BlockHeader = BlockHeader()
     var txStatus: TxStatus = TxStatus.TX_STATUS_PENDING
-    val cutoffEvents = if (!txdata.tx.to.equalsIgnoreCase(orderCancelAddress)) {
+    if (!txdata.tx.to.equalsIgnoreCase(orderCancelAddress)) {
       Seq.empty
     } else {
       txdata.receiptAndHeaderOpt match {
         case Some((receipt, eventHeader)) =>
           if (receipt.status == TX_STATUS_FAILED) {
-            extractEventsFromInput(txdata.tx)
+            val cutoffEvents = extractEventsFromInput(txdata.tx)
+            val activities = generateActivities(
+              cutoffEvents,
+              txdata.tx.hash,
+              TX_STATUS_FAILED,
+              eventHeader.getBlockHeader
+            )
+            ////should return activities if tx is failed
+            activities
           } else {
-            blockHeader = eventHeader.getBlockHeader
-            txStatus = receipt.status
-            extractConfirmedEvents(txdata.tx, receipt, eventHeader)
+            val cutoffEvents =
+              extractConfirmedEvents(txdata.tx, receipt, eventHeader)
+            val activities = generateActivities(
+              cutoffEvents,
+              txdata.tx.hash,
+              TX_STATUS_SUCCESS,
+              eventHeader.getBlockHeader
+            )
+            cutoffEvents ++ activities
           }
         case None =>
-          extractEventsFromInput(txdata.tx)
+          val cutoffEvents = extractEventsFromInput(txdata.tx)
+          val activities = generateActivities(
+            cutoffEvents,
+            txdata.tx.hash,
+            TX_STATUS_PENDING,
+            BlockHeader()
+          )
+          //should return activities if tx is pending
+          activities
       }
     }
-    val activities = cutoffEvents.map {
+  }
+
+  def generateActivities(
+      cutoffEvents: Seq[AnyRef],
+      txHash: String,
+      txStatus: TxStatus,
+      blockHeader: BlockHeader
+    ): Seq[Activity] = {
+    cutoffEvents.flatMap {
       case evt: CutoffEvent =>
         val detail = Activity.OrderCancellation(
           cutoff = evt.cutoff,
@@ -70,11 +100,10 @@ class TxCutoffEventExtractor @Inject()(
           Activity(
             owner = evt.owner,
             block = blockHeader.height,
-            txHash = txdata.tx.hash,
+            txHash = txHash,
             activityType = ActivityType.ORDER_CANCEL,
             timestamp = blockHeader.timestamp,
-            //            fiatValue = 0.0, //TODO:(hongyu):确定法币金额是现在计算还是返回时计算
-            token = Address.ZERO.toString(), //TODO(hongyu):取消订单按照ETH
+            token = Address.ZERO.toString(),
             detail = Activity.Detail.OrderCancellation(detail),
             txStatus = txStatus
           )
@@ -86,10 +115,9 @@ class TxCutoffEventExtractor @Inject()(
           Activity(
             owner = evt.owner,
             block = blockHeader.height,
-            txHash = txdata.tx.hash,
+            txHash = txHash,
             activityType = ActivityType.ORDER_CANCEL,
             timestamp = blockHeader.timestamp,
-            //            fiatValue = 0.0, //TODO:(hongyu):确定法币金额是现在计算还是返回时计算
             token = Address.ZERO.toString(), //TODO(hongyu):取消订单按照ETH
             detail = Activity.Detail.OrderCancellation(detail),
             txStatus = txStatus
@@ -97,8 +125,6 @@ class TxCutoffEventExtractor @Inject()(
         )
       case _ => Seq.empty
     }
-
-    cutoffEvents ++ activities.flatten
   }
 
   def extractConfirmedEvents(
@@ -205,6 +231,20 @@ class TxCutoffEventExtractor @Inject()(
             broker = tx.from,
             owner = tx.from,
             cutoff = params.cutoff.longValue()
+          )
+        )
+      case Some(params: CancelOrdersFunction.Params) =>
+        val orderHashes = params.orderHashes.zipWithIndex
+          .groupBy(_._2 / 32)
+          .map {
+            case (_, bytesTuple) =>
+              NumericConversion.toHexString(BigInt(bytesTuple.map(_._1)))
+          }
+        Seq(
+          OrdersCancelledOnChainEvent(
+            owner = tx.from,
+            broker = tx.from,
+            orderHashes = orderHashes.toSeq
           )
         )
       case _ => Seq.empty

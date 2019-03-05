@@ -17,7 +17,7 @@
 package io.lightcone.ethereum.extractor
 
 import io.lightcone.ethereum.BlockHeader
-import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
+import io.lightcone.ethereum.TxStatus.{TX_STATUS_FAILED, TX_STATUS_SUCCESS}
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.persistence.Activity.{
@@ -43,7 +43,10 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
       tx.receiptAndHeaderOpt.get._1.logs(0).data,
       tx.receiptAndHeaderOpt.get._1.logs(0).topics.toArray
     )
-    val events = Await.result(
+    info(
+      "extracted events should contains OrdersCancelledOnChainEvent and Activity if tx.status = TX_STATUS_SUCCESS"
+    )
+    val successEvents = Await.result(
       cutoffEventsExtractor.extractEvents(tx),
       5.second
     )
@@ -74,7 +77,7 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
       broker = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467",
       orderHashes = orderHashes
     )
-    events.find { e =>
+    successEvents.find { e =>
       e.isInstanceOf[OrdersCancelledOnChainEvent]
     }.get
       .asInstanceOf[OrdersCancelledOnChainEvent] should be(event)
@@ -95,10 +98,50 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
         )
       )
     )
-    events.find { e =>
+    successEvents.find { e =>
       e.isInstanceOf[Activity]
     }.get
       .asInstanceOf[Activity] should be(activity)
+
+    info(
+      "extracted events should contains OrdersCancelledOnChainEvent and Activity if tx.status = TX_STATUS_FAILED"
+    )
+    val failedTxData = tx.copy(
+      receiptAndHeaderOpt = Some(
+        tx.receiptAndHeaderOpt.get._1.copy(status = TX_STATUS_FAILED),
+        tx.receiptAndHeaderOpt.get._2
+      )
+    )
+    val failedEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(failedTxData),
+      5.second
+    )
+    failedEvents.exists(_.isInstanceOf[Activity]) should be(true)
+    failedEvents.forall(!_.isInstanceOf[OrdersCancelledOnChainEvent]) should be(
+      true
+    )
+    info(s"${failedEvents}")
+
+    info(
+      "extracted events should contains OrdersCancelledOnChainEvent and Activity if tx.status = TX_STATUS_PENDING"
+    )
+    val pendingTxData = tx.copy(receiptAndHeaderOpt = None)
+    val pendingEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(pendingTxData),
+      5.second
+    )
+    pendingEvents.exists(_.isInstanceOf[Activity]) should be(true)
+    pendingEvents.forall(!_.isInstanceOf[OrdersCancelledOnChainEvent]) should be(
+      true
+    )
+    val pendingActivity = pendingEvents
+      .find(_.isInstanceOf[Activity])
+      .get
+      .asInstanceOf[Activity]
+    pendingActivity.getOrderCancellation.orderIds.diff(orderHashes) should be(
+      Seq.empty
+    )
+    info(s"${pendingEvents}")
   }
 
   "extract block contains CutOffEvents" should "get events correctly" in {
