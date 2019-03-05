@@ -23,6 +23,7 @@ import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
 import io.lightcone.relayer.base._
 import io.lightcone.core._
+import io.lightcone.ethereum.persistence.Fill
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.GetOrders._
@@ -101,14 +102,27 @@ class DatabaseQueryActor(
 
     case req: GetFills.Req =>
       (for {
-        result <- dbModule.fillService.getFills(req)
-        total <- dbModule.fillService.countFills(req)
-      } yield GetFills.Res(result, total)) sendTo sender
+        fills <- dbModule.fillDal.getFills(req)
+        total <- dbModule.fillDal.countFills(req)
+      } yield {
+        val fills_ = fills.map { f =>
+          new Fill(
+            blockTimestamp = f.blockTimestamp,
+            tokenS = f.tokenS,
+            tokenB = f.tokenB,
+            amountS = f.amountS,
+            amountB = f.amountB,
+            orderHash = f.orderHash,
+            txHash = f.txHash
+          )
+        }
+        GetFills.Res(fills_, total)
+      }).sendTo(sender)
 
     case req: GetRings.Req =>
       (for {
-        result <- dbModule.ringService.getRings(req)
-        total <- dbModule.ringService.countRings(req)
+        result <- dbModule.ringDal.getRings(req)
+        total <- dbModule.ringDal.countRings(req)
       } yield GetRings.Res(result, total)) sendTo sender
   }
 

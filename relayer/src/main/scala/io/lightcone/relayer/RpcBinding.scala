@@ -21,6 +21,7 @@ import io.lightcone.relayer.data._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
+  import RpcDataConversions._
 
   method("get_orderbook")
   // .accepts[ext.GetOrderbook.Req, GetOrderbook.Req]
@@ -69,6 +70,10 @@ trait RpcBinding extends JsonRpcModule {
   method("get_account")
     .accepts[GetAccount.Req]
     .replies[GetAccount.Res]
+
+  method("get_accounts")
+    .accepts[GetAccounts.Req]
+    .replies[GetAccounts.Res]
 
   method("get_filled_amount")
     .accepts[GetFilledAmount.Req]

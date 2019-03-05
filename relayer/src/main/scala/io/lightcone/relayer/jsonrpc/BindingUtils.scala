@@ -20,7 +20,6 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import io.lightcone.lib._
 import org.json4s.JsonAST.JValue
-import scala.reflect.ClassTag
 import io.lightcone.core._
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 
@@ -63,6 +62,7 @@ class Accept[
     implicit
     module: JsonRpcBinding,
     ps: ProtoSerializer) {
+
   private def identity[T <: Proto[T]: TypeTag](obj: T) = obj
 
   def replies[C <: Proto[C]: TypeTag](
@@ -70,8 +70,10 @@ class Accept[
       pa: ProtoC[A],
       ca: ClassTag[A],
       pd: ProtoC[C],
-      cd: ClassTag[C]
-    ) = new Reply[A, B, C, C](method, requestConverter, identity)
+      cd: ClassTag[C],
+      responseCleaner: C => C = null
+    ) =
+    new Reply[A, B, C, C](method, requestConverter, identity, responseCleaner)
 
   def replies[
       C <: Proto[C]: TypeTag, //
@@ -86,7 +88,7 @@ class Accept[
       cd: ClassTag[D],
       responseConverter: C => D
     ) =
-    new Reply[A, B, C, D](method, requestConverter, responseConverter)
+    new Reply[A, B, C, D](method, requestConverter, responseConverter, null)
 }
 
 class Reply[
@@ -96,7 +98,8 @@ class Reply[
     D <: Proto[D]: TypeTag
   ](val method: String,
     requestConverter: A => B,
-    responseConverter: C => D
+    responseConverter: C => D,
+    responseCleaner: D => D
   )(
     implicit
     pa: ProtoC[A],
@@ -127,7 +130,10 @@ class Reply[
             s"expect ${typeOf[D].typeSymbol.name} get ${s.getClass.getName}"
           )
         val c = s.asInstanceOf[C]
-        val d = responseConverter(c)
+        val d = Option(responseCleaner) match {
+          case Some(f) => f(responseConverter(c))
+          case None    => responseConverter(c)
+        }
         ps.serialize[D](d).get
 
     }
