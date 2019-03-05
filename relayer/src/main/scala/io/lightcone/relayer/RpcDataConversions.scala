@@ -16,14 +16,24 @@
 
 package io.lightcone.relayer
 
+import io.lightcone.relayer.data._
+
 object RpcDataConversions {
-//  implicit def convertGetOrderbookReq(
-//      r: ext.GetOrderbook.Req
-//    ): GetOrderbook.Req =
-//    null
-//
-//  implicit def convertGetOrderbookRes(
-//      r: GetOrderbook.Res
-//    ): ext.GetOrderbook.Res =
-//    null
+  //  implicit def convertGetOrderbookReq(
+  //      r: ext.GetOrderbook.Req
+  //    ): GetOrderbook.Req =
+  //    null
+  //
+  //  implicit def convertGetOrderbookRes(
+  //      r: GetOrderbook.Res
+  //    ): ext.GetOrderbook.Res =
+  //    null
+
+  // TODO(yadong): def an implicit method as following and it will be
+  // called automatically by the RpcBinding.
+  implicit def cleanGetOrderboobRes(res: GetOrderbook.Res) =
+    new GetOrderbook.Res( /* select some fields only */ )
+
+  implicit def cleanGetOrdersRes(res: GetOrders.Res) =
+    new GetOrders.Res( /* select some fields only */ )
 }

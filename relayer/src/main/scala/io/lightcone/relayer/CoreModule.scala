@@ -32,6 +32,7 @@ import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
@@ -69,12 +70,10 @@ class CoreModule(
     // --- bind db configs ---------------------
     bind[DatabaseConfigManager].toInstance(dbConfigManager)
 
-    //TODO(yongfeng):去除trade和tx的dal时，同时去除该部分
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-token-info",
       "dbconfig-dal-order",
-      "dbconfig-dal-trade",
       "dbconfig-dal-ring",
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
@@ -151,17 +150,14 @@ class CoreModule(
       )
       .register(
         classOf[CutoffEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrderFilledEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
         classOf[OrdersCancelledOnChainEvent],
-        TransactionRecordActor.name,
         MultiAccountManagerActor.name
       )
       .register(
@@ -169,11 +165,7 @@ class CoreModule(
         MetadataManagerActor.name
       )
       .register(
-        classOf[TransferEvent], //
-        TransactionRecordActor.name
-      )
-      .register(
-        classOf[OHLCRawDataEvent], //
+        classOf[OHLCRawData], //
         MarketHistoryActor.name
       )
       .register(

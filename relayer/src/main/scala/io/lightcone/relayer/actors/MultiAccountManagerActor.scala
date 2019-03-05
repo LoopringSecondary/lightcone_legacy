@@ -125,6 +125,9 @@ class MultiAccountManagerActor(
 
   val selfConfig = config.getConfig(MultiAccountManagerActor.name)
 
+  val balanceRefreshIntervalSeconds =
+    selfConfig.getInt("balance-allowance-refresh-interval-seconds")
+
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
@@ -234,7 +237,7 @@ class MultiAccountManagerActor(
       )
   }
 
-  implicit private val baProvider = new BalanceAndAllowanceProvider {
+  implicit private val balanceProvider = new BalanceAndAllowanceProvider {
 
     def getBalanceAndALlowance(
         address: String,
@@ -268,7 +271,12 @@ class MultiAccountManagerActor(
         log.info(s"created new account manager for address $address")
         accountManagerActors.add(
           address,
-          context.actorOf(Props(new AccountManagerActor(address)), address)
+          context.actorOf(
+            Props(
+              new AccountManagerActor(address, balanceRefreshIntervalSeconds)
+            ),
+            address
+          )
         )
       }
       accountManagerActors.get(address)

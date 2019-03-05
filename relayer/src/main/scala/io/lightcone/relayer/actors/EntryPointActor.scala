@@ -69,8 +69,8 @@ class EntryPointActor(
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    // TODO(hongyu): implement this
-    case _: GetAccountActivities.Req => None
+    case _: GetActivities.Req =>
+      Some(ActivityValidator.name)
 
     case _: GetAccount.Req | _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
@@ -81,16 +81,12 @@ class EntryPointActor(
     case _: GetRings.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
-    case _: JsonRpc.Request | _: JsonRpc.RequestWithHeight =>
+    case _: JsonRpc.Request =>
       Some(EthereumAccessActor.name)
 
     case _: GetOrderbook.Req => Some(OrderbookManagerMessageValidator.name)
 
     case _: GetMarkets.Req | _: GetTokens.Req => Some(MetadataRefresher.name)
-
-    // TODO(hongyu): remove all of the folloiwng
-    case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
-      Some(TransactionRecordMessageValidator.name)
 
     case _: GetMarketHistory.Req => Some(MarketHistoryActor.name)
 

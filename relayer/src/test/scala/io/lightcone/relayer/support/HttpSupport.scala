@@ -24,7 +24,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.RpcBinding
 import io.lightcone.relayer.jsonrpc._
-import io.lightcone.relayer.data.{GetTransactionRecords, _}
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib.ProtoSerializer
 import org.slf4s.Logging
@@ -148,34 +148,6 @@ trait HttpSupport extends RpcBinding with Logging {
         getBalanceResF.mapTo[GetAccount.Res],
         timeout.duration
       )
-      if (assertFun(res)) {
-        resOpt = Some(res)
-      } else {
-        Thread.sleep(200)
-      }
-    }
-    if (resOpt.isEmpty) {
-      throw new Exception(
-        s"Timed out waiting for expectBalanceRes of req:${req} "
-      )
-    }
-    resOpt
-  }
-
-  def expectTransfersRes(
-      req: GetTransactionRecords.Req,
-      assertFun: GetTransactionRecords.Res => Boolean,
-      expectTimeout: Timeout = timeout
-    ) = {
-    var resOpt: Option[GetTransactionRecords.Res] = None
-    val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
-
-    //必须等待jsonRpcServer启动完成
-    while (resOpt.isEmpty &&
-           System.currentTimeMillis() <= lastTime) {
-      val getTransferRecordsF =
-        singleRequest(req, "get_transactions").mapTo[GetTransactionRecords.Res]
-      val res = Await.result(getTransferRecordsF, timeout.duration)
       if (assertFun(res)) {
         resOpt = Some(res)
       } else {

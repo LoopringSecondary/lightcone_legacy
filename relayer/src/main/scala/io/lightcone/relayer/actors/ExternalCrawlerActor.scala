@@ -144,6 +144,8 @@ class ExternalCrawlerActor(
         tokenTickers
       )
     } yield {
+      assert(tokenTickers.nonEmpty)
+      assert(currencyTickers.nonEmpty)
       assert(persistTickers.nonEmpty)
 
       refreshTickers(persistTickers)

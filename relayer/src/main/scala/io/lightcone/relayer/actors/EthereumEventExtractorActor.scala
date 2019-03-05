@@ -20,6 +20,7 @@ import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._

@@ -17,13 +17,13 @@
 package io.lightcone.relayer.implicits
 
 import io.lightcone.core.Currency
-import io.lightcone.lib.NumericConversion
+import io.lightcone.lib.{Address, NumericConversion}
 
 private[relayer] class RichCurrency(ticker: Currency) {
 
   def getAddress() = {
     if (ticker.isEth) {
-      "0x0"
+      Address.ZERO.toString
     } else {
       NumericConversion.toHexString(BigInt(Math.abs(ticker.name.hashCode)))
     }

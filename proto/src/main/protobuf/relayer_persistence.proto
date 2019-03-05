@@ -21,8 +21,8 @@ package io.lightcone.relayer.data;
 
 import "core.proto";
 import "persistence.proto";
+import "ethereum_persistence.proto";
 import "relayer_common.proto";
-import "relayer_ethereum.proto";
 import "ethereum_event.proto";
 
 /////////////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ message PersistOrder {
 message UpdateOrderState {
     message Req {
         string hash = 1;
-        io.lightcone.core.RawOrder .State state = 2;
+        io.lightcone.core.RawOrder.State state = 2;
         bool changeUpdatedAtField = 3;
     }
 
@@ -144,7 +144,7 @@ message GetFills {
     }
 
     message Res {
-        repeated io.lightcone.persistence.Fill fills   = 1;
+        repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
         int32   total  = 2;
     }
 }
@@ -164,7 +164,7 @@ message GetRings {
     }
 
     message Res {
-        repeated io.lightcone.persistence.Ring rings    = 1;
+        repeated io.lightcone.ethereum.persistence.Ring rings    = 1;
         int32 total                                     = 2;
     }
 }
@@ -202,73 +202,12 @@ message UpdateTxInBlock {
     }
 }
 
-message TransactionRecord {
-    enum RecordType {
-        TRANSFER        = 0;
-        ERC20_TRANSFER  = 1;
-        ORDER_FILLED    = 2;
-        ORDER_CANCELLED = 3;
-    }
-    message EventData {
-        oneof event {
-            io.lightcone.ethereum.event.TransferEvent        transfer       = 101;
-            io.lightcone.ethereum.event.OrdersCancelledOnChainEvent orderCancelled = 102;
-            io.lightcone.ethereum.event.CutoffEvent          cutoff         = 103;
-            io.lightcone.ethereum.event.OrderFilledEvent     filled         = 104;
-        }
-    }
-    io.lightcone.ethereum.event.EventHeader header       = 1;
-    string      owner        = 2;
-    RecordType  record_type  = 3;
-    int64       market_id    = 4;
-    string      market_name  = 5; // LRC-WETH
-    int64       sequence_id  = 6;
-    EventData   event_data   = 7;
-}
-
-message PersistTransactionRecord {
-    message Req {
-        TransactionRecord transaction   = 1;
-    }
-    message Res {
-        bool       already_exist = 1;
-        io.lightcone.core.ErrorCode  error         = 2;
-    }
-}
-
-message GetTransactionRecords {
-    message QueryType {
-        TransactionRecord.RecordType value  = 1;
-    }
-    message Req {
-        string        owner       = 1;
-        QueryType     query_type  = 2;
-        io.lightcone.persistence.SortingType   sort        = 3;
-        io.lightcone.persistence.CursorPaging  paging      = 4;
-    }
-
-    message Res {
-        repeated TransactionRecord transactions = 1;
-    }
-}
-
-message GetTransactionRecordCount {
-    message Req {
-        string owner                                = 1;
-        GetTransactionRecords.QueryType query_type  = 2;
-    }
-
-    message Res {
-        int32 count = 1;
-    }
-}
-
 message PersistOHLCData {
     message Req {
-        io.lightcone.ethereum.event.OHLCRawDataEvent data    = 1;
+        io.lightcone.ethereum.persistence.OHLCRawData data    = 1;
     }
     message Res {
-        io.lightcone.ethereum.event.OHLCRawDataEvent record  = 1;
+        io.lightcone.ethereum.persistence.OHLCRawData record  = 1;
         io.lightcone.core.ErrorCode error     = 2;
     }
 }

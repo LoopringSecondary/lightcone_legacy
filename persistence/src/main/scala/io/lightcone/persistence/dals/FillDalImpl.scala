@@ -22,6 +22,7 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.persistence._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile

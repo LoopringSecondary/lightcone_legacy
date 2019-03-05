@@ -18,7 +18,7 @@ package io.lightcone.relayer.socketio
 
 import io.lightcone.core._
 import io.lightcone.lib.Address
-import io.lightcone.persistence._
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 
 class RelayerNotifier() extends SocketIONotifier {

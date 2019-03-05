@@ -63,6 +63,7 @@ class MetadataManagerActor(
     extends InitializationRetryActor
     with RepeatedJobActor
     with ActorLogging {
+
   import ErrorCode._
 
   val selfConfig = config.getConfig(MetadataManagerActor.name)
@@ -94,18 +95,19 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
-          _ <- if (token.burnRateForMarket != burnRateRes.forMarket || token.burnRateForP2P != burnRateRes.forP2P)
+          burnRate = burnRateRes.getBurnRate
+          _ <- if (token.burnRateForMarket != burnRate.forMarket || token.burnRateForP2P != burnRate.forP2P)
             dbModule.tokenMetadataDal
               .updateBurnRate(
                 token.address,
-                burnRateRes.forMarket,
-                burnRateRes.forP2P
+                burnRate.forMarket,
+                burnRate.forP2P
               )
           else Future.unit
         } yield
           token.copy(
-            burnRateForMarket = burnRateRes.forMarket,
-            burnRateForP2P = burnRateRes.forP2P
+            burnRateForMarket = burnRate.forMarket,
+            burnRateForP2P = burnRate.forP2P
           )
       })
       tickers_ <- (externalCrawlerActor ? LoadTickers.Req())
@@ -151,11 +153,12 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = req.token
           )).mapTo[GetBurnRate.Res]
+          burnRate = burnRateRes.getBurnRate
           result <- dbModule.tokenMetadataDal
             .updateBurnRate(
               req.token,
-              burnRateRes.forMarket,
-              burnRateRes.forP2P
+              burnRate.forMarket,
+              burnRate.forP2P
             )
           tokens_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
         } yield {
@@ -222,12 +225,6 @@ class MetadataManagerActor(
         publish()
       }
     }
-
-    case _: GetTokens.Req =>
-      sender ! GetTokens.Res(tokens)
-
-    case _: GetMarkets.Req =>
-      sender ! GetMarkets.Res(markets)
   }
 
   private def publish() = {
@@ -279,7 +276,7 @@ class MetadataManagerActor(
   }
 
   private def refreshTokenAndMarket() = {
-    if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickersInUsd.nonEmpty && marketMetadatas.nonEmpty) {
+    if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickersInUsd.nonEmpty) {
       val tokenMetadataMap = tokenMetadatas.map(m => m.symbol -> m).toMap
       val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
       val tokenTickerMap = tokenTickersInUsd.map(t => t.symbol -> t.price).toMap
