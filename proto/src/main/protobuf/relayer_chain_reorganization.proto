@@ -32,7 +32,3 @@ message RecordAccountUpdateReq {
     string address              = 2;
     string token_address        = 3;
 }
-
-message NotifyChainReorganization {
-    int64 block                 = 1;
-}

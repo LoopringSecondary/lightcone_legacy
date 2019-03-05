@@ -94,7 +94,7 @@ class EthereumEventExtractorActor(
         onlineBlock <- getBlockData(blockData.height - 1)
       } yield {
         blockData = onlineBlock.get
-        if (dbBlock.get.hash == onlineBlock.get.hash)
+        if (dbBlock.map(_.hash) == onlineBlock.map(_.hash))
           self ! GET_BLOCK
         else
           self ! BLOCK_REORG_DETECTED
