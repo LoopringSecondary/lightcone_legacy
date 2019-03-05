@@ -16,21 +16,20 @@
 
 package io.lightcone.ethereum.extractor
 
-import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.RawOrderValidatorImpl
-import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
-import io.lightcone.ethereum.persistence._
+import io.lightcone.ethereum.abi._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class RingMinedEventExtractorSpec extends AbstractExtractorSpec {
+class BurnRateEventExtractorSpec extends AbstractExtractorSpec {
 
-  "extract a block contains SubmitRing" should "get events correctly" in {
+  "extract a block contains BurnRateEvent" should "get events correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     implicit val orderValidator = new RawOrderValidatorImpl()
-    val ringMinedEventExtractor = new TxRingMinedEventExtractor()
+    val burnRateEventExtractor = new TxTokenBurnRateEventExtractor()
+    //TODO(hongyu):与孔亮确定燃烧请求
     val transactions =
       getTransactionDatas("ethereum/src/test/resources/event/ring_mined_block")
     val tx = transactions(0)
@@ -39,30 +38,9 @@ class RingMinedEventExtractorSpec extends AbstractExtractorSpec {
       tx.receiptAndHeaderOpt.get._1.logs(0).topics.toArray
     )
     val events = Await.result(
-      ringMinedEventExtractor.extractEvents(tx),
+      burnRateEventExtractor.extractEvents(tx),
       5.second
     )
-    val fills = events.filter(_ match {
-      case _: Fill => true
-      case _       => false
-    })
-    fills.size should be(2)
-    val activities = events.filter(_ match {
-      case _: Activity => true
-      case _           => false
-    })
-    activities.size should be(4)
 
-    val ringMinedEvents = events.filter(_ match {
-      case _: PRingMinedEvent => true
-      case _                  => false
-    })
-    ringMinedEvents.size should be(1)
-
-    val ohlcDatas = events.filter(_ match {
-      case _: OHLCRawData => true
-      case _              => false
-    })
-    ohlcDatas.size should be(2)
   }
 }
