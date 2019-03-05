@@ -136,3 +136,10 @@ message BlockEvent {
     repeated Tx txs = 2;
     string shardKey = 3; // for messages sending to all shard
 }
+
+message AddressNonceChangedEvent {
+    string tx_hash = 1;
+    string from = 2;
+    int32 nonce = 3;
+    io.lightcone.ethereum.TxStatus tx_status = 4;
+}
