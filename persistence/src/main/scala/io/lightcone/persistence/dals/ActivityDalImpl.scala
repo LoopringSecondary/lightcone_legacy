@@ -46,8 +46,8 @@ class ActivityDalImpl @Inject()(
     // set block to a certain value if pending
     val activities_ = activities.map { a =>
       if (a.txStatus == pendingTxStatus)
-        a.copy(block = ACTIVITY_PENDING_BLOCK_HEIGHT)
-      else a
+        a.copy(block = ACTIVITY_PENDING_BLOCK_HEIGHT, sequenceId = 0L)
+      else a.copy(sequenceId = 0L)
     }
     val a = (for {
       // delete pending activities with current block's txHash
