@@ -62,9 +62,10 @@ final class TxTransferEventExtractor @Inject()(
       .filter(event => event.to == wethAddress || event.from == wethAddress)
       .map(extractActivity)
 
-    transferEvents ++ transferActivity ++ wethActivity
+    transferActivity ++ wethActivity
   }
 
+  //从TransferEvent抽取Transfer Activity,Wrap,Unwrap等Activity
   def extractActivity(event: PTransferEvent): Activity = {
     Activity(
       owner = event.owner,
@@ -102,6 +103,7 @@ final class TxTransferEventExtractor @Inject()(
     )
   }
 
+  //抽取成功的事件
   def extractFromReceipt(
       receipt: TransactionReceipt,
       header: Option[EventHeader]
@@ -163,6 +165,7 @@ final class TxTransferEventExtractor @Inject()(
     } else events
   }
 
+  //抽取失败的事件或者pending的tx的事件
   def extractFromTxInput(
       tx: Transaction,
       header: Option[EventHeader]

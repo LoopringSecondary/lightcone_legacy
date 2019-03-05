@@ -45,13 +45,12 @@ class TxApprovalEventExtractor @Inject()(
 
   def extractEvents(source: TransactionData): Future[Seq[AnyRef]] = Future {
     val events = extractApproveEvents(source)
-    val activities =
-      events
-        .filterNot(event => event.getHeader.txTo == protocolAddress)
-        .map(extractTokenAuthActivity)
-    events ++ activities
+    events
+      .filterNot(event => event.getHeader.txTo == protocolAddress)
+      .map(extractTokenAuthActivity)
   }
 
+  // 从ApprovalEvent中抽取Token Auth Activity
   def extractTokenAuthActivity(event: PApprovalEvent): Activity = {
     Activity(
       owner = event.owner,
@@ -92,6 +91,7 @@ class TxApprovalEventExtractor @Inject()(
     }
   }
 
+  //提取由于交易造成的授权变化以及成功的授权事件
   def extractFromReceipt(
       receipt: TransactionReceipt,
       header: Option[EventHeader]
@@ -124,6 +124,7 @@ class TxApprovalEventExtractor @Inject()(
     }.filter(_.isDefined).map(_.get)
   }
 
+  //失败或者pending的tx 使用该方法进行提取,由于BNB没有授权事件，此类无授权事件的token也应该采用该方法进行提取
   def extractFromTxInput(
       tx: Transaction,
       header: Option[EventHeader]
