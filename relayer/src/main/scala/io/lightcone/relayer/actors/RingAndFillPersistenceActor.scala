@@ -63,7 +63,7 @@ class RingAndFillPersistenceActor(
 
     case req: BlockEvent =>
       (for {
-        result <- dbModule.fillDal.clearForkedFills(req)
+        result <- dbModule.fillDal.cleanUpForBlockReorganization(req)
       } yield result).sendTo(sender)
   }
 

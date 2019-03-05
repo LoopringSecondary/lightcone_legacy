@@ -111,7 +111,7 @@ class FillDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def clearForkedFills(req: BlockEvent): Future[Int] =
+  def cleanUpForBlockReorganization(req: BlockEvent): Future[Int] =
     db.run(
       query
         .filter(_.blockHeight >= req.blockNumber)
