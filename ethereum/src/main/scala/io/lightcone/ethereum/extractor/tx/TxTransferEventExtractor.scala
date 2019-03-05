@@ -24,7 +24,10 @@ import io.lightcone.ethereum.extractor._
 import io.lightcone.ethereum.persistence.Activity
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
-import io.lightcone.ethereum.event.{EventHeader, TransferEvent => PTransferEvent}
+import io.lightcone.ethereum.event.{
+  EventHeader,
+  TransferEvent => PTransferEvent
+}
 
 import scala.concurrent._
 
@@ -35,7 +38,8 @@ final class TxTransferEventExtractor @Inject()(
     val protocol: String)
     extends EventExtractor[TransactionData, AnyRef] {
 
-  val wethAddress = metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
+  val wethAddress =
+    metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
   val protocolAddress = Address.normalize(protocol)
 
   def extractEvents(txdata: TransactionData): Future[Seq[AnyRef]] = Future {
@@ -73,7 +77,7 @@ final class TxTransferEventExtractor @Inject()(
   def extractTransferEvents(txdata: TransactionData) = {
     val events = txdata.receiptAndHeaderOpt match {
       case Some((receipt, header)) if header.txStatus.isTxStatusSuccess =>
-        extractFromReceipt(receipt,Some(header))
+        extractFromReceipt(receipt, Some(header))
       case Some((_, header)) if header.txStatus.isTxStatusFailed =>
         extractEventsFromTxInput(txdata.tx, Some(header))
       case _ =>
@@ -93,50 +97,53 @@ final class TxTransferEventExtractor @Inject()(
     )
   }
 
-  def extractFromReceipt(receipt:TransactionReceipt,header:Option[EventHeader]): Seq[PTransferEvent] = {
+  def extractFromReceipt(
+      receipt: TransactionReceipt,
+      header: Option[EventHeader]
+    ): Seq[PTransferEvent] = {
     val txValue = NumericConversion.toBigInt(header.get.getTxValue)
     val events = receipt.logs.flatMap { log =>
-          wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-            case Some(transfer: TransferEvent.Result) =>
-              Seq(
-                PTransferEvent(
-                  header = header,
-                  from = Address.normalize(transfer.from),
-                  to = Address.normalize(transfer.receiver),
-                  token = Address.normalize(log.address),
-                  amount = Some(NumericConversion.toAmount(transfer.amount))
-                )
-              )
-            case Some(withdraw: WithdrawalEvent.Result) =>
-              Seq(
-                PTransferEvent(
-                  header = header,
-                  from = Address.normalize(withdraw.src),
-                  to = Address.normalize(log.address),
-                  token = Address.normalize(log.address),
-                  amount = Some(NumericConversion.toAmount(withdraw.wad))
-                ),
-                PTransferEvent(
-                  Some(header),
-                  from = Address.normalize(log.address),
-                  to = Address.normalize(withdraw.src),
-                  token = Address.ZERO.toString(),
-                  amount = Some(NumericConversion.toAmount(withdraw.wad))
-                )
-              )
-            case Some(deposit: DepositEvent.Result) =>
-              Seq(
-                PTransferEvent(
-                  header = header,
-                  from = Address.normalize(log.address),
-                  to = Address.normalize(deposit.dst),
-                  token = Address.normalize(log.address),
-                  amount = Some(NumericConversion.toAmount(deposit.wad))
-                )
-              )
-            case _ => Seq.empty
-          }
-        }
+      wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(transfer: TransferEvent.Result) =>
+          Seq(
+            PTransferEvent(
+              header = header,
+              from = Address.normalize(transfer.from),
+              to = Address.normalize(transfer.receiver),
+              token = Address.normalize(log.address),
+              amount = Some(NumericConversion.toAmount(transfer.amount))
+            )
+          )
+        case Some(withdraw: WithdrawalEvent.Result) =>
+          Seq(
+            PTransferEvent(
+              header = header,
+              from = Address.normalize(withdraw.src),
+              to = Address.normalize(log.address),
+              token = Address.normalize(log.address),
+              amount = Some(NumericConversion.toAmount(withdraw.wad))
+            ),
+            PTransferEvent(
+              Some(header),
+              from = Address.normalize(log.address),
+              to = Address.normalize(withdraw.src),
+              token = Address.ZERO.toString(),
+              amount = Some(NumericConversion.toAmount(withdraw.wad))
+            )
+          )
+        case Some(deposit: DepositEvent.Result) =>
+          Seq(
+            PTransferEvent(
+              header = header,
+              from = Address.normalize(log.address),
+              to = Address.normalize(deposit.dst),
+              token = Address.normalize(log.address),
+              amount = Some(NumericConversion.toAmount(deposit.wad))
+            )
+          )
+        case _ => Seq.empty
+      }
+    }
 
     if (txValue > 0) {
       events.+:(
