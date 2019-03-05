@@ -38,7 +38,7 @@ class AllowanceUpdateAddressExtractor @Inject()(
     val timeout: Timeout,
     val ec: ExecutionContext,
     val delegate: String,
-    val event: TxApprovalEventExtractor)
+    val extractor: TxApprovalEventExtractor)
     extends EventExtractor[BlockWithTxObject, AddressAllowanceUpdatedEvent] {
 
   val delegateAddress = Address.normalize(delegate)
@@ -64,7 +64,7 @@ class AllowanceUpdateAddressExtractor @Inject()(
           txStatus = receipt.status,
           txValue = tx.value
         )
-        event
+        extractor
           .extractApproveEvents(
             TransactionData(tx, Some(receipt -> eventHeader))
           )
@@ -77,36 +77,37 @@ class AllowanceUpdateAddressExtractor @Inject()(
       }
       .distinct
 
+    getAllowances(addresses)
+  }
+
+  def getAllowances(
+      addresses: Seq[AddressAllowanceUpdatedEvent]
+    ): Future[Seq[AddressAllowanceUpdatedEvent]] = {
+    val balanceCallReqs = addresses.zipWithIndex.map {
+      case (address, index) =>
+        val data = erc20Abi.allowance.pack(
+          AllowanceFunction.Parms(
+            _owner = address.address,
+            _spender = delegateAddress
+          )
+        )
+        val param = TransactionParams(to = address.token, data = data)
+        EthCall.Req(index, Some(param), "latest")
+    }
+    val batchCallReq = BatchCallContracts.Req(balanceCallReqs, true)
     for {
       tokenAllowances <- if (addresses.nonEmpty) {
-        val balanceCallReqs = addresses.zipWithIndex.map {
-          case (address, index) =>
-            val data = erc20Abi.allowance.pack(
-              AllowanceFunction.Parms(
-                _owner = address.address,
-                _spender = delegateAddress
-              )
-            )
-            val param = TransactionParams(to = address.token, data = data)
-            EthCall.Req(index, Some(param), "latest")
-        }
-        val batchCallReq = BatchCallContracts.Req(
-          balanceCallReqs,
-          returnBlockNum = true
-        )
-
         (ethereumAccessor() ? batchCallReq)
           .mapTo[BatchCallContracts.Res]
           .map(
             resp =>
-              resp.resps
-                .map(
-                  res =>
-                    Amount(
-                      NumericConversion.toAmount(res.result).value,
-                      resp.block
-                    )
-                )
+              resp.resps.map(
+                res =>
+                  Amount(
+                    NumericConversion.toAmount(res.result).value,
+                    resp.block
+                  )
+              )
           )
       } else {
         Future.successful(Seq.empty)
@@ -115,7 +116,6 @@ class AllowanceUpdateAddressExtractor @Inject()(
       (addresses zip tokenAllowances).map(
         item => item._1.withAllowance(item._2)
       )
-
   }
 
 }

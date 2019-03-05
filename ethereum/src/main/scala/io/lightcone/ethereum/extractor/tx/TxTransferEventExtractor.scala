@@ -42,8 +42,8 @@ final class TxTransferEventExtractor @Inject()(
     metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
   val protocolAddress = Address.normalize(protocol)
 
-  def extractEvents(txdata: TransactionData): Future[Seq[AnyRef]] = Future {
-    val transferEvents = extractTransferEvents(txdata)
+  def extractEvents(txData: TransactionData): Future[Seq[AnyRef]] = Future {
+    val transferEvents = extractTransferEvents(txData)
     val transferActivity = transferEvents
       .filterNot(
         event =>
@@ -62,7 +62,7 @@ final class TxTransferEventExtractor @Inject()(
     transferEvents ++ transferActivity ++ wethActivity
   }
 
-  def extractActivity(event: PTransferEvent) = {
+  def extractActivity(event: PTransferEvent): Activity = {
     Activity(
       owner = event.owner,
       block = event.getHeader.blockHeader.map(_.height).getOrElse(-1L),
@@ -74,14 +74,16 @@ final class TxTransferEventExtractor @Inject()(
     )
   }
 
-  def extractTransferEvents(txdata: TransactionData) = {
-    val events = txdata.receiptAndHeaderOpt match {
+  def extractTransferEvents(txData: TransactionData): Seq[PTransferEvent] = {
+    val events = txData.receiptAndHeaderOpt match {
       case Some((receipt, header)) if header.txStatus.isTxStatusSuccess =>
         extractFromReceipt(receipt, Some(header))
+
       case Some((_, header)) if header.txStatus.isTxStatusFailed =>
-        extractEventsFromTxInput(txdata.tx, Some(header))
+        extractFromTxInput(txData.tx, Some(header))
+
       case _ =>
-        val tx = txdata.tx
+        val tx = txData.tx
         val eventHeader = EventHeader(
           txFrom = Address.normalize(tx.from),
           txHash = tx.hash,
@@ -89,7 +91,7 @@ final class TxTransferEventExtractor @Inject()(
           txStatus = TxStatus.TX_STATUS_PENDING,
           txValue = Some(NumericConversion.toAmount(tx.value))
         )
-        extractEventsFromTxInput(tx, Some(eventHeader))
+        extractFromTxInput(tx, Some(eventHeader))
     }
 
     events.flatMap(
@@ -124,7 +126,7 @@ final class TxTransferEventExtractor @Inject()(
               amount = Some(NumericConversion.toAmount(withdraw.wad))
             ),
             PTransferEvent(
-              Some(header),
+              header,
               from = Address.normalize(log.address),
               to = Address.normalize(withdraw.src),
               token = Address.ZERO.toString(),
@@ -148,9 +150,9 @@ final class TxTransferEventExtractor @Inject()(
     if (txValue > 0) {
       events.+:(
         PTransferEvent(
-          header = txdata.receiptAndHeaderOpt.map(_._2),
-          from = Address.normalize(tx.from),
-          to = Address.normalize(tx.to),
+          header = header,
+          from = Address.normalize(receipt.from),
+          to = Address.normalize(receipt.to),
           token = Address.ZERO.toString(),
           amount = Some(NumericConversion.toAmount(txValue))
         )
@@ -158,7 +160,7 @@ final class TxTransferEventExtractor @Inject()(
     } else events
   }
 
-  def extractEventsFromTxInput(
+  def extractFromTxInput(
       tx: Transaction,
       header: Option[EventHeader]
     ): Seq[PTransferEvent] = {
@@ -258,16 +260,16 @@ final class TxTransferEventExtractor @Inject()(
     if (event.from == wethAddress && event.token == wethAddress)
       return Activity.ActivityType.ETHER_WRAP
 
-    if (event.from == event.owner) {
-      if (event.token == Address.ZERO.toString())
-        Activity.ActivityType.ETHER_TRANSFER_OUT
-      else
-        Activity.ActivityType.TOKEN_TRANSFER_OUT
-    } else {
-      if (event.token == Address.ZERO.toString())
-        Activity.ActivityType.ETHER_TRANSFER_IN
-      else Activity.ActivityType.TOKEN_TRANSFER_IN
-    }
+    if (event.from == event.owner && event.token == Address.ZERO.toString())
+      return Activity.ActivityType.ETHER_TRANSFER_OUT
+
+    if (event.from == event.owner && event.token != Address.ZERO.toString())
+      return Activity.ActivityType.TOKEN_TRANSFER_OUT
+
+    if (event.token == Address.ZERO.toString())
+      Activity.ActivityType.ETHER_TRANSFER_IN
+    else Activity.ActivityType.TOKEN_TRANSFER_IN
+
   }
 
   def getActivityDetail(event: PTransferEvent): Activity.Detail = {
@@ -280,19 +282,18 @@ final class TxTransferEventExtractor @Inject()(
       )
     }
     if (event.token == Address.ZERO.toString()) {
-      Activity.Detail.EtherTransfer(
+      return Activity.Detail.EtherTransfer(
         Activity.EtherTransfer(
           address = event.to,
           amount = event.amount
         )
       )
-    } else {
-      Activity.Detail.TokenTransfer(
-        Activity.TokenTransfer(
-          address = event.to,
-          amount = event.amount
-        )
-      )
     }
+    Activity.Detail.TokenTransfer(
+      Activity.TokenTransfer(
+        address = event.to,
+        amount = event.amount
+      )
+    )
   }
 }

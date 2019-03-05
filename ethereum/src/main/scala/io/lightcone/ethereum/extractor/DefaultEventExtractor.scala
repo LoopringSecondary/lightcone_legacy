@@ -24,15 +24,11 @@ import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.lightcone.core.MetadataManager
-import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 
 final class DefaultEventExtractor @Inject()(
     implicit
     val txEventExtractor: EventExtractor[TransactionData, AnyRef],
-    val ec: ExecutionContext,
-    val metadataManager: MetadataManager,
-    val protocol: String)
+    val ec: ExecutionContext)
     extends EventExtractor[BlockWithTxObject, AnyRef] {
 
   // TODO(hongyu): add more block/tx-event extractors here in the list.

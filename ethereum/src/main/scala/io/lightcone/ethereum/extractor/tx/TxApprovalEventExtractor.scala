@@ -70,8 +70,10 @@ class TxApprovalEventExtractor @Inject()(
       case Some((receipt, header)) if header.txStatus.isTxStatusSuccess =>
         (extractFromReceipt(receipt, Some(header))
           ++ extractFromTxInput(txData.tx, Some(header))).distinct
+
       case Some((_, header)) if header.txStatus.isTxStatusFailed =>
         extractFromTxInput(txData.tx, Some(header))
+
       case _ =>
         val tx = txData.tx
         val eventHeader = EventHeader(
