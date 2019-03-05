@@ -20,15 +20,16 @@ import io.lightcone.core.MetadataManager
 import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
 import io.lightcone.ethereum.event.EventHeader
-import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
+import io.lightcone.core.MetadataManager
+import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 
 final class DefaultEventExtractor @Inject()(
-  )(
     implicit
+    val txEventExtractor: EventExtractor[TransactionData, AnyRef],
     val ec: ExecutionContext,
     val metadataManager: MetadataManager,
     val protocol: String)
@@ -38,11 +39,6 @@ final class DefaultEventExtractor @Inject()(
   private val blockEventExtractor: EventExtractor[BlockWithTxObject, AnyRef] =
     EventExtractor.compose[BlockWithTxObject, AnyRef]( //
       new BlockGasPriceExtractor() // more block event extractors
-    )
-
-  private val txEventExtractor: EventExtractor[TransactionData, AnyRef] =
-    EventExtractor.compose[TransactionData, AnyRef]( //
-      new TxTransferEventExtractor() // more tx event extractors
     )
 
   def extractEvents(block: BlockWithTxObject) =
