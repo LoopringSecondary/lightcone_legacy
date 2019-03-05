@@ -85,7 +85,7 @@ class ActivityDalImpl @Inject()(
     db.run(deleteActivitiesWithHashesDBIO(txHashes))
       .map(_ > 0)
 
-  def cleanActivitiesForBlockReorganization(req: BlockEvent): Future[Unit] = {
+  def cleanActivitiesForReorg(req: BlockEvent): Future[Unit] = {
     val op = (for {
       // delete pending and confirmed activities with current block's txHashes
       _ <- deleteActivitiesWithHashesDBIO(req.txs.map(_.txHash).toSet)

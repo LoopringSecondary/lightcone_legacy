@@ -101,7 +101,7 @@ class ActivityActor(
 
     case req: BlockEvent =>
       (for {
-        _ <- activityDal.cleanActivitiesForBlockReorganization(req)
+        _ <- activityDal.cleanActivitiesForReorg(req)
       } yield {}).sendTo(sender)
 
     case req: GetActivities.Req =>
