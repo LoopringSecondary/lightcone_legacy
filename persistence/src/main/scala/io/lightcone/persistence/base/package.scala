@@ -54,5 +54,5 @@ package object base {
         case None    => Ring.Fees().toByteArray
       }, bytes => Some(Ring.Fees.parseFrom(bytes)))
 
-  val ACTIVITY_PENDING_BLOCK_HEIGHT: Long = 1000000000L
+  val PENDING_BLOCK_HEIGHT: Long = 1000000000L
 }

@@ -16,7 +16,6 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
@@ -38,8 +37,8 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       token: Option[String]
     ): Future[Int]
 
-  def deleteByTxHashes(txHashes: Set[String]): Future[Boolean]
+  def deletecActivitiesWithHashes(txHashes: Set[String]): Future[Boolean]
 
-  def cleanUpForBlockReorganization(req: BlockEvent): Future[Unit]
+  def cleanActivitiesForReorg(req: BlockEvent): Future[Unit]
 
 }

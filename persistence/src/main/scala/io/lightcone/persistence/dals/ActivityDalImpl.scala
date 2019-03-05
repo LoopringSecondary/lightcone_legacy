@@ -40,22 +40,22 @@ class ActivityDalImpl @Inject()(
 
   val query = TableQuery(new ActivityTable(shardId)(_))
   implicit val activityStatusCxolumnType = enumColumnType(TxStatus)
-  val pendingTxStatus: TxStatus = TxStatus.TX_STATUS_PENDING
+  val STATUS_PENDING: TxStatus = TxStatus.TX_STATUS_PENDING
 
   def saveActivities(activities: Seq[Activity]) = {
     // set block to a certain value if pending
     val activities_ = activities.map { a =>
-      if (a.txStatus == pendingTxStatus)
-        a.copy(block = ACTIVITY_PENDING_BLOCK_HEIGHT, sequenceId = 0L)
+      if (a.txStatus == STATUS_PENDING)
+        a.copy(block = PENDING_BLOCK_HEIGHT, sequenceId = 0L)
       else a.copy(sequenceId = 0L)
     }
-    val a = (for {
+    val op = (for {
       // delete pending activities with current block's txHash
       _ <- deletePendingByTxHashesDBIO(activities_.head.txHash)
       // save activities
       _ <- DBIO.sequence(activities_.map(saveActivityDBIO))
     } yield {}).transactionally
-    db.run(a)
+    db.run(op)
   }
 
   def getActivities(
@@ -81,29 +81,29 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def deleteByTxHashes(txHashes: Set[String]): Future[Boolean] =
-    db.run(deleteByTxHashesDBIO(txHashes))
+  def deletecActivitiesWithHashes(txHashes: Set[String]): Future[Boolean] =
+    db.run(deleteActivitiesWithHashesDBIO(txHashes))
       .map(_ > 0)
 
-  def cleanUpForBlockReorganization(req: BlockEvent): Future[Unit] = {
-    val a = (for {
-      // delete pending and blocked activities with current block's txHashes
-      _ <- deleteByTxHashesDBIO(req.txs.map(_.txHash).toSet)
+  def cleanActivitiesForReorg(req: BlockEvent): Future[Unit] = {
+    val op = (for {
+      // delete pending and confirmed activities with current block's txHashes
+      _ <- deleteActivitiesWithHashesDBIO(req.txs.map(_.txHash).toSet)
       // update all activities which block >= current block height
-      _ <- updateBlockActivitiesToPendingDBIO(req.blockNumber)
-      // delete the from address's activities which nonce <= the tx's nonce
+      _ <- changeActivitiesToPendingDBIO(req.blockNumber)
+      // delete the from address's pending activities which nonce <= the tx's nonce
       fromWithMaxNonce = req.txs
         .groupBy(_.from)
         .values
         .map(t => t.maxBy(_.nonce))
       _ <- DBIO.sequence(fromWithMaxNonce.map { r =>
-        deletePendingActivitiesWhenFromNonceBlowGivenValueDBIO(r.from, r.nonce)
+        deletePendingActivitiesWithSmallerNonceDBIO(r.from, r.nonce)
       })
     } yield {}).transactionally
-    db.run(a)
+    db.run(op)
   }
 
-  def deleteByTxHashesDBIO(
+  def deleteActivitiesWithHashesDBIO(
       txHashes: Set[String]
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query
@@ -115,30 +115,30 @@ class ActivityDalImpl @Inject()(
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query += activity
 
-  private def updateBlockActivitiesToPendingDBIO(
+  private def changeActivitiesToPendingDBIO(
       block: Long
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query
       .filter(_.block >= block)
-      .filterNot(_.block === ACTIVITY_PENDING_BLOCK_HEIGHT)
+      .filterNot(_.block === PENDING_BLOCK_HEIGHT)
       .map(c => (c.block, c.txStatus))
-      .update(ACTIVITY_PENDING_BLOCK_HEIGHT, pendingTxStatus)
+      .update(PENDING_BLOCK_HEIGHT, STATUS_PENDING)
 
   private def deletePendingByTxHashesDBIO(
       txHash: String
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query
       .filter(_.txHash === txHash)
-      .filter(_.txStatus === pendingTxStatus)
+      .filter(_.txStatus === STATUS_PENDING)
       .delete
 
-  private def deletePendingActivitiesWhenFromNonceBlowGivenValueDBIO(
+  private def deletePendingActivitiesWithSmallerNonceDBIO(
       fromOfTx: String,
       nonceWithFrom: Long
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query
       .filter(_.from === fromOfTx)
-      .filter(_.block === ACTIVITY_PENDING_BLOCK_HEIGHT)
+      .filter(_.block === PENDING_BLOCK_HEIGHT)
       .filter(_.nonce <= nonceWithFrom)
       .delete
 

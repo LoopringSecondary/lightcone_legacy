@@ -34,7 +34,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
     with OrderGenerateSupport {
 
   "submit two fullMatched orders" must {
-    "submit a ring and affect to orderbook before blocked and executed in eth" in {
+    "submit a ring and affect to orderbook before confirmed and executed in eth" in {
       val order1 =
         createRawOrder(
           amountS = "10".zeros(LRC_TOKEN.decimals),
