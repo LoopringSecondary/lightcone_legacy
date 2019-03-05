@@ -120,55 +120,6 @@ message UserCancelOrder {
     }
 }
 
-message GetFills {
-    message Req {
-        message Market {
-            string token_s = 1;
-            string token_b = 2;
-            bool   is_query_both_side = 3; // 是否查询两个方向的订单
-        }
-        message Ring2 {  // TODO(yongfeng): rename this class
-            string  ring_hash         = 3;
-            string  ring_index        = 4; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
-            string  fill_index        = 5;
-        }
-        string      owner      = 1;
-        string      tx_hash    = 2;
-        string      order_hash = 3;
-        Ring2       ring       = 4;
-        Market      market     = 5;
-        string      wallet     = 6;
-        string      miner      = 7;
-        io.lightcone.persistence.SortingType sort       = 8;
-        io.lightcone.persistence.Paging      skip       = 9;
-    }
-
-    message Res {
-        repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
-        int32   total  = 2;
-    }
-}
-
-message GetRings {
-    message Req {
-        // TODO(yongfeng): remove this Ring2 definition and use the oneof directly
-        message Ring2 {
-            oneof filter {
-                string ring_hash  = 1;
-                int64  ring_index = 2;
-            }
-        }
-        Ring2 ring              = 1;
-        io.lightcone.persistence.SortingType sort       = 2;
-        io.lightcone.persistence.Paging skip            = 3;
-    }
-
-    message Res {
-        repeated io.lightcone.ethereum.persistence.Ring rings    = 1;
-        int32 total                                     = 2;
-    }
-}
-
 message PersistSettlementTx {
     message Req {
         SettlementTx tx = 1;

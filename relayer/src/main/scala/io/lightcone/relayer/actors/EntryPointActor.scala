@@ -78,10 +78,7 @@ class EntryPointActor(
     case _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: GetOrders.Req | _: GetFills.Req =>
-      Some(DatabaseQueryMessageValidator.name)
-
-    case _: GetRings.Req =>
+    case _: GetOrders.Req | _: GetRings.Req | _: GetFills.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
     case _: JsonRpc.Request =>

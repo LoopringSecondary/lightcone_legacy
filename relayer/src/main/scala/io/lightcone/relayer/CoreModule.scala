@@ -37,7 +37,6 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -98,8 +97,6 @@ class CoreModule(
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[FillService].to[FillServiceImpl].asEagerSingleton
-    bind[RingService].to[RingServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
     bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton
