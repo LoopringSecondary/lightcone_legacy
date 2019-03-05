@@ -54,8 +54,14 @@ object HttpConnector {
       .zipWithIndex
       .map {
         case (c, index) =>
-          val node = EthereumProxySettings
-            .Node(host = c.getString("host"), port = c.getInt("port"))
+          var node = EthereumProxySettings
+            .Node(
+              host = c.getString("host"),
+              port = c.getInt("port")
+            )
+          if (c.hasPath("ws-port")) {
+            node = node.withWsPort(c.getInt("ws-port"))
+          }
           s"${name}_$index" -> node
       }
       .toMap

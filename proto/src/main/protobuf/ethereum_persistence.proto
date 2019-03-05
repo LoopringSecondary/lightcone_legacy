@@ -124,7 +124,6 @@ message Activity {
     }
 }
 
-// TODO(yongfeng): simply this.
 // For the fontend, we only need to display:
 // time, base-amount, quote-amount
 // we may also want to give back order-id and market-pair,

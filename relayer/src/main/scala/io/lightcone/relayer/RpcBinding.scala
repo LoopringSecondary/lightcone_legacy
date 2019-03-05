@@ -21,6 +21,7 @@ import io.lightcone.relayer.data._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
+  import RpcDataConversions._
 
   method("get_orderbook")
   // .accepts[ext.GetOrderbook.Req, GetOrderbook.Req]
@@ -61,10 +62,18 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetMarketHistory.Req]
     .replies[GetMarketHistory.Res]
 
+  method("get_activities")
+    .accepts[GetActivities.Req]
+    .replies[GetActivities.Res]
+
   //Ethereum Query
   method("get_account")
     .accepts[GetAccount.Req]
     .replies[GetAccount.Res]
+
+  method("get_accounts")
+    .accepts[GetAccounts.Req]
+    .replies[GetAccounts.Res]
 
   method("get_filled_amount")
     .accepts[GetFilledAmount.Req]
