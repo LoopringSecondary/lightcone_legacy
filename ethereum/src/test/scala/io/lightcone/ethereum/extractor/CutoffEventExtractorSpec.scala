@@ -56,6 +56,7 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
       "0x1f4b506f995c07302cb09b278a877562c45c109f5151f78e3a7a01f6b5571341",
       "0x1f4b506f995c07302cb09b278a877562c45c109f5151f78e3a7a01f6b5571342"
     )
+    info("Event and Activity must be correct if tx.status = TX_STATUS_SUCCESS")
     val event = OrdersCancelledOnChainEvent(
       header = Some(
         EventHeader(
@@ -104,7 +105,7 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
       .asInstanceOf[Activity] should be(activity)
 
     info(
-      "extracted events should contains OrdersCancelledOnChainEvent and Activity if tx.status = TX_STATUS_FAILED"
+      "extracted events should not contains events excepts Activity if tx.status = TX_STATUS_FAILED"
     )
     val failedTxData = tx.copy(
       receiptAndHeaderOpt = Some(
@@ -116,24 +117,20 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
       cutoffEventsExtractor.extractEvents(failedTxData),
       5.second
     )
-    failedEvents.exists(_.isInstanceOf[Activity]) should be(true)
-    failedEvents.forall(!_.isInstanceOf[OrdersCancelledOnChainEvent]) should be(
-      true
-    )
-    info(s"${failedEvents}")
+    failedEvents
+      .forall(_.isInstanceOf[Activity]) should be(true)
 
     info(
-      "extracted events should contains OrdersCancelledOnChainEvent and Activity if tx.status = TX_STATUS_PENDING"
+      "extracted events should not contains events excepts Activity if tx.status = TX_STATUS_PENDING"
     )
     val pendingTxData = tx.copy(receiptAndHeaderOpt = None)
     val pendingEvents = Await.result(
       cutoffEventsExtractor.extractEvents(pendingTxData),
       5.second
     )
-    pendingEvents.exists(_.isInstanceOf[Activity]) should be(true)
-    pendingEvents.forall(!_.isInstanceOf[OrdersCancelledOnChainEvent]) should be(
-      true
-    )
+    pendingEvents
+      .forall(_.isInstanceOf[Activity]) should be(true)
+
     val pendingActivity = pendingEvents
       .find(_.isInstanceOf[Activity])
       .get
@@ -141,7 +138,6 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
     pendingActivity.getOrderCancellation.orderIds.diff(orderHashes) should be(
       Seq.empty
     )
-    info(s"${pendingEvents}")
   }
 
   "extract block contains CutOffEvents" should "get events correctly" in {
@@ -151,15 +147,16 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
     val transactions = getTransactionDatas(
       "ethereum/src/test/resources/event/cutoff/cancel_for_trading_pair"
     )
-    val tx = transactions(0)
+    val successTxData = transactions(0)
     loopringProtocolAbi.unpackEvent(
-      tx.receiptAndHeaderOpt.get._1.logs(0).data,
-      tx.receiptAndHeaderOpt.get._1.logs(0).topics.toArray
+      successTxData.receiptAndHeaderOpt.get._1.logs(0).data,
+      successTxData.receiptAndHeaderOpt.get._1.logs(0).topics.toArray
     )
-    val events = Await.result(
-      cutoffEventsExtractor.extractEvents(tx),
+    val successEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(successTxData),
       5.second
     )
+    info("Event and Activity must be correct if tx.status = TX_STATUS_SUCCESS")
     val txHash =
       "0x60cf2c444eb2759ec2a3ffeee8dc7b69b6f7e28a0f86881a9082a054f015a2ed"
     val event = CutoffEvent(
@@ -183,7 +180,7 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
       cutoff = BigInt(10000000).longValue(),
       marketHash = "0xeb9187f4734e15e5f04058f64b9b8194781c0afa"
     )
-    events.find { e =>
+    successEvents.find { e =>
       e.isInstanceOf[CutoffEvent]
     }.get
       .asInstanceOf[CutoffEvent] should be(event)
@@ -203,10 +200,130 @@ class CutoffEventExtractorSpec extends AbstractExtractorSpec {
         )
       )
     )
-    events.find { e =>
+    successEvents.find { e =>
       e.isInstanceOf[Activity]
     }.get
       .asInstanceOf[Activity] should be(activity)
+
+    info(
+      "extracted events should not contains events excepts Activity if tx.status = TX_STATUS_FAILED"
+    )
+    val failedTxData = successTxData.copy(
+      receiptAndHeaderOpt = Some(
+        successTxData.receiptAndHeaderOpt.get._1
+          .copy(status = TX_STATUS_FAILED),
+        successTxData.receiptAndHeaderOpt.get._2
+      )
+    )
+    val failedEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(failedTxData),
+      5.second
+    )
+    failedEvents
+      .forall(_.isInstanceOf[Activity]) should be(true)
+
+    info(
+      "extracted events should not contains events excepts Activity if tx.status = TX_STATUS_PENDING"
+    )
+    val pendingTxData = successTxData.copy(receiptAndHeaderOpt = None)
+    val pendingEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(pendingTxData),
+      5.second
+    )
+    pendingEvents
+      .forall(_.isInstanceOf[Activity]) should be(true)
+  }
+
+  "extract block contains CutOffEvents of CancelAllOrdersOfOwnerFunction" should "get events correctly" in {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val cutoffEventsExtractor = new TxCutoffEventExtractor()
+    val transactions = getTransactionDatas(
+      "ethereum/src/test/resources/event/cutoff/cancel_by_owner"
+    )
+    val successTxData = transactions(0)
+    loopringProtocolAbi.unpackEvent(
+      successTxData.receiptAndHeaderOpt.get._1.logs(0).data,
+      successTxData.receiptAndHeaderOpt.get._1.logs(0).topics.toArray
+    )
+    val successEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(successTxData),
+      5.second
+    )
+    info("Event and Activity must be correct if tx.status = TX_STATUS_SUCCESS")
+    val txHash =
+      "0x640ed93707f06b4442156e03f9a637ed54eefebdb99d1f5fe9f2fe126278f2e3"
+    val event = CutoffEvent(
+      header = Some(
+        EventHeader(
+          txHash = txHash,
+          txStatus = TX_STATUS_SUCCESS,
+          blockHeader = Some(
+            BlockHeader(
+              height = 45,
+              hash =
+                "0x630c0236fe77a060a688e787fcfa4b851e85af28f8a40d612024c1587dc5a25d",
+              miner = "0x0000000000000000000000000000000000000000",
+              timestamp = 1551775916
+            )
+          )
+        )
+      ),
+      owner = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467",
+      broker = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467",
+      cutoff = BigInt(10000000).longValue()
+    )
+    successEvents.find { e =>
+      e.isInstanceOf[CutoffEvent]
+    }.get
+      .asInstanceOf[CutoffEvent] should be(event)
+    val activity = Activity(
+      owner = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467",
+      block = 45,
+      txHash = txHash,
+      activityType = ActivityType.ORDER_CANCEL,
+      timestamp = 1551775916,
+      token = "0x0000000000000000000000000000000000000000", //token为0 会放置在eth中
+      txStatus = TX_STATUS_SUCCESS,
+      detail = Activity.Detail.OrderCancellation(
+        OrderCancellation(
+          cutoff = BigInt(10000000).longValue(),
+          broker = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467"
+        )
+      )
+    )
+    successEvents.find { e =>
+      e.isInstanceOf[Activity]
+    }.get
+      .asInstanceOf[Activity] should be(activity)
+
+    info(
+      "extracted events should not contains events excepts Activity if tx.status = TX_STATUS_FAILED"
+    )
+    val failedTxData = successTxData.copy(
+      receiptAndHeaderOpt = Some(
+        successTxData.receiptAndHeaderOpt.get._1
+          .copy(status = TX_STATUS_FAILED),
+        successTxData.receiptAndHeaderOpt.get._2
+      )
+    )
+    val failedEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(failedTxData),
+      5.second
+    )
+    failedEvents
+      .forall(_.isInstanceOf[Activity]) should be(true)
+
+    info(
+      "extracted events should not contains events excepts Activity if tx.status = TX_STATUS_PENDING"
+    )
+    val pendingTxData = successTxData.copy(receiptAndHeaderOpt = None)
+    val pendingEvents = Await.result(
+      cutoffEventsExtractor.extractEvents(pendingTxData),
+      5.second
+    )
+    pendingEvents
+      .forall(_.isInstanceOf[Activity]) should be(true)
   }
 
 }
