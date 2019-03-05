@@ -23,7 +23,7 @@ import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.extractor._
-import io.lightcone.ethereum.extractor.tx.ApprovalEventExtractor
+import io.lightcone.ethereum.extractor.tx.TxApprovalEventExtractor
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import akka.pattern._
@@ -38,7 +38,7 @@ class AllowanceUpdateAddressExtractor @Inject()(
     val timeout: Timeout,
     val ec: ExecutionContext,
     val delegate: String,
-    val event: ApprovalEventExtractor)
+    val event: TxApprovalEventExtractor)
     extends EventExtractor[BlockWithTxObject, AddressAllowanceUpdatedEvent] {
 
   val delegateAddress = Address.normalize(delegate)
@@ -112,7 +112,9 @@ class AllowanceUpdateAddressExtractor @Inject()(
         Future.successful(Seq.empty)
       }
     } yield
-      (addresses zip tokenAllowances).map(item => item._1.withAllowance(item._2))
+      (addresses zip tokenAllowances).map(
+        item => item._1.withAllowance(item._2)
+      )
 
   }
 

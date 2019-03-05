@@ -30,7 +30,7 @@ import io.lightcone.ethereum.persistence.Activity
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ApprovalEventExtractor @Inject()(
+class TxApprovalEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val delegate: String,
@@ -47,7 +47,7 @@ class ApprovalEventExtractor @Inject()(
     events ++ activities
   }
 
-  def extractTokenAuthActivity(event: PApprovalEvent) = {
+  def extractTokenAuthActivity(event: PApprovalEvent): Activity = {
     Activity(
       owner = event.owner,
       block = event.getHeader.blockHeader.map(_.height).getOrElse(-1L),
@@ -88,7 +88,7 @@ class ApprovalEventExtractor @Inject()(
   def extractFromReceipt(
       receipt: TransactionReceipt,
       header: Option[EventHeader]
-    ) = {
+    ): Seq[PApprovalEvent] = {
     receipt.logs.map { log =>
       erc20Abi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(transfer: TransferEvent.Result)

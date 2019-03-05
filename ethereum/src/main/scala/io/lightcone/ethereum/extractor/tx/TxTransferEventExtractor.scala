@@ -20,14 +20,11 @@ import com.google.inject.Inject
 import io.lightcone.core.MetadataManager
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.event.{
-  EventHeader,
-  TransferEvent => PTransferEvent
-}
-import io.lightcone.ethereum.extractor.{EventExtractor, TransactionData}
+import io.lightcone.ethereum.extractor._
 import io.lightcone.ethereum.persistence.Activity
 import io.lightcone.lib._
-import io.lightcone.relayer.data.Transaction
+import io.lightcone.relayer.data._
+import io.lightcone.ethereum.event.{EventHeader, TransferEvent => PTransferEvent}
 
 import scala.concurrent._
 
@@ -38,11 +35,9 @@ final class TxTransferEventExtractor @Inject()(
     val protocol: String)
     extends EventExtractor[TransactionData, AnyRef] {
 
-  val wethAddress =
-    metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
+  val wethAddress = metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
   val protocolAddress = Address.normalize(protocol)
 
-  // TODO(yadong) sequenceId 需要计算
   def extractEvents(txdata: TransactionData): Future[Seq[AnyRef]] = Future {
     val transferEvents = extractTransferEvents(txdata)
     val transferActivity = transferEvents
@@ -77,8 +72,8 @@ final class TxTransferEventExtractor @Inject()(
 
   def extractTransferEvents(txdata: TransactionData) = {
     val events = txdata.receiptAndHeaderOpt match {
-      case Some((_, header)) if header.txStatus.isTxStatusSuccess =>
-        extractSuccessfulEvents(txdata)
+      case Some((receipt, header)) if header.txStatus.isTxStatusSuccess =>
+        extractFromReceipt(receipt,Some(header))
       case Some((_, header)) if header.txStatus.isTxStatusFailed =>
         extractEventsFromTxInput(txdata.tx, Some(header))
       case _ =>
@@ -98,17 +93,14 @@ final class TxTransferEventExtractor @Inject()(
     )
   }
 
-  def extractSuccessfulEvents(txdata: TransactionData): Seq[PTransferEvent] = {
-    val tx = txdata.tx
-    val txValue = NumericConversion.toBigInt(tx.value)
-    val events: Seq[PTransferEvent] = txdata.receiptAndHeaderOpt match {
-      case Some((receipt, header)) =>
-        receipt.logs.flatMap { log =>
+  def extractFromReceipt(receipt:TransactionReceipt,header:Option[EventHeader]): Seq[PTransferEvent] = {
+    val txValue = NumericConversion.toBigInt(header.get.getTxValue)
+    val events = receipt.logs.flatMap { log =>
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) =>
               Seq(
                 PTransferEvent(
-                  header = Some(header),
+                  header = header,
                   from = Address.normalize(transfer.from),
                   to = Address.normalize(transfer.receiver),
                   token = Address.normalize(log.address),
@@ -118,7 +110,7 @@ final class TxTransferEventExtractor @Inject()(
             case Some(withdraw: WithdrawalEvent.Result) =>
               Seq(
                 PTransferEvent(
-                  header = Some(header),
+                  header = header,
                   from = Address.normalize(withdraw.src),
                   to = Address.normalize(log.address),
                   token = Address.normalize(log.address),
@@ -135,7 +127,7 @@ final class TxTransferEventExtractor @Inject()(
             case Some(deposit: DepositEvent.Result) =>
               Seq(
                 PTransferEvent(
-                  header = Some(header),
+                  header = header,
                   from = Address.normalize(log.address),
                   to = Address.normalize(deposit.dst),
                   token = Address.normalize(log.address),
@@ -144,11 +136,7 @@ final class TxTransferEventExtractor @Inject()(
               )
             case _ => Seq.empty
           }
-        }.flatMap { event =>
-          Seq(event.copy(owner = event.from), event.copy(owner = event.to))
         }
-      case _ => Seq.empty
-    }
 
     if (txValue > 0) {
       events.+:(
