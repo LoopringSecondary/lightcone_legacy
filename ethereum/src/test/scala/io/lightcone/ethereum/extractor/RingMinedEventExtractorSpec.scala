@@ -17,9 +17,9 @@
 package io.lightcone.ethereum.extractor
 
 import io.lightcone.core.MarketPair
+import io.lightcone.ethereum.TxStatus._
+import io.lightcone.ethereum._
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.{BlockHeader, RawOrderValidatorImpl}
-import io.lightcone.ethereum.TxStatus.{TX_STATUS_FAILED, TX_STATUS_SUCCESS}
 import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
 import io.lightcone.ethereum.persistence._
 

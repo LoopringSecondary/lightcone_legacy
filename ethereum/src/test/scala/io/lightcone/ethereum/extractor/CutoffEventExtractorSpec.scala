@@ -17,13 +17,10 @@
 package io.lightcone.ethereum.extractor
 
 import io.lightcone.ethereum.BlockHeader
-import io.lightcone.ethereum.TxStatus.{TX_STATUS_FAILED, TX_STATUS_SUCCESS}
+import io.lightcone.ethereum.TxStatus._
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.event._
-import io.lightcone.ethereum.persistence.Activity.{
-  ActivityType,
-  OrderCancellation
-}
+import io.lightcone.ethereum.persistence.Activity._
 import io.lightcone.ethereum.persistence._
 
 import scala.concurrent.Await
