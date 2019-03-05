@@ -128,7 +128,7 @@ message OrdersCancelledOnChainEvent {
 message BlockEvent {
     message Tx {
         string from = 1;
-        int32  nonce = 2;
+        int32 nonce = 2;
         string tx_hash = 3;
     }
 

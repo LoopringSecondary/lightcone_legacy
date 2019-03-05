@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence
+package io.lightcone.relayer.splitmerge
 
-import io.lightcone.core._
-import io.lightcone.ethereum.persistence._
+import scala.reflect.ClassTag
 
-import scala.concurrent.Future
+trait SplitMergerProvider {
+  def get(msg: Any): Option[SplitMerger[_, _, _, _]]
+}
 
-trait ActivityService {
-  def saveActivity(activity: Activity): Future[ErrorCode]
+abstract class RegisterableSplitMergerProvider extends SplitMergerProvider {
 
-  def getActivities(
-      owner: String,
-      token: Option[String],
-      paging: CursorPaging
-    ): Future[(Seq[Activity], Int)]
+  private var registry = Map.empty[Class[_], SplitMerger[_, _, _, _]]
+
+  protected def register[T: ClassTag](splitMerger: SplitMerger[T, _, _, _]) = {
+    val klass = implicitly[ClassTag[T]].runtimeClass
+    assert(!registry.contains(klass))
+    registry += klass -> splitMerger
+  }
+
+  def get(msg: Any) = registry.get(msg.getClass)
 }

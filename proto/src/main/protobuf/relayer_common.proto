@@ -63,7 +63,8 @@ message EthereumProxySettings {
     message Node {
         string host                 = 1;
         int32  port                 = 2;
-        string ipcPath              = 3;
+        int32  ws_port              = 3;
+        string ipc_path             = 4;
     }
     int32 pool_size                 = 1;
     int32 check_interval_seconds    = 2;

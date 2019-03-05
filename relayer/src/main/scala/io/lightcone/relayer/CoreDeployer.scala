@@ -34,6 +34,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
@@ -64,6 +65,7 @@ class CoreDeployer @Inject()(
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
     socketIONotifier: SocketIONotifier,
+    splitMergerProvider: SplitMergerProvider,
     system: ActorSystem)
     extends Object
     with Logging {
@@ -111,6 +113,10 @@ class CoreDeployer @Inject()(
       .add(
         EthereumQueryActor.name, //
         EthereumQueryActor.start
+      )
+      .add(
+        PendingTxEventExtractorActor.name,
+        PendingTxEventExtractorActor.start
       )
   }
 
@@ -202,16 +208,16 @@ class CoreDeployer @Inject()(
           RingSettlementManagerActor.name, //
           RingSettlementManagerActor.start
         )
+        .add(
+          RingAndFillPersistenceActor.name,
+          RingAndFillPersistenceActor.start
+        )
 
       //-----------deploy sharded actors-----------
       actors
         .add(
           DatabaseQueryActor.name, //
           DatabaseQueryActor.start
-        )
-        .add(
-          RingAndFillPersistenceActor.name,
-          RingAndFillPersistenceActor.start
         )
         .add(
           GasPriceActor.name, //
@@ -241,7 +247,10 @@ class CoreDeployer @Inject()(
           MarketHistoryActor.name, //
           MarketHistoryActor.start
         )
-        .add(ActivityActor.name, ActivityActor.start)
+        .add(
+          ActivityActor.name,
+          ActivityActor.start
+        )
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors

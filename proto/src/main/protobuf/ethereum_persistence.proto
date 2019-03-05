@@ -124,7 +124,6 @@ message Activity {
     }
 }
 
-// TODO(yongfeng): simply this.
 // For the fontend, we only need to display:
 // time, base-amount, quote-amount
 // we may also want to give back order-id and market-pair,
@@ -160,6 +159,21 @@ message Fill {
     string miner                                = 15;
     int64  block_height                         = 16;
     int64  block_timestamp                      = 17;
+}
+
+message TxEvents {
+    message Activities {
+        repeated Activity events = 1;
+    }
+
+    message Fills {
+        repeated Fill events = 1;
+    }
+
+    oneof events {
+        Activities activities = 1;
+        Fills      fills = 2;
+    }
 }
 
 // TODO(yangli): rename to SpotPrice???

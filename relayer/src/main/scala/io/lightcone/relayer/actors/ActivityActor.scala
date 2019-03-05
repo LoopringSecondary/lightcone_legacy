@@ -20,7 +20,7 @@ import akka.actor.{Address => _, _}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.ethereum.event.BlockEvent
-import io.lightcone.ethereum.persistence.Activity
+import io.lightcone.ethereum.persistence._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
@@ -50,11 +50,12 @@ object ActivityActor extends DeployedAsShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractShardingObject: PartialFunction[Any, String] = {
-    case req: Activity          => req.owner
     case req: GetActivities.Req => req.owner
     // TODO (yongfeng)：分片逻辑待完善
-    case req: BlockEvent => req.shardKey
+    case req: TxEvents   => "0x0"
+    case req: BlockEvent => "0x0"
   }
+
 }
 
 class ActivityActor(
@@ -88,8 +89,14 @@ class ActivityActor(
 
   def ready: Receive = {
 
-    case req: Activity =>
-      activityDal.saveActivity(req)
+    // TODO yongfeng: 这个事件可以发给所有分片，每个分片过滤自己需要存储的activity ，一组activities txHash应一致
+    //  分片广播逻辑确认后可能会修改这里
+    case req: TxEvents => {
+      // filter activities which current shard care
+      val activities = req.getActivities.events
+        .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
+      activityDal.saveActivities(activities)
+    }
 
     case req: BlockEvent =>
       (for {
@@ -107,27 +114,5 @@ class ActivityActor(
       } yield res).sendTo(sender)
 
   }
-
-//  private def clearPendingWithBlock(req: BlockEvent) =
-//    for {
-//      pendingActivities <- activityDal.getPendingActivities(
-//        req.txs.map(_.from).toSet
-//      )
-//
-//      successTxHashes = req.txs.map(_.txHash)
-//
-//      inLowerNonce = req.txs.map { t =>
-//        pendingActivities.find(
-//          p =>
-//            (p.from == t.from && p.nonce == t.nonce && p.txHash != t.txHash) || (p.from == t.from && p.nonce < t.nonce && !successTxHashes
-//              .contains(p.txHash))
-//        )
-//      }.filter(_.isDefined)
-//
-//      _ <- Future.sequence(inLowerNonce.map { t =>
-//        val activity = t.get
-//        activityDal.deleteBySequenceId(activity.sequenceId)
-//      })
-//    } yield {}
 
 }

@@ -17,54 +17,56 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.event._
-import io.lightcone.ethereum.persistence.Fill
 import io.lightcone.relayer.base._
-import io.lightcone.lib._
-import io.lightcone.persistence._
-import scala.concurrent._
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum._
+import javax.inject.Inject
 
-// Owner: Yongfeng
-object RingAndFillPersistenceActor extends DeployedAsSingleton {
-  val name = "ring_and_fill_persistence"
+import scala.concurrent.{ExecutionContext, Future}
+
+object PendingTxEventExtractorActor extends DeployedAsSingleton {
+
+  val name = "pending_transaction_listener"
 
   def start(
       implicit
-      system: ActorSystem,
       config: Config,
+      system: ActorSystem,
       ec: ExecutionContext,
-      timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    startSingleton(Props(new RingAndFillPersistenceActor()))
+    startSingleton(Props(new PendingTxEventExtractorActor()))
   }
+
 }
 
-class RingAndFillPersistenceActor(
+class PendingTxEventExtractorActor @Inject()(
     implicit
     val config: Config,
+    val system: ActorSystem,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    dbModule: DatabaseModule)
+    val actors: Lookup[ActorRef])
     extends InitializationRetryActor {
 
-  // TODO yongfeng: Ring要不要存 ?
-  def ready: Receive = LoggingReceive {
-    case req: Fill =>
-      dbModule.fillDal.saveFill(req)
+  val subscribers = HttpConnector
+    .connectorNames(config)
+    .filter(node => node._2.wsPort > 0)
+    .map(node => new PendingTransactionSubscriber(node._1, node._2))
 
-    case req: BlockEvent =>
-      (for {
-        result <- dbModule.fillDal.cleanUpForBlockReorganization(req)
-      } yield result).sendTo(sender)
+  override def initialize(): Future[Unit] = Future {
+    subscribers.foreach(_.start())
+    becomeReady()
+  }
+
+  def ready: Receive = {
+    case tx: Transaction =>
+    //TODO(yadong) 解析Transaction，把事件发送到对应的Actor
+
   }
 
 }

@@ -40,7 +40,7 @@ class ActivityTable(shardId: String)(tag: Tag)
   def timestamp = column[Long]("timestamp")
   def fiatValue = column[Double]("fiat_value")
   def details = column[Array[Byte]]("details")
-  def sequenceId = column[Long]("sequence_id")
+  def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
   def from = columnAddress("from")
   def nonce = column[Int]("nonce")
   def txStatus = column[TxStatus]("tx_status")
@@ -57,7 +57,6 @@ class ActivityTable(shardId: String)(tag: Tag)
   def idx_timestamp = index("idx_timestamp", (timestamp), unique = false)
   def idx_block = index("idx_block", (block), unique = false)
   def idx_from_block_nonce = index("idx_from_block_nonce", (from, block, nonce))
-  def pk = primaryKey("pk", (owner, from, nonce))
 
   def * =
     (

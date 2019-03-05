@@ -24,15 +24,14 @@ import io.lightcone.persistence.base._
 import scala.concurrent._
 
 trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
-  def saveActivity(activity: Activity): Future[ErrorCode]
+
+  def saveActivities(activities: Seq[Activity]): Future[Unit]
 
   def getActivities(
       owner: String,
       token: Option[String],
       paging: CursorPaging
     ): Future[Seq[Activity]]
-
-  def getPendingActivities(from: Set[String]): Future[Seq[Activity]]
 
   def countActivities(
       owner: String,

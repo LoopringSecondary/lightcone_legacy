@@ -17,11 +17,14 @@
 package io.lightcone.relayer.validator
 
 import akka.actor._
+import akka.pattern.ask
 import io.lightcone.relayer.base._
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core._
 import io.lightcone.relayer.base._
+import io.lightcone.relayer.splitmerge._
 import scala.concurrent._
+import akka.util.Timeout
 
 // Owner: Daniel
 object MessageValidationActor {
@@ -33,7 +36,9 @@ object MessageValidationActor {
     )(
       implicit
       system: ActorSystem,
+      splitMergerProvider: SplitMergerProvider,
       ec: ExecutionContext,
+      timeout: Timeout,
       actors: Lookup[ActorRef]
     ): ActorRef =
     system.actorOf(
@@ -47,29 +52,45 @@ class MessageValidationActor(
     validator: MessageValidator
   )(
     implicit
+    val splitMergerProvider: SplitMergerProvider,
     val ec: ExecutionContext,
+    val timeout: Timeout,
     val actors: Lookup[ActorRef])
     extends Actor
     with ActorLogging {
 
   @inline private def destinationActor = actors.get(destinationName)
-  private val validate = validator.validate.lift
+  @inline private val validate = validator.validate.lift
 
   override def receive: Receive = {
-    case msg =>
-      val f = for {
-        validatedMsg <- validate(msg).getOrElse {
+    case originalReq =>
+      val _sender = sender
+      for {
+        req <- validate(originalReq).getOrElse {
           Future.failed(
             ErrorException(
               ERR_UNEXPECTED_ACTOR_MSG,
-              s"unexpected msg of ${msg.getClass.getName}"
+              s"unexpected msg of ${originalReq.getClass.getName}"
             )
           )
         }
-        _ = if (validatedMsg != msg)
-          log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
-      } yield validatedMsg
+        _ = if (req != originalReq)
+          log.debug(s"request rewritten from\n\t${originalReq} to\n\t${req}")
 
-      f.forwardTo(destinationActor, sender)
+        _ <- splitMergerProvider.get(req) match {
+          case None =>
+            destinationActor.tell(req, _sender)
+            Future.unit
+
+          case Some(sm) =>
+            for {
+              subResponses <- Future.sequence {
+                sm.splitRequest(req).map(destinationActor ? _)
+              }
+              res = sm.mergeResponses(subResponses)
+              _ = _sender ! res
+            } yield Unit
+        }
+      } yield Unit
   }
 }
