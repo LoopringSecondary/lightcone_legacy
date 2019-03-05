@@ -17,6 +17,7 @@
 package io.lightcone.ethereum.extractor.tx
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum.extractor._
@@ -33,17 +34,21 @@ import scala.concurrent.{ExecutionContext, Future}
 class TxApprovalEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
-    val delegate: String,
-    val protocol: String)
+    val config: Config)
     extends EventExtractor[TransactionData, AnyRef] {
 
-  val delegateAddress = Address.normalize(delegate)
-  val protocolAddress = Address.normalize(protocol)
+  val delegateAddress =
+    Address.normalize(config.getString("loopring_protocol.delegate-address"))
+
+  val protocolAddress =
+    Address.normalize(config.getString("loopring_protocol.protocol-address"))
 
   def extractEvents(source: TransactionData): Future[Seq[AnyRef]] = Future {
     val events = extractApproveEvents(source)
     val activities =
-      events.filterNot(event => event.getHeader.txTo == protocolAddress)
+      events
+        .filterNot(event => event.getHeader.txTo == protocolAddress)
+        .map(extractTokenAuthActivity)
     events ++ activities
   }
 

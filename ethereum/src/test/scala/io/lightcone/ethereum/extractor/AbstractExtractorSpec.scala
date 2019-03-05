@@ -77,11 +77,6 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
 
   implicit val formats = DefaultFormats
 
-  implicit val protocolAddress =
-    Address.normalize("0xB7101ff647ac42e776bA857907DdBE743522AA95")
-  implicit val delegateAddress =
-    Address.normalize("0xCa66Ffaf17e4B600563f6af032456AA7B05a6975")
-
   val ps = new ProtoSerializer
 
   val parser = org.json4s.native.JsonParser

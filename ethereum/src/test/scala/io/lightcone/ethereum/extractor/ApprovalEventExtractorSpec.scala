@@ -17,23 +17,21 @@
 package io.lightcone.ethereum.extractor
 
 import io.lightcone.ethereum.BlockHeader
-import io.lightcone.ethereum.event.{EventHeader, TransferEvent}
-import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
-import io.lightcone.ethereum.persistence.Activity
+import io.lightcone.ethereum.event._
+import io.lightcone.ethereum.extractor.tx.TxApprovalEventExtractor
 import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data.BlockWithTxObject
-import scala.concurrent.duration._
 
 import scala.concurrent.ExecutionContext.Implicits
 import scala.concurrent.{Await, Future}
 import scala.io.Source
+import scala.concurrent.duration._
 
-class TransferEventExtractorSepc extends AbstractExtractorSpec {
+class ApprovalEventExtractorSpec extends AbstractExtractorSpec {
 
-  "extract transfer event" should "extract all transfer events correctly" in {
-
+  "extract approval event" should "extract all approval events and activities correctly" in {
     val resStr: String = Source
-      .fromFile("ethereum/src/test/resources/event/transfer_block")
+      .fromFile("ethereum/src/test/resources/event/approval_block")
       .getLines()
       .next()
 
@@ -41,7 +39,8 @@ class TransferEventExtractorSepc extends AbstractExtractorSpec {
 
     implicit val ec = Implicits.global
 
-    implicit val txTransferEventExtractor = new TxTransferEventExtractor()
+    val approvalExtractor =
+      new TxApprovalEventExtractor()
 
     val blockHeader = BlockHeader(
       height = NumericConversion.toBigInt(source.getNumber.value).toLong,
@@ -63,40 +62,17 @@ class TransferEventExtractorSepc extends AbstractExtractorSpec {
               txStatus = receipt.status,
               txValue = tx.value
             )
-            txTransferEventExtractor
+            approvalExtractor
               .extractEvents(
                 TransactionData(tx, Some(receipt -> eventHeader))
               )
         })
         .map(_.flatten)
-      (transfers, activities) = events.partition(_.isInstanceOf[TransferEvent])
-      ethTransfers = activities
-        .asInstanceOf[Seq[Activity]]
-        .filter(
-          activity =>
-            activity.activityType.isEtherTransferIn || activity.activityType.isEtherTransferOut
-        )
-      tokenTransfers = activities
-        .asInstanceOf[Seq[Activity]]
-        .filter(
-          activity =>
-            activity.activityType.isTokenTransferIn || activity.activityType.isTokenTransferOut
-        )
-      wrapAndUnwraps = activities
-        .asInstanceOf[Seq[Activity]]
-        .filter(
-          activity =>
-            activity.activityType.isEtherUnwrap || activity.activityType.isEtherWrap
-        )
-
+      (approvals, activities) = events.partition(_.isInstanceOf[ApprovalEvent])
     } yield {
-      transfers.size should be(18)
-      ethTransfers.size should be(2)
-      tokenTransfers.size should be(2)
-      wrapAndUnwraps.size should be(4)
+      approvals.size should be(5)
+      activities.size should be(2)
     }
-
     Await.result(result, 60 second)
-
   }
 }

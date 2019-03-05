@@ -17,6 +17,7 @@
 package io.lightcone.ethereum.extractor.tx
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import io.lightcone.core.MetadataManager
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.ethereum.abi._
@@ -35,12 +36,14 @@ final class TxTransferEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val metadataManager: MetadataManager,
-    val protocol: String)
+    val config: Config)
     extends EventExtractor[TransactionData, AnyRef] {
 
   val wethAddress =
     metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
-  val protocolAddress = Address.normalize(protocol)
+
+  val protocolAddress =
+    Address.normalize(config.getString("loopring_protocol.protocol-address"))
 
   def extractEvents(txData: TransactionData): Future[Seq[AnyRef]] = Future {
     val transferEvents = extractTransferEvents(txData)
