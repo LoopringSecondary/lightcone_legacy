@@ -34,8 +34,6 @@ class DatabaseModule @Inject()(
     val tokenTickerRecordDal: TokenTickerRecordDal,
     val ohlcDataDal: OHLCDataDal,
     val orderService: OrderService,
-    val fillService: FillService,
-    val ringService: RingService,
     val blockService: BlockService,
     val settlementTxService: SettlementTxService,
     val ohlcDataService: OHLCDataService

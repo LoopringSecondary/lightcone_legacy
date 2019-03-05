@@ -124,3 +124,15 @@ message OrdersCancelledOnChainEvent {
     string broker                   = 3;
     repeated string order_hashes    = 4;
 }
+
+message BlockEvent {
+    message Tx {
+        string from = 1;
+        int32 nonce = 2;
+        string tx_hash = 3;
+    }
+
+    int64 block_number = 1;
+    repeated Tx txs = 2;
+    string shardKey = 3; // for messages sending to all shard
+}

@@ -20,7 +20,6 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import io.lightcone.lib._
 import org.json4s.JsonAST.JValue
-import scala.reflect.ClassTag
 import io.lightcone.core._
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 

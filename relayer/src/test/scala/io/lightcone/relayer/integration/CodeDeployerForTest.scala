@@ -28,6 +28,7 @@ import io.lightcone.ethereum._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.ethereum.event.EventExtractor
@@ -59,6 +60,7 @@ class CoreDeployerForTest @Inject()(
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor,
     socketIONotifier: SocketIONotifier,
+    splitMergerProvider: SplitMergerProvider,
     system: ActorSystem)
     extends CoreDeployer {
 

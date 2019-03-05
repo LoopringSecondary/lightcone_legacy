@@ -34,6 +34,7 @@ import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
 import scala.concurrent.duration._
@@ -100,8 +101,6 @@ class CoreModule(
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[FillService].to[FillServiceImpl].asEagerSingleton
-    bind[RingService].to[RingServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
     bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton
@@ -123,6 +122,8 @@ class CoreModule(
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
+
+    bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -148,14 +149,8 @@ class CoreModule(
         MarketManagerActor.name,
         RingAndFillPersistenceActor.name
       )
-      .register(
-        classOf[CutoffEvent],
-        MultiAccountManagerActor.name
-      )
-      .register(
-        classOf[OrderFilledEvent],
-        MultiAccountManagerActor.name
-      )
+      .register(classOf[CutoffEvent], MultiAccountManagerActor.name)
+      .register(classOf[OrderFilledEvent], MultiAccountManagerActor.name)
       .register(
         classOf[OrdersCancelledOnChainEvent],
         MultiAccountManagerActor.name
