@@ -96,7 +96,6 @@ class CoreModule(
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[RingService].to[RingServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
     bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton

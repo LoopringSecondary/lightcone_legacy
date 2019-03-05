@@ -121,8 +121,8 @@ class DatabaseQueryActor(
 
     case req: GetRings.Req =>
       (for {
-        result <- dbModule.ringService.getRings(req)
-        total <- dbModule.ringService.countRings(req)
+        result <- dbModule.ringDal.getRings(req)
+        total <- dbModule.ringDal.countRings(req)
       } yield GetRings.Res(result, total)) sendTo sender
   }
 
