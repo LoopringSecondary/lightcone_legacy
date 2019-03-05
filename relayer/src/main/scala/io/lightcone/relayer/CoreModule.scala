@@ -34,6 +34,7 @@ import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.ethereum.event._
 
@@ -121,6 +122,8 @@ class CoreModule(
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
+    bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
+
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
 
@@ -145,14 +148,8 @@ class CoreModule(
         MarketManagerActor.name,
         RingAndFillPersistenceActor.name
       )
-      .register(
-        classOf[CutoffEvent],
-        MultiAccountManagerActor.name
-      )
-      .register(
-        classOf[OrderFilledEvent],
-        MultiAccountManagerActor.name
-      )
+      .register(classOf[CutoffEvent], MultiAccountManagerActor.name)
+      .register(classOf[OrderFilledEvent], MultiAccountManagerActor.name)
       .register(
         classOf[OrdersCancelledOnChainEvent],
         MultiAccountManagerActor.name

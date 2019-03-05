@@ -28,7 +28,7 @@ import scala.concurrent.Future
 //     case x: SomeMessageA => // pass as-is
 //     case x: SomeMessageB => x // pass as-is
 //     case x: SomeMessageC => x.copy(field=value) // modify
-//     // unhandled messages are passed as-is
+//     // unhandled messages will triger exceptions
 //
 //
 
