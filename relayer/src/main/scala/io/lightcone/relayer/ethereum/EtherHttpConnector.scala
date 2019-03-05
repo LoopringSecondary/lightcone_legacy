@@ -264,12 +264,12 @@ class HttpConnector(
 
     case r: GetBlockWithTxHashByNumber.Req =>
       sendMessage("eth_getBlockByNumber") {
-        Seq(r.blockNumber, false)
+        Seq(NumericConversion.toBigInt(r.getBlockNumber), false)
       } map deserializeToProto[GetBlockWithTxHashByNumber.Res] sendTo sender
 
     case r: GetBlockWithTxObjectByNumber.Req =>
       sendMessage("eth_getBlockByNumber") {
-        Seq(r.blockNumber, true)
+        Seq(NumericConversion.toBigInt(r.getBlockNumber), true)
       } map deserializeToProto[GetBlockWithTxObjectByNumber.Res] sendTo sender
 
     case r: GetBlockWithTxHashByHash.Req =>
@@ -311,7 +311,7 @@ class HttpConnector(
 
     case r: GetUncle.Req =>
       sendMessage(method = "eth_getUncleByBlockNumberAndIndex") {
-        Seq(r.blockNum, r.index)
+        Seq(NumericConversion.toBigInt(r.blockNum), r.index)
       } map deserializeToProto[GetBlockWithTxHashByHash.Res] sendTo sender
 
     case batchR: BatchCallContracts.Req =>
@@ -388,7 +388,8 @@ class HttpConnector(
         BatchMethod(
           id = randInt(),
           method = "eth_getUncleByBlockNumberAndIndex",
-          params = Seq(singleReq.blockNum, singleReq.index)
+          params =
+            Seq(NumericConversion.toBigInt(singleReq.blockNum), singleReq.index)
         )
       }
       batchSendMessages(batchReqs) map { json =>
