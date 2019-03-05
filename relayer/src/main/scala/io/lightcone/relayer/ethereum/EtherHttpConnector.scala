@@ -388,7 +388,8 @@ class HttpConnector(
         BatchMethod(
           id = randInt(),
           method = "eth_getUncleByBlockNumberAndIndex",
-          params = Seq(NumericConversion.toBigInt(singleReq.blockNum), singleReq.index)
+          params =
+            Seq(NumericConversion.toBigInt(singleReq.blockNum), singleReq.index)
         )
       }
       batchSendMessages(batchReqs) map { json =>

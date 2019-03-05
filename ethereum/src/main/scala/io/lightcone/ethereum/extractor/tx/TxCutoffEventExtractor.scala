@@ -33,7 +33,7 @@ class TxCutoffEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val config: Config)
-    extends EventExtractor[TransactionData, Any] {
+    extends EventExtractor[TransactionData, AnyRef] {
 
   val orderCancelAddress = Address(
     config.getString("loopring_protocol.order-cancel-address")
@@ -49,7 +49,7 @@ class TxCutoffEventExtractor @Inject()(
         case Some((receipt, eventHeader)) =>
           blockHeader = eventHeader.getBlockHeader
           txStatus = receipt.status
-          extractBlockedEvents(txdata.tx, receipt, eventHeader)
+          extractConfirmedEvents(txdata.tx, receipt, eventHeader)
         case None =>
           extractPendingEvents(txdata.tx)
       }
@@ -68,17 +68,15 @@ class TxCutoffEventExtractor @Inject()(
             txHash = txdata.tx.hash,
             activityType = ActivityType.ORDER_CANCEL,
             timestamp = blockHeader.timestamp,
-//            fiatValue = 0.0, //TODO:(hongyu):确定法币金额是现在计算还是返回时计算
+            //            fiatValue = 0.0, //TODO:(hongyu):确定法币金额是现在计算还是返回时计算
             token = Address.ZERO.toString(), //TODO(hongyu):取消订单按照ETH
             detail = Activity.Detail.OrderCancellation(detail),
             txStatus = txStatus
           )
         )
       case evt: OrdersCancelledOnChainEvent =>
-        val detail = Activity.OrderCancellation(
-          broker = evt.broker,
-          orderIds = evt.orderHashes
-        )
+        val detail = Activity
+          .OrderCancellation(broker = evt.broker, orderIds = evt.orderHashes)
         Seq(
           Activity(
             owner = evt.owner,
@@ -98,11 +96,11 @@ class TxCutoffEventExtractor @Inject()(
     cutoffEvents ++ activities.flatten
   }
 
-  def extractBlockedEvents(
+  def extractConfirmedEvents(
       tx: Transaction,
       receipt: TransactionReceipt,
       eventHeader: EventHeader
-    ): Seq[Any] = {
+    ): Seq[AnyRef] = {
 
     receipt.logs.zipWithIndex.map {
       case (log, index) =>
@@ -135,9 +133,8 @@ class TxCutoffEventExtractor @Inject()(
                 cutoff = event._cutoff.longValue,
                 broker = Address.normalize(event._broker),
                 owner = Address.normalize(event._owner),
-                marketHash = MarketHash(
-                  MarketPair(event._token1, event._token2)
-                ).toString
+                marketHash =
+                  MarketHash(MarketPair(event._token1, event._token2)).toString
               )
             )
           case Some(
@@ -149,9 +146,8 @@ class TxCutoffEventExtractor @Inject()(
                 cutoff = event._cutoff.longValue,
                 broker = Address.normalize(event._broker),
                 owner = Address.normalize(event._broker),
-                marketHash = MarketHash(
-                  MarketPair(event._token1, event._token2)
-                ).toString
+                marketHash =
+                  MarketHash(MarketPair(event._token1, event._token2)).toString
               )
             )
           case Some(event: OrdersCancelledEvent.Result) =>
@@ -169,16 +165,15 @@ class TxCutoffEventExtractor @Inject()(
     }.filter(_.nonEmpty).map(_.get)
   }
 
-  def extractPendingEvents(tx: Transaction): Seq[Any] =
+  def extractPendingEvents(tx: Transaction): Seq[AnyRef] =
     loopringProtocolAbi.unpackFunctionInput(tx.input) match {
       case Some(params: CancelAllOrdersForTradingPairFunction.Params) =>
         Seq(
           CutoffEvent(
             broker = tx.from,
             owner = tx.from,
-            marketHash = MarketHash(
-              MarketPair(params.token1, params.token2)
-            ).toString,
+            marketHash =
+              MarketHash(MarketPair(params.token1, params.token2)).toString,
             cutoff = params.cutoff.longValue()
           )
         )
@@ -187,9 +182,8 @@ class TxCutoffEventExtractor @Inject()(
           CutoffEvent(
             broker = tx.from,
             owner = params.owner,
-            marketHash = MarketHash(
-              MarketPair(params.token1, params.token2)
-            ).toString,
+            marketHash =
+              MarketHash(MarketPair(params.token1, params.token2)).toString,
             cutoff = params.cutoff.longValue()
           )
         )

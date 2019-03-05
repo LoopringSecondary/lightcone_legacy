@@ -52,7 +52,7 @@ class TxRingMinedEventExtractor @Inject()(
     val ec: ExecutionContext,
     val config: Config,
     val metadataManager: MetadataManager)
-    extends EventExtractor[TransactionData, Any] {
+    extends EventExtractor[TransactionData, AnyRef] {
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
@@ -74,10 +74,8 @@ class TxRingMinedEventExtractor @Inject()(
                   val fillContent = Numeric.cleanHexPrefix(event._fills)
                   val fillStrs =
                     (0 until (fillContent.length / fillLength)).map { index =>
-                      fillContent.substring(
-                        index * fillLength,
-                        fillLength * (index + 1)
-                      )
+                      fillContent
+                        .substring(index * fillLength, fillLength * (index + 1))
                     }
                   val fills = deserializeFill(
                     fillStrs,
@@ -172,9 +170,7 @@ class TxRingMinedEventExtractor @Inject()(
       marketMetadata: MarketMetadata
     ): (Double, Double) = {
     val amountInWei =
-      if (Address(
-            baseToken.getAddress()
-          ).equals(Address(fill.tokenS)))
+      if (Address(baseToken.getAddress()).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.amountS.toByteArray)
       else Numeric.toBigInt(fill.amountB.toByteArray)
 
@@ -183,9 +179,7 @@ class TxRingMinedEventExtractor @Inject()(
       .doubleValue()
 
     val totalInWei =
-      if (Address(
-            quoteToken.getAddress()
-          ).equals(Address(fill.tokenS)))
+      if (Address(quoteToken.getAddress()).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.amountS.toByteArray)
       else Numeric.toBigInt(fill.amountB.toByteArray)
 
@@ -214,8 +208,7 @@ class TxRingMinedEventExtractor @Inject()(
           tokenQuote = fill.tokenB,
           amountBase = fill.amountS,
           amountQuote = fill.amountB,
-          isP2P = isP2P
-//          price = fill.
+          isP2P = isP2P //          price = fill.
         )
         val activity = Activity(
           owner = fill.owner,
