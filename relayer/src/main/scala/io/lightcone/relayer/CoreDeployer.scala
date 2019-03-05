@@ -36,7 +36,6 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.splitmerge._
-import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
