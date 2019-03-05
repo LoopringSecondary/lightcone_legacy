@@ -32,3 +32,5 @@ message RecordAccountUpdateReq {
     string address              = 2;
     string token_address        = 3;
 }
+
+
