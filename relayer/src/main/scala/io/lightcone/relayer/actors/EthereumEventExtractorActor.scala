@@ -17,16 +17,13 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum._
 import io.lightcone.ethereum.extractor._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data
 import io.lightcone.relayer.data._
 
 import scala.concurrent._
@@ -94,8 +91,10 @@ class EthereumEventExtractorActor(
   def handleBlockReorganization: Receive = {
     case BLOCK_REORG_DETECTED =>
       for {
-        dbBlock <- dbModule.blockDal.findByHeight(blockData.height - 1)
-        onlineBlock <- getBlockData(blockData.height - 1)
+        dbBlock <- dbModule.blockDal.findByHeight(
+          NumericConversion.toBigInt(blockData.number).longValue() - 1
+        )
+        onlineBlock <- getBlockData(blockData.number)
       } yield {
         blockData = onlineBlock.get
         if (dbBlock.map(_.hash) == onlineBlock.map(_.hash))

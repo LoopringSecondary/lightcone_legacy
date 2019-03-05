@@ -55,13 +55,15 @@ trait EventExtraction {
     case GET_BLOCK =>
       assert(blockData != null)
 
-      getBlockData(blockData.height + 1).map {
+      getBlockData(NumericConversion.toBigInt(blockData.number) + 1).map {
         case Some(block) =>
-          if (block.parentHash == blockData.hash || blockData.height == -1) {
+          if (block.parentHash == blockData.hash || NumericConversion
+                .toBigInt(blockData.number) == -1) {
             blockData = block
             val blockEvent = BlockEvent(
-              blockNumber = blockData.height,
-              txs = blockData.txs.map(
+              blockNumber =
+                NumericConversion.toBigInt(blockData.number).longValue(),
+              txs = blockData.transactions.map(
                 tx =>
                   BlockEvent.Tx(
                     from = tx.from,
@@ -95,7 +97,7 @@ trait EventExtraction {
     case PROCESS_EVENTS =>
       processEvents onComplete {
         case Success(_) =>
-          if (blockData.height < untilBlock) self ! GET_BLOCK
+          if (blockData.number < untilBlock) self ! GET_BLOCK
         case Failure(e) =>
           log.error(
             s" Actor: ${self.path} extracts ethereum events failed with error:${e.getMessage}"
@@ -105,22 +107,16 @@ trait EventExtraction {
 
   def handleBlockReorganization: Receive
 
-  def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
+  def getBlockData(blockNum: BigInt): Future[Option[BlockWithTxObject]] = {
     for {
       blockOpt <- (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-        Numeric.toHexString(BigInt(blockNum).toByteArray)
+        blockNum
       )).mapAs[GetBlockWithTxObjectByNumber.Res]
         .map(_.result)
-
-      uncles <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
+      uncleMiners <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
         val batchGetUnclesReq = BatchGetUncle.Req(
-          blockOpt.get.uncles.indices.map(
-            index =>
-              GetUncle.Req(
-                blockOpt.get.number,
-                Numeric.prependHexPrefix(index.toHexString)
-              )
-          )
+          blockOpt.get.uncles.indices
+            .map(index => GetUncle.Req(blockOpt.get.number, BigInt(index)))
         )
 
         (ethereumAccessorActor ? batchGetUnclesReq)
@@ -129,18 +125,6 @@ trait EventExtraction {
       } else {
         Future.successful(Seq.empty)
       }
-      rawBlock = blockOpt.map(
-        block =>
-          RawBlockData(
-            hash = block.hash,
-            parentHash = block.parentHash,
-            height = NumericConversion.toBigInt(block.number).longValue,
-            timestamp = block.timestamp,
-            miner = block.miner,
-            uncles = uncles,
-            txs = block.transactions
-          )
-      )
       rawBlock = blockOpt.map(block => block.copy(uncleMiners = uncleMiners))
     } yield rawBlock
   }

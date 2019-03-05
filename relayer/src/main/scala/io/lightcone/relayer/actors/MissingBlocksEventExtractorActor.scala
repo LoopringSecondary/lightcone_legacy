@@ -86,7 +86,7 @@ class MissingBlocksEventExtractorActor(
           if (missingBlocksOpt.get.lastHandledBlock >= 0)
             blockData = lastBlockData.get
           else
-            blockData = RawBlockData(height = -1L)
+            blockData = BlockWithTxObject(number = BigInt(-1))
           val missingBlocks = missingBlocksOpt.get
           untilBlock = missingBlocks.blockEnd
           sequenceId = missingBlocks.sequenceId
@@ -103,16 +103,18 @@ class MissingBlocksEventExtractorActor(
     //This Actor will never receive this message
   }
 
-  override def postProcessEvents =
+  override def postProcessEvents = {
+    val blockNumber = NumericConversion.toBigInt(blockData.number).longValue()
     for {
       _ <- dbModule.missingBlocksRecordDal
-        .updateProgress(sequenceId, blockData.height)
-      needDelete = blockData.height >= untilBlock
+        .updateProgress(sequenceId, blockNumber)
+      needDelete = blockNumber >= untilBlock
       _ <- if (!needDelete) Future.unit
       else dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
       _ = if (needDelete) {
         self ! NEXT_RANGE
       }
     } yield Unit
+  }
 
 }
