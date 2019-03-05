@@ -19,11 +19,11 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.ethereum.event._
 
 import scala.concurrent.duration._
@@ -78,10 +78,16 @@ class MissingBlocksEventExtractorActor(
     case NEXT_RANGE =>
       for {
         missingBlocksOpt <- dbModule.missingBlocksRecordDal.getOldestOne()
+        lastBlockData <- if (missingBlocksOpt.isDefined && missingBlocksOpt.get.lastHandledBlock >= 0)
+          getBlockData(missingBlocksOpt.get.lastHandledBlock)
+        else Future.successful(None)
       } yield {
         if (missingBlocksOpt.isDefined) {
+          if (missingBlocksOpt.get.lastHandledBlock >= 0)
+            blockData = lastBlockData.get
+          else
+            blockData = RawBlockData(height = -1L)
           val missingBlocks = missingBlocksOpt.get
-          blockData = RawBlockData(height = missingBlocks.lastHandledBlock)
           untilBlock = missingBlocks.blockEnd
           sequenceId = missingBlocks.sequenceId
           self ! GET_BLOCK
@@ -90,6 +96,11 @@ class MissingBlocksEventExtractorActor(
             .scheduleOnce(delayInSeconds seconds, self, NEXT_RANGE)
         }
       }
+  }
+
+  def handleBlockReorganization: Receive = {
+    case BLOCK_REORG_DETECTED =>
+    //This Actor will never receive this message
   }
 
   override def postProcessEvents =

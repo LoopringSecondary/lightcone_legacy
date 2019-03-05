@@ -35,7 +35,7 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findEvent(searchByName(OrderSubmittedEvent.name))
   )
 
-  override def unpackEvent(
+  def unpackEvent(
       data: String,
       topics: Array[String]
     ): Option[Any] = {

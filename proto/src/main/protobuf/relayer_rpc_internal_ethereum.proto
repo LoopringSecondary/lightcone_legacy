@@ -312,6 +312,7 @@ message RawBlockData{
     repeated string uncles = 5;
     repeated Transaction txs = 6;
     repeated TransactionReceipt receipts = 7;
+    string parent_hash = 8;
 }
 
 

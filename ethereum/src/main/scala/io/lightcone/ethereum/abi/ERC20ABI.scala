@@ -59,7 +59,7 @@ class ERC20Abi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findEvent(searchByName(ApprovalEvent.name))
   )
 
-  override def unpackEvent(
+  def unpackEvent(
       data: String,
       topics: Array[String]
     ): Option[Any] = {
