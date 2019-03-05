@@ -93,7 +93,7 @@ class ActivityActor(
 
     case req: BlockEvent =>
       (for {
-        _ <- activityDal.clearForkedActivities(req)
+        _ <- activityDal.cleanUpForBlockReorganization(req)
       } yield {}).sendTo(sender)
 
     case req: GetActivities.Req =>
