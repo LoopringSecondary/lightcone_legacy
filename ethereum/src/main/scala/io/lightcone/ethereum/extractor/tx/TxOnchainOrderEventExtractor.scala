@@ -55,7 +55,7 @@
 //     OrderSubmittedOnChainEvent
 //   ]] = ???
 
-//   def extractBlockedEvents(params: TransactionData): Future[Seq[
+//   def extractConfirmedEvents(params: TransactionData): Future[Seq[
 //     OrderSubmittedOnChainEvent
 //   ]] = Future {
 //     val (tx, receipt, eventHeader) =
