@@ -21,6 +21,7 @@ import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.extractor._
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
@@ -44,19 +45,37 @@ trait EventExtraction {
   val GET_BLOCK = Notify("get_block")
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
   val PROCESS_EVENTS = Notify("process_events")
+  val BLOCK_REORG_DETECTED = Notify("block_reorg_detected")
 
   var untilBlock: Long
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  def handleMessage: Receive = {
+  def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
 
-      getBlockData(NumericConversion.toBigInt(blockData.number) + 1).map {
+      getBlockData(blockData.height + 1).map {
         case Some(block) =>
-          blockData = block
-          self ! RETRIEVE_RECEIPTS
+          if (block.parentHash == blockData.hash || blockData.height == -1) {
+            blockData = block
+            val blockEvent = BlockEvent(
+              blockNumber = blockData.height,
+              txs = blockData.txs.map(
+                tx =>
+                  BlockEvent.Tx(
+                    from = tx.from,
+                    nonce = NumericConversion.toBigInt(tx.nonce).toInt,
+                    txHash = tx.hash
+                  )
+              )
+            )
+
+            //TODO(yadong) broadcast blockEvent
+            self ! RETRIEVE_RECEIPTS
+          } else {
+            self ! BLOCK_REORG_DETECTED
+          }
         case None =>
           context.system.scheduler
             .scheduleOnce(1 seconds, self, GET_BLOCK)
@@ -76,8 +95,7 @@ trait EventExtraction {
     case PROCESS_EVENTS =>
       processEvents onComplete {
         case Success(_) =>
-          if (NumericConversion.toBigInt(blockData.number) < untilBlock)
-            self ! GET_BLOCK
+          if (blockData.height < untilBlock) self ! GET_BLOCK
         case Failure(e) =>
           log.error(
             s" Actor: ${self.path} extracts ethereum events failed with error:${e.getMessage}"
@@ -85,17 +103,24 @@ trait EventExtraction {
       }
   }
 
-  def getBlockData(blockNum: BigInt): Future[Option[BlockWithTxObject]] = {
+  def handleBlockReorganization: Receive
+
+  def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
     for {
       blockOpt <- (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-        blockNum
+        Numeric.toHexString(BigInt(blockNum).toByteArray)
       )).mapAs[GetBlockWithTxObjectByNumber.Res]
         .map(_.result)
 
-      uncleMiners <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
+      uncles <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
         val batchGetUnclesReq = BatchGetUncle.Req(
-          blockOpt.get.uncles.indices
-            .map(index => GetUncle.Req(blockOpt.get.number, BigInt(index)))
+          blockOpt.get.uncles.indices.map(
+            index =>
+              GetUncle.Req(
+                blockOpt.get.number,
+                Numeric.prependHexPrefix(index.toHexString)
+              )
+          )
         )
 
         (ethereumAccessorActor ? batchGetUnclesReq)
@@ -104,6 +129,18 @@ trait EventExtraction {
       } else {
         Future.successful(Seq.empty)
       }
+      rawBlock = blockOpt.map(
+        block =>
+          RawBlockData(
+            hash = block.hash,
+            parentHash = block.parentHash,
+            height = NumericConversion.toBigInt(block.number).longValue,
+            timestamp = block.timestamp,
+            miner = block.miner,
+            uncles = uncles,
+            txs = block.transactions
+          )
+      )
       rawBlock = blockOpt.map(block => block.copy(uncleMiners = uncleMiners))
     } yield rawBlock
   }

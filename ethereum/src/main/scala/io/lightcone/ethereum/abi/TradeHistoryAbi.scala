@@ -47,7 +47,7 @@ class TradeHistoryAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findFunction(searchByName(CutoffForBrokerFunction.name))
   )
 
-  override def unpackEvent(
+  def unpackEvent(
       data: String,
       topics: Array[String]
     ): Option[Any] = None

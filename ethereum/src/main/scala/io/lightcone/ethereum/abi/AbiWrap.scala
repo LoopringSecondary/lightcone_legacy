@@ -93,7 +93,7 @@ abstract class AbiWrap(abiJson: String) {
   def unpackEvent(
       data: String,
       topics: Array[String]
-    ): Option[Any] = ???
+    ): Option[Any]
 
   def unpackFunctionInput(data: String): Option[Any] = None
 }
