@@ -67,7 +67,7 @@ class ActivityDalImpl @Inject()(
     db.run(
       filters
         .filter(_.sequenceId > paging.cursor)
-        .sortBy(c => c.sequenceId.desc)
+        .sortBy(c => (c.block.desc, c.sequenceId.desc))
         .take(paging.size)
         .result
     )
