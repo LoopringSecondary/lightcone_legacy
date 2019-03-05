@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence
+package io.lightcone.relayer.splitmerge
 
-import io.lightcone.relayer.data._
-import io.lightcone.core._
-import io.lightcone.ethereum.persistence._
-import scala.concurrent.Future
+trait SplitMerger[REQ, SUB_REQ, SUB_RES, RES] {
 
-trait RingService {
-  def saveRing(ring: Ring): Future[ErrorCode]
-  def saveRings(trades: Seq[Ring]): Future[Seq[ErrorCode]]
-  def getRings(request: GetRings.Req): Future[Seq[Ring]]
-  def countRings(request: GetRings.Req): Future[Int]
-  def obsolete(height: Long): Future[Unit]
+  final def splitRequest(req: Any) =
+    split(req.asInstanceOf[REQ])
+
+  final def mergeResponses(resps: Seq[Any]) =
+    merge(resps.asInstanceOf[Seq[SUB_RES]])
+
+  def split(req: REQ): Seq[SUB_REQ]
+
+  def merge(resps: Seq[SUB_RES]): RES
 }

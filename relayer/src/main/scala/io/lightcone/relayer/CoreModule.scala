@@ -36,6 +36,7 @@ import io.lightcone.ethereum.extractor._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
 
 import scala.concurrent.duration._
@@ -72,11 +73,9 @@ class CoreModule(
     // --- bind db configs ---------------------
     bind[DatabaseConfigManager].toInstance(dbConfigManager)
 
-    //TODO(yongfeng):去除trade和tx的dal时，同时去除该部分
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
-      "dbconfig-dal-trade",
       "dbconfig-dal-ring",
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
@@ -100,8 +99,6 @@ class CoreModule(
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[FillService].to[FillServiceImpl].asEagerSingleton
-    bind[RingService].to[RingServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
     bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton
@@ -123,6 +120,8 @@ class CoreModule(
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
+
+    bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
 
     bind[EventExtractor[BlockWithTxObject, AnyRef]]
       .to[DefaultEventExtractor]
