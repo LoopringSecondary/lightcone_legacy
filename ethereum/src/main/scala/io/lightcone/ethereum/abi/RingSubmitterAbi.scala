@@ -39,7 +39,7 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findEvent(searchByName(InvalidRingEvent.name))
   )
 
-  override def unpackEvent(
+  def unpackEvent(
       data: String,
       topics: Array[String]
     ): Option[Any] = {
