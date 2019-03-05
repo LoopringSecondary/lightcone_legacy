@@ -24,18 +24,16 @@ import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-final class DefaultEventExtractor @Inject()()(implicit val ec: ExecutionContext)
+final class DefaultEventExtractor @Inject()(
+    implicit
+    val txEventExtractor: EventExtractor[TransactionData, AnyRef],
+    val ec: ExecutionContext)
     extends EventExtractor[BlockWithTxObject, AnyRef] {
 
   // TODO(hongyu): add more block/tx-event extractors here in the list.
   private val blockEventExtractor: EventExtractor[BlockWithTxObject, AnyRef] =
     EventExtractor.compose[BlockWithTxObject, AnyRef]( //
       new BlockGasPriceExtractor() // more block event extractors
-    )
-
-  private val txEventExtractor: EventExtractor[TransactionData, AnyRef] =
-    EventExtractor.compose[TransactionData, AnyRef]( //
-      new TxTransferEventExtractor() // more tx event extractors
     )
 
   def extractEvents(block: BlockWithTxObject) =
