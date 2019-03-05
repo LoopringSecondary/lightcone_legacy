@@ -33,6 +33,14 @@ import io.lightcone.persistence._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.extractor._
+import io.lightcone.ethereum.extractor.block.{
+  AllowanceUpdateAddressExtractor,
+  BalanceUpdateAddressExtractor
+}
+import io.lightcone.ethereum.extractor.tx.{
+  TxApprovalEventExtractor,
+  TxTransferEventExtractor
+}
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors._
@@ -123,9 +131,9 @@ class CoreModule(
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
 
-    bind[EventExtractor[BlockWithTxObject, AnyRef]]
-      .to[DefaultEventExtractor]
-      .asEagerSingleton
+//    bind[EventExtractor[BlockWithTxObject, AnyRef]]
+//      .to[DefaultEventExtractor]
+//      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -150,7 +158,39 @@ class CoreModule(
     EventExtractor.compose[TransactionData, AnyRef]( //
       new TxCutoffEventExtractor(),
       new TxRingMinedEventExtractor(),
-      new TxTokenBurnRateEventExtractor() // more tx event extractors
+      new TxTokenBurnRateEventExtractor(),
+      new TxTransferEventExtractor(),
+      new TxApprovalEventExtractor() // more tx event extractors
+    )
+  }
+
+  @Provides
+  def bindBlockEventExtractor(
+      implicit
+      ec: ExecutionContext,
+      metadataManager: MetadataManager,
+      config: Config,
+      actors: Lookup[ActorRef],
+      timeout: Timeout,
+      txEventExtractor: EventExtractor[TransactionData, AnyRef]
+    ): DefaultEventExtractor = {
+
+    val ethereumAccess = () => actors.get(EthereumAccessActor.name)
+    val approvalEventExtractor = new TxApprovalEventExtractor()
+    val txTransferEventExtractor = new TxTransferEventExtractor()
+
+    new DefaultEventExtractor(
+      EventExtractor.compose[BlockWithTxObject, AnyRef](
+        new BlockGasPriceExtractor(),
+        new AllowanceUpdateAddressExtractor(
+          ethereumAccess,
+          approvalEventExtractor
+        ),
+        new BalanceUpdateAddressExtractor(
+          ethereumAccess,
+          txTransferEventExtractor
+        )
+      )
     )
   }
 

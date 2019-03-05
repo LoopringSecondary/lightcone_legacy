@@ -50,7 +50,7 @@ message ApprovalEvent {
     string owner    = 2;
     string spender  = 3;
     string token    = 4;
-    bytes amount    = 5;
+    io.lightcone.core.Amount amount    = 5;
     int64 block     = 6;
 }
 
