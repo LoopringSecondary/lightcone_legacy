@@ -135,6 +135,18 @@ message GetAccount {
     }
 }
 
+message GetAccounts {
+    message Req {
+        repeated string addresses = 1;
+        repeated string tokens = 2;
+        string tag = 3;
+    }
+
+    message Res {
+        map<string, AccountBalance> account_balances    = 1;
+    }
+}
+
 message GetActivities {
     message Req {
         string owner = 1;

@@ -16,13 +16,32 @@
 
 package io.lightcone.relayer.splitmerge
 
-// TODO(hongyu): implement the SplitMerger for GetAccounts
+import io.lightcone.relayer.data._
+
 class DefaultSplitMergerProvider extends RegisterableSplitMergerProvider {
 
-  // The following are demo code
-  register(new SplitMerger[String, String, String, String] {
-    def split(req: String) = Seq(req)
-    def merge(resps: Seq[String]) = resps.reduce(_ + _)
-  })
+  register(
+    new SplitMerger[
+      GetAccounts.Req,
+      GetAccount.Req,
+      GetAccount.Res,
+      GetAccounts.Res
+    ] {
 
+      def split(req: GetAccounts.Req) = req.addresses.map { addr =>
+        GetAccount.Req(addr, req.tokens, req.tag)
+      }
+
+      def merge(resps: Seq[GetAccount.Res]) = {
+        GetAccounts.Res(
+          resps
+            .map(_.accountBalance)
+            .filter(_.nonEmpty)
+            .map(_.get)
+            .map(accountBalance => accountBalance.address -> accountBalance)
+            .toMap
+        )
+      }
+    }
+  )
 }
