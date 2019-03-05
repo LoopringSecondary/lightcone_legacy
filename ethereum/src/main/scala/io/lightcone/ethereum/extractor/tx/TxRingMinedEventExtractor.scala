@@ -55,61 +55,55 @@ class TxRingMinedEventExtractor @Inject()(
       )
       .getAddress()
   )
-
   val fillLength: Int = 8 * 64
 
-  //TODO(hongyu):pending的需要如何处理，主要是p2p前端的表现形式
   def extractEvents(txdata: TransactionData) = Future {
     if (!txdata.tx.to.equalsIgnoreCase(ringSubmitterAddress)) {
       Seq.empty
     } else {
       txdata.receiptAndHeaderOpt match {
         case Some((receipt, eventHeader)) =>
-          receipt.status match {
-            case TX_STATUS_FAILED =>
-              //失败的环路提交，只生成RingMinedEvent
-              val fills = extractInputToFill(txdata.tx)
-              val ringMinedEvents = generateRingMinedEvents(fills, eventHeader)
-              //如果是p2p则需要生成activity
-              val activities = if (isP2P(fills, eventHeader.txFrom)) {
-                genereateActivity(fills, eventHeader)
-              } else Seq.empty
-              ringMinedEvents ++ activities
-            case TX_STATUS_SUCCESS =>
-              receipt.logs.zipWithIndex.flatMap {
-                case (log, index) =>
-                  loopringProtocolAbi
-                    .unpackEvent(log.data, log.topics.toArray) match {
-                    case Some(event: RingMinedEvent.Result) =>
-                      val fillContent = Numeric.cleanHexPrefix(event._fills)
-                      val fillStrs =
-                        (0 until (fillContent.length / fillLength)).map {
-                          index =>
-                            fillContent
-                              .substring(
-                                index * fillLength,
-                                fillLength * (index + 1)
-                              )
+          if (receipt.status == TX_STATUS_FAILED) {
+            //失败的环路提交，只生成RingMinedEvent
+            val fills = extractInputToFill(txdata.tx)
+            val ringMinedEvents = generateRingMinedEvents(fills, eventHeader)
+            //如果是p2p则需要生成activity
+            val activities = if (isP2P(fills, eventHeader.txFrom)) {
+              genereateActivity(fills, eventHeader)
+            } else Seq.empty
+            ringMinedEvents ++ activities
+          } else {
+            receipt.logs.zipWithIndex.flatMap {
+              case (log, index) =>
+                loopringProtocolAbi
+                  .unpackEvent(log.data, log.topics.toArray) match {
+                  case Some(event: RingMinedEvent.Result) =>
+                    val fillContent = Numeric.cleanHexPrefix(event._fills)
+                    val fillStrs =
+                      fillContent.zipWithIndex
+                        .groupBy(_._2 / fillLength)
+                        .map {
+                          case (_, chars) => chars.map(_._1).mkString
                         }
-                      val fills = deserializeFill(
-                        fillStrs,
-                        event,
-                        txdata.tx,
-                        eventHeader.getBlockHeader
-                      )
-                      val ringMinedEvents =
-                        generateRingMinedEvents(fills, eventHeader)
-                      val ohlcDatas = generateOHLCDatas(
-                        fills,
-                        event._ringIndex.longValue(),
-                        eventHeader
-                      )
-                      val activities = genereateActivity(fills, eventHeader)
-                      fills ++ ringMinedEvents ++ ohlcDatas ++ activities
-                    case _ =>
-                      Seq.empty
-                  }
-              }
+                    val fills = deserializeFill(
+                      fillStrs.toSeq,
+                      event,
+                      txdata.tx,
+                      eventHeader.getBlockHeader
+                    )
+                    val ringMinedEvents =
+                      generateRingMinedEvents(fills, eventHeader)
+                    val ohlcDatas = generateOHLCDatas(
+                      fills,
+                      event._ringIndex.longValue(),
+                      eventHeader
+                    )
+                    val activities = genereateActivity(fills, eventHeader)
+                    fills ++ ringMinedEvents ++ ohlcDatas ++ activities
+                  case _ =>
+                    Seq.empty
+                }
+            }
           }
         case None =>
           //pending的环路提交不生成RingMinedEvent
@@ -253,7 +247,6 @@ class TxRingMinedEventExtractor @Inject()(
                 case Some(token) => token.fromWei(fill.amountB)
               }
             val price = if (market.getMarketPair.baseToken == fill.tokenS) {
-              market.priceDecimals
               fillAmountS / fillAmountB
             } else {
               fillAmountB / fillAmountS
