@@ -139,6 +139,21 @@ class CoreModule(
       .toInstance(deployActorsIgnoringRoles)
   }
 
+  // --- bind tx event extractors ---------------------
+  @Provides
+  def bindTxEventExtractor(
+      implicit
+      ec: ExecutionContext,
+      metadataManager: MetadataManager,
+      config: Config
+    ): EventExtractor[TransactionData, AnyRef] = {
+    EventExtractor.compose[TransactionData, AnyRef]( //
+      new TxCutoffEventExtractor(),
+      new TxRingMinedEventExtractor(),
+      new TxTokenBurnRateEventExtractor() // more tx event extractors
+    )
+  }
+
   // --- bind event dispatchers ---------------------
   @Provides
   def bindEventDispatcher(
