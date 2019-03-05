@@ -154,6 +154,41 @@ trait EthereumSupport {
     sendTransaction(tx)
   }
 
+  def wrap(
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val input = wethAbi.deposit.pack(DepositFunction.Parms())
+    val tx = Tx(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = WETH_TOKEN.address,
+      value = amountStr.zeros(WETH_TOKEN.decimals)
+    )
+    sendTransaction(tx)
+  }
+
+  def unwrap(amountStr: String)(implicit credentials: Credentials) = {
+
+    val input = wethAbi.withdraw.pack(
+      WithdrawFunction.Parms(amountStr.zeros(WETH_TOKEN.decimals))
+    )
+    val tx = Tx(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = WETH_TOKEN.address,
+      value = 0
+    )
+    sendTransaction(tx)
+
+  }
+
   def transferWETH(
       to: String,
       amountStr: String

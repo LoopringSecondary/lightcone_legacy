@@ -48,15 +48,15 @@ final class TxTransferEventExtractor @Inject()(
       .filterNot(
         event =>
           event.getHeader.txTo == protocolAddress ||
-            event.getHeader.txTo == wethAddress
+            event.to == wethAddress || event.from == wethAddress
       )
       .map(extractActivity)
 
     val wethActivity = transferEvents
-      .filter(
-        event =>
-          event.getHeader.txTo == wethAddress && event.owner != wethAddress
+      .filterNot(
+        event => event.owner == wethAddress
       )
+      .filter(event => event.to == wethAddress || event.from == wethAddress)
       .map(extractActivity)
 
     transferEvents ++ transferActivity ++ wethActivity
