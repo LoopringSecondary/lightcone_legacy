@@ -37,9 +37,10 @@ class TxRingMinedEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     val config: Config,
-    val metadataManager: MetadataManager,
-    val rawOrderValidatorArg: RawOrderValidator)
+    val metadataManager: MetadataManager)
     extends EventExtractor[TransactionData, AnyRef] {
+
+  implicit val orderValidator = new RawOrderValidatorImpl()
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()

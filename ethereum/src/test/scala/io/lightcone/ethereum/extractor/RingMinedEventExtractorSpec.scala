@@ -31,7 +31,6 @@ class RingMinedEventExtractorSpec extends AbstractExtractorSpec {
   "extract a block contains SubmitRing" should "get events correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    implicit val orderValidator = new RawOrderValidatorImpl()
     val ringMinedEventExtractor = new TxRingMinedEventExtractor()
     val transactions =
       getTransactionDatas("ethereum/src/test/resources/event/ring_mined_block")
