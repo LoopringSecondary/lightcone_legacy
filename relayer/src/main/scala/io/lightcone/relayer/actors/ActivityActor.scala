@@ -95,7 +95,8 @@ class ActivityActor(
       // filter activities which current shard care
       val activities = req.getActivities.events
         .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
-      activityDal.saveActivities(activities)
+      if (activities.nonEmpty) activityDal.saveActivities(activities)
+      else Future.successful(Unit)
     }
 
     case req: BlockEvent =>

@@ -134,7 +134,7 @@ class ActivityDalImpl @Inject()(
 
   private def deletePendingActivitiesWhenFromNonceBlowGivenValueDBIO(
       fromOfTx: String,
-      nonceWithFrom: Int
+      nonceWithFrom: Long
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query
       .filter(_.from === fromOfTx)

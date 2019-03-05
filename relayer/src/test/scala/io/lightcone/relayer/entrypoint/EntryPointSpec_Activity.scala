@@ -74,7 +74,7 @@ class EntryPointSpec_Activity
         activityType = ActivityType.ETHER_TRANSFER_IN,
         detail = detail1,
         from = from1,
-        nonce = 1
+        nonce = 1L
       )
       val activity2 = Activity(
         owner = owner1,
@@ -84,7 +84,7 @@ class EntryPointSpec_Activity
         activityType = ActivityType.ORDER_CANCEL,
         detail = detail2,
         from = from1,
-        nonce = 2
+        nonce = 2L
       )
 
       actor ! TxEvents(
@@ -93,7 +93,7 @@ class EntryPointSpec_Activity
             Seq(
               activity1,
               activity2,
-              activity2.copy(owner = owner2, nonce = 3, txHash = txHash3)
+              activity2.copy(owner = owner2, nonce = 3L, txHash = txHash3)
             )
           )
         )

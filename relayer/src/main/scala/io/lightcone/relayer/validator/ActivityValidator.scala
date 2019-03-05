@@ -21,7 +21,6 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data._
-import org.slf4s.Logging
 import scala.concurrent.{ExecutionContext, Future}
 
 object ActivityValidator {
@@ -33,8 +32,7 @@ final class ActivityValidator(
     implicit
     val config: Config,
     ec: ExecutionContext)
-    extends MessageValidator
-    with Logging {
+    extends MessageValidator {
 
   val activityConfig = config.getConfig(ActivityActor.name)
 

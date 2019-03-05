@@ -17,7 +17,6 @@
 package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.Props
 import akka.pattern._
 import com.typesafe.config.ConfigFactory
@@ -34,11 +33,10 @@ import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 
-trait EthereumSupport {
+trait EthereumSupport extends DatabaseModuleSupport {
   me: CommonSpec =>
 
   implicit val rb = new EthereumCallRequestBuilder

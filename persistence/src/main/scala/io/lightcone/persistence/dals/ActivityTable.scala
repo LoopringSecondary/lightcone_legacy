@@ -42,7 +42,7 @@ class ActivityTable(shardId: String)(tag: Tag)
   def details = column[Array[Byte]]("details")
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
   def from = columnAddress("from")
-  def nonce = column[Int]("nonce")
+  def nonce = column[Long]("nonce")
   def txStatus = column[TxStatus]("tx_status")
 
   // indexes
