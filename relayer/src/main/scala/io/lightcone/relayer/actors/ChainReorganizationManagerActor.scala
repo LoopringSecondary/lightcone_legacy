@@ -26,6 +26,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent._
 import akka.event.LoggingReceive
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.persistence.DatabaseModule
 
 //目标：需要恢复的以及初始化花费时间较长的
@@ -77,16 +78,18 @@ class ChainReorganizationManagerActor @Inject()(
     case reorg.RecordAccountUpdateReq(block, address, tokenAddress) =>
       manager.recordAccountUpdate(block, address, tokenAddress)
 
-    case reorg.NotifyChainReorganization(block) =>
-      val impact = manager.reorganizedAt(block)
+    case event: BlockEvent =>
+      val impact = manager.reorganizedAt(event.blockNumber)
 
-      log.info(s"chain reorganized at $block with impact: $impact")
+      log.info(
+        s"chain reorganized at ${event.blockNumber} with impact: $impact"
+      )
 
       if (impact.orderIds.nonEmpty) {
         context
           .actorOf(
             Props(new RecoverOrdersActor()),
-            s"reorg_restore_orders_$block"
+            s"reorg_restore_orders_${event.blockNumber}"
           ) ! impact
       }
 
@@ -94,7 +97,7 @@ class ChainReorganizationManagerActor @Inject()(
         context
           .actorOf(
             Props(new RecoverAccountsActor()),
-            s"reorg_restore_accounts_$block"
+            s"reorg_restore_accounts_${event.blockNumber}"
           ) ! impact
       }
   }

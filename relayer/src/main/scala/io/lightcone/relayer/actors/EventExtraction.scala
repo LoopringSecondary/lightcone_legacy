@@ -20,6 +20,7 @@ import akka.actor.ActorRef
 import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
@@ -45,19 +46,37 @@ trait EventExtraction {
   val GET_BLOCK = Notify("get_block")
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
   val PROCESS_EVENTS = Notify("process_events")
+  val BLOCK_REORG_DETECTED = Notify("block_reorg_detected")
 
   var untilBlock: Long
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  def handleMessage: Receive = {
+  def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
 
       getBlockData(blockData.height + 1).map {
         case Some(block) =>
-          blockData = block
-          self ! RETRIEVE_RECEIPTS
+          if (block.parentHash == blockData.hash || blockData.height == -1) {
+            blockData = block
+            val blockEvent = BlockEvent(
+              blockNumber = blockData.height,
+              txs = blockData.txs.map(
+                tx =>
+                  BlockEvent.Tx(
+                    from = tx.from,
+                    nonce = NumericConversion.toBigInt(tx.nonce).toInt,
+                    txHash = tx.hash
+                  )
+              )
+            )
+
+            //TODO(yadong) broadcast blockEvent
+            self ! RETRIEVE_RECEIPTS
+          } else {
+            self ! BLOCK_REORG_DETECTED
+          }
         case None =>
           context.system.scheduler
             .scheduleOnce(1 seconds, self, GET_BLOCK)
@@ -84,6 +103,8 @@ trait EventExtraction {
           )
       }
   }
+
+  def handleBlockReorganization: Receive
 
   def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
     for {
@@ -113,6 +134,7 @@ trait EventExtraction {
         block =>
           RawBlockData(
             hash = block.hash,
+            parentHash = block.parentHash,
             height = NumericConversion.toBigInt(block.number).longValue,
             timestamp = block.timestamp,
             miner = block.miner,
