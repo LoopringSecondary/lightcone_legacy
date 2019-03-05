@@ -81,13 +81,6 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def deleteByTxHashesDBIO(
-      txHashes: Set[String]
-    ): FixedSqlAction[Int, NoStream, Effect.Write] =
-    query
-      .filter(_.txHash inSet txHashes)
-      .delete
-
   def deleteByTxHashes(txHashes: Set[String]): Future[Boolean] =
     db.run(deleteByTxHashesDBIO(txHashes))
       .map(_ > 0)
@@ -96,19 +89,26 @@ class ActivityDalImpl @Inject()(
     val a = (for {
       // delete pending and blocked activities with current block's txHashes
       _ <- deleteByTxHashesDBIO(req.txs.map(_.txHash).toSet)
-      // update all activities which block above current block height
+      // update all activities which block >= current block height
       _ <- updateBlockActivitiesToPendingDBIO(req.blockNumber)
-      // delete the from address's in txs which nonce blow or equals to the tx's nonce
-      txsWithMaxNonce = req.txs
+      // delete the from address's activities which nonce <= the tx's nonce
+      fromWithMaxNonce = req.txs
         .groupBy(_.from)
         .values
         .map(t => t.maxBy(_.nonce))
-      _ <- DBIO.sequence(txsWithMaxNonce.map { r =>
+      _ <- DBIO.sequence(fromWithMaxNonce.map { r =>
         deletePendingActivitiesWhenFromNonceBlowGivenValueDBIO(r.from, r.nonce)
       })
     } yield {}).transactionally
     db.run(a)
   }
+
+  def deleteByTxHashesDBIO(
+      txHashes: Set[String]
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.txHash inSet txHashes)
+      .delete
 
   private def saveActivityDBIO(
       activity: Activity
