@@ -98,8 +98,8 @@ class MissingBlocksEventExtractorActor(
       }
   }
 
-  def handleFork: Receive = {
-    case DETECT_FORK_HEIGHT =>
+  def handleBlockReorganization: Receive = {
+    case BLOCK_REORG_DETECTED =>
     //This Actor will never receive this message
   }
 

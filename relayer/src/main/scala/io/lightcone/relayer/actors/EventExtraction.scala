@@ -45,13 +45,13 @@ trait EventExtraction {
   val GET_BLOCK = Notify("get_block")
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
   val PROCESS_EVENTS = Notify("process_events")
-  val DETECT_FORK_HEIGHT = Notify("detect_fork_height")
+  val BLOCK_REORG_DETECTED = Notify("block_reorg_detected")
 
   var untilBlock: Long
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  def handleMessage: Receive = handleFork orElse {
+  def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
 
@@ -61,7 +61,7 @@ trait EventExtraction {
             blockData = block
             self ! RETRIEVE_RECEIPTS
           } else {
-            self ! DETECT_FORK_HEIGHT
+            self ! BLOCK_REORG_DETECTED
           }
         case None =>
           context.system.scheduler
@@ -90,7 +90,7 @@ trait EventExtraction {
       }
   }
 
-  def handleFork: Receive
+  def handleBlockReorganization: Receive
 
   def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
     for {

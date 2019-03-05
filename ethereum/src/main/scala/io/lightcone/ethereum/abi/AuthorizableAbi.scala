@@ -35,7 +35,7 @@ class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findEvent(searchByName(AddressDeauthorizedEvent.name))
   )
 
-  override def unpackEvent(
+  def unpackEvent(
       data: String,
       topics: Array[String]
     ): Option[Any] = {

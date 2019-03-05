@@ -17,14 +17,11 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.BlockData
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.ethereum.event._
 
@@ -66,44 +63,17 @@ class EthereumEventExtractorActor(
 
   val selfConfig = config.getConfig(EthereumEventExtractorActor.name)
 
-  val preBlockNumber = selfConfig.getInt("pre-block")
-
   var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 
   override def initialize(): Future[Unit] = {
     val startBlock = Math.max(selfConfig.getLong("start-block"), 0)
     val f = for {
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
-      currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
-        .mapAs[GetBlockNumber.Res]
-        .map(res => NumericConversion.toBigInt(res.result).longValue)
       lastHandledBlockNum = lastHandledBlock.getOrElse(startBlock - 1)
-      preBlockNum = Math.max(currentBlock - 1 - preBlockNumber, 0)
-      missing = preBlockNum > lastHandledBlockNum
-      preBlockData <- getBlockData(preBlockNum).map(_.get)
-      lastHandledBlockData <- dbModule.blockDal.findByHeight(
-        lastHandledBlockNum
-      )
-      startBlockData <- getBlockData(startBlock).map(_.get)
-      _ = if (missing) {
-        dbModule.blockService.saveBlock(
-          BlockData(hash = preBlockData.hash, height = preBlockData.height)
-        )
-        dbModule.missingBlocksRecordDal.saveMissingBlock(
-          MissingBlocksRecord(
-            lastHandledBlockNum + 1,
-            currentBlock,
-            lastHandledBlockNum
-          )
-        )
-      }
+      blockStartNum = Math.max(lastHandledBlockNum, startBlock - 1)
+      blockStartData <- getBlockData(blockStartNum).map(_.get)
     } yield {
-      blockData =
-        if (missing) preBlockData
-        else
-          lastHandledBlockData
-            .map(data => RawBlockData(hash = data.hash, height = data.height))
-            .getOrElse(startBlockData)
+      blockData = blockStartData
     }
     f onComplete {
       case Success(value) =>
@@ -117,8 +87,8 @@ class EthereumEventExtractorActor(
 
   def ready = handleMessage
 
-  def handleFork: Receive = {
-    case DETECT_FORK_HEIGHT =>
+  def handleBlockReorganization: Receive = {
+    case BLOCK_REORG_DETECTED =>
       for {
         dbBlock <- dbModule.blockDal.findByHeight(blockData.height - 1)
         onlineBlock <- getBlockData(blockData.height - 1)
@@ -127,7 +97,7 @@ class EthereumEventExtractorActor(
         if (dbBlock.get.hash == onlineBlock.get.hash)
           self ! GET_BLOCK
         else
-          self ! DETECT_FORK_HEIGHT
+          self ! BLOCK_REORG_DETECTED
       }
   }
 
