@@ -28,7 +28,7 @@ import io.lightcone.ethereum.persistence.Activity.ActivityType
 import io.lightcone.ethereum.persistence.Fill.Fee
 import io.lightcone.ethereum.persistence._
 import io.lightcone.lib._
-import io.lightcone.relayer.data.Transaction
+import io.lightcone.relayer.data._
 import org.web3j.utils._
 
 import scala.concurrent._
@@ -62,67 +62,97 @@ class TxRingMinedEventExtractor @Inject()(
     if (!txdata.tx.to.equalsIgnoreCase(ringSubmitterAddress)) {
       Seq.empty
     } else {
-      txdata.receiptAndHeaderOpt match {
-        case Some((receipt, eventHeader)) =>
-          if (receipt.status == TX_STATUS_FAILED) {
-            //失败的环路提交，只生成RingMinedEvent
-            val fills = extractInputToFill(txdata.tx)
-            val ringMinedEvents = generateRingMinedEvents(fills, eventHeader)
-            //如果是p2p则需要生成activity
-            val activities = if (isP2P(fills, eventHeader.txFrom)) {
-              genereateActivity(fills, eventHeader)
-            } else Seq.empty
-            ringMinedEvents ++ activities
-          } else {
-            receipt.logs.zipWithIndex.flatMap {
-              case (log, index) =>
-                loopringProtocolAbi
-                  .unpackEvent(log.data, log.topics.toArray) match {
-                  case Some(event: RingMinedEvent.Result) =>
-                    val fillContent = Numeric.cleanHexPrefix(event._fills)
-                    val fillStrs =
-                      fillContent.zipWithIndex
-                        .groupBy(_._2 / fillLength)
-                        .map {
-                          case (_, chars) => chars.map(_._1).mkString
-                        }
-                    val fills = deserializeFill(
-                      fillStrs.toSeq,
-                      event,
-                      txdata.tx,
-                      eventHeader.getBlockHeader
+      extractInputToRingBatch(txdata.tx.input) match {
+        case None => Seq.empty
+        case Some(ringBatch) =>
+          val isP2PRes = isP2P(ringBatch.orders, txdata.tx.from)
+          txdata.receiptAndHeaderOpt match {
+            case Some((receipt, eventHeader)) =>
+              //失败的交易只有在p2p时才生成Activity，否则只生成RingMinedEvent
+              if (receipt.status == TX_STATUS_FAILED) {
+                val ringMinedEvents =
+                  ringBatchToRingMinedEvents(ringBatch, eventHeader)
+                val activities =
+                  if (isP2PRes)
+                    ringBatchToActivities(
+                      ringBatch,
+                      txdata.tx.hash,
+                      TX_STATUS_SUCCESS,
+                      isP2PRes
                     )
-                    val ringMinedEvents =
-                      generateRingMinedEvents(fills, eventHeader)
-                    val ohlcDatas = generateOHLCDatas(
-                      fills,
-                      event._ringIndex.longValue(),
-                      eventHeader
-                    )
-                    val activities = genereateActivity(fills, eventHeader)
-                    fills ++ ringMinedEvents ++ ohlcDatas ++ activities
-                  case _ =>
-                    Seq.empty
+                  else Seq.empty
+                ringMinedEvents ++ activities
+              } else {
+                val orders = ringBatch.orders map { order =>
+                  order.hash -> order
                 }
-            }
+
+                extractSuccessedEvents(
+                  txdata.tx,
+                  receipt,
+                  eventHeader,
+                  orders.toMap,
+                  ringBatch.feeRecipient,
+                  isP2PRes
+                )
+              }
+            case None =>
+              //pending的只生成activity
+              if (isP2PRes) {
+                ringBatchToActivities(
+                  ringBatch,
+                  txdata.tx.hash,
+                  TX_STATUS_PENDING,
+                  isP2PRes
+                )
+              } else {
+                Seq.empty
+              }
           }
-        case None =>
-          //pending的环路提交不生成RingMinedEvent
-          val eventHeader = EventHeader(
-            txFrom = txdata.tx.from,
-            txHash = txdata.tx.hash,
-            txStatus = TX_STATUS_PENDING,
-            txTo = txdata.tx.to,
-            txValue = txdata.tx.value,
-            blockHeader = Some(BlockHeader())
-          )
-          val fills = extractInputToFill(txdata.tx)
-          //但是如果是p2p则需要生成activity
-          val activities = if (isP2P(fills, eventHeader.txFrom)) {
-            genereateActivity(fills, eventHeader)
-          } else Seq.empty
-          activities
       }
+    }
+  }
+
+  private def extractSuccessedEvents(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      eventHeader: EventHeader,
+      orders: Map[String, RawOrder],
+      feeReceipt: String,
+      isP2PRes: Boolean
+    ) = {
+    receipt.logs.zipWithIndex.flatMap {
+      case (log, index) =>
+        loopringProtocolAbi
+          .unpackEvent(log.data, log.topics.toArray) match {
+          case Some(event: RingMinedEvent.Result) =>
+            val fillContent = Numeric.cleanHexPrefix(event._fills)
+            val fillStrs =
+              fillContent.zipWithIndex
+                .groupBy(_._2 / fillLength)
+                .map {
+                  case (_, chars) => chars.map(_._1).mkString
+                }
+            val fills = deserializeFill(
+              fillStrs.toSeq,
+              orders,
+              feeReceipt,
+              event,
+              tx,
+              eventHeader.getBlockHeader
+            )
+            val ringMinedEvents =
+              generateRingMinedEvents(fills, eventHeader)
+            val ohlcDatas = generateOHLCDatas(
+              fills,
+              event._ringIndex.longValue(),
+              eventHeader
+            )
+            val activities = genereateActivity(fills, eventHeader, isP2PRes)
+            fills ++ ringMinedEvents ++ ohlcDatas ++ activities
+          case _ =>
+            Seq.empty
+        }
     }
   }
 
@@ -214,54 +244,42 @@ class TxRingMinedEventExtractor @Inject()(
   //generate two activity by one fill
   private def genereateActivity(
       fills: Seq[Fill],
-      eventHeader: EventHeader
+      eventHeader: EventHeader,
+      isP2PRes: Boolean
     ): Seq[Activity] = {
-    val isP2PRes = isP2P(fills, eventHeader.txFrom)
-
     val activities = fills.zipWithIndex.map {
       case (fill, index) =>
         val nextFill =
           if (index + 1 >= fills.size) fills.head else fills(index + 1)
 
-        //p2p订单并且是失败的环路、pending的环路 不计算价格等属性
-        val trade =
-          if (isP2PRes && (eventHeader.txStatus == TX_STATUS_PENDING || eventHeader.txStatus == TX_STATUS_FAILED)) {
-            Activity.Trade(
-              address = fill.owner,
-              tokenBase = fill.tokenS,
-              tokenQuote = fill.tokenB,
-              isP2P = isP2PRes
-            )
-          } else {
-            val market =
-              metadataManager.getMarket(
-                MarketPair(fill.tokenS, nextFill.tokenS)
-              )
-            val fillAmountS =
-              metadataManager.getTokenWithAddress(fill.tokenS) match {
-                case None        => BigInt(fill.amountS.get).doubleValue()
-                case Some(token) => token.fromWei(fill.amountS)
-              }
-            val fillAmountB =
-              metadataManager.getTokenWithAddress(nextFill.tokenS) match {
-                case None        => BigInt(fill.amountB.get).doubleValue()
-                case Some(token) => token.fromWei(fill.amountB)
-              }
-            val price = if (market.getMarketPair.baseToken == fill.tokenS) {
-              fillAmountS / fillAmountB
-            } else {
-              fillAmountB / fillAmountS
-            }
-            Activity.Trade(
-              address = fill.owner,
-              tokenBase = market.baseTokenSymbol,
-              tokenQuote = market.quoteTokenSymbol,
-              amountBase = fill.amountS,
-              amountQuote = fill.amountB,
-              price = price.formatted(s"%.${market.priceDecimals}f"),
-              isP2P = isP2PRes
-            )
+        val market =
+          metadataManager.getMarket(
+            MarketPair(fill.tokenS, nextFill.tokenS)
+          )
+        val fillAmountS =
+          metadataManager.getTokenWithAddress(fill.tokenS) match {
+            case None        => BigInt(fill.amountS.get).doubleValue()
+            case Some(token) => token.fromWei(fill.amountS)
           }
+        val fillAmountB =
+          metadataManager.getTokenWithAddress(nextFill.tokenS) match {
+            case None        => BigInt(fill.amountB.get).doubleValue()
+            case Some(token) => token.fromWei(fill.amountB)
+          }
+        val price = if (market.getMarketPair.baseToken == fill.tokenS) {
+          fillAmountS / fillAmountB
+        } else {
+          fillAmountB / fillAmountS
+        }
+        val trade = Activity.Trade(
+          address = fill.owner,
+          tokenBase = market.baseTokenSymbol,
+          tokenQuote = market.quoteTokenSymbol,
+          amountBase = fill.amountS,
+          amountQuote = fill.amountB,
+          price = price.formatted(s"%.${market.priceDecimals}f"),
+          isP2P = isP2PRes
+        )
         val activity = Activity(
           owner = fill.owner,
           block = eventHeader.getBlockHeader.height,
@@ -283,6 +301,8 @@ class TxRingMinedEventExtractor @Inject()(
 
   private def deserializeFill(
       fillData: Seq[String],
+      orders: Map[String, RawOrder],
+      feeRecipeit: String,
       eventRes: RingMinedEvent.Result,
       tx: Transaction,
       blockHeader: BlockHeader
@@ -292,6 +312,8 @@ class TxRingMinedEventExtractor @Inject()(
         val nextFill =
           if (index + 1 >= fillData.size) fillData.head else fillData(index + 1)
         val data = Numeric.cleanHexPrefix(fill)
+        val orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1))
+        val order = orders.getOrElse(orderHash, RawOrder())
         val nextFillData = Numeric.cleanHexPrefix(nextFill)
         Fill(
           owner = Address.normalize(data.substring(64 * 1, 64 * 2)),
@@ -305,8 +327,21 @@ class TxRingMinedEventExtractor @Inject()(
           tokenS = Address.normalize(data.substring(64 * 2, 64 * 3)),
           tokenB = Address.normalize(nextFillData.substring(64 * 2, 64 * 3)),
           split = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
-          fee = Some(Fee()), //TODO(hongyu):补全，因为需要data的结构，稍后处理
-          //      wallet =
+          fee = Some(
+            Fee(
+              tokenFee = order.getFeeParams.tokenFee,
+              amountFee =
+                NumericConversion.toBigInt(data.substring(64 * 5, 64 * 6)),
+              feeAmountS =
+                NumericConversion.toBigInt(data.substring(64 * 6, 64 * 7)),
+              feeAmountB =
+                NumericConversion.toBigInt(data.substring(64 * 7, 64 * 8)),
+              feeRecipient = feeRecipeit,
+              waiveFeePercentage = order.getFeeParams.waiveFeePercentage,
+              walletSplitPercentage = order.getFeeParams.walletSplitPercentage
+            )
+          ),
+          wallet = order.getParams.wallet,
           miner = tx.from,
           blockHeight = blockHeader.height,
           blockTimestamp = blockHeader.timestamp
@@ -314,45 +349,79 @@ class TxRingMinedEventExtractor @Inject()(
     }
   }
 
-  def extractInputToFill(tx: Transaction): Seq[Fill] = {
-    ringSubmitterAbi.unpackFunctionInput(tx.input) match {
-      case Some(params: SubmitRingsFunction.Params) =>
-        new SimpleRingBatchDeserializer(Numeric.toHexString(params.data)).deserialize match {
-          case Left(_) =>
-            Seq.empty
-          case Right(ringBatch) =>
-            ringBatch.rings flatMap { ring =>
-              ring.orderIndexes map { idx =>
-                val order = ringBatch.orders(idx)
-                val feeParams = order.getFeeParams
-                Fill(
-                  owner = order.owner,
-                  orderHash = order.hash,
-                  tokenS = order.tokenS,
-                  tokenB = order.tokenB,
-                  split = BigInt(feeParams.walletSplitPercentage),
-                  fee = Some(
-                    Fee(
-                      tokenFee = feeParams.tokenFee,
-                      walletSplitPercentage = feeParams.walletSplitPercentage
-                    )
-                  ),
-                  miner = tx.from
-                )
-              }
-            }
-        }
-      case _ =>
-        Seq.empty
+  private def ringBatchToRingMinedEvents(
+      ringBatch: RingBatch,
+      eventHeader: EventHeader
+    ): Seq[PRingMinedEvent] = {
+    ringBatch.rings map { ring =>
+      val order1 = ringBatch.orders(ring.orderIndexes(0))
+      val order2 = ringBatch.orders(ring.orderIndexes(1))
+      PRingMinedEvent(
+        header = Some(eventHeader),
+        orderIds = Seq(order1.hash, order2.hash),
+        marketPair = Some(MarketPair(order1.tokenS, order2.tokenS))
+      )
     }
   }
 
-  def isP2P(
-      fills: Seq[Fill],
+  private def ringBatchToActivities(
+      ringBatch: RingBatch,
+      txHash: String,
+      txStatus: TxStatus,
+      isP2PRes: Boolean
+    ): Seq[Activity] = {
+    ringBatch.rings flatMap { ring =>
+      ringBatch.rings flatMap { ring =>
+        ring.orderIndexes flatMap { idx =>
+          val order = ringBatch.orders(idx)
+          val feeParams = order.getFeeParams
+          val trade = Activity.Trade(
+            address = order.owner,
+            tokenBase = order.tokenS,
+            tokenQuote = order.tokenB,
+            isP2P = isP2PRes
+          )
+          val activity = Activity(
+            owner = order.owner,
+            txHash = txHash,
+            txStatus = txStatus,
+            activityType = ActivityType.TRADE_BUY, //TODO:
+            token = order.tokenS,
+            detail = Activity.Detail.Trade(trade)
+          )
+          Seq(
+            activity,
+            activity
+              .copy(
+                activityType = ActivityType.TRADE_SELL,
+                token = order.tokenB
+              )
+          )
+        }
+      }
+    }
+  }
+
+  private def extractInputToRingBatch(inputData: String): Option[RingBatch] = {
+    ringSubmitterAbi.unpackFunctionInput(inputData) match {
+      case Some(params: SubmitRingsFunction.Params) =>
+        new SimpleRingBatchDeserializer(Numeric.toHexString(params.data)).deserialize match {
+          case Left(_) =>
+            None
+          case Right(ringBatch) =>
+            Some(ringBatch)
+        }
+      case _ =>
+        None
+    }
+  }
+
+  private def isP2P(
+      orders: Seq[RawOrder],
       txFrom: String
     ): Boolean = {
-    fills.exists { fill =>
-      fill.owner == txFrom
+    orders.exists { order =>
+      order.owner == txFrom
     }
   }
 
