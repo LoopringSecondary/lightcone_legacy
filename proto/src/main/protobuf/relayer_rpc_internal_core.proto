@@ -265,16 +265,6 @@ message SetGasPrice {
     }
 }
 
-message SaveBlock {
-    message Req {
-        io.lightcone.ethereum.BlockData block_data = 1;
-    }
-
-    message Res {
-        io.lightcone.core.Error error = 1;
-    }
-}
-
 message GetNodeBlockHeight {
     message Req{}
 

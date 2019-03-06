@@ -177,16 +177,12 @@ class EthereumAccessActor(
       .asInstanceOf[SignedRawTransaction]
     Transaction(
       hash = hash,
-      nonce = NumericConversion
-        .toHexString(BigInt(rawTransaction.getNonce)),
+      nonce = BigInt(rawTransaction.getNonce),
       from = rawTransaction.getFrom,
       to = rawTransaction.getTo,
-      value = NumericConversion
-        .toHexString(BigInt(rawTransaction.getValue)),
-      gas = NumericConversion
-        .toHexString(BigInt(rawTransaction.getGasLimit)),
-      gasPrice = NumericConversion
-        .toHexString(BigInt(rawTransaction.getGasPrice)),
+      value = BigInt(rawTransaction.getValue),
+      gas = BigInt(rawTransaction.getGasLimit),
+      gasPrice = BigInt(rawTransaction.getGasPrice),
       input = rawTransaction.getData,
       r = NumericConversion.toHexString(
         ByteString.copyFrom(rawTransaction.getSignatureData.getR)

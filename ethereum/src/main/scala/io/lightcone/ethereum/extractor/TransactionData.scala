@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.ethereum.event
+package io.lightcone.ethereum.extractor
 
+import io.lightcone.ethereum.event.EventHeader
 import io.lightcone.relayer.data._
-import scala.concurrent.Future
 
-trait EventExtractor {
-  def extractEvents(block: RawBlockData): Future[Seq[AnyRef]]
-}
+case class TransactionData(
+    tx: Transaction,
+    receiptAndHeaderOpt: Option[(TransactionReceipt, EventHeader)])

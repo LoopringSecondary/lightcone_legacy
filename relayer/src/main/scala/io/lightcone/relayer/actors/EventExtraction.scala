@@ -20,14 +20,13 @@ import akka.actor.ActorRef
 import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.extractor._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
-import io.lightcone.relayer.ethereum.event._
-import org.web3j.utils.Numeric
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -37,11 +36,11 @@ trait EventExtraction {
   me: InitializationRetryActor =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
-  implicit val eventExtractor: EventExtractor
+  implicit val eventExtractor: EventExtractor[BlockWithTxObject, AnyRef]
   implicit val eventDispatcher: EventDispatcher
 
   implicit val dbModule: DatabaseModule
-  var blockData: RawBlockData = _
+  var blockData: BlockWithTxObject = _
 
   val GET_BLOCK = Notify("get_block")
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
@@ -56,13 +55,15 @@ trait EventExtraction {
     case GET_BLOCK =>
       assert(blockData != null)
 
-      getBlockData(blockData.height + 1).map {
+      getBlockData(NumericConversion.toBigInt(blockData.number) + 1).map {
         case Some(block) =>
-          if (block.parentHash == blockData.hash || blockData.height == -1) {
+          if (block.parentHash == blockData.hash || NumericConversion
+                .toBigInt(blockData.number) == -1) {
             blockData = block
             val blockEvent = BlockEvent(
-              blockNumber = blockData.height,
-              txs = blockData.txs.map(
+              blockNumber =
+                NumericConversion.toBigInt(blockData.number).longValue(),
+              txs = blockData.transactions.map(
                 tx =>
                   BlockEvent.Tx(
                     from = tx.from,
@@ -96,7 +97,8 @@ trait EventExtraction {
     case PROCESS_EVENTS =>
       processEvents onComplete {
         case Success(_) =>
-          if (blockData.height < untilBlock) self ! GET_BLOCK
+          if (NumericConversion.toBigInt(blockData.number) < untilBlock)
+            self ! GET_BLOCK
         case Failure(e) =>
           log.error(
             s" Actor: ${self.path} extracts ethereum events failed with error:${e.getMessage}"
@@ -106,22 +108,16 @@ trait EventExtraction {
 
   def handleBlockReorganization: Receive
 
-  def getBlockData(blockNum: Long): Future[Option[RawBlockData]] = {
+  def getBlockData(blockNum: BigInt): Future[Option[BlockWithTxObject]] = {
     for {
       blockOpt <- (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-        Numeric.toHexString(BigInt(blockNum).toByteArray)
+        blockNum
       )).mapAs[GetBlockWithTxObjectByNumber.Res]
         .map(_.result)
-
-      uncles <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
+      uncleMiners <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
         val batchGetUnclesReq = BatchGetUncle.Req(
-          blockOpt.get.uncles.indices.map(
-            index =>
-              GetUncle.Req(
-                blockOpt.get.number,
-                Numeric.prependHexPrefix(index.toHexString)
-              )
-          )
+          blockOpt.get.uncles.indices
+            .map(index => GetUncle.Req(blockOpt.get.number, BigInt(index)))
         )
 
         (ethereumAccessorActor ? batchGetUnclesReq)
@@ -130,24 +126,13 @@ trait EventExtraction {
       } else {
         Future.successful(Seq.empty)
       }
-      rawBlock = blockOpt.map(
-        block =>
-          RawBlockData(
-            hash = block.hash,
-            parentHash = block.parentHash,
-            height = NumericConversion.toBigInt(block.number).longValue,
-            timestamp = block.timestamp,
-            miner = block.miner,
-            uncles = uncles,
-            txs = block.transactions
-          )
-      )
+      rawBlock = blockOpt.map(block => block.copy(uncleMiners = uncleMiners))
     } yield rawBlock
   }
 
   def getAllReceipts: Future[Seq[Option[TransactionReceipt]]] =
     (ethereumAccessorActor ? BatchGetTransactionReceipts.Req(
-      blockData.txs
+      blockData.transactions
         .map(tx => GetTransactionReceipt.Req(tx.hash))
     )).mapAs[BatchGetTransactionReceipts.Res]
       .map(_.resps.map(_.result))
@@ -159,7 +144,7 @@ trait EventExtraction {
       _ <- dbModule.blockService.saveBlock(
         BlockData(
           hash = blockData.hash,
-          height = blockData.height,
+          height = NumericConversion.toBigInt(blockData.number).longValue(),
           timestamp = NumericConversion.toBigInt(blockData.timestamp).longValue
         )
       )

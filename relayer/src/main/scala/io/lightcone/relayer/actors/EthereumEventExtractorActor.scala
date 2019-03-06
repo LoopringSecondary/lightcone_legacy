@@ -19,11 +19,12 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.lib._
-import io.lightcone.persistence._
+import io.lightcone.ethereum.extractor._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
-import io.lightcone.relayer.ethereum.event._
+import io.lightcone.lib._
+import io.lightcone.persistence._
+import io.lightcone.relayer.data._
 
 import scala.concurrent._
 import scala.util._
@@ -42,7 +43,7 @@ object EthereumEventExtractorActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       eventDispatcher: EventDispatcher,
-      eventExtractor: EventExtractor,
+      eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new EthereumEventExtractorActor()))
@@ -56,7 +57,7 @@ class EthereumEventExtractorActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val eventDispatcher: EventDispatcher,
-    val eventExtractor: EventExtractor,
+    val eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {
@@ -90,8 +91,10 @@ class EthereumEventExtractorActor(
   def handleBlockReorganization: Receive = {
     case BLOCK_REORG_DETECTED =>
       for {
-        dbBlock <- dbModule.blockDal.findByHeight(blockData.height - 1)
-        onlineBlock <- getBlockData(blockData.height - 1)
+        dbBlock <- dbModule.blockDal.findByHeight(
+          NumericConversion.toBigInt(blockData.number).longValue() - 1
+        )
+        onlineBlock <- getBlockData(blockData.number)
       } yield {
         blockData = onlineBlock.get
         if (dbBlock.map(_.hash) == onlineBlock.map(_.hash))
