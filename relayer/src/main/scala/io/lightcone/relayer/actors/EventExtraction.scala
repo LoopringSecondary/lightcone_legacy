@@ -40,7 +40,12 @@ trait EventExtraction {
   implicit val eventDispatcher: EventDispatcher
 
   implicit val dbModule: DatabaseModule
+
+  var preBlockData: BlockWithTxObject = _
   var blockData: BlockWithTxObject = _
+
+  val maxRetryTimes = 10
+  var retryTimes = 0
 
   val GET_BLOCK = Notify("get_block")
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
@@ -59,6 +64,7 @@ trait EventExtraction {
         case Some(block) =>
           if (block.parentHash == blockData.hash || NumericConversion
                 .toBigInt(blockData.number) == -1) {
+            preBlockData = blockData
             blockData = block
             val blockEvent = BlockEvent(
               blockNumber =
@@ -89,9 +95,14 @@ trait EventExtraction {
         if (receipts.forall(_.nonEmpty)) {
           blockData = blockData.withReceipts(receipts.map(_.get))
           self ! PROCESS_EVENTS
-        } else {
+        } else if (retryTimes < maxRetryTimes) {
+          retryTimes += 1
           context.system.scheduler
             .scheduleOnce(500 millis, self, RETRIEVE_RECEIPTS)
+        } else {
+          retryTimes = 0
+          blockData = preBlockData
+          self ! GET_BLOCK
         }
       }
     case PROCESS_EVENTS =>
