@@ -36,6 +36,7 @@ class SimpleRingBatchDeserializer(
   private var tableOffSet: Int = 0
   private var dataOffset: Int = 0
 
+  //TODO(kongliang):RingBatch.rings 为空
   def deserialize: Either[ErrorCode, RingBatch] =
     try {
       val version = bitExtractor.extractUint16(0)
