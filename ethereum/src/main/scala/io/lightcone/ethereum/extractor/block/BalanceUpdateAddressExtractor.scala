@@ -93,53 +93,47 @@ class BalanceUpdateAddressExtractor @Inject()(
     val batchCallReq =
       BatchCallContracts.Req(balanceCallReqs, returnBlockNum = true)
     for {
-      tokenBalances <- if (addresses.nonEmpty) {
-        (ethereumAccessor() ? batchCallReq)
-          .mapTo[BatchCallContracts.Res]
-          .map(
-            resp =>
-              resp.resps.map(
-                res =>
-                  Amount(
-                    NumericConversion.toAmount(res.result).value,
-                    block = resp.block
-                  )
-              )
-          )
-      } else {
-        Future.successful(Seq.empty)
+      tokenBalances <- {
+        if (addresses.isEmpty) Future.successful(Seq.empty)
+        else {
+          (ethereumAccessor() ? batchCallReq)
+            .mapTo[BatchCallContracts.Res]
+            .map { resp =>
+              resp.resps.map { r =>
+                Amount(
+                  NumericConversion.toAmount(r.result).value,
+                  block = resp.block
+                )
+              }
+            }
+        }
       }
-    } yield
-      (addresses zip tokenBalances)
-        .map(item => item._1.withBalance(item._2))
+      result = (addresses zip tokenBalances).map { item =>
+        item._1.withBalance(item._2)
+      }
+    } yield result
   }
 
   def getEthBalances(
       addresses: Seq[AddressBalanceUpdatedEvent]
     ): Future[Seq[AddressBalanceUpdatedEvent]] = {
-
     for {
-      ethBalances <- if (addresses.nonEmpty) {
-        (ethereumAccessor() ? BatchGetEthBalance.Req(
-          addresses.map(addr => EthGetBalance.Req(address = addr.address)),
-          returnBlockNum = true
-        )).mapTo[BatchGetEthBalance.Res]
-          .map(
-            resp =>
-              resp.resps.map(
-                res =>
-                  Amount(
-                    NumericConversion.toAmount(res.result).value,
-                    resp.block
-                  )
-              )
-          )
-      } else {
-        Future.successful(Seq.empty)
+      ethBalances <- {
+        if (addresses.isEmpty) Future.successful(Seq.empty)
+        else {
+          (ethereumAccessor() ? BatchGetEthBalance.Req(
+            addresses.map(addr => EthGetBalance.Req(address = addr.address)),
+            returnBlockNum = true
+          )).mapTo[BatchGetEthBalance.Res].map { resp =>
+            resp.resps.map { r =>
+              Amount(NumericConversion.toAmount(r.result).value, resp.block)
+            }
+          }
+        }
       }
-    } yield
-      (addresses zip ethBalances).map(item => item._1.withBalance(item._2))
-
+      result = (addresses zip ethBalances).map { item =>
+        item._1.withBalance(item._2)
+      }
+    } yield result
   }
-
 }

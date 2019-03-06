@@ -47,18 +47,13 @@ final class TxTransferEventExtractor @Inject()(
 
   def extractEvents(txData: TransactionData): Future[Seq[AnyRef]] = Future {
     val transferEvents = extractTransferEvents(txData)
-    val transferActivity = transferEvents
-      .filterNot(
-        event =>
-          event.getHeader.txTo == protocolAddress ||
-            event.to == wethAddress || event.from == wethAddress
-      )
-      .map(extractActivity)
+    val transferActivity = transferEvents.filterNot { event =>
+      event.getHeader.txTo == protocolAddress ||
+      event.to == wethAddress || event.from == wethAddress
+    }.map(extractActivity)
 
     val wethActivity = transferEvents
-      .filterNot(
-        event => event.owner == wethAddress
-      )
+      .filter(_.owner != wethAddress)
       .filter(event => event.to == wethAddress || event.from == wethAddress)
       .map(extractActivity)
 
@@ -253,53 +248,41 @@ final class TxTransferEventExtractor @Inject()(
   }
 
   def getActivityType(event: PTransferEvent): Activity.ActivityType = {
-
     if (event.to == wethAddress && event.token == Address.ZERO.toString())
-      return Activity.ActivityType.ETHER_WRAP
-
-    if (event.to == wethAddress && event.token == wethAddress)
-      return Activity.ActivityType.ETHER_UNWRAP
-
-    if (event.from == wethAddress && event.token == Address.ZERO.toString())
-      return Activity.ActivityType.ETHER_UNWRAP
-
-    if (event.from == wethAddress && event.token == wethAddress)
-      return Activity.ActivityType.ETHER_WRAP
-
-    if (event.from == event.owner && event.token == Address.ZERO.toString())
-      return Activity.ActivityType.ETHER_TRANSFER_OUT
-
-    if (event.from == event.owner && event.token != Address.ZERO.toString())
-      return Activity.ActivityType.TOKEN_TRANSFER_OUT
-
-    if (event.token == Address.ZERO.toString())
+      Activity.ActivityType.ETHER_WRAP
+    else if (event.to == wethAddress && event.token == wethAddress)
+      Activity.ActivityType.ETHER_UNWRAP
+    else if (event.from == wethAddress && event.token == Address.ZERO
+               .toString())
+      Activity.ActivityType.ETHER_UNWRAP
+    else if (event.from == wethAddress && event.token == wethAddress)
+      Activity.ActivityType.ETHER_WRAP
+    else if (event.from == event.owner && event.token == Address.ZERO
+               .toString())
+      Activity.ActivityType.ETHER_TRANSFER_OUT
+    else if (event.from == event.owner && event.token != Address.ZERO
+               .toString())
+      Activity.ActivityType.TOKEN_TRANSFER_OUT
+    else if (event.token == Address.ZERO.toString())
       Activity.ActivityType.ETHER_TRANSFER_IN
-    else Activity.ActivityType.TOKEN_TRANSFER_IN
-
+    else
+      Activity.ActivityType.TOKEN_TRANSFER_IN
   }
 
   def getActivityDetail(event: PTransferEvent): Activity.Detail = {
 
     if (event.to == wethAddress || event.from == wethAddress) {
-      return Activity.Detail.EtherConversion(
-        Activity.EtherConversion(
-          amount = event.amount
-        )
+      Activity.Detail.EtherConversion(
+        Activity.EtherConversion(amount = event.amount)
+      )
+    } else if (event.token == Address.ZERO.toString()) {
+      Activity.Detail.EtherTransfer(
+        Activity.EtherTransfer(address = event.to, amount = event.amount)
+      )
+    } else {
+      Activity.Detail.TokenTransfer(
+        Activity.TokenTransfer(address = event.to, amount = event.amount)
       )
     }
-    if (event.token == Address.ZERO.toString()) {
-      return Activity.Detail.EtherTransfer(
-        Activity.EtherTransfer(
-          address = event.to,
-          amount = event.amount
-        )
-      )
-    }
-    Activity.Detail.TokenTransfer(
-      Activity.TokenTransfer(
-        address = event.to,
-        amount = event.amount
-      )
-    )
   }
 }

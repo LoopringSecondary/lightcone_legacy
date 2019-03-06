@@ -17,12 +17,14 @@
 package io.lightcone.ethereum.extractor
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
+import org.slf4s.Logging
 
 trait EventExtractor[S, +E] {
   def extractEvents(source: S): Future[Seq[E]]
 }
 
-object EventExtractor {
+object EventExtractor extends Object with Logging {
 
   // Constructs a new EventExtractor with a given list of sub-EventExtractors and
   // invokes them in the given order. Duplicatd events will be removed.
@@ -33,9 +35,29 @@ object EventExtractor {
       ec: ExecutionContext
     ) = new EventExtractor[S, E] {
 
-    def extractEvents(source: S): Future[Seq[E]] =
+    def extractEvents(source: S): Future[Seq[E]] = {
+      def recoverly(
+          extractor: EventExtractor[S, E],
+          source: S
+        ): Future[Seq[E]] = {
+        val f = extractor.extractEvents(source)
+
+        f.onComplete {
+          case Success(_) =>
+          case Failure(e) =>
+            log.error(
+              s"${extractor.getClass.getSimpleName} failed to extract events from $source",
+              e
+            )
+        }
+
+        f
+      }
+
       Future
-        .sequence(extractors.map(_.extractEvents(source)))
+        .sequence(extractors.map(recoverly(_, source)))
         .map(_.flatten.distinct)
+    }
+
   }
 }

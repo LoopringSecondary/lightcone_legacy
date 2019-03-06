@@ -88,36 +88,31 @@ class AllowanceUpdateAddressExtractor @Inject()(
     val balanceCallReqs = addresses.zipWithIndex.map {
       case (address, index) =>
         val data = erc20Abi.allowance.pack(
-          AllowanceFunction.Parms(
-            _owner = address.address,
-            _spender = delegateAddress
-          )
+          AllowanceFunction
+            .Parms(_owner = address.address, _spender = delegateAddress)
         )
         val param = TransactionParams(to = address.token, data = data)
         EthCall.Req(index, Some(param), "latest")
     }
     val batchCallReq = BatchCallContracts.Req(balanceCallReqs, true)
     for {
-      tokenAllowances <- if (addresses.nonEmpty) {
-        (ethereumAccessor() ? batchCallReq)
-          .mapTo[BatchCallContracts.Res]
-          .map(
-            resp =>
-              resp.resps.map(
-                res =>
-                  Amount(
-                    NumericConversion.toAmount(res.result).value,
-                    resp.block
-                  )
-              )
-          )
-      } else {
-        Future.successful(Seq.empty)
+      tokenAllowances <- {
+        if (addresses.isEmpty) Future.successful(Seq.empty)
+        else {
+          (ethereumAccessor() ? batchCallReq)
+            .mapTo[BatchCallContracts.Res]
+            .map { resp =>
+              resp.resps.map { r =>
+                Amount(NumericConversion.toAmount(r.result).value, resp.block)
+              }
+            }
+
+        }
       }
-    } yield
-      (addresses zip tokenAllowances).map(
-        item => item._1.withAllowance(item._2)
-      )
+      result = (addresses zip tokenAllowances).map { item =>
+        item._1.withAllowance(item._2)
+      }
+    } yield result
   }
 
 }
