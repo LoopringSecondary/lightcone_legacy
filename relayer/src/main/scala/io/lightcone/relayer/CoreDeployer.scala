@@ -31,11 +31,11 @@ import io.lightcone.ethereum._
 import io.lightcone.relayer.jsonrpc.JsonRpcServer
 import io.lightcone.relayer.validator._
 import io.lightcone.core._
+import io.lightcone.ethereum.extractor._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.splitmerge._
-import io.lightcone.relayer.ethereum.event._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -63,7 +63,7 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
-    eventExtractor: EventExtractor,
+    eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     socketIONotifier: SocketIONotifier,
     splitMergerProvider: SplitMergerProvider,
     system: ActorSystem)

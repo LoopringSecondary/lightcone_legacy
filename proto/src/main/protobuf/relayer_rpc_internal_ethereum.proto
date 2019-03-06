@@ -20,7 +20,7 @@ option java_multiple_files = true;
 package io.lightcone.relayer.data;
 
 import "relayer_ethereum.proto";
-// import "core.proto";
+import "core.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ETHEREUM JSON-RPC MESSAGES
@@ -129,7 +129,7 @@ message GetTransactionReceipt {
 // eth_getBlockByNumber
 message GetBlockWithTxHashByNumber {
     message Req {
-        string blockNumber = 1;
+        io.lightcone.core.Amount blockNumber = 1;
     }
     message Res {
         int32 id = 1;
@@ -141,7 +141,7 @@ message GetBlockWithTxHashByNumber {
 
 message GetBlockWithTxObjectByNumber {
     message Req {
-        string blockNumber = 1;
+        io.lightcone.core.Amount blockNumber = 1;
     }
     message Res {
         int32 id = 1;
@@ -273,8 +273,8 @@ message SendRawTransaction {
 
 message GetUncle {
     message Req {
-        string blockNum = 1;
-        string index = 2;
+        io.lightcone.core.Amount blockNum = 1;
+        io.lightcone.core.Amount index = 2;
     }
     message Res {
     }
@@ -304,16 +304,6 @@ message BatchGetUncle {
 // ETHEREUM EVENT EXTRACT MESSAGES
 /////////////////////////////////////////////////////////////////////
 
-message RawBlockData{
-    int64 height = 1;
-    string hash = 2;
-    string  miner = 3;
-    string timestamp = 4;
-    repeated string uncles = 5;
-    repeated Transaction txs = 6;
-    repeated TransactionReceipt receipts = 7;
-    string parent_hash = 8;
-}
 
 
 

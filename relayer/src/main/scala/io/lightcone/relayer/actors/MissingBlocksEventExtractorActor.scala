@@ -19,12 +19,12 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.lib.TimeProvider
-import io.lightcone.persistence.DatabaseModule
+import io.lightcone.ethereum.extractor._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
-import io.lightcone.relayer.ethereum.event._
+import io.lightcone.lib.{NumericConversion, TimeProvider}
+import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer.data._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,7 +42,7 @@ object MissingBlocksEventExtractorActor extends DeployedAsSingleton {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       eventDispatcher: EventDispatcher,
-      eventExtractor: EventExtractor,
+      eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new MissingBlocksEventExtractorActor()))
@@ -57,7 +57,7 @@ class MissingBlocksEventExtractorActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val eventDispatcher: EventDispatcher,
-    val eventExtractor: EventExtractor,
+    val eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     val dbModule: DatabaseModule)
     extends InitializationRetryActor
     with EventExtraction {
@@ -86,7 +86,7 @@ class MissingBlocksEventExtractorActor(
           if (missingBlocksOpt.get.lastHandledBlock >= 0)
             blockData = lastBlockData.get
           else
-            blockData = RawBlockData(height = -1L)
+            blockData = BlockWithTxObject(number = BigInt(-1))
           val missingBlocks = missingBlocksOpt.get
           untilBlock = missingBlocks.blockEnd
           sequenceId = missingBlocks.sequenceId
@@ -103,16 +103,18 @@ class MissingBlocksEventExtractorActor(
     //This Actor will never receive this message
   }
 
-  override def postProcessEvents =
+  override def postProcessEvents = {
+    val blockNumber = NumericConversion.toBigInt(blockData.number).longValue()
     for {
       _ <- dbModule.missingBlocksRecordDal
-        .updateProgress(sequenceId, blockData.height)
-      needDelete = blockData.height >= untilBlock
+        .updateProgress(sequenceId, blockNumber)
+      needDelete = blockNumber >= untilBlock
       _ <- if (!needDelete) Future.unit
       else dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
       _ = if (needDelete) {
         self ! NEXT_RANGE
       }
     } yield Unit
+  }
 
 }

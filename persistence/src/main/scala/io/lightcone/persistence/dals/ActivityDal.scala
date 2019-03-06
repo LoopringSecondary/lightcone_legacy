@@ -16,14 +16,15 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.core._
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import scala.concurrent._
 
 trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
-  def saveActivity(activity: Activity): Future[ErrorCode]
+
+  def saveActivities(activities: Seq[Activity]): Future[Unit]
 
   def getActivities(
       owner: String,
@@ -36,10 +37,8 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       token: Option[String]
     ): Future[Int]
 
-  def deleteByTxHash(
-      owner: String,
-      txHash: String
-    ): Future[Boolean]
+  def deleteActivitiesWithHashes(txHashes: Set[String]): Future[Boolean]
 
-  def obsoleteDataSinceBlock(block: Long): Future[Boolean]
+  def cleanActivitiesForReorg(req: BlockEvent): Future[Unit]
+
 }

@@ -53,4 +53,6 @@ package object base {
         case Some(e) => e.toByteArray
         case None    => Ring.Fees().toByteArray
       }, bytes => Some(Ring.Fees.parseFrom(bytes)))
+
+  val PENDING_BLOCK_HEIGHT: Long = 1000000000L
 }

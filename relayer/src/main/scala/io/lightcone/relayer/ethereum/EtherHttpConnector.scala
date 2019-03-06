@@ -26,16 +26,17 @@ import akka.stream.scaladsl._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
+import io.lightcone.core.{ErrorCode, ErrorException}
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors.KeepAliveActor
-import io.lightcone.lib.{NumericConversion, TimeProvider}
+import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
-import scalapb.json4s.JsonFormat
+import io.lightcone.relayer.jsonrpc.{Proto, ProtoC}
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -113,10 +114,14 @@ class HttpConnector(
 
   import context.dispatcher
 
+  //TODO(hongyu):optimize serialization of this
   implicit val serialization = jackson.Serialization //.formats(NoTypeHints)
   implicit val system: ActorSystem = context.system
   implicit val formats = org.json4s.native.Serialization
     .formats(NoTypeHints) + new EmptyValueSerializer
+
+  val ps = new ProtoSerializer
+  val parser = org.json4s.native.JsonParser
 
   val DEBUG_TIMEOUT_STR = "5s"
   val DEBUG_TRACER = "callTracer"
@@ -152,6 +157,23 @@ class HttpConnector(
         case (Failure(e), p)    => p.failure(e)
       }))(Keep.left)
       .run()(mat)
+
+  private def deserializeToProto[T <: Proto[T]](
+      json: String
+    )(
+      implicit
+      pa: ProtoC[T]
+    ): T = {
+    val jv = parser.parse(json)
+    ps.deserialize[T](jv) match {
+      case None =>
+        throw ErrorException(
+          ErrorCode.ERR_UNEXPECTED_RESPONSE,
+          "failed to deserialize"
+        )
+      case Some(value) => value
+    }
+  }
 
   private def request(request: HttpRequest): Future[HttpResponse] = {
     val responsePromise = Promise[HttpResponse]()
@@ -224,85 +246,79 @@ class HttpConnector(
     case r: SendRawTransaction.Req =>
       sendMessage("eth_sendRawTransaction") {
         Seq(r.data)
-      } map JsonFormat.fromJsonString[SendRawTransaction.Res] sendTo sender
+      } map deserializeToProto[SendRawTransaction.Res] sendTo sender
 
     case _: GetBlockNumber.Req =>
       sendMessage("eth_blockNumber") {
         Seq.empty
-      } map JsonFormat.fromJsonString[GetBlockNumber.Res] sendTo sender
+      } map deserializeToProto[GetBlockNumber.Res] sendTo sender
 
     case r: EthGetBalance.Req =>
       sendMessage("eth_getBalance") {
         Seq(r.address, r.tag)
-      } map JsonFormat.fromJsonString[EthGetBalance.Res] sendTo sender
+      } map deserializeToProto[EthGetBalance.Res] sendTo sender
 
     case r: GetTransactionByHash.Req =>
       sendMessage("eth_getTransactionByHash") {
         Seq(r.hash)
-      } map JsonFormat.fromJsonString[GetTransactionByHash.Res] sendTo sender
+      } map deserializeToProto[GetTransactionByHash.Res] sendTo sender
 
     case r: GetTransactionReceipt.Req =>
       sendMessage("eth_getTransactionReceipt") {
         Seq(r.hash)
-      } map JsonFormat.fromJsonString[GetTransactionReceipt.Res] sendTo sender
+      } map deserializeToProto[GetTransactionReceipt.Res] sendTo sender
 
     case r: GetBlockWithTxHashByNumber.Req =>
       sendMessage("eth_getBlockByNumber") {
-        Seq(r.blockNumber, false)
-      } map JsonFormat
-        .fromJsonString[GetBlockWithTxHashByNumber.Res] sendTo sender
+        Seq(NumericConversion.toBigInt(r.getBlockNumber), false)
+      } map deserializeToProto[GetBlockWithTxHashByNumber.Res] sendTo sender
 
     case r: GetBlockWithTxObjectByNumber.Req =>
       sendMessage("eth_getBlockByNumber") {
-        Seq(r.blockNumber, true)
-      } map JsonFormat
-        .fromJsonString[GetBlockWithTxObjectByNumber.Res] sendTo sender
+        Seq(NumericConversion.toBigInt(r.getBlockNumber), true)
+      } map deserializeToProto[GetBlockWithTxObjectByNumber.Res] sendTo sender
 
     case r: GetBlockWithTxHashByHash.Req =>
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, false)
-      } map JsonFormat
-        .fromJsonString[GetBlockWithTxHashByHash.Res] sendTo sender
+      } map deserializeToProto[GetBlockWithTxHashByHash.Res] sendTo sender
 
     case r: GetBlockWithTxObjectByHash.Req =>
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, true)
-      } map JsonFormat
-        .fromJsonString[GetBlockWithTxObjectByHash.Res] sendTo sender
+      } map deserializeToProto[GetBlockWithTxObjectByHash.Res] sendTo sender
 
     case r: TraceTransaction.Req =>
       sendMessage("debug_traceTransaction") {
         val debugParams = DebugParams(DEBUG_TIMEOUT_STR, DEBUG_TRACER)
         Seq(r.txhash, debugParams)
-      } map JsonFormat.fromJsonString[TraceTransaction.Res] sendTo sender
+      } map deserializeToProto[TraceTransaction.Res] sendTo sender
 
     case r: GetEstimatedGas.Req =>
       sendMessage("eth_estimateGas") {
         val args = TransactionParams().withTo(r.to).withData(r.data)
         Seq(args)
-      } map JsonFormat.fromJsonString[GetEstimatedGas.Res] sendTo sender
+      } map deserializeToProto[GetEstimatedGas.Res] sendTo sender
 
     case r: GetNonce.Req =>
       sendMessage("eth_getTransactionCount") {
         Seq(r.owner, r.tag)
-      } map JsonFormat.fromJsonString[GetNonce.Res] sendTo sender
+      } map deserializeToProto[GetNonce.Res] sendTo sender
 
     case r: GetBlockTransactionCount.Req =>
       sendMessage("eth_getBlockTransactionCountByHash") {
         Seq(r.blockHash)
-      } map JsonFormat
-        .fromJsonString[GetBlockTransactionCount.Res] sendTo sender
+      } map deserializeToProto[GetBlockTransactionCount.Res] sendTo sender
 
     case r @ EthCall.Req(_, param, _) =>
       sendMessage("eth_call") {
         Seq(param, normalizeTag(r.tag))
-      } map JsonFormat.fromJsonString[EthCall.Res] sendTo sender
+      } map deserializeToProto[EthCall.Res] sendTo sender
 
     case r: GetUncle.Req =>
       sendMessage(method = "eth_getUncleByBlockNumberAndIndex") {
-        Seq(r.blockNum, r.index)
-      } map JsonFormat
-        .fromJsonString[GetBlockWithTxHashByHash.Res] sendTo sender
+        Seq(NumericConversion.toBigInt(r.blockNum), r.index)
+      } map deserializeToProto[GetBlockWithTxHashByHash.Res] sendTo sender
 
     case batchR: BatchCallContracts.Req =>
       var batchReqs = batchR.reqs.map { singleReq =>
@@ -326,7 +342,7 @@ class HttpConnector(
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val callResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[EthCall.Res](respJson)
+          deserializeToProto[EthCall.Res](respJson)
         })
         if (batchR.returnBlockNum)
           BatchCallContracts.Res(
@@ -350,7 +366,7 @@ class HttpConnector(
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val receiptResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[GetTransactionReceipt.Res](respJson)
+          deserializeToProto[GetTransactionReceipt.Res](respJson)
         })
         BatchGetTransactionReceipts.Res(resps = receiptResps)
       } sendTo sender
@@ -368,7 +384,7 @@ class HttpConnector(
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val txResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[GetTransactionByHash.Res](respJson)
+          deserializeToProto[GetTransactionByHash.Res](respJson)
         })
         BatchGetTransactions.Res(resps = txResps)
       } sendTo sender
@@ -378,14 +394,15 @@ class HttpConnector(
         BatchMethod(
           id = randInt(),
           method = "eth_getUncleByBlockNumberAndIndex",
-          params = Seq(singleReq.blockNum, singleReq.index)
+          params =
+            Seq(NumericConversion.toBigInt(singleReq.blockNum), singleReq.index)
         )
       }
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val txResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[GetBlockWithTxHashByHash.Res](respJson)
+          deserializeToProto[GetBlockWithTxHashByHash.Res](respJson)
         })
         BatchGetUncle.Res(txResps)
       } sendTo sender
@@ -412,7 +429,7 @@ class HttpConnector(
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val txResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[EthGetBalance.Res](respJson)
+          deserializeToProto[EthGetBalance.Res](respJson)
         })
         if (batchR.returnBlockNum)
           BatchGetEthBalance.Res(

@@ -17,16 +17,18 @@
 package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
-import io.lightcone.core._
+import io.lightcone.ethereum.TxStatus
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.lib.Address
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
+import io.lightcone.persistence.base._
 import slick.basic._
+import slick.dbio.Effect
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
+import slick.sql.FixedSqlAction
 import scala.concurrent._
-import scala.util.{Failure, Success}
 
 class ActivityDalImpl @Inject()(
     val shardId: String,
@@ -37,20 +39,22 @@ class ActivityDalImpl @Inject()(
     extends ActivityDal {
 
   val query = TableQuery(new ActivityTable(shardId)(_))
+  implicit val activityStatusCxolumnType = enumColumnType(TxStatus)
+  val STATUS_PENDING: TxStatus = TxStatus.TX_STATUS_PENDING
 
-  def saveActivity(activity: Activity): Future[ErrorCode] =
-    db.run(
-        (query += activity).asTry
-      )
-      .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) =>
-          ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
-        case Failure(ex) => {
-          logger.error(s"error : ${ex.getMessage}")
-          ErrorCode.ERR_PERSISTENCE_INTERNAL
-        }
-        case Success(x) => ErrorCode.ERR_NONE
-      }
+  def saveActivities(activities: Seq[Activity]) = {
+    // set block to a certain value if pending
+    val activities_ = activities.map { a =>
+      if (a.txStatus == STATUS_PENDING)
+        a.copy(block = PENDING_BLOCK_HEIGHT, sequenceId = 0L)
+      else a.copy(sequenceId = 0L)
+    }
+    // save activities
+    val op = (for {
+      _ <- DBIO.sequence(activities_.map(saveActivityDBIO))
+    } yield {}).transactionally
+    db.run(op)
+  }
 
   def getActivities(
       owner: String,
@@ -61,7 +65,7 @@ class ActivityDalImpl @Inject()(
     db.run(
       filters
         .filter(_.sequenceId > paging.cursor)
-        .sortBy(c => c.timestamp.desc)
+        .sortBy(c => (c.block.desc, c.sequenceId.desc))
         .take(paging.size)
         .result
     )
@@ -75,15 +79,66 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def deleteByTxHash(
-      owner: String,
-      txHash: String
-    ): Future[Boolean] =
-    db.run(query.filter(_.owner === owner).filter(_.txHash === txHash).delete)
+  def deleteActivitiesWithHashes(txHashes: Set[String]): Future[Boolean] =
+    db.run(deleteActivitiesWithHashesDBIO(txHashes))
       .map(_ > 0)
 
-  def obsoleteDataSinceBlock(block: Long): Future[Boolean] =
-    db.run(query.filter(_.block >= block).delete).map(_ > 0)
+  def cleanActivitiesForReorg(req: BlockEvent): Future[Unit] = {
+    val op = (for {
+      // delete pending and confirmed activities with current block's txHashes
+      _ <- deleteActivitiesWithHashesDBIO(req.txs.map(_.txHash).toSet)
+      // update all activities which block >= current block height
+      _ <- changeActivitiesToPendingDBIO(req.blockNumber)
+      // delete the from address's pending activities which nonce <= the tx's nonce
+      fromWithMaxNonce = req.txs
+        .groupBy(_.from)
+        .values
+        .map(t => t.maxBy(_.nonce))
+      _ <- DBIO.sequence(fromWithMaxNonce.map { r =>
+        deletePendingActivitiesWithSmallerNonceDBIO(r.from, r.nonce)
+      })
+    } yield {}).transactionally
+    db.run(op)
+  }
+
+  private def deleteActivitiesWithHashesDBIO(
+      txHashes: Set[String]
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.txHash inSet txHashes)
+      .delete
+
+  private def saveActivityDBIO(
+      activity: Activity
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query += activity
+
+  private def changeActivitiesToPendingDBIO(
+      block: Long
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.block >= block)
+      .filterNot(_.block === PENDING_BLOCK_HEIGHT)
+      .map(c => (c.block, c.txStatus))
+      .update(PENDING_BLOCK_HEIGHT, STATUS_PENDING)
+
+  private def deletePendingByTxHashesDBIO(
+      txHash: String
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.txHash === txHash)
+      .filter(_.txStatus === STATUS_PENDING)
+      .delete
+
+  private def deletePendingActivitiesWithSmallerNonceDBIO(
+      fromOfTx: String,
+      nonceWithFrom: Long
+    ): FixedSqlAction[Int, NoStream, Effect.Write] =
+    query
+      .filter(_.from === fromOfTx)
+      .filter(_.block === PENDING_BLOCK_HEIGHT)
+      .filter(_.nonce <= nonceWithFrom)
+      .delete
 
   private def createActivityFilters(
       owner: String,
