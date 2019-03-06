@@ -305,7 +305,7 @@ class TxRingMinedEventExtractor @Inject()(
           tokenS = Address.normalize(data.substring(64 * 2, 64 * 3)),
           tokenB = Address.normalize(nextFillData.substring(64 * 2, 64 * 3)),
           split = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
-          fee = Some(Fee()), //TODO:补全
+          fee = Some(Fee()), //TODO(hongyu):补全，因为需要data的结构，稍后处理
           //      wallet =
           miner = tx.from,
           blockHeight = blockHeader.height,

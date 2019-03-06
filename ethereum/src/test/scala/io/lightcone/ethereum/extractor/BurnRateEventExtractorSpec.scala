@@ -29,7 +29,7 @@ class BurnRateEventExtractorSpec extends AbstractExtractorSpec {
 
     implicit val orderValidator = new RawOrderValidatorImpl()
     val burnRateEventExtractor = new TxTokenBurnRateEventExtractor()
-    //TODO(hongyu):与孔亮确定燃烧请求
+    //TODO(hongyu):燃烧的流程：将lrc授权给BurnRateTable，然后调用update生成TokenTierUpgradedEvent事件
     val transactions =
       getTransactionDatas("ethereum/src/test/resources/event/ring_mined_block")
     val tx = transactions(0)
