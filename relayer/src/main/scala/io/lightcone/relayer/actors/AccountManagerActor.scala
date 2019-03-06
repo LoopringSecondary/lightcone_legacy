@@ -243,7 +243,7 @@ class AccountManagerActor(
         } yield result).sendTo(sender)
       }
 
-    case req @ CancelOrder.Req("", addr, _, None, _) =>
+    case req @ CancelOrder.Req("", addr, _, None, _, _) =>
       count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner取消订单
         (for {
@@ -256,7 +256,7 @@ class AccountManagerActor(
       }
 
     case req @ CancelOrder
-          .Req("", owner, _, Some(marketPair), _) =>
+          .Req("", owner, _, Some(marketPair), _, _) =>
       count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner-MarketPair取消订单
         (for {
@@ -268,7 +268,7 @@ class AccountManagerActor(
         } yield result).sendTo(sender)
       }
 
-    case req @ CancelOrder.Req(id, addr, status, _, _) =>
+    case req @ CancelOrder.Req(id, addr, status, _, _, _) =>
       count.refine("label" -> "cancel_order").increment()
 
       blocking {

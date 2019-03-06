@@ -84,7 +84,8 @@ message CancelOrder {
         string owner = 2;
         io.lightcone.core.OrderStatus status = 3; //取消的类型
         io.lightcone.core.MarketPair market_pair = 4;
-        string sig = 5;
+        io.lightcone.core.Amount time = 5;
+        string sig = 6;
     }
 
     message Res {

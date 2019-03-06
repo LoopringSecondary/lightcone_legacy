@@ -17,15 +17,13 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
-import io.lightcone.relayer.actors._
-import io.lightcone.relayer.data._
-import io.lightcone.core.MetadataManager
+import io.lightcone.core.{MetadataManager, _}
 import io.lightcone.ethereum._
 import io.lightcone.lib._
-import io.lightcone.core._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.core.ErrorCode._
+import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
+
 import scala.concurrent._
 
 // Owner: Hongyu
@@ -45,8 +43,8 @@ final class MultiAccountManagerMessageValidator(
     dbModule: DatabaseModule)
     extends MessageValidator {
 
-  import OrderStatus._
   import MarketMetadata.Status._
+  import OrderStatus._
 
   val selfConfig = config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = selfConfig.getInt("num-of-shards")
@@ -70,17 +68,15 @@ final class MultiAccountManagerMessageValidator(
 
   def validate = {
     case req: CancelOrder.Req =>
-      for {
-        orderOpt <- dbModule.orderService.getOrder(req.id)
-        order = orderOpt.getOrElse(throw ErrorException(ERR_ORDER_NOT_EXIST))
-        marketPair = MarketPair(order.tokenS, order.tokenB)
-        newReq = req.copy(
-          owner = Address.normalize(req.owner),
-          status = STATUS_SOFT_CANCELLED_BY_USER,
-          marketPair = Some(marketPair.normalize)
-        )
-        _ <- cancelOrderValidator.validate(newReq)
-      } yield newReq
+      cancelOrderValidator.validate(req).map {
+        case Left(errorCode) =>
+          throw ErrorException(
+            errorCode,
+            message = s"invalid order in CancelOrder.Req:$req"
+          )
+        case Right(newReq) =>
+          newReq.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
+      }
 
     case req: GetAccounts.Req =>
       Future {

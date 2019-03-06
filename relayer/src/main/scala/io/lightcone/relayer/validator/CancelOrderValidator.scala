@@ -16,34 +16,82 @@
 
 package io.lightcone.relayer.validator
 
+import com.typesafe.config.Config
 import io.lightcone.core._
-import io.lightcone.lib._
 import io.lightcone.ethereum._
+import io.lightcone.lib._
+import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import org.web3j.utils._
+
 import scala.concurrent._
 
 final class CancelOrderValidator(
     implicit
+    config: Config,
     ec: ExecutionContext,
-    metadataManager: MetadataManager)
-    extends MessageValidator {
+    metadataManager: MetadataManager,
+    timeProvider: TimeProvider,
+    dbModule: DatabaseModule) {
   import ErrorCode._
-  import MarketMetadata.Status._
+
+  /**
+    * config.getInt("") 该配置应该放在哪里？
+    */
+  val validityInSeconds = 600
 
   //TODO：确定签名规则，单个订单，采用订单的签名简单测试
-  override def validate = {
-    case req: CancelOrder.Req =>
-      Future {
-        metadataManager.assertMarketStatus(req.getMarketPair, ACTIVE)
-        if (!checkSign(req.owner, req.id, req.sig))
-          throw ErrorException(
-            ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG,
-            s"not authorized to cancel this order $req.id"
+  def validate(req: CancelOrder.Req) = {
+    val id = req.id
+    val owner = req.owner
+    val marketPair = req.marketPair
+    val time = req.time
+    val current = timeProvider.getTimeSeconds()
+
+    if (owner.isEmpty || !Address.isValid(owner) || time.isEmpty
+        || NumericConversion.toBigInt(time.get) < current - validityInSeconds
+        || NumericConversion.toBigInt(time.get) > current) {
+
+      Future.successful(Left(ERR_INVALID_ARGUMENT))
+    } else if (id.isEmpty && marketPair.isEmpty) {
+      Future.successful(
+        Right(
+          req.copy(
+            owner = Address.normalize(owner)
           )
-        req
+        )
+      )
+    } else if (id.isEmpty && marketPair.isDefined) {
+      Future {
+        try {
+          metadataManager.getMarket(marketPair.get)
+          Right(
+            req.copy(
+              owner = Address.normalize(owner),
+              marketPair = marketPair.map(_.normalize())
+            )
+          )
+        } catch {
+          case _: Throwable =>
+            Left(ERR_INVALID_MARKET)
+        }
       }
-    case _ => throw ErrorException(ERR_INVALID_ARGUMENT)
+    } else {
+      dbModule.orderService.getOrder(req.id).map {
+        case Some(order) if order.owner == owner =>
+          Right(
+            req.copy(
+              owner = Address.normalize(req.owner)
+            )
+          )
+        case Some(_) =>
+          Left(
+            ERR_ORDER_OWNER_UNMATCHED
+          )
+        case None =>
+          Left(ERR_ORDER_NOT_EXIST)
+      }
+    }
   }
 
   private def checkSign(
