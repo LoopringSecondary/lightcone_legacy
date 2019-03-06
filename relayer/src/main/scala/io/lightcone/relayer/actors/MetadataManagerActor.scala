@@ -74,6 +74,11 @@ class MetadataManagerActor(
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   @inline def externalCrawlerActor = actors.get(ExternalCrawlerActor.name)
 
+  private val effectiveMarketMetadatas = metadataManager
+    .getMarkets()
+    .filter(_.metadata.get.status != MarketMetadata.Status.TERMINATED)
+    .map(_.metadata.get)
+
   private var tokenMetadatas = Seq.empty[TokenMetadata]
   private var tokenInfos = Seq.empty[TokenInfo]
   private var tokenTickersInUsd
@@ -123,7 +128,8 @@ class MetadataManagerActor(
       tokenInfos = tokenInfos_
       marketMetadatas = marketMetadatas_.map(MetadataManager.normalize)
       tokenTickersInUsd = tickers_.tokenTickers
-      marketTickers = tickers_.marketTickers
+      marketTickers =
+        fillAllMarketTickers(tokenTickersInUsd, effectiveMarketMetadatas)
     }
     f onComplete {
       case Success(_) =>
@@ -222,6 +228,10 @@ class MetadataManagerActor(
         tokenTickersInUsd = req.tokenTickers
         marketTickers = req.marketTickers
         refreshTokenAndMarket()
+        val newTickers = tokens.map(t => TokenTicker(price = t.price))
+        val newMarketTickers = markets.map(m => MarketTicker())
+        val newReq = TokenTickerChanged(newTickers, newMarketTickers)
+
         publish()
       }
     }
@@ -315,4 +325,71 @@ class MetadataManagerActor(
       }
     }
   }
+
+  private def fillAllMarketTickers(
+                                    usdTickers: Seq[TokenTickerRecord],
+                                    effectiveMarket: Seq[MarketMetadata]
+                                  ): Seq[MarketTicker] = {
+    effectiveMarket.map(m => calculateMarketQuote(m, usdTickers))
+  }
+
+  private def calculateMarketQuote(
+                                    market: MarketMetadata,
+                                    usdTickers: Seq[TokenTickerRecord]
+                                  ): MarketTicker = {
+    val pair = market.marketPair.get
+    val baseTicker = getTickerByAddress(pair.baseToken, usdTickers)
+    val quoteTicker = getTickerByAddress(pair.quoteToken, usdTickers)
+    val rate = toDouble(BigDecimal(baseTicker.price / quoteTicker.price))
+    val volume24H = toDouble(
+      BigDecimal(baseTicker.volume24H / baseTicker.price) * rate
+    )
+    val market_cap = toDouble(
+      BigDecimal(baseTicker.marketCap / baseTicker.price) * rate
+    )
+    val percentChange1H =
+      calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
+    val percentChange24H =
+      calc(baseTicker.percentChange24H, quoteTicker.percentChange24H)
+    val percentChange7D =
+      calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
+    MarketTicker(
+      market.baseTokenSymbol,
+      market.quoteTokenSymbol,
+      rate,
+      baseTicker.price,
+      volume24H,
+      toDouble(percentChange1H),
+      toDouble(percentChange24H),
+      toDouble(percentChange7D)
+    )
+  }
+
+  private def getTickerByAddress(
+                                  address: String,
+                                  usdTickers: Seq[TokenTickerRecord]
+                                ) = {
+    usdTickers
+      .find(t => t.tokenAddress == address)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found ticker of address: $address"
+        )
+      )
+  }
+
+  private def calc(
+                    v1: Double,
+                    v2: Double
+                  ) =
+    BigDecimal((1 + v1) / (1 + v2) - 1)
+      .setScale(2, BigDecimal.RoundingMode.HALF_UP)
+      .toDouble
+
+  private def toDouble(bigDecimal: BigDecimal): Double =
+    scala.util
+      .Try(bigDecimal.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .toOption
+      .getOrElse(0)
 }

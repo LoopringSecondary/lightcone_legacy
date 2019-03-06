@@ -88,8 +88,6 @@ class ExternalCrawlerActor(
 
   private var tokenTickersInUSD: Seq[TokenTicker] =
     Seq.empty[TokenTicker] // USD price
-  private var marketTickers: Seq[MarketTicker] =
-    Seq.empty[MarketTicker] // price represent exchange rate of market (price of market LRC-WETH is 0.01)
 
   val repeatedJobs = Seq(
     Job(
@@ -162,8 +160,8 @@ class ExternalCrawlerActor(
 //    assert(cnyToUsd.nonEmpty)
 //    assert(cnyToUsd.get.price > 0)
       // except currency and quote tokens
-      val effectiveTokens = tickerRecords.filter(isEffectiveToken)
-      tokenTickersInUSD = effectiveTokens
+      //val effectiveTokens = tickerRecords.filter(isEffectiveToken)
+      tokenTickersInUSD = tickerRecords
         .map(convertPersistToExternal)
       marketTickers =
         fillAllMarketTickers(effectiveTokens, effectiveMarketMetadatas)
@@ -208,88 +206,21 @@ class ExternalCrawlerActor(
     )
   }
 
-  private def fillAllMarketTickers(
-      usdTickers: Seq[TokenTickerRecord],
-      effectiveMarket: Seq[MarketMetadata]
-    ): Seq[MarketTicker] = {
-    effectiveMarket.map(m => calculateMarketQuote(m, usdTickers))
-  }
-
-  private def calculateMarketQuote(
-      market: MarketMetadata,
-      usdTickers: Seq[TokenTickerRecord]
-    ): MarketTicker = {
-    val pair = market.marketPair.get
-    val baseTicker = getTickerByAddress(pair.baseToken, usdTickers)
-    val quoteTicker = getTickerByAddress(pair.quoteToken, usdTickers)
-    val rate = toDouble(BigDecimal(baseTicker.price / quoteTicker.price))
-    val volume24H = toDouble(
-      BigDecimal(baseTicker.volume24H / baseTicker.price) * rate
-    )
-    val market_cap = toDouble(
-      BigDecimal(baseTicker.marketCap / baseTicker.price) * rate
-    )
-    val percentChange1H =
-      calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
-    val percentChange24H =
-      calc(baseTicker.percentChange24H, quoteTicker.percentChange24H)
-    val percentChange7D =
-      calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
-    MarketTicker(
-      market.baseTokenSymbol,
-      market.quoteTokenSymbol,
-      rate,
-      baseTicker.price,
-      volume24H,
-      toDouble(percentChange1H),
-      toDouble(percentChange24H),
-      toDouble(percentChange7D)
-    )
-  }
-
-  private def getTickerByAddress(
-      address: String,
-      usdTickers: Seq[TokenTickerRecord]
-    ) = {
-    usdTickers
-      .find(t => t.tokenAddress == address)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found ticker of address: $address"
-        )
-      )
-  }
-
-  private def calc(
-      v1: Double,
-      v2: Double
-    ) =
-    BigDecimal((1 + v1) / (1 + v2) - 1)
-      .setScale(2, BigDecimal.RoundingMode.HALF_UP)
-      .toDouble
-
-  private def toDouble(bigDecimal: BigDecimal): Double =
-    scala.util
-      .Try(bigDecimal.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
-      .toOption
-      .getOrElse(0)
-
-  private def convertUsdTickersToCny(
-      usdTickers: Seq[TokenTicker],
-      usdToCny: Option[TokenTickerRecord]
-    ) = {
-    if (usdTickers.nonEmpty && usdToCny.nonEmpty) {
-      val cnyToUsd = usdToCny.get.price
-      usdTickers.map { t =>
-        t.copy(
-          price = toDouble(BigDecimal(t.price) / BigDecimal(cnyToUsd)),
-          volume24H = toDouble(BigDecimal(t.volume24H) / BigDecimal(cnyToUsd))
-        )
-      }
-    } else {
-      Seq.empty
-    }
-  }
+//  private def convertUsdTickersToCny(
+//      usdTickers: Seq[TokenTicker],
+//      usdToCny: Option[TokenTickerRecord]
+//    ) = {
+//    if (usdTickers.nonEmpty && usdToCny.nonEmpty) {
+//      val cnyToUsd = usdToCny.get.price
+//      usdTickers.map { t =>
+//        t.copy(
+//          price = toDouble(BigDecimal(t.price) / BigDecimal(cnyToUsd)),
+//          volume24H = toDouble(BigDecimal(t.volume24H) / BigDecimal(cnyToUsd))
+//        )
+//      }
+//    } else {
+//      Seq.empty
+//    }
+//  }
 
 }
