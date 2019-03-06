@@ -55,7 +55,9 @@ class ActivityTable(shardId: String)(tag: Tag)
 
   def idx_txhash = index("idx_txhash", (txHash), unique = false)
   def idx_timestamp = index("idx_timestamp", (timestamp), unique = false)
-  def idx_block = index("idx_block", (block), unique = false)
+
+  def idx_block_sequence =
+    index("idx_block_sequence", (block, sequenceId), unique = false)
   def idx_from_block_nonce = index("idx_from_block_nonce", (from, block, nonce))
 
   def * =

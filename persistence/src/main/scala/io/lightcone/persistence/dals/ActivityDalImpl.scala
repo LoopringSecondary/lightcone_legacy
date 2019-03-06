@@ -49,10 +49,8 @@ class ActivityDalImpl @Inject()(
         a.copy(block = PENDING_BLOCK_HEIGHT, sequenceId = 0L)
       else a.copy(sequenceId = 0L)
     }
+    // save activities
     val op = (for {
-      // delete pending activities with current block's txHash
-      _ <- deletePendingByTxHashesDBIO(activities_.head.txHash)
-      // save activities
       _ <- DBIO.sequence(activities_.map(saveActivityDBIO))
     } yield {}).transactionally
     db.run(op)
@@ -81,7 +79,7 @@ class ActivityDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def deletecActivitiesWithHashes(txHashes: Set[String]): Future[Boolean] =
+  def deleteActivitiesWithHashes(txHashes: Set[String]): Future[Boolean] =
     db.run(deleteActivitiesWithHashesDBIO(txHashes))
       .map(_ > 0)
 
@@ -103,7 +101,7 @@ class ActivityDalImpl @Inject()(
     db.run(op)
   }
 
-  def deleteActivitiesWithHashesDBIO(
+  private def deleteActivitiesWithHashesDBIO(
       txHashes: Set[String]
     ): FixedSqlAction[Int, NoStream, Effect.Write] =
     query

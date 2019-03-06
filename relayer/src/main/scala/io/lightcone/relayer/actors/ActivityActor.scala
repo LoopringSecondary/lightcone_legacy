@@ -95,8 +95,19 @@ class ActivityActor(
       // filter activities which current shard care
       val activities = req.getActivities.events
         .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
-      if (activities.nonEmpty) activityDal.saveActivities(activities)
-      else Future.successful(Unit)
+      if (activities.nonEmpty) {
+        val blocks = activities.groupBy(_.block).keySet
+        if (blocks.size != 1)
+          log.error(
+            s"multiple block detected in a batch activities save request: $activities"
+          )
+        val txs = activities.groupBy(_.txHash).keySet
+        if (txs.size != 1)
+          log.error(
+            s"multiple txHash detected in a batch activities save request: $activities"
+          )
+        activityDal.saveActivities(activities)
+      }
     }
 
     case req: BlockEvent =>

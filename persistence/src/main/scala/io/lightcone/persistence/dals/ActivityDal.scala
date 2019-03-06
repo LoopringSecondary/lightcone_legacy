@@ -37,7 +37,7 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
       token: Option[String]
     ): Future[Int]
 
-  def deletecActivitiesWithHashes(txHashes: Set[String]): Future[Boolean]
+  def deleteActivitiesWithHashes(txHashes: Set[String]): Future[Boolean]
 
   def cleanActivitiesForReorg(req: BlockEvent): Future[Unit]
 
