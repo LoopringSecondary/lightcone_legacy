@@ -97,7 +97,8 @@ trait EventExtraction {
     case PROCESS_EVENTS =>
       processEvents onComplete {
         case Success(_) =>
-          if (blockData.number < untilBlock) self ! GET_BLOCK
+          if (NumericConversion.toBigInt(blockData.number) < untilBlock)
+            self ! GET_BLOCK
         case Failure(e) =>
           log.error(
             s" Actor: ${self.path} extracts ethereum events failed with error:${e.getMessage}"
