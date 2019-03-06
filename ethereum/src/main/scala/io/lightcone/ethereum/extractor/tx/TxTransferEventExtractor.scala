@@ -47,17 +47,9 @@ final class TxTransferEventExtractor @Inject()(
 
   def extractEvents(txData: TransactionData): Future[Seq[AnyRef]] = Future {
     val transferEvents = extractTransferEvents(txData)
-    val transferActivity = transferEvents.filterNot { event =>
-      event.getHeader.txTo == protocolAddress ||
-      event.to == wethAddress || event.from == wethAddress
+    transferEvents.filterNot { event =>
+      event.getHeader.txTo == protocolAddress || event.owner == wethAddress
     }.map(extractActivity)
-
-    val wethActivity = transferEvents
-      .filter(_.owner != wethAddress)
-      .filter(event => event.to == wethAddress || event.from == wethAddress)
-      .map(extractActivity)
-
-    transferActivity ++ wethActivity
   }
 
   //从TransferEvent抽取Transfer Activity,Wrap,Unwrap等Activity

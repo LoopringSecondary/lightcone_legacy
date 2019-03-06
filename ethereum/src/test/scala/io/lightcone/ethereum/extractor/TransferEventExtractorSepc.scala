@@ -52,7 +52,7 @@ class TransferEventExtractorSepc extends AbstractExtractorSpec {
     )
 
     val result = for {
-      events <- Future
+      activities <- Future
         .sequence((source.transactions zip source.receipts).map {
           case (tx, receipt) =>
             val eventHeader = EventHeader(
@@ -69,7 +69,6 @@ class TransferEventExtractorSepc extends AbstractExtractorSpec {
               )
         })
         .map(_.flatten)
-      (transfers, activities) = events.partition(_.isInstanceOf[TransferEvent])
       ethTransfers = activities
         .asInstanceOf[Seq[Activity]]
         .filter(
@@ -90,7 +89,6 @@ class TransferEventExtractorSepc extends AbstractExtractorSpec {
         )
 
     } yield {
-      transfers.size should be(18)
       ethTransfers.size should be(2)
       tokenTransfers.size should be(2)
       wrapAndUnwraps.size should be(4)

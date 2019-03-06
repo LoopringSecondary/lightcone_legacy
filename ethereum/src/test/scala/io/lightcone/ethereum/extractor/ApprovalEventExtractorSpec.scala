@@ -51,7 +51,7 @@ class ApprovalEventExtractorSpec extends AbstractExtractorSpec {
     )
 
     val result = for {
-      events <- Future
+      activities <- Future
         .sequence((source.transactions zip source.receipts).map {
           case (tx, receipt) =>
             val eventHeader = EventHeader(
@@ -68,9 +68,7 @@ class ApprovalEventExtractorSpec extends AbstractExtractorSpec {
               )
         })
         .map(_.flatten)
-      (approvals, activities) = events.partition(_.isInstanceOf[ApprovalEvent])
     } yield {
-      approvals.size should be(5)
       activities.size should be(2)
     }
     Await.result(result, 60 second)
