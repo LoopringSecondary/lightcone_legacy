@@ -21,7 +21,7 @@ import io.lightcone.relayer.base._
 import org.slf4s.Logging
 
 trait EventDispatcher {
-  def dispatch(evt: AnyRef): Unit
+  def dispatch(evt: Any): Unit
 }
 
 class EventDispatcherImpl(actors: Lookup[ActorRef])
@@ -38,7 +38,7 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
     this
   }
 
-  def dispatch(evt: AnyRef) = {
+  def dispatch(evt: Any) = {
     targets.get(evt.getClass) match {
       case None =>
         log.error(
