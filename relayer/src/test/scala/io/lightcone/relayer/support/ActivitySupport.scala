@@ -16,10 +16,18 @@
 
 package io.lightcone.relayer.support
 
+import java.util.concurrent.TimeUnit
 import com.typesafe.config._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.validator._
+import org.rnorth.ducttape.TimeoutException
+import org.rnorth.ducttape.unreliables.Unreliables
+import org.testcontainers.containers.ContainerLaunchException
+import akka.pattern._
+import io.lightcone.persistence.CursorPaging
+import scala.concurrent.Await
 
 trait ActivitySupport extends DatabaseModuleSupport {
   me: CommonSpec =>
@@ -50,6 +58,25 @@ trait ActivitySupport extends DatabaseModuleSupport {
         true
       )
   )
+
+  try Unreliables.retryUntilTrue(
+    10,
+    TimeUnit.SECONDS,
+    () => {
+      val f =
+        (actors.get(ActivityActor.name) ? GetActivities.Req(
+          paging = Some(CursorPaging(size = 10))
+        )).mapTo[GetActivities.Res]
+      val res = Await.result(f, timeout.duration)
+      res.activities.isEmpty || res.activities.nonEmpty
+    }
+  )
+  catch {
+    case e: TimeoutException =>
+      throw new ContainerLaunchException(
+        "Timed out waiting for MetadataManagerActor init.)"
+      )
+  }
 
   actors.add(
     ActivityValidator.name,

@@ -110,7 +110,9 @@ message Activity {
     double fiat_value           = 6;
     string token                = 7;
     int64  sequence_id          = 8; //唯一、排序(pending在最前面)、可重复性 -- block_txIndex_eventIdex (4000000+txHash.code)_eventIdx
-    io.lightcone.ethereum.TxStatus tx_status = 9;
+    string from                 = 9;
+    int64  nonce                = 10;
+    io.lightcone.ethereum.TxStatus tx_status  = 11;
 
     //Activity不汇总了，但是要发送新块通知事件(事件包含所有的txhash)，并且不能直接notify，而是直接发送到对应的shard
     oneof detail {
@@ -159,6 +161,21 @@ message Fill {
     string miner                                = 15;
     int64  block_height                         = 16;
     int64  block_timestamp                      = 17;
+}
+
+message TxEvents {
+    message Activities {
+        repeated Activity events = 1;
+    }
+
+    message Fills {
+        repeated Fill events = 1;
+    }
+
+    oneof events {
+        Activities activities = 1;
+        Fills      fills = 2;
+    }
 }
 
 // TODO(yangli): rename to SpotPrice???

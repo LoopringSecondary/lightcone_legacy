@@ -22,6 +22,7 @@ import akka.util.Timeout
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 import org.slf4s.Logging
 
@@ -30,7 +31,8 @@ class RecoverOrdersActor(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
-    actors: Lookup[ActorRef])
+    actors: Lookup[ActorRef],
+    dbModule: DatabaseModule)
     extends Actor
     with Logging {
 
@@ -54,18 +56,19 @@ class RecoverOrdersActor(
 
         case Some(orderId) =>
           orderIds = orderIds.tail
-          // TODO(yongfeng): get the order with the given id, ignoring the order's status in DB.
-          val rawOrderOpt: Option[RawOrder] = ???
+          for {
+            rawOrderOpt: Option[RawOrder] <- dbModule.orderDal.getOrder(orderId)
+          } yield {
+            rawOrderOpt match {
+              case None => self ! NEXT
 
-          rawOrderOpt match {
-            case None => self ! NEXT
-
-            case Some(rawOrder) =>
-              for {
-                _ <- mama ? ActorRecover.RecoverOrderReq(Some(rawOrder))
-                _ = log.debug(s"order recovered ${rawOrder.hash}")
-                _ = self ! NEXT
-              } yield Unit
+              case Some(rawOrder) =>
+                for {
+                  _ <- mama ? ActorRecover.RecoverOrderReq(Some(rawOrder))
+                  _ = log.debug(s"order recovered ${rawOrder.hash}")
+                  _ = self ! NEXT
+                } yield Unit
+            }
           }
       }
   }

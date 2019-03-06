@@ -21,7 +21,7 @@ import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.ethereum.event._
-import io.lightcone.ethereum.persistence.Fill
+import io.lightcone.ethereum.persistence.TxEvents
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.persistence._
@@ -56,14 +56,16 @@ class RingAndFillPersistenceActor(
     dbModule: DatabaseModule)
     extends InitializationRetryActor {
 
-  // TODO yongfeng: Ring要不要存 ?
   def ready: Receive = LoggingReceive {
-    case req: Fill =>
-      dbModule.fillDal.saveFill(req)
+    case req: TxEvents => {
+      val fills = req.getFills.events
+      if (fills.nonEmpty) dbModule.fillDal.saveFills(fills)
+      else Future.successful(Unit)
+    }
 
     case req: BlockEvent =>
       (for {
-        result <- dbModule.fillDal.cleanUpForBlockReorganization(req)
+        result <- dbModule.fillDal.cleanActivitiesForReorg(req)
       } yield result).sendTo(sender)
   }
 

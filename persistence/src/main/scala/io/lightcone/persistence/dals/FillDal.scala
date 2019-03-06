@@ -28,5 +28,5 @@ trait FillDal extends BaseDalImpl[FillTable, Fill] {
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
   def getFills(request: GetFills.Req): Future[Seq[Fill]]
   def countFills(request: GetFills.Req): Future[Int]
-  def cleanUpForBlockReorganization(req: BlockEvent): Future[Int]
+  def cleanActivitiesForReorg(req: BlockEvent): Future[Int]
 }

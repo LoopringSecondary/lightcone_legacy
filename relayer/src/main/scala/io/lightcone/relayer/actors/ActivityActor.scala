@@ -19,7 +19,8 @@ package io.lightcone.relayer.actors
 import akka.actor.{Address => _, _}
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.persistence.Activity
+import io.lightcone.ethereum.event.BlockEvent
+import io.lightcone.ethereum.persistence._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
@@ -49,9 +50,12 @@ object ActivityActor extends DeployedAsShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractShardingObject: PartialFunction[Any, String] = {
-    case req: Activity          => req.owner
     case req: GetActivities.Req => req.owner
+    // TODO (yongfeng)：分片逻辑待完善
+    case req: TxEvents   => "0x0"
+    case req: BlockEvent => "0x0"
   }
+
 }
 
 class ActivityActor(
@@ -85,8 +89,31 @@ class ActivityActor(
 
   def ready: Receive = {
 
-    case req: Activity =>
-      activityDal.saveActivity(req)
+    // TODO yongfeng: 这个事件可以发给所有分片，每个分片过滤自己需要存储的activity ，一组activities txHash应一致
+    //  分片广播逻辑确认后可能会修改这里
+    case req: TxEvents => {
+      // filter activities which current shard care
+      val activities = req.getActivities.events
+        .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
+      if (activities.nonEmpty) {
+        val blocks = activities.groupBy(_.block).keySet
+        if (blocks.size != 1)
+          log.error(
+            s"multiple block detected in a batch activities save request: $activities"
+          )
+        val txs = activities.groupBy(_.txHash).keySet
+        if (txs.size != 1)
+          log.error(
+            s"multiple txHash detected in a batch activities save request: $activities"
+          )
+        activityDal.saveActivities(activities)
+      }
+    }
+
+    case req: BlockEvent =>
+      (for {
+        _ <- activityDal.cleanActivitiesForReorg(req)
+      } yield {}).sendTo(sender)
 
     case req: GetActivities.Req =>
       (for {
@@ -98,7 +125,6 @@ class ActivityActor(
         res = GetActivities.Res(activities)
       } yield res).sendTo(sender)
 
-    //TODO (yongfeng) obsolete, pending -> failed & success
   }
 
 }

@@ -24,10 +24,10 @@ import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent._
 import akka.event.LoggingReceive
 import io.lightcone.ethereum.event.BlockEvent
+import io.lightcone.persistence.DatabaseModule
 
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
@@ -42,7 +42,7 @@ object ChainReorganizationManagerActor extends DeployedAsSingleton {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      // dbModule: DatabaseModule,
+      dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new ChainReorganizationManagerActor()))
@@ -55,6 +55,7 @@ class ChainReorganizationManagerActor @Inject()(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
+    val dbModule: DatabaseModule,
     val actors: Lookup[ActorRef])
     extends InitializationRetryActor
     with Stash

@@ -80,10 +80,10 @@ class KeepAliveActor @Inject()(
       run = () =>
         Future.sequence(
           Seq(
-            initEtherHttpConnector(),
-            initOrderbookManager(),
-            initMarketManager(),
-            initAccountManager()
+            pingEtherHttpConnector(),
+            pingOrderbookManager(),
+            pingMarketManager(),
+            pingAccountManager()
           )
         )
     )
@@ -93,7 +93,7 @@ class KeepAliveActor @Inject()(
   def ready: Receive = receiveRepeatdJobs
 
   // TODO: market的配置读取，可以等待永丰处理完毕再优化
-  private def initOrderbookManager(): Future[Unit] =
+  private def pingOrderbookManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY) map {
         case meta =>
@@ -105,7 +105,7 @@ class KeepAliveActor @Inject()(
       })
     } yield Unit
 
-  private def initMarketManager(): Future[Unit] =
+  private def pingMarketManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY) map {
         case meta =>
@@ -117,7 +117,7 @@ class KeepAliveActor @Inject()(
       })
     } yield Unit
 
-  private def initAccountManager(): Future[Unit] = {
+  private def pingAccountManager(): Future[Unit] = {
     for {
       _ <- Future.sequence((0 until numsOfAccountShards) map { i =>
         multiAccountManagerActor ? Notify(KeepAliveActor.NOTIFY_MSG, i.toString)
@@ -125,7 +125,7 @@ class KeepAliveActor @Inject()(
     } yield Unit
   }
 
-  private def initEtherHttpConnector(): Future[Unit] =
+  private def pingEtherHttpConnector(): Future[Unit] =
     for {
       _ <- Future.sequence(HttpConnector.connectorNames(config).map {
         case (nodeName, node) =>
