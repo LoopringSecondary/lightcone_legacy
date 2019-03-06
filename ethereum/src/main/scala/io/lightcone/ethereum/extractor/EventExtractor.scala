@@ -36,27 +36,36 @@ object EventExtractor extends Object with Logging {
     ) = new EventExtractor[S, E] {
 
     def extractEvents(source: S): Future[Seq[E]] = {
-      def recoverly(
-          extractor: EventExtractor[S, E],
-          source: S
-        ): Future[Seq[E]] = {
-        val f = extractor.extractEvents(source)
-
-        f.onComplete {
-          case Success(_) =>
-          case Failure(e) =>
-            log.error(
-              s"${extractor.getClass.getSimpleName} failed to extract events from $source",
-              e
-            )
-        }
-
-        f
-      }
 
       Future
-        .sequence(extractors.map(recoverly(_, source)))
+        .sequence(extractors.map(extractAndLog(_, source)))
         .map(_.flatten.distinct)
+    }
+
+    private def extractAndLog(
+        extractor: EventExtractor[S, E],
+        source: S
+      ): Future[Seq[E]] = {
+      val f = extractor.extractEvents(source)
+
+      f.onComplete {
+        case Success(events) =>
+          val size = events.size
+          log.debug(
+            s"EXTRACTOR ${extractor.getClass.getSimpleName} extracted $size events from: $source ===>"
+          )
+          events.zipWithIndex foreach {
+            case (evt, idx) => log.debug(s"EVENT $idx/$size --> $evt")
+          }
+
+        case Failure(e) =>
+          log.error(
+            s"${extractor.getClass.getSimpleName} failed to extract events from $source",
+            e
+          )
+      }
+
+      f
     }
 
   }
