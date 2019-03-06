@@ -16,29 +16,20 @@
 
 package io.lightcone.relayer.actors
 
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum._
 import io.lightcone.lib.NumericConversion
-
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.support._
+import io.lightcone.relayer.base._
 import scala.concurrent.{Await, Future}
 
-class RingSettlementSpec
+class ExtractorSpec_RingMinedEvent
     extends CommonSpec
-    with EthereumSupport
-    with MetadataManagerSupport
-    with MarketManagerSupport
-    with MultiAccountManagerSupport
-    with OrderGenerateSupport
-    with OrderHandleSupport
-    with OrderbookManagerSupport
-    with JsonrpcSupport
-    with HttpSupport {
+    with EventExtractorSupport
+    with OrderGenerateSupport {
+  implicit val account1 = getUniqueAccountWithoutEth
 
-  @inline def orderHandler = actors.get(OrderPersistenceActor.name)
-
-  val account1 = getUniqueAccountWithoutEth
   //设置余额
   info("set the balance and allowance is enough befor submit an order")
   override def beforeAll(): Unit = {
@@ -46,7 +37,7 @@ class RingSettlementSpec
       Seq(
         transferEth(account1.getAddress, "10")(accounts(0)),
         transferLRC(account1.getAddress, "30")(accounts(0)),
-        approveLRCToDelegate("30")(account1)
+        approveLRCToDelegate("30")
       )
     )
 
@@ -66,7 +57,7 @@ class RingSettlementSpec
         100,
         Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val order1 = createRawOrder()(account1)
+      val order1 = createRawOrder()
 
       val order2 = createRawOrder( // by LRC
         tokenS = WETH_TOKEN.address,
@@ -91,9 +82,9 @@ class RingSettlementSpec
           assert(buys.isEmpty)
           assert(sells.size == 1)
           val head = sells.head
-          assert(head.price.toDouble == "0.1".toDouble)
-          assert(head.amount.toDouble == "10".toDouble)
-          assert(head.total.toDouble == "1".toDouble)
+          assert(head.price == "0.100000")
+          assert(head.amount == "10.00000")
+          assert(head.total == "1.00000")
         case _ => assert(false)
       }
 

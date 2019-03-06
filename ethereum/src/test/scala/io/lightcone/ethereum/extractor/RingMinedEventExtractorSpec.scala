@@ -94,7 +94,7 @@ class RingMinedEventExtractorSpec extends AbstractExtractorSpec {
         successTxData.receiptAndHeaderOpt.get._2
       )
     )
-    //TODO(hongyu):解析订单的可能有bug，需要与孔亮确认，暂不做验证
+    //TODO(kongliang):解析订单的可能有bug，需要与孔亮确认，暂不做验证
 
 //    val failedEvents = Await.result(
 //      ringMinedEventExtractor.extractEvents(failedTxData),
