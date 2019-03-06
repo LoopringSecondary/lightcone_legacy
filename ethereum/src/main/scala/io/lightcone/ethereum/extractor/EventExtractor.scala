@@ -52,10 +52,12 @@ object EventExtractor extends Object with Logging {
         case Success(events) =>
           val size = events.size
           log.debug(
-            s"EXTRACTOR ${extractor.getClass.getSimpleName} extracted $size events from: $source ===>"
+            s"EXTRACTOR ${extractor.getClass.getSimpleName} extracted " +
+              s"$size events from: ${source.toString.take(1000)} ===>"
           )
+
           events.zipWithIndex foreach {
-            case (evt, idx) => log.debug(s"EVENT $idx/$size --> $evt")
+            case (evt, idx) => log.debug(s"EVENT ${idx}/${size} --> ${evt}")
           }
 
         case Failure(e) =>
