@@ -262,7 +262,7 @@ class AccountManagerActor(
         } yield result).sendTo(sender)
       }
 
-    case GetAccountNonce.Req(addr, tag) =>
+    case GetAccountNonce.Req(addr) =>
       count.refine("label" -> "get_account_nonce").increment()
       sender ! GetAccountNonce.Res(nonce)
 

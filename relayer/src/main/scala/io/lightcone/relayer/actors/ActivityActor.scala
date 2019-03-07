@@ -128,7 +128,8 @@ class ActivityActor(
 
     case req: GetPendingActivityNonce.Req =>
       (for {
-        res <- activityDal.getPendingActivityNonces(req.from, req.limit)
+        nonces <- activityDal.getPendingActivityNonces(req.from, req.limit)
+        res = GetPendingActivityNonce.Res(nonces)
       } yield res).sendTo(sender)
   }
 
