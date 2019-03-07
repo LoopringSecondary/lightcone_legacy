@@ -17,40 +17,25 @@
 package io.lightcone.relayer.cmc
 
 import io.lightcone.core._
-import io.lightcone.persistence.TokenTickerRecord
+import io.lightcone.persistence._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.external.CMCResponse.CMCTickerData
 import io.lightcone.relayer.external._
 import io.lightcone.relayer.support._
-import scalapb.json4s.Parser
 import io.lightcone.relayer.implicits._
+import io.lightcone.relayer.data.{GetMarkets, GetTokens}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class CMCCrawlerSpec
     extends CommonSpec
+    with JsonrpcSupport
     with HttpSupport
     with EthereumSupport
     with DatabaseModuleSupport
     with MetadataManagerSupport {
 
   val metadataManagerActor = actors.get(MetadataManagerActor.name)
-
-  val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
-
-  var tickers: Seq[TokenTicker] = Seq.empty[TokenTicker]
-
-  private val tokens = metadataManager.getTokens
-  private val effectiveMarketMetadatas = metadataManager
-    .getMarkets()
-    .filter(_.metadata.get.status != MarketMetadata.Status.TERMINATED).map(_.metadata.get)
-
-  private var tickerRecords: Seq[TokenTickerRecord] =
-    Seq.empty[TokenTickerRecord]
-  private var tokenTickersInUSD: Seq[TokenTicker] =
-    Seq.empty[TokenTicker] // USD price
-  private var marketTickers: Seq[MarketTicker] =
-    Seq.empty[MarketTicker] // price represent exchange rate of market (price of market LRC-WETH is 0.01)
 
   "cmc crawler" must {
     "sina currency rate" in {
@@ -96,24 +81,180 @@ class CMCCrawlerSpec
         ],
         50.second
       )
-      tickerRecords = q1._3
+      tickers = q1._3
       q1._1.length should be(1099)
       q1._2.length should be(CURRENCY_EXCHANGE_PAIR.length)
       q1._3.length should be(1099 + CURRENCY_EXCHANGE_PAIR.length)
     }
 
-    "convert USD tickers to all quote markets (ExternalDataRefresher)" in {
-      refreshTickers()
-      // get a random position
-      assert(tokenTickersInUSD.length == tokens.length)
-      val p = (new util.Random).nextInt(tokenTickersInUSD.size)
-      val tickerInUsd = tokenTickersInUSD(p)
-      assert(tickerInUsd.price > 0)
-      assert(tickerInUsd.volume24H > 0)
-      assert(tickerInUsd.symbol.nonEmpty)
-      assert(tickerInUsd.percentChange1H != 0)
-      assert(tickerInUsd.percentChange24H != 0)
-      assert(tickerInUsd.percentChange7D != 0)
+    "getTokens require [metadata]" in {
+      val f1 = singleRequest(GetTokens.Req(true), "get_tokens")
+      val res1 = Await.result(f1.mapTo[GetTokens.Res], timeout.duration)
+      res1.tokens.nonEmpty should be(true)
+      res1.tokens.foreach { t =>
+        t.metadata.nonEmpty should be(true)
+        t.info.isEmpty should be(true)
+        t.price should be(0.0)
+      }
+    }
+
+    "getTokens require [metadata] with token address" in {
+      val f1 = singleRequest(
+        GetTokens.Req(requireMetadata = true, tokens = Seq(LRC_TOKEN.address)),
+        "get_tokens"
+      )
+      val res1 = Await.result(f1.mapTo[GetTokens.Res], timeout.duration)
+      res1.tokens.length == 1 should be(true)
+      val lrc = res1.tokens.head
+      lrc.metadata.nonEmpty should be(true)
+      lrc.info.isEmpty should be(true)
+      lrc.price should be(0.0)
+    }
+
+    "getTokens require [metadata, info]" in {
+      val f1 = singleRequest(GetTokens.Req(true, true), "get_tokens")
+      val res1 = Await.result(f1.mapTo[GetTokens.Res], timeout.duration)
+      res1.tokens.nonEmpty should be(true)
+      res1.tokens.foreach { t =>
+        t.metadata.nonEmpty should be(true)
+        t.info.nonEmpty should be(true)
+        t.price should be(0.0)
+      }
+    }
+
+    "getTokens require [metadata, info, ticker]" in {
+      val f1 = singleRequest(GetTokens.Req(true, true, true), "get_tokens")
+      val res1 = Await.result(f1.mapTo[GetTokens.Res], timeout.duration)
+      res1.tokens.nonEmpty should be(true)
+      res1.tokens.foreach { t =>
+        t.metadata.nonEmpty should be(true)
+        t.info.nonEmpty should be(true)
+        t.price > 0 should be(true)
+      }
+    }
+
+    "getTokens require [metadata, info, ticker] , with quote [ETH, RMB]" in {
+      val f1 = singleRequest(GetTokens.Req(true, true, true), "get_tokens")
+      val res1 = Await.result(f1.mapTo[GetTokens.Res], timeout.duration)
+      res1.tokens.nonEmpty should be(true)
+      res1.tokens.foreach { t =>
+        t.metadata.nonEmpty should be(true)
+        t.info.nonEmpty should be(true)
+        t.price > 0 should be(true)
+      }
+      val f2 = singleRequest(
+        GetTokens.Req(true, true, true, Currency.ETH),
+        "get_tokens"
+      )
+      val res2 = Await.result(f2.mapTo[GetTokens.Res], timeout.duration)
+      res2.tokens.nonEmpty should be(true)
+      res2.tokens.foreach { t =>
+        t.metadata.nonEmpty should be(true)
+        t.info.nonEmpty should be(true)
+        t.price > 0 should be(true)
+      }
+
+      val f3 = singleRequest(
+        GetTokens.Req(true, true, true, Currency.RMB),
+        "get_tokens"
+      )
+      val res3 = Await.result(f3.mapTo[GetTokens.Res], timeout.duration)
+      res3.tokens.nonEmpty should be(true)
+      res3.tokens.foreach { t =>
+        t.metadata.nonEmpty should be(true)
+        t.info.nonEmpty should be(true)
+        t.price > 0 should be(true)
+      }
+
+      val lrc1 = res1.tokens.find(_.getMetadata.symbol == LRC_TOKEN.symbol)
+      lrc1.nonEmpty should be(true)
+      val lrc2 = res2.tokens.find(_.getMetadata.symbol == LRC_TOKEN.symbol)
+      lrc2.nonEmpty should be(true)
+      val lrc3 = res3.tokens.find(_.getMetadata.symbol == LRC_TOKEN.symbol)
+      lrc3.nonEmpty should be(true)
+      lrc1 != lrc2 && lrc1 != lrc3 && lrc2 != lrc3 should be(true)
+    }
+
+    "getMarkets require [metadata]" in {
+      val f1 = singleRequest(GetMarkets.Req(true), "get_markets")
+      val res1 = Await.result(f1.mapTo[GetMarkets.Res], timeout.duration)
+      res1.markets.nonEmpty should be(true)
+      res1.markets.foreach { m =>
+        m.metadata.nonEmpty should be(true)
+        m.ticker.isEmpty should be(true)
+      }
+    }
+
+    "getMarkets require [metadata] with market pair" in {
+      val lrcWeth = MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)
+      val f1 = singleRequest(
+        GetMarkets.Req(requireMetadata = true, marketPairs = Seq(lrcWeth)),
+        "get_markets"
+      )
+      val res1 = Await.result(f1.mapTo[GetMarkets.Res], timeout.duration)
+      res1.markets.length should be(1)
+      val m = res1.markets.head
+      m.metadata.nonEmpty should be(true)
+      m.ticker.isEmpty should be(true)
+    }
+
+    "getMarkets require [metadata, ticker]" in {
+      val f1 = singleRequest(GetMarkets.Req(true, true), "get_markets")
+      val res1 = Await.result(f1.mapTo[GetMarkets.Res], timeout.duration)
+      res1.markets.nonEmpty should be(true)
+      res1.markets.foreach { m =>
+        m.metadata.nonEmpty should be(true)
+        m.ticker.nonEmpty should be(true)
+        m.ticker.get.price > 0 should be(true)
+      }
+    }
+
+    "getMarkets require [metadata, ticker], with quote [BTC, GBP]" in {
+      val f1 = singleRequest(GetMarkets.Req(true, true), "get_markets")
+      val res1 = Await.result(f1.mapTo[GetMarkets.Res], timeout.duration)
+      res1.markets.nonEmpty should be(true)
+      res1.markets.foreach { m =>
+        m.metadata.nonEmpty should be(true)
+        m.ticker.nonEmpty should be(true)
+        m.ticker.get.price > 0 should be(true)
+      }
+
+      val f2 = singleRequest(
+        GetMarkets.Req(true, true, false, Currency.BTC),
+        "get_markets"
+      )
+      val res2 = Await.result(f2.mapTo[GetMarkets.Res], timeout.duration)
+      res2.markets.nonEmpty should be(true)
+      res2.markets.foreach { m =>
+        m.metadata.nonEmpty should be(true)
+        m.ticker.nonEmpty should be(true)
+        m.ticker.get.price > 0 should be(true)
+      }
+
+      val f3 = singleRequest(
+        GetMarkets.Req(true, true, false, Currency.GBP),
+        "get_markets"
+      )
+      val res3 = Await.result(f3.mapTo[GetMarkets.Res], timeout.duration)
+      res3.markets.nonEmpty should be(true)
+      res3.markets.foreach { m =>
+        m.metadata.nonEmpty should be(true)
+        m.ticker.nonEmpty should be(true)
+        m.ticker.get.price > 0 should be(true)
+      }
+
+      val lrcWethHash =
+        MarketHash(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
+          .hashString()
+      val lrcWeth1 = res1.markets.find(_.getMetadata.marketHash == lrcWethHash)
+      lrcWeth1.nonEmpty should be(true)
+      val lrcWeth2 = res2.markets.find(_.getMetadata.marketHash == lrcWethHash)
+      lrcWeth2.nonEmpty should be(true)
+      val lrcWeth3 = res3.markets.find(_.getMetadata.marketHash == lrcWethHash)
+      lrcWeth3.nonEmpty should be(true)
+      lrcWeth1 != lrcWeth2 && lrcWeth1 != lrcWeth3 && lrcWeth2 != lrcWeth3 should be(
+        true
+      )
     }
   }
 
@@ -136,21 +277,6 @@ class CMCCrawlerSpec
     }
   }
 
-  private def refreshTickers() = this.synchronized {
-    //    val cnyToUsd = tickerRecords.find(_.tokenAddress == Currency.RMB.getAddress())
-    //    assert(cnyToUsd.nonEmpty)
-    //    assert(cnyToUsd.get.price > 0)
-    // except currency and quote tokens
-    val effectiveTokens = tickerRecords.filter(isEffectiveToken)
-    tokenTickersInUSD = effectiveTokens
-      .map(convertPersistToExternal)
-    marketTickers = fillAllMarketTickers(effectiveTokens, effectiveMarketMetadatas)
-  }
-
-  private def isEffectiveToken(ticker: TokenTickerRecord): Boolean = {
-    tokens.exists(_.metadata.get.address == ticker.tokenAddress)
-  }
-
   private def persistTickers(
       currencyTickersInUsd: Seq[TokenTickerRecord],
       tokenTickersInUsd: Seq[TokenTickerRecord]
@@ -165,107 +291,12 @@ class CMCCrawlerSpec
       _ <- Future.sequence(
         fixGroup.map(dbModule.tokenTickerRecordDal.saveTickers)
       )
-      updateSucc <- dbModule.tokenTickerRecordDal.setValid(now)
+      updatedValid <- dbModule.tokenTickerRecordDal.setValid(now)
     } yield {
-      if (updateSucc != ErrorCode.ERR_NONE)
-        log.error(s"External tickers persist failed, code:$updateSucc")
+      if (updatedValid != ErrorCode.ERR_NONE)
+        log.error(s"External tickers persist failed, code:$updatedValid")
       tickers_
     }
-
-  private def convertPersistToExternal(ticker: TokenTickerRecord) = {
-    TokenTicker(
-      ticker.symbol,
-      ticker.price,
-      ticker.volume24H,
-      ticker.percentChange1H,
-      ticker.percentChange24H,
-      ticker.percentChange7D
-    )
-  }
-
-  private def fillAllMarketTickers(
-      usdTickers: Seq[TokenTickerRecord],
-      effectiveMarket: Seq[MarketMetadata]
-    ): Seq[MarketTicker] = {
-    effectiveMarket.map(m => calculateMarketQuote(m, usdTickers))
-  }
-
-  private def calculateMarketQuote(
-      market: MarketMetadata,
-      usdTickers: Seq[TokenTickerRecord]
-    ): MarketTicker = {
-    val pair = market.marketPair.get
-    val baseTicker = getTickerByAddress(pair.baseToken, usdTickers)
-    val quoteTicker = getTickerByAddress(pair.quoteToken, usdTickers)
-    val rate = toDouble(BigDecimal(baseTicker.price / quoteTicker.price))
-    val volume24H = toDouble(
-      BigDecimal(baseTicker.volume24H / baseTicker.price) * rate
-    )
-    val market_cap = toDouble(
-      BigDecimal(baseTicker.marketCap / baseTicker.price) * rate
-    )
-    val percentChange1H =
-      calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
-    val percentChange24H =
-      calc(baseTicker.percentChange24H, quoteTicker.percentChange24H)
-    val percentChange7D =
-      calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
-    MarketTicker(
-      market.baseTokenSymbol,
-      market.quoteTokenSymbol,
-      rate,
-      baseTicker.price,
-      volume24H,
-      toDouble(percentChange1H),
-      toDouble(percentChange24H),
-      toDouble(percentChange7D)
-    )
-  }
-
-  private def getTickerByAddress(
-      address: String,
-      usdTickers: Seq[TokenTickerRecord]
-    ) = {
-    usdTickers
-      .find(t => t.tokenAddress == address)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found ticker of address: $address"
-        )
-      )
-  }
-
-  private def calc(
-      v1: Double,
-      v2: Double
-    ) =
-    BigDecimal((1 + v1) / (1 + v2) - 1)
-      .setScale(2, BigDecimal.RoundingMode.HALF_UP)
-      .toDouble
-
-  private def toDouble(bigDecimal: BigDecimal): Double =
-    scala.util
-      .Try(bigDecimal.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
-      .toOption
-      .getOrElse(0)
-
-  private def convertUsdTickersToCny(
-      usdTickers: Seq[TokenTicker],
-      usdToCny: Option[TokenTickerRecord]
-    ) = {
-    if (usdTickers.nonEmpty && usdToCny.nonEmpty) {
-      val cnyToUsd = usdToCny.get.price
-      usdTickers.map { t =>
-        t.copy(
-          price = toDouble(BigDecimal(t.price) / BigDecimal(cnyToUsd)),
-          volume24H = toDouble(BigDecimal(t.volume24H) / BigDecimal(cnyToUsd))
-        )
-      }
-    } else {
-      Seq.empty
-    }
-  }
 
   def fillTickersToPersistence(tickersInUsd: Seq[CMCTickerData]) = {
     fillERC20TokenTickersToPersistence(tickersInUsd).++:(
@@ -287,6 +318,7 @@ class CMCCrawlerSpec
           TokenTickerRecord(
             p.tokenAddress,
             t.symbol,
+            t.slug,
             q.price,
             q.volume24H,
             q.percentChange1H,
@@ -340,19 +372,22 @@ class CMCCrawlerSpec
             s"not found Currency of name:$t"
           )
         )
-      normalize(TokenTickerRecord(
-        currency.getAddress(),
-        t,
-        quote.price,
-        quote.volume24H,
-        quote.percentChange1H,
-        quote.percentChange24H,
-        quote.percentChange7D,
-        quote.marketCap,
-        0,
-        false,
-        "CMC"
-      ))
+      normalize(
+        TokenTickerRecord(
+          currency.getAddress(),
+          t,
+          ticker.slug,
+          quote.price,
+          quote.volume24H,
+          quote.percentChange1H,
+          quote.percentChange24H,
+          quote.percentChange7D,
+          quote.marketCap,
+          0,
+          false,
+          "CMC"
+        )
+      )
     }
   }
 

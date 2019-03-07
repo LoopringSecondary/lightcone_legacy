@@ -16,26 +16,26 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.core.ErrorCode
-import io.lightcone.persistence.TokenTickerRecord
+import io.lightcone.persistence._
 import io.lightcone.persistence.base._
-import scala.concurrent._
+import slick.jdbc.MySQLProfile.api._
 
-trait TokenTickerRecordDal
-    extends BaseDalImpl[TokenTickerRecordTable, TokenTickerRecord] {
+class CMCCrawlerConfigForTokenTable(tag: Tag)
+    extends BaseTable[CMCCrawlerConfigForToken](
+      tag,
+      "T_CMC_CRAWLER_CONFIG_FOR_TOKEN"
+    ) {
 
-  def saveTickers(tickers: Seq[TokenTickerRecord]): Future[ErrorCode]
+  def id = slug
+  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"), O.PrimaryKey)
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
 
-  def getLastTicker(): Future[Option[Long]]
+  // indexes
+  def idx_symbol = index("idx_symbol", (symbol), unique = true)
 
-  def getTickers(timestamp: Long): Future[Seq[TokenTickerRecord]]
-
-  def countTickers(timestamp: Long): Future[Int]
-
-  def getTickers(
-      timestamp: Long,
-      tokenSlugs: Seq[String]
-    ): Future[Seq[TokenTickerRecord]]
-
-  def setValid(timestamp: Long): Future[ErrorCode]
+  def * =
+    (
+      slug,
+      symbol
+    ) <> ((CMCCrawlerConfigForToken.apply _).tupled, CMCCrawlerConfigForToken.unapply)
 }

@@ -16,16 +16,34 @@
 
 package io.lightcone.relayer.implicits
 
-import io.lightcone.core.Currency
+import io.lightcone.core.{Currency, ErrorCode, ErrorException}
 import io.lightcone.lib.{Address, NumericConversion}
+import io.lightcone.relayer.external._
 
-private[relayer] class RichCurrency(ticker: Currency) {
+private[relayer] class RichCurrency(currency: Currency) {
 
   def getAddress() = {
-    if (ticker.isEth) {
+    if (currency.isEth) {
       Address.ZERO.toString
     } else {
-      NumericConversion.toHexString(BigInt(Math.abs(ticker.name.hashCode)))
+      // NumericConversion.toHexString(BigInt(Math.abs(currency.name.hashCode)))
+      ""
+    }
+  }
+
+  def getSlug() = {
+    if (QUOTE_TOKEN.contains(currency.name)) {
+      currency match {
+        case Currency.ETH => "ethereum"
+        case Currency.BTC => "bitcoin"
+        case m =>
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not support currency:$m"
+          )
+      }
+    } else {
+      s"loopring-${currency.name.toLowerCase}"
     }
   }
 }

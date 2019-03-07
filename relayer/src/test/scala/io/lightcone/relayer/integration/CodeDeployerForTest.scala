@@ -33,8 +33,8 @@ import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data.BlockWithTxObject
 import io.lightcone.relayer.ethereum._
+import io.lightcone.relayer.external._
 import io.lightcone.relayer.socketio._
-
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class CoreDeployerForTest @Inject()(
@@ -62,6 +62,8 @@ class CoreDeployerForTest @Inject()(
     eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     socketIONotifier: SocketIONotifier,
     splitMergerProvider: SplitMergerProvider,
+    externalTickerFetcher: ExternalTickerFetcher,
+    fiatExchangeRateFetcher: FiatExchangeRateFetcher,
     system: ActorSystem)
     extends CoreDeployer {
 

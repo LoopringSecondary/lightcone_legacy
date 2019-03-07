@@ -45,13 +45,19 @@ message News {
 message TokenTickerRecord {
     string token_address        = 1;
     string symbol               = 2;
-    double price                = 3;  //默认存储的为usd价格
-    double volume_24h           = 4;
-    double percent_change_1h    = 5;
-    double percent_change_24h   = 6;
-    double percent_change_7d    = 7;
-    double market_cap           = 8;
-    int64 timestamp             = 9;
-    bool  is_valid              = 10;
-    string data_source          = 11;
+    string slug                 = 3;
+    double price                = 4;  //默认存储的为usd价格
+    double volume_24h           = 5;
+    double percent_change_1h    = 6;
+    double percent_change_24h   = 7;
+    double percent_change_7d    = 8;
+    double market_cap           = 9;
+    int64 timestamp             = 10;
+    bool  is_valid              = 11;
+    string data_source          = 12;
+}
+
+message CMCCrawlerConfigForToken {
+    string symbol = 1;
+    string slug = 2;
 }

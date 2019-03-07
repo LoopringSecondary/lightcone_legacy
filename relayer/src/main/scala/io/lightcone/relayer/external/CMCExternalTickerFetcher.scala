@@ -122,6 +122,7 @@ class CMCExternalTickerFetcher @Inject()(
           TokenTickerRecord(
             p.tokenAddress,
             t.symbol,
+            t.slug,
             q.price,
             q.volume24H,
             q.percentChange1H,
@@ -150,7 +151,8 @@ class CMCExternalTickerFetcher @Inject()(
   private def normalize(record: TokenTickerRecord) = {
     record.copy(
       tokenAddress = record.tokenAddress.toLowerCase,
-      symbol = record.symbol.toUpperCase
+      symbol = record.symbol.toUpperCase,
+      slug = record.slug.toLowerCase
     )
   }
 
@@ -179,6 +181,7 @@ class CMCExternalTickerFetcher @Inject()(
         TokenTickerRecord(
           currency.getAddress(),
           t,
+          ticker.slug,
           quote.price,
           quote.volume24H,
           quote.percentChange1H,

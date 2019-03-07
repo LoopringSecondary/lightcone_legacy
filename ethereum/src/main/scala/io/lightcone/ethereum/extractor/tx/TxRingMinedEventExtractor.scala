@@ -18,6 +18,7 @@ package io.lightcone.ethereum.extractor
 
 import com.google.inject.Inject
 import com.typesafe.config.Config
+import io.lightcone.core.ErrorCode.ERR_INTERNAL_UNKNOWN
 import io.lightcone.core.MarketMetadata.Status._
 import io.lightcone.core._
 import io.lightcone.ethereum.TxStatus._
@@ -30,7 +31,6 @@ import io.lightcone.ethereum.persistence._
 import io.lightcone.lib._
 import io.lightcone.relayer.data.Transaction
 import org.web3j.utils._
-
 import scala.concurrent._
 
 class TxRingMinedEventExtractor @Inject()(
@@ -158,7 +158,15 @@ class TxRingMinedEventExtractor @Inject()(
           None
         else {
           val marketMetadata =
-            metadataManager.getMarket(marketHash)
+            metadataManager
+              .getMarket(marketHash)
+              .metadata
+              .getOrElse(
+                throw ErrorException(
+                  ERR_INTERNAL_UNKNOWN,
+                  s"not found metadata with marketHash:${marketHash}"
+                )
+              )
           val marketPair = marketMetadata.getMarketPair
           val baseToken =
             metadataManager.getTokenWithAddress(marketPair.baseToken).get
@@ -234,9 +242,17 @@ class TxRingMinedEventExtractor @Inject()(
             )
           } else {
             val market =
-              metadataManager.getMarket(
-                MarketPair(fill.tokenS, nextFill.tokenS)
-              )
+              metadataManager
+                .getMarket(
+                  MarketPair(fill.tokenS, nextFill.tokenS)
+                )
+                .metadata
+                .getOrElse(
+                  throw ErrorException(
+                    ERR_INTERNAL_UNKNOWN,
+                    s"not found metadata with tokenS:${fill.tokenS} tokenB:${nextFill.tokenS}"
+                  )
+                )
             val fillAmountS =
               metadataManager.getTokenWithAddress(fill.tokenS) match {
                 case None        => BigInt(fill.amountS.get).doubleValue()

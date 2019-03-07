@@ -18,65 +18,54 @@ package io.lightcone.persistence.dals
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import io.lightcone.core.ErrorCode
 import io.lightcone.core.ErrorCode._
-import io.lightcone.persistence.TokenTickerRecord
+import io.lightcone.persistence._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-class TokenTickerRecordDalImpl @Inject()(
+class CMCCrawlerConfigForTokenDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-dal-token-ticker-record") val dbConfig: DatabaseConfig[
+    @Named("dbconfig-dal-cmc-ticker-config") val dbConfig: DatabaseConfig[
       JdbcProfile
     ])
-    extends TokenTickerRecordDal {
+    extends CMCCrawlerConfigForTokenDal {
 
-  val query = TableQuery[TokenTickerRecordTable]
+  val query = TableQuery[CMCCrawlerConfigForTokenTable]
 
-  def saveTickers(tickers: Seq[TokenTickerRecord]) =
-    db.run((query ++= tickers).asTry).map {
+  def saveConfigs(configs: Seq[CMCCrawlerConfigForToken]): Future[ErrorCode] =
+    db.run((query ++= configs).asTry).map {
       case Failure(ex) => {
-        logger.error(s"save tickers error : ${ex.getMessage}")
+        logger.error(s"save ticker configs error : ${ex.getMessage}")
         ERR_PERSISTENCE_INTERNAL
       }
       case Success(x) =>
         ERR_NONE
     }
 
-  def getLastTicker() = {
-    db.run(query.filter(_.isValid === true).map(_.timestamp).max.result)
-  }
+  def getConfigs(): Future[Seq[CMCCrawlerConfigForToken]] =
+    db.run(query.take(Integer.MAX_VALUE).result)
 
-  def getTickers(timestamp: Long): Future[Seq[TokenTickerRecord]] =
-    db.run(query.filter(_.timestamp === timestamp).result)
+  def getConfigs(slugs: Seq[String]): Future[Seq[CMCCrawlerConfigForToken]] =
+    db.run(query.filter(_.slug inSet slugs).result)
 
-  def countTickers(timestamp: Long) =
-    db.run(query.filter(_.timestamp === timestamp).size.result)
-
-  def getTickers(
-      timestamp: Long,
-      tokenSlugs: Seq[String]
-    ): Future[Seq[TokenTickerRecord]] =
-    db.run(
-      query
-        .filter(_.timestamp === timestamp)
-        .filter(_.slug inSet tokenSlugs)
-        .result
-    )
-
-  def setValid(timestamp: Long) =
+  def updateConfig(ticker: CMCCrawlerConfigForToken): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.timestamp === timestamp)
-          .map(_.isValid)
-          .update(true)
+          .filter(_.symbol === ticker.symbol)
+          .map(_.slug)
+          .update(ticker.symbol)
       )
     } yield {
       if (result >= 1) ERR_NONE
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
+
+  def deleteConfigs(symbol: String): Future[Boolean] =
+    db.run(query.filter(_.symbol === symbol).delete).map(_ > 0)
 }

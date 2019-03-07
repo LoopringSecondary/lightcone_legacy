@@ -18,7 +18,7 @@ package io.lightcone.relayer.actors
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.ethereum.event._
@@ -29,7 +29,6 @@ import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import scala.util._
-import io.lightcone.relayer.implicits._
 
 // Owner: Yongfeng
 object MetadataManagerActor extends DeployedAsSingleton {
@@ -72,19 +71,12 @@ class MetadataManagerActor(
 
   val mediator = DistributedPubSub(context.system).mediator
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
-  @inline def externalCrawlerActor = actors.get(ExternalCrawlerActor.name)
-
-  private val effectiveMarketMetadatas = metadataManager
-    .getMarkets()
-    .filter(_.metadata.get.status != MarketMetadata.Status.TERMINATED)
-    .map(_.metadata.get)
 
   private var tokenMetadatas = Seq.empty[TokenMetadata]
   private var tokenInfos = Seq.empty[TokenInfo]
-  private var tokenTickersInUsd
-    : Seq[TokenTicker] = Seq.empty[TokenTicker] // USD price
-  private var marketTickers
-    : Seq[MarketTicker] = Seq.empty[MarketTicker] // price represent exchange rate of market (price of market LRC-WETH is 0.01)
+  private var tokenTickers: Seq[TokenTickerRecord] =
+    Seq.empty[TokenTickerRecord]
+  private var marketTickers: Seq[MarketTicker] = Seq.empty[MarketTicker]
   private var marketMetadatas = Seq.empty[MarketMetadata]
 
   private var tokens = Seq.empty[Token]
@@ -92,8 +84,9 @@ class MetadataManagerActor(
 
   override def initialize() = {
     val f = for {
+      _ <- mediator ? Subscribe(ExternalCrawlerActor.pubsubTopic, self)
       tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
-      tokenInfos_ <- dbModule.tokenInfoDal.getTokens()
+      tokenInfos_ <- dbModule.tokenInfoDal.getTokenInfos()
       marketMetadatas_ <- dbModule.marketMetadataDal.getMarkets()
       tokensUpdated <- Future.sequence(tokenMetadatas_.map { token =>
         for {
@@ -115,26 +108,22 @@ class MetadataManagerActor(
             burnRateForP2P = burnRate.forP2P
           )
       })
-      tickers_ <- (externalCrawlerActor ? LoadTickers.Req())
-        .mapTo[LoadTickers.Res]
+      tickers_ <- getLastTickers()
     } yield {
       assert(tokenMetadatas_.nonEmpty)
       assert(tokenInfos_.nonEmpty)
       assert(marketMetadatas_ nonEmpty)
       assert(tokensUpdated nonEmpty)
-      assert(tickers_.tokenTickers nonEmpty)
-      assert(tickers_.marketTickers nonEmpty)
+      assert(tickers_ nonEmpty)
       tokenMetadatas = tokensUpdated.map(MetadataManager.normalize)
       tokenInfos = tokenInfos_
       marketMetadatas = marketMetadatas_.map(MetadataManager.normalize)
-      tokenTickersInUsd = tickers_.tokenTickers
-      marketTickers =
-        fillAllMarketTickers(tokenTickersInUsd, effectiveMarketMetadatas)
+      tokenTickers = tickers_
+      marketTickers = fillSupportMarketTickers(tokenTickers)
+      refreshTokenAndMarket()
     }
     f onComplete {
       case Success(_) =>
-        refreshTokenAndMarket()
-        publish()
         becomeReady()
       case Failure(e) =>
         throw e
@@ -223,19 +212,38 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case req: TokenTickerChanged => {
-      if (req.tokenTickers.nonEmpty && req.marketTickers.nonEmpty) {
-        tokenTickersInUsd = req.tokenTickers
-        marketTickers = req.marketTickers
-        refreshTokenAndMarket()
-        val newTickers = tokens.map(t => TokenTicker(price = t.price))
-        val newMarketTickers = markets.map(m => MarketTicker())
-        val newReq = TokenTickerChanged(newTickers, newMarketTickers)
-
-        publish()
+    case _: TokenTickerChanged => { // subscribe message from ExternalCrawlerActor
+      for {
+        tickers_ <- getLastTickers()
+      } yield {
+        if (tickers_.nonEmpty) {
+          tokenTickers = tickers_
+          marketTickers = fillSupportMarketTickers(tickers_)
+          refreshTokenAndMarket()
+          publish()
+        }
       }
     }
+
+    case _: GetTokens.Req =>
+      sender ! GetTokens
+        .Res(tokens) // support for MetadataRefresher to synchronize tokens
+
+    case _: GetMarkets.Req => sender ! GetMarkets.Res(markets)
   }
+
+  private def getLastTickers(): Future[Seq[TokenTickerRecord]] =
+    for {
+      latestEffectiveTime <- dbModule.tokenTickerRecordDal
+        .getLastTicker()
+      tickers_ <- if (latestEffectiveTime.nonEmpty) {
+        dbModule.tokenTickerRecordDal.getTickers(
+          latestEffectiveTime.get
+        )
+      } else {
+        Future.successful(Seq.empty)
+      }
+    } yield tickers_
 
   private def publish() = {
     mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
@@ -277,39 +285,31 @@ class MetadataManagerActor(
   private def syncMetadata() = {
     log.info("MetadataManagerActor run tokens and markets reload job")
     for {
-      tokensMetadata_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
-      tokenInfos_ <- dbModule.tokenInfoDal.getTokens()
-      markets_ <- dbModule.marketMetadataDal.getMarkets()
+      tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
+      tokenInfos_ <- dbModule.tokenInfoDal.getTokenInfos()
+      marketMetadatas_ <- dbModule.marketMetadataDal.getMarkets()
     } yield {
-      checkAndPublish(Some(tokensMetadata_), Some(tokenInfos_), Some(markets_))
+      checkAndPublish(
+        Some(tokenMetadatas_),
+        Some(tokenInfos_),
+        Some(marketMetadatas_)
+      )
     }
   }
 
-  private def refreshTokenAndMarket() = {
-    if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickersInUsd.nonEmpty) {
+  private def refreshTokenAndMarket(): Unit = this.synchronized {
+    if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickers.nonEmpty) {
       val tokenMetadataMap = tokenMetadatas.map(m => m.symbol -> m).toMap
       val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
-      val tokenTickerMap = tokenTickersInUsd.map(t => t.symbol -> t.price).toMap
-      tokens = tokenTickersInUsd.map { t =>
-        val meta = if (tokenMetadataMap.contains(t.symbol)) {
-          tokenMetadataMap(t.symbol)
-        } else {
-          val currencyOpt = Currency.fromName(t.symbol)
-          if (currencyOpt.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INTERNAL_UNKNOWN,
-              s"not found Currency from symbol: ${t.symbol}"
-            )
-          TokenMetadata(
-            symbol = t.symbol,
-            address = currencyOpt.get.getAddress()
-          )
-        }
-        val info = tokenInfoMap.getOrElse(t.symbol, TokenInfo(t.symbol))
+      tokens = tokenTickers.map { ticker =>
+        val symbol = ticker.symbol
+        val meta =
+          tokenMetadataMap.getOrElse(symbol, TokenMetadata(symbol = symbol))
+        val info = tokenInfoMap.getOrElse(symbol, TokenInfo(symbol = symbol))
         Token(
           Some(meta),
           Some(info),
-          tokenTickerMap.getOrElse(t.symbol, 0.0)
+          ticker.price
         )
       }
     }
@@ -326,27 +326,29 @@ class MetadataManagerActor(
     }
   }
 
-  private def fillAllMarketTickers(
-                                    usdTickers: Seq[TokenTickerRecord],
-                                    effectiveMarket: Seq[MarketMetadata]
-                                  ): Seq[MarketTicker] = {
+  private def fillSupportMarketTickers(
+      usdTickers: Seq[TokenTickerRecord]
+    ): Seq[MarketTicker] = {
+    val effectiveMarket = metadataManager
+      .getMarkets()
+      .filter(_.metadata.get.status != MarketMetadata.Status.TERMINATED)
+      .map(_.metadata.get)
     effectiveMarket.map(m => calculateMarketQuote(m, usdTickers))
   }
 
   private def calculateMarketQuote(
-                                    market: MarketMetadata,
-                                    usdTickers: Seq[TokenTickerRecord]
-                                  ): MarketTicker = {
-    val pair = market.marketPair.get
-    val baseTicker = getTickerByAddress(pair.baseToken, usdTickers)
-    val quoteTicker = getTickerByAddress(pair.quoteToken, usdTickers)
+      market: MarketMetadata,
+      usdTickers: Seq[TokenTickerRecord]
+    ): MarketTicker = {
+    val baseTicker = getTickerBySymbol(market.baseTokenSymbol, usdTickers)
+    val quoteTicker = getTickerBySymbol(market.quoteTokenSymbol, usdTickers)
     val rate = toDouble(BigDecimal(baseTicker.price / quoteTicker.price))
     val volume24H = toDouble(
       BigDecimal(baseTicker.volume24H / baseTicker.price) * rate
     )
-    val market_cap = toDouble(
-      BigDecimal(baseTicker.marketCap / baseTicker.price) * rate
-    )
+//    val market_cap = toDouble(
+//      BigDecimal(baseTicker.marketCap / baseTicker.price) * rate
+//    )
     val percentChange1H =
       calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
     val percentChange24H =
@@ -365,24 +367,24 @@ class MetadataManagerActor(
     )
   }
 
-  private def getTickerByAddress(
-                                  address: String,
-                                  usdTickers: Seq[TokenTickerRecord]
-                                ) = {
+  private def getTickerBySymbol(
+      symbol: String,
+      usdTickers: Seq[TokenTickerRecord]
+    ) = {
     usdTickers
-      .find(t => t.tokenAddress == address)
+      .find(t => t.symbol == symbol)
       .getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found ticker of address: $address"
+          s"not found ticker of symbol: $symbol"
         )
       )
   }
 
   private def calc(
-                    v1: Double,
-                    v2: Double
-                  ) =
+      v1: Double,
+      v2: Double
+    ) =
     BigDecimal((1 + v1) / (1 + v2) - 1)
       .setScale(2, BigDecimal.RoundingMode.HALF_UP)
       .toDouble

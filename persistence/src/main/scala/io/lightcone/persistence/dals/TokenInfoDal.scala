@@ -38,13 +38,13 @@ import scala.concurrent._
 
 trait TokenInfoDal extends BaseDalImpl[TokenInfoTable, TokenInfo] {
 
-  def saveToken(token: TokenInfo): Future[ErrorCode]
+  def saveTokenInfo(token: TokenInfo): Future[ErrorCode]
 
-  def saveTokens(tokens: Seq[TokenInfo]): Future[Seq[String]]
+  def saveTokenInfos(tokens: Seq[TokenInfo]): Future[Seq[String]]
 
-  def updateToken(token: TokenInfo): Future[ErrorCode]
+  def updateTokenInfo(token: TokenInfo): Future[ErrorCode]
 
-  def getTokens(symbols: Seq[String]): Future[Seq[TokenInfo]]
+  def getTokenInfos(symbols: Seq[String]): Future[Seq[TokenInfo]]
 
-  def getTokens(): Future[Seq[TokenInfo]]
+  def getTokenInfos(): Future[Seq[TokenInfo]]
 }

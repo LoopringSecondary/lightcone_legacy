@@ -60,9 +60,9 @@ object MetadataManager {
 trait MetadataManager {
 
   def reset(
-             tokens: Seq[Token],
-             markets: Seq[Market]
-           ): Unit
+      tokens: Seq[Token],
+      markets: Seq[Market]
+    ): Unit
 
   def getTokenWithAddress(addr: String): Option[Token]
   def getTokenWithSymbol(symbol: String): Option[Token]

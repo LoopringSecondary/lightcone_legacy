@@ -128,6 +128,7 @@ class SinaFiatExchangeRateFetcher @Inject()(
         )
       new TokenTickerRecord(
         symbol = currencies(1),
+        slug = currency.getSlug(),
         tokenAddress = currency.getAddress(),
         price = price,
         dataSource = "Sina"

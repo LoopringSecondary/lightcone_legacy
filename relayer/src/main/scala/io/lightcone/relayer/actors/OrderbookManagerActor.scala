@@ -20,12 +20,12 @@ import akka.actor._
 import akka.util.Timeout
 import akka.pattern.ask
 import com.typesafe.config.Config
+import io.lightcone.core.ErrorCode.ERR_INTERNAL_UNKNOWN
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.slf4s.Logging
-
 import scala.concurrent._
 
 // Owner: Hongyu
@@ -83,15 +83,28 @@ class OrderbookManagerActor(
 
   val marketPair = metadataManager
     .getMarkets(ACTIVE, READONLY)
-    .find(m => OrderbookManagerActor.getEntityId(m.marketPair.get) == entityId)
-    .map(_.marketPair.get)
+    .find(
+      m =>
+        OrderbookManagerActor
+          .getEntityId(m.getMetadata.marketPair.get) == entityId
+    )
+    .map(_.getMetadata.marketPair.get)
     .getOrElse {
       val error = s"unable to find market pair matching entity id ${entityId}"
       log.error(error)
       throw new IllegalStateException(error)
     }
 
-  def marketMetadata = metadataManager.getMarket(marketPair)
+  def marketMetadata =
+    metadataManager
+      .getMarket(marketPair)
+      .metadata
+      .getOrElse(
+        throw ErrorException(
+          ERR_INTERNAL_UNKNOWN,
+          s"not found metadata with marketPair:$marketPair"
+        )
+      )
   val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -127,7 +140,7 @@ class OrderbookManagerActor(
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarket(marketPair))
+        Option(metadataManager.getMarket(marketPair).getMetadata)
       } catch {
         case _: Throwable => None
       }

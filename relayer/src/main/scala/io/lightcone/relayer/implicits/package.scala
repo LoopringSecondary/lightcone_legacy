@@ -16,11 +16,27 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.core.Currency
+import io.lightcone.core.{Currency, TokenTicker}
+import io.lightcone.persistence.TokenTickerRecord
 
 package object implicits {
 
   @inline
   implicit class Rich_Currency(currency: Currency)
       extends RichCurrency(currency)
+
+  implicit def tickerRecordConvertor(ticker: TokenTickerRecord): TokenTicker =
+    TokenTicker(
+      ticker.symbol,
+      ticker.price,
+      ticker.volume24H,
+      ticker.percentChange1H,
+      ticker.percentChange24H,
+      ticker.percentChange7D
+    )
+
+  implicit def tickersRecordConvertor(
+      tickers: Seq[TokenTickerRecord]
+    ): Seq[TokenTicker] =
+    tickers.map(tickerRecordConvertor)
 }

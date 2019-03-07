@@ -46,6 +46,7 @@ class TokenInfoTable(tag: Tag)
   def totalSupply = column[Double]("total_supply")
   def maxSupply = column[Double]("max_supply")
   def cmcRank = column[Int]("cmc_rank")
+  def icoRateWithEth = column[Double]("ico_rate_with_eth")
   def websiteUrl = column[String]("website_url")
   def updatedAt = column[Long]("updated_at")
 
@@ -56,6 +57,7 @@ class TokenInfoTable(tag: Tag)
       totalSupply,
       maxSupply,
       cmcRank,
+      icoRateWithEth,
       websiteUrl,
       updatedAt
     ) <> ((TokenInfo.apply _).tupled, TokenInfo.unapply)

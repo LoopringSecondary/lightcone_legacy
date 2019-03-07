@@ -95,22 +95,3 @@ message GetRings{
         repeated io.lightcone.ethereum.persistence.Ring rings = 4;
     }
 }
-
-
-message GetTokens{
-    message Params{
-    }
-
-    message  Result {
-        repeated io.lightcone.core.TokenMetadata tokens  =1;
-    }
-}
-
-message GetMarkets{
-    message Params{
-    }
-
-    message  Result {
-        repeated io.lightcone.core.MarketMetadata markets  =1;
-    }
-}

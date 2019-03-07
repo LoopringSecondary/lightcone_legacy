@@ -30,6 +30,7 @@ import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.util._
 import io.lightcone.relayer.implicits._
+import io.lightcone.relayer.external._
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -92,32 +93,63 @@ class MetadataRefresher(
         _ = getLocalActors().foreach(_ ! req)
       } yield Unit
 
-    case req: GetMarkets.Req =>
-      //TODO(du):
-      sender ! GetMarkets.Res()
-
     case req: GetTokens.Req => {
-      val eth = tokens
-        .find(t => t.metadata.get.symbol == Currency.ETH.name)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            "not found ticker ETH"
-          )
-        )
-      val currencySymbols = Currency.values.map(_.name)
-      val tokens_ = tokens
-        .filter(t => !currencySymbols.contains(t.metadata.get.symbol))
-        .:+(eth)
+      val tokens_ = if (tokens.nonEmpty) {
+        if (req.tokens.nonEmpty) {
+          tokens
+            .filter(
+              t =>
+                t.metadata.nonEmpty && t.getMetadata.address.nonEmpty && req.tokens
+                  .contains(t.getMetadata.address)
+            )
+        } else {
+          val eth = tokens
+            .find(t => t.getSymbol() == Currency.ETH.name)
+            .getOrElse(
+              throw ErrorException(
+                ErrorCode.ERR_INTERNAL_UNKNOWN,
+                "not found ticker ETH"
+              )
+            )
+          val currencySymbols = Currency.values.map(_.name)
+          tokens
+            .filter(t => !currencySymbols.contains(t.getSymbol()))
+            .:+(eth)
+        }
+      } else {
+        Seq.empty
+      }
       val res = tokens_.map { t =>
         val metadata = if (req.requireMetadata) t.metadata else None
         val info = if (req.requireInfo) t.info else None
-        val price = if (req.requirePrice) t.price else 0.0
+        val price = if (req.requirePrice) {
+          changeUsdPriceWithQuoteCurrency(t.price, req.quoteCurrencyForPrice)
+        } else 0.0
         Token(metadata, info, price)
       }
       sender ! GetTokens.Res(res)
     }
 
+    case req: GetMarkets.Req =>
+      // TODO(yongfeng): req.queryLoopringTicker
+      val markets_ = if (req.marketPairs.nonEmpty) {
+        markets.filter(
+          m => req.marketPairs.contains(m.getMetadata.marketPair.get)
+        )
+      } else {
+        markets
+      }
+      val res = markets_.map { m =>
+        val metadata = if (req.requireMetadata) m.metadata else None
+        val ticker = if (req.requireTicker) {
+          val t = m.ticker.get
+          val price =
+            changeUsdPriceWithQuoteCurrency(t.price, req.quoteCurrencyForTicker)
+          Some(t.copy(price = price))
+        } else None
+        Market(metadata, ticker)
+      }
+      sender ! GetMarkets.Res(res)
   }
 
   private def refreshMetadata() =
@@ -133,7 +165,6 @@ class MetadataRefresher(
       assert(markets_.nonEmpty)
       tokens = tokens_
       markets = markets_
-
       metadataManager.reset(tokens, markets)
     }
 
@@ -148,66 +179,34 @@ class MetadataRefresher(
     )
   }
 
-  private def getPriceWithQuoteToken(
-      fromToken: Token,
+  private def changeUsdPriceWithQuoteCurrency(
+      priceInUsd: Double,
       toCurrency: Currency
     ) = {
-    val toToken = tokens
-      .find(t => t.metadata.get.address == toCurrency.getAddress())
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found ticker from currency:$toCurrency"
-        )
-      )
-    scala.util
-      .Try(
-        (BigDecimal(fromToken.price) / BigDecimal(toToken.price))
-          .setScale(8, BigDecimal.RoundingMode.HALF_UP)
-          .toDouble
-      )
-      .toOption
-      .getOrElse(0)
+    toCurrency match {
+      case Currency.NOT_USE | Currency.USD =>
+        calculate(priceInUsd, 1, 2)
+      case m =>
+        val precision =
+          if (QUOTE_TOKEN.contains(m.name)) { // ETH, BTC will set to 8 or token's precision
+            val quoteTokenOpt = tokens.find(_.getSymbol() == m.name)
+            if (quoteTokenOpt.nonEmpty)
+              quoteTokenOpt.get.getMetadata.precision | 8
+            else 8
+          } else 2 // RMB, JPY
+        val currencyToken = tokens
+          .find(_.getSymbol() == m.name)
+          .getOrElse(Token()) // price = 0 if not found currency token
+        calculate(priceInUsd, currencyToken.price, precision)
+    }
   }
 
-  private def refreshTokenAndMarket() = {
-    if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickersInUsd.nonEmpty) {
-      val tokenMetadataMap = tokenMetadatas.map(m => m.symbol -> m).toMap
-      val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
-      val tokenTickerMap = tokenTickersInUsd.map(t => t.symbol -> t.price).toMap
-      tokens = tokenTickersInUsd.map { t =>
-        val meta = if (tokenMetadataMap.contains(t.symbol)) {
-          tokenMetadataMap(t.symbol)
-        } else {
-          val currencyOpt = Currency.fromName(t.symbol)
-          if (currencyOpt.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INTERNAL_UNKNOWN,
-              s"not found Currency from symbol: ${t.symbol}"
-            )
-          TokenMetadata(
-            symbol = t.symbol,
-            address = currencyOpt.get.getAddress()
-          )
-        }
-        val info = tokenInfoMap.getOrElse(t.symbol, TokenInfo(t.symbol))
-        Token(
-          Some(meta),
-          Some(info),
-          tokenTickerMap.getOrElse(t.symbol, 0.0)
-        )
-      }
-    }
-    if (marketMetadatas.nonEmpty && marketTickers.nonEmpty) {
-      val marketTickerMap = marketTickers
-        .map(m => s"${m.baseTokenSymbol}-${m.quoteTokenSymbol}" -> m)
-        .toMap
-      markets = marketMetadatas.map { m =>
-        Market(
-          Some(m),
-          marketTickerMap.get(s"${m.baseTokenSymbol}-${m.quoteTokenSymbol}")
-        )
-      }
-    }
-  }
+  private def calculate(
+      p1: Double,
+      p2: Double,
+      scale: Int
+    ) =
+    BigDecimal(p1 / p2)
+      .setScale(scale, BigDecimal.RoundingMode.HALF_UP)
+      .toDouble
 }

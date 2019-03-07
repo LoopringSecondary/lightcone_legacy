@@ -96,8 +96,8 @@ class KeepAliveActor @Inject()(
   private def pingOrderbookManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY) map {
-        case meta =>
-          val marketPair = meta.marketPair.get
+        case m =>
+          val marketPair = m.metadata.get.marketPair.get
           orderbookManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
             marketPair.baseToken + "-" + marketPair.quoteToken
@@ -108,8 +108,8 @@ class KeepAliveActor @Inject()(
   private def pingMarketManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY) map {
-        case meta =>
-          val marketPair = meta.marketPair.get
+        case m =>
+          val marketPair = m.metadata.get.marketPair.get
           marketManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
             marketPair.baseToken + "-" + marketPair.quoteToken

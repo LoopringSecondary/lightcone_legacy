@@ -44,9 +44,9 @@ import io.lightcone.ethereum.extractor.tx.{
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.external._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -93,7 +93,8 @@ class CoreModule(
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-dal-ohlc-data",
       "dbconfig-dal-fill",
-      "dbconfig-token-ticker-record"
+      "dbconfig-dal-token-ticker-record",
+      "dbconfig-dal-cmc-ticker-config"
     )
 
     // --- bind dals ---------------------
@@ -134,6 +135,10 @@ class CoreModule(
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
+    bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].asEagerSingleton
+    bind[FiatExchangeRateFetcher]
+      .to[SinaFiatExchangeRateFetcher]
+      .asEagerSingleton
 
 //    bind[EventExtractor[BlockWithTxObject, AnyRef]]
 //      .to[DefaultEventExtractor]

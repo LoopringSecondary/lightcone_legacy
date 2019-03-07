@@ -42,7 +42,7 @@ class TokenInfoDalImpl @Inject()(
 
   val query = TableQuery[TokenInfoTable]
 
-  def saveToken(token: TokenInfo): Future[ErrorCode] =
+  def saveTokenInfo(token: TokenInfo): Future[ErrorCode] =
     db.run((query += token).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) =>
         ERR_PERSISTENCE_DUPLICATE_INSERT
@@ -52,13 +52,13 @@ class TokenInfoDalImpl @Inject()(
       case Success(x) => ERR_NONE
     }
 
-  def saveTokens(tokens: Seq[TokenInfo]): Future[Seq[String]] =
+  def saveTokenInfos(tokens: Seq[TokenInfo]): Future[Seq[String]] =
     for {
-      _ <- Future.sequence(tokens.map(saveToken))
-      query <- getTokens(tokens.map(_.symbol))
+      _ <- Future.sequence(tokens.map(saveTokenInfo))
+      query <- getTokenInfos(tokens.map(_.symbol))
     } yield query.map(_.symbol)
 
-  def updateToken(token: TokenInfo): Future[ErrorCode] =
+  def updateTokenInfo(token: TokenInfo): Future[ErrorCode] =
     for {
       result <- db.run(query.insertOrUpdate(token))
     } yield {
@@ -69,9 +69,9 @@ class TokenInfoDalImpl @Inject()(
       }
     }
 
-  def getTokens(symbols: Seq[String]): Future[Seq[TokenInfo]] =
+  def getTokenInfos(symbols: Seq[String]): Future[Seq[TokenInfo]] =
     db.run(query.filter(_.symbol inSet symbols).result)
 
-  def getTokens(): Future[Seq[TokenInfo]] =
+  def getTokenInfos(): Future[Seq[TokenInfo]] =
     db.run(query.take(Int.MaxValue).result)
 }

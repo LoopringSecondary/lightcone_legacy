@@ -26,6 +26,7 @@ class TokenTickerRecordTable(tag: Tag)
   def id = symbol
   def tokenAddress = columnAddress("token_address")
   def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
+  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
   def price = column[Double]("price")
   def volume24H = column[Double]("volume_24h")
   def percentChange1H = column[Double]("percent_change_1h")
@@ -45,12 +46,13 @@ class TokenTickerRecordTable(tag: Tag)
     )
 
   def pk_timestamp_slug =
-    primaryKey("pk_timestamp_slug", (timestamp, symbol))
+    primaryKey("pk_timestamp_slug", (timestamp, slug))
 
   def * =
     (
       tokenAddress,
       symbol,
+      slug,
       price,
       volume24H,
       percentChange1H,

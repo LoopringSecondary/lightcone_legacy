@@ -17,25 +17,20 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core.ErrorCode
-import io.lightcone.persistence.TokenTickerRecord
+import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import scala.concurrent._
 
-trait TokenTickerRecordDal
-    extends BaseDalImpl[TokenTickerRecordTable, TokenTickerRecord] {
+trait CMCCrawlerConfigForTokenDal
+    extends BaseDalImpl[CMCCrawlerConfigForTokenTable, CMCCrawlerConfigForToken] {
 
-  def saveTickers(tickers: Seq[TokenTickerRecord]): Future[ErrorCode]
+  def saveConfigs(configs: Seq[CMCCrawlerConfigForToken]): Future[ErrorCode]
 
-  def getLastTicker(): Future[Option[Long]]
+  def getConfigs(): Future[Seq[CMCCrawlerConfigForToken]]
 
-  def getTickers(timestamp: Long): Future[Seq[TokenTickerRecord]]
+  def getConfigs(slugs: Seq[String]): Future[Seq[CMCCrawlerConfigForToken]]
 
-  def countTickers(timestamp: Long): Future[Int]
+  def updateConfig(ticker: CMCCrawlerConfigForToken): Future[ErrorCode]
 
-  def getTickers(
-      timestamp: Long,
-      tokenSlugs: Seq[String]
-    ): Future[Seq[TokenTickerRecord]]
-
-  def setValid(timestamp: Long): Future[ErrorCode]
+  def deleteConfigs(symbol: String): Future[Boolean]
 }

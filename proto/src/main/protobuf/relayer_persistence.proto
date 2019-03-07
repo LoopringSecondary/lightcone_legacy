@@ -242,18 +242,4 @@ message TerminateMarket {
     }
 }
 
-message LoadTickers {
-    message Req {
-
-    }
-
-    message Res {
-        repeated io.lightcone.core.TokenTicker token_tickers = 1;
-        repeated io.lightcone.core.MarketTicker market_tickers = 2;
-    }
-}
-
-message TokenTickerChanged {
-    repeated io.lightcone.core.TokenTicker token_tickers = 1;
-    repeated io.lightcone.core.MarketTicker market_tickers = 2;
-}
+message TokenTickerChanged {}

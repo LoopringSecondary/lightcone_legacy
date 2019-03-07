@@ -22,6 +22,7 @@ import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import io.lightcone.lib._
 import io.lightcone.core._
+import io.lightcone.relayer.implicits._
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig
@@ -93,6 +94,18 @@ package object support {
   )
 
   val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
+
+  val TOKEN_SLUGS_SYMBOLS = Seq(
+    ("ETH", "ethereum"),
+    ("BTC", "bitcoin"),
+    ("WETH", "weth"),
+    ("LRC", "loopring"),
+    ("GTO", "gifto"),
+    (Currency.RMB.name, Currency.RMB.getSlug()),
+    (Currency.JPY.name, Currency.JPY.getSlug()),
+    (Currency.EUR.name, Currency.EUR.getSlug()),
+    (Currency.GBP.name, Currency.GBP.getSlug())
+  )
 
   val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET)
 
