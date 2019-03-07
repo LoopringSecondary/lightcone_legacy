@@ -79,7 +79,8 @@ object Dependencies {
     "io.kamon" %% "kamon-datadog" % "1.0.0",
     "io.kamon" %% "kamon-prometheus" % "1.1.1",
     "io.kamon" %% "kamon-scala-future" % "1.0.0",
-    "io.kamon" %% "kamon-logback" % "1.0.5" // TODO(dongw): use https://github.com/openzipkin-contrib/brave-akka instead in the future
+    // TODO(dongw): use https://github.com/openzipkin-contrib/brave-akka instead in the future
+    "io.kamon" %% "kamon-logback" % "1.0.5"
     )
 
   lazy val dependency4Lib = commonDependency ++
