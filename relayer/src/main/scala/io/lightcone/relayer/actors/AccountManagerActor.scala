@@ -40,7 +40,7 @@ import scala.util.{Failure, Success}
 class AccountManagerActor(
     val owner: String,
     val balanceRefreshIntervalSeconds: Int,
-    val pendingTxLength: Int
+    val numOfActivitiesForCalculatingNonce: Int
   )(
     implicit
     val config: Config,
@@ -112,7 +112,7 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
         nonceRes <- (activityActor ? GetPendingActivityNonce.Req(
           owner,
-          pendingTxLength
+          numOfActivitiesForCalculatingNonce
         )).mapAs[GetPendingActivityNonce.Res]
       } yield {
         nonceRes.nonces
@@ -257,9 +257,7 @@ class AccountManagerActor(
               )
           }
           //TODO(HONGYU):确认nonce的更新以及使用方式
-          result = GetAccount.Res(
-            Some(AccountBalance(owner, tokenBalances))
-          )
+          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances)))
         } yield result).sendTo(sender)
       }
 
@@ -327,7 +325,7 @@ class AccountManagerActor(
               nonce = nonce + 1
             }
           } else {
-            if (jumpedPendingNonce.size < 10000) { //限制nonce跳跃的数量不超过10000
+            if (jumpedPendingNonce.size < 1000) { //限制nonce跳跃的数量不超过1000
               jumpedPendingNonce = jumpedPendingNonce + evt.nonce
             }
           }

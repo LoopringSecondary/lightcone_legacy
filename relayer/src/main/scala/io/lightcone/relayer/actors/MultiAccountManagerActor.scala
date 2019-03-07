@@ -130,7 +130,8 @@ class MultiAccountManagerActor(
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
-  val pendingTxLength = selfConfig.getInt("pending-tx-length")
+  val numOfActivitiesForCalculatingNonce =
+    selfConfig.getInt("num-activities-for-calculating-nonce")
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
@@ -278,7 +279,7 @@ class MultiAccountManagerActor(
               new AccountManagerActor(
                 address,
                 balanceRefreshIntervalSeconds,
-                pendingTxLength
+                numOfActivitiesForCalculatingNonce
               )
             ),
             address
