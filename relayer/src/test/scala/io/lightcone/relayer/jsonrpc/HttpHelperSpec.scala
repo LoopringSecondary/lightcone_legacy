@@ -37,7 +37,7 @@ class HttpHelperSpec
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
-  "a example of HttpHelper" must {
+  "an example of HttpHelper" must {
     "receive a response " in {
       val method = "get_account"
       val getBalanceReq =
