@@ -20,8 +20,8 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.data._
-import org.web3j.utils._
 import scala.concurrent._
+import org.web3j.utils._
 
 final class CancelOrderValidator(
     implicit

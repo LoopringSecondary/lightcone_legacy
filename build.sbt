@@ -5,8 +5,8 @@ import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.tapad.docker.DockerComposeKeys
 
-addCommandAlias("fix", ";all compile:scalafix RemoveUnused ProcedureSyntax; all test:scalafix RemoveUnused ProcedureSyntax")
-addCommandAlias("check", ";all compile:scalafix RemoveUnused ProcedureSyntax; all test:scalafix RemoveUnused ProcedureSyntax; all clean; all test:compile")
+addCommandAlias("fix", ";all compile:scalafix; all test:scalafix")
+addCommandAlias("check", ";all compile:scalafix; all test:scalafix; all clean; all test:compile")
 
 lazy val proto = (project in file("proto"))
   .settings(
