@@ -41,10 +41,10 @@ class TokenInfoTable(tag: Tag)
 
   def id = symbol
 
-  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"), O.PrimaryKey)
-  def circulatingSupply = column[Double]("circulating_supply")
-  def totalSupply = column[Double]("total_supply")
-  def maxSupply = column[Double]("max_supply")
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(10)"), O.PrimaryKey)
+  def circulatingSupply = column[Long]("circulating_supply")
+  def totalSupply = column[Long]("total_supply")
+  def maxSupply = column[Long]("max_supply")
   def cmcRank = column[Int]("cmc_rank")
   def icoRateWithEth = column[Double]("ico_rate_with_eth")
   def websiteUrl = column[String]("website_url")

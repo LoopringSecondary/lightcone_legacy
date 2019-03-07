@@ -25,7 +25,7 @@ class TokenTickerRecordTable(tag: Tag)
 
   def id = symbol
   def tokenAddress = columnAddress("token_address")
-  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(10)"))
   def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
   def price = column[Double]("price")
   def volume24H = column[Double]("volume_24h")

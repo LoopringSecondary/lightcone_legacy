@@ -26,7 +26,7 @@ trait TokenTickerRecordDal
 
   def saveTickers(tickers: Seq[TokenTickerRecord]): Future[ErrorCode]
 
-  def getLastTicker(): Future[Option[Long]]
+  def getLastTickerTime(): Future[Option[Long]]
 
   def getTickers(timestamp: Long): Future[Seq[TokenTickerRecord]]
 

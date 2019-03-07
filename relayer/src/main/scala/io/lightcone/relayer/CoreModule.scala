@@ -109,6 +109,9 @@ class CoreModule(
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
     bind[TokenTickerRecordDal].to[TokenTickerRecordDalImpl].asEagerSingleton
     bind[TokenInfoDal].to[TokenInfoDalImpl].asEagerSingleton
+    bind[CMCCrawlerConfigForTokenDal]
+      .to[CMCCrawlerConfigForTokenDalImpl]
+      .asEagerSingleton
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton

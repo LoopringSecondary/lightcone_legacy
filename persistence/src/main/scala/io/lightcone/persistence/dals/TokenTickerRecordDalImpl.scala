@@ -46,7 +46,7 @@ class TokenTickerRecordDalImpl @Inject()(
         ERR_NONE
     }
 
-  def getLastTicker() = {
+  def getLastTickerTime() = {
     db.run(query.filter(_.isValid === true).map(_.timestamp).max.result)
   }
 

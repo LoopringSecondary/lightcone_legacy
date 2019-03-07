@@ -190,9 +190,9 @@ message TokenMetadata {
 
 message TokenInfo {
     string symbol = 1;
-    double circulating_supply = 2;
-    double total_supply = 3;
-    double max_supply = 4;
+    int64  circulating_supply = 2;
+    int64  total_supply = 3;
+    int64  max_supply = 4;
     int32  cmc_rank = 5;
     double ico_rate_with_eth = 6;
     string website_url = 7;

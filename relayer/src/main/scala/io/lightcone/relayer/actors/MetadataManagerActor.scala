@@ -235,7 +235,7 @@ class MetadataManagerActor(
   private def getLastTickers(): Future[Seq[TokenTickerRecord]] =
     for {
       latestEffectiveTime <- dbModule.tokenTickerRecordDal
-        .getLastTicker()
+        .getLastTickerTime()
       tickers_ <- if (latestEffectiveTime.nonEmpty) {
         dbModule.tokenTickerRecordDal.getTickers(
           latestEffectiveTime.get
