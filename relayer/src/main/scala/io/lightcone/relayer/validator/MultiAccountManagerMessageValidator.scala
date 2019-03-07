@@ -90,9 +90,9 @@ final class MultiAccountManagerMessageValidator(
         } else if (req.allTokens)
           req.copy(
             addresses = req.addresses.map(Address.normalize),
-            tokens = (req.tokens ++ metadataManager
+            tokens = (req.tokens union metadataManager
               .getTokens()
-              .map(_.getMetadata.address)).map(normalize)
+              .map(_.getMetadata.address)).distinct.map(normalize)
           )
         else if (req.tokens.nonEmpty)
           req.copy(
@@ -116,9 +116,9 @@ final class MultiAccountManagerMessageValidator(
         } else if (req.allTokens)
           req.copy(
             address = Address.normalize(req.address),
-            tokens = (req.tokens ++ metadataManager
+            tokens = (req.tokens union metadataManager
               .getTokens()
-              .map(_.getMetadata.address)).map(normalize)
+              .map(_.getMetadata.address)).distinct.map(normalize)
           )
         else if (req.tokens.nonEmpty)
           req.copy(
