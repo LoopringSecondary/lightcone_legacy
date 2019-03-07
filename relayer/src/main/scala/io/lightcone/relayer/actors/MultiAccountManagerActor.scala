@@ -275,7 +275,11 @@ class MultiAccountManagerActor(
           address,
           context.actorOf(
             Props(
-              new AccountManagerActor(address, balanceRefreshIntervalSeconds, pendingTxLength)
+              new AccountManagerActor(
+                address,
+                balanceRefreshIntervalSeconds,
+                pendingTxLength
+              )
             ),
             address
           )
