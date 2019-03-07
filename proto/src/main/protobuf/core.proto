@@ -19,8 +19,6 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.core;
 
-import "google/protobuf/any.proto";
-
 
 /////////////////////////////////////////////////////////////////////
 // CONTAINS DATA USED BY THE CORE SUB-PROJECT, ONLY!!!
