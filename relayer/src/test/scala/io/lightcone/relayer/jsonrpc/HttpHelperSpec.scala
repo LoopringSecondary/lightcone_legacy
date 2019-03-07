@@ -46,11 +46,11 @@ class HttpHelperSpec
           tokens = Seq(LRC_TOKEN.name, WETH_TOKEN.address)
         )
 
-      getBalanceReq.expect[GetAccount.Res](Matcher { left: GetAccount.Res =>
+      getBalanceReq.expect[GetAccount.Res](Matcher { res: GetAccount.Res =>
         MatchResult(
-          left.accountBalance.nonEmpty,
-          left + " was not odd",
-          left + " was odd"
+          res.accountBalance.nonEmpty,
+          res + " could not be empty",
+          res + " is empty"
         )
       })
     }

@@ -42,26 +42,30 @@ trait HttpHelper extends RpcBindingForTest with Logging {
         expectTimeout: Timeout = timeout
       ) = {
       var resOpt: Option[R] = None
-      val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
-      while (resOpt.isEmpty &&
+      var resMatched = false
+      val lastTime = System
+        .currentTimeMillis() + expectTimeout.duration.toMillis
+      while (!resMatched &&
              System.currentTimeMillis() <= lastTime) {
         val res = Await.result(req.request, timeout.duration).asInstanceOf[R]
-        if (matcher(res).matches) {
-          resOpt = Some(res)
-        } else {
+        resOpt = Some(res)
+        resMatched = matcher(res).matches
+        if (!resMatched) {
           Thread.sleep(200)
         }
       }
-      if (resOpt.isEmpty) {
+      if (resOpt.isEmpty || !resMatched) {
         throw new Exception(
           s"Timed out waiting for result of req:${req} "
         )
+      } else {
+        //最好判断，便于返回未匹配的信息
+        resOpt.get should matcher
       }
     }
 
     def expect[R <: GeneratedMessage](matcher: Matcher[R]) = {
-      val res = Await.result(req.request, timeout.duration).asInstanceOf[R]
-      res should matcher
+      Await.result(req.request, timeout.duration).asInstanceOf[R] should matcher
     }
 
     def request(
