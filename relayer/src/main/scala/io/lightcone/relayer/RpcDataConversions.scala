@@ -30,11 +30,6 @@ object RpcDataConversions {
   //    ): ext.GetOrderbook.Res =
   //    null
 
-  // TODO(yadong): def an implicit method as following and it will be
-  // called automatically by the RpcBinding.
-  implicit def cleanGetOrderboobRes(res: GetOrderbook.Res) =
-    new GetOrderbook.Res( /* select some fields only */ )
-
   implicit def cleanSubmitOrderRes(res: SubmitOrder.Res) =
     SubmitOrder.Res(success = res.success)
 

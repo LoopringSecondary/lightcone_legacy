@@ -121,13 +121,12 @@ final class CancelOrderValidator(
     val typedData = eip712Support.jsonToTypedData(completedMessage)
     val hash = eip712Support.getEIP712Message(typedData)
     val sigBytes = Numeric.hexStringToByteArray(req.sig)
-    val result = verifyEthereumSignature(
+    verifyEthereumSignature(
       Numeric.hexStringToByteArray(hash),
-      sigBytes.toSeq.slice(0, 32).toArray,
-      sigBytes.toSeq.slice(32, 64).toArray,
+      sigBytes.slice(0, 32),
+      sigBytes.slice(32, 64),
       sigBytes(64),
       Address(req.owner)
     )
-    result
   }
 }
