@@ -35,6 +35,9 @@ object RpcDataConversions {
   implicit def cleanGetOrderboobRes(res: GetOrderbook.Res) =
     new GetOrderbook.Res( /* select some fields only */ )
 
+  implicit def cleanSubmitOrderRes(res: SubmitOrder.Res) =
+    SubmitOrder.Res(success = res.success)
+
   implicit def cleanGetOrdersRes(res: GetOrders.Res) =
     res.copy(orders = res.orders.map(cleanRawOrder))
 
