@@ -29,7 +29,6 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.util._
-import io.lightcone.relayer.implicits._
 import io.lightcone.relayer.external._
 
 // Owner: Hongyu
