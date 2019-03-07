@@ -29,7 +29,7 @@ class DefaultSplitMergerProvider extends RegisterableSplitMergerProvider {
     ] {
 
       def split(req: GetAccounts.Req) = req.addresses.map { addr =>
-        GetAccount.Req(addr, req.tokens, req.tag)
+        GetAccount.Req(addr, req.tokens, tag = req.tag)
       }
 
       def merge(resps: Seq[GetAccount.Res]) = {

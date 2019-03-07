@@ -17,6 +17,7 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
+import io.lightcone.core.ErrorCode.ERR_INVALID_ARGUMENT
 import io.lightcone.core.{MetadataManager, _}
 import io.lightcone.ethereum._
 import io.lightcone.lib._
@@ -81,18 +82,54 @@ final class MultiAccountManagerMessageValidator(
 
     case req: GetAccounts.Req =>
       Future {
-        req.copy(
-          addresses = req.addresses.map(Address.normalize),
-          tokens = req.tokens.map(normalize)
-        )
+        if (req.addresses.isEmpty || req.addresses.forall(Address.isValid)) {
+          throw ErrorException(
+            ERR_INVALID_ARGUMENT,
+            message = s"invalid addresses in GetAccount.Req:$req"
+          )
+        } else if (req.allTokens)
+          req.copy(
+            addresses = req.addresses.map(Address.normalize),
+            tokens = (req.tokens ++ metadataManager
+              .getTokens()
+              .map(_.getMetadata.address)).map(normalize)
+          )
+        else if (req.tokens.nonEmpty)
+          req.copy(
+            addresses = req.addresses.map(Address.normalize),
+            tokens = req.tokens.map(normalize)
+          )
+        else
+          throw ErrorException(
+            ERR_INVALID_ARGUMENT,
+            message = s"invalid tokens in GetAccount.Req:$req"
+          )
       }
 
     case req: GetAccount.Req =>
       Future {
-        req.copy(
-          address = Address.normalize(req.address),
-          tokens = req.tokens.map(normalize)
-        )
+        if (req.address.isEmpty || Address.isValid(req.address)) {
+          throw ErrorException(
+            ERR_INVALID_ARGUMENT,
+            message = s"invalid address in GetAccount.Req:$req"
+          )
+        } else if (req.allTokens)
+          req.copy(
+            address = Address.normalize(req.address),
+            tokens = (req.tokens ++ metadataManager
+              .getTokens()
+              .map(_.getMetadata.address)).map(normalize)
+          )
+        else if (req.tokens.nonEmpty)
+          req.copy(
+            address = Address.normalize(req.address),
+            tokens = req.tokens.map(normalize)
+          )
+        else
+          throw ErrorException(
+            ERR_INVALID_ARGUMENT,
+            message = s"invalid tokens in GetAccount.Req:$req"
+          )
       }
 
     case req @ SubmitOrder.Req(Some(order)) =>

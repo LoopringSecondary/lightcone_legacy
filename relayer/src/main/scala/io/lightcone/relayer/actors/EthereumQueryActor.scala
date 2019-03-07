@@ -76,7 +76,7 @@ class EthereumQueryActor(
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
-    case req @ GetAccount.Req(owner, tokens, tag) =>
+    case req @ GetAccount.Req(owner, tokens, _, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
         brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))
