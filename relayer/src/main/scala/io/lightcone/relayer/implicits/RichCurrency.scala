@@ -17,7 +17,7 @@
 package io.lightcone.relayer.implicits
 
 import io.lightcone.core.{Currency, ErrorCode, ErrorException}
-import io.lightcone.lib.{Address, NumericConversion}
+import io.lightcone.lib.Address
 import io.lightcone.relayer.external._
 
 private[relayer] class RichCurrency(currency: Currency) {
