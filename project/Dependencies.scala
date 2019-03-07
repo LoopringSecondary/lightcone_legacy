@@ -57,8 +57,7 @@ object Dependencies {
 
   lazy val socketDependency = Seq(
     "com.corundumstudio.socketio" % "netty-socketio" % "1.7.7",
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.8"
-  )
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.8")
 
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
@@ -79,7 +78,10 @@ object Dependencies {
     "io.kamon" %% "kamon-zipkin" % "1.0.0",
     "io.kamon" %% "kamon-datadog" % "1.0.0",
     "io.kamon" %% "kamon-prometheus" % "1.1.1",
-    "io.kamon" %% "kamon-scala-future" % "1.0.0")
+    "io.kamon" %% "kamon-scala-future" % "1.0.0",
+    // TODO(dongw): use https://github.com/openzipkin-contrib/brave-akka instead in the future
+    "io.kamon" %% "kamon-logback" % "1.0.5"
+    )
 
   lazy val dependency4Lib = commonDependency ++
     libDependency ++
