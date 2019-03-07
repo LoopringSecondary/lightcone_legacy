@@ -20,11 +20,11 @@ import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.ethereum.extractor._
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.ethereum._
 
 import scala.concurrent._
 import scala.util._
@@ -72,7 +72,15 @@ class EthereumEventExtractorActor(
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       lastHandledBlockNum = lastHandledBlock.getOrElse(startBlock - 1)
       blockStartNum = Math.max(lastHandledBlockNum, startBlock - 1)
-      blockStartData <- getBlockData(blockStartNum).map(_.get)
+      blockStartData <- {
+        if (blockStartNum == -1)
+          Future.successful(
+            BlockWithTxObject(
+              number = Some(NumericConversion.toAmount(BigInt(-1)))
+            )
+          )
+        else getBlockData(blockStartNum).map(_.get)
+      }
     } yield {
       blockData = blockStartData
     }

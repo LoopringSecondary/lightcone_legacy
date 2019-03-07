@@ -174,7 +174,7 @@ class CoreModule(
       actors: Lookup[ActorRef],
       timeout: Timeout,
       txEventExtractor: EventExtractor[TransactionData, AnyRef]
-    ): DefaultEventExtractor = {
+    ): EventExtractor[BlockWithTxObject, AnyRef] = {
 
     val ethereumAccess = () => actors.get(EthereumAccessActor.name)
     val approvalEventExtractor = new TxApprovalEventExtractor()

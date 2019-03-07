@@ -18,7 +18,6 @@ package io.lightcone.relayer.validator
 
 import akka.actor._
 import akka.pattern.ask
-import io.lightcone.relayer.base._
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core._
 import io.lightcone.relayer.base._
@@ -65,7 +64,7 @@ class MessageValidationActor(
   override def receive: Receive = {
     case originalReq =>
       val _sender = sender
-      for {
+      val f = for {
         req <- validate(originalReq).getOrElse {
           Future.failed(
             ErrorException(
@@ -92,5 +91,10 @@ class MessageValidationActor(
             } yield Unit
         }
       } yield Unit
+
+      f recover {
+        case e: ErrorException =>
+          _sender ! e
+      }
   }
 }
