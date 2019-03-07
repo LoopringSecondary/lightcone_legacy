@@ -61,13 +61,7 @@ final class CancelOrderValidator(
     } else {
       req match {
         case CancelOrder.Req("", owner, _, None, _, _) =>
-          Future.successful(
-            Right(
-              req.copy(
-                owner = Address.normalize(owner)
-              )
-            )
-          )
+          Future.successful(Right(req.copy(owner = Address.normalize(owner))))
 
         case CancelOrder.Req("", owner, _, Some(marketPair), _, _) =>
           Future {
@@ -88,13 +82,9 @@ final class CancelOrderValidator(
         case CancelOrder.Req(id, owner, _, _, _, _) =>
           dbModule.orderService.getOrder(req.id).map {
             case Some(order) if order.owner == owner =>
-              Right(
-                req.copy(
-                  owner = Address.normalize(req.owner)
-                )
-              )
+              Right(req.copy(owner = Address.normalize(req.owner)))
             case Some(_) =>
-              Left(ERR_ORDER_OWNER_UNMATCHED)
+              Left(ERR_ORDER_VALIDATION_INVALID_OWNER)
 
             case None =>
               Left(ERR_ORDER_NOT_EXIST)
