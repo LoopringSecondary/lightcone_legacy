@@ -130,6 +130,8 @@ class MultiAccountManagerActor(
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
+  val pendingTxLength = selfConfig.getInt("pending-tx-length")
+
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
   val maxRecoverDurationMinutes =
@@ -273,7 +275,7 @@ class MultiAccountManagerActor(
           address,
           context.actorOf(
             Props(
-              new AccountManagerActor(address, balanceRefreshIntervalSeconds)
+              new AccountManagerActor(address, balanceRefreshIntervalSeconds, pendingTxLength)
             ),
             address
           )

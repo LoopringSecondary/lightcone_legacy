@@ -39,7 +39,8 @@ import scala.util.{Failure, Success}
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
     val owner: String,
-    val balanceRefreshIntervalSeconds: Int
+    val balanceRefreshIntervalSeconds: Int,
+    val pendingTxLength: Int
   )(
     implicit
     val config: Config,
@@ -111,7 +112,7 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
         nonceRes <- (activityActor ? GetPendingActivityNonce.Req(
           owner,
-          100 //TODO: set in config
+          pendingTxLength
         )).mapAs[GetPendingActivityNonce.Res]
       } yield {
         nonceRes.nonces
