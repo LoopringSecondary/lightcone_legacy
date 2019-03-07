@@ -28,7 +28,7 @@ class CMCCrawlerConfigForTokenTable(tag: Tag)
 
   def id = slug
   def slug = column[String]("slug", O.SqlType("VARCHAR(50)"), O.PrimaryKey)
-  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(10)"))
 
   // indexes
   def idx_symbol = index("idx_symbol", (symbol), unique = true)
