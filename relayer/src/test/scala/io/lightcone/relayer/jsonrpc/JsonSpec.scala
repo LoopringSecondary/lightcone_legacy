@@ -22,27 +22,17 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.native.JsonMethods.parse
 
-class JsonSpec extends CommonSpec {
+class JsonSpec extends CommonSpec with EventEx{
 
   "merge json" must {
     "merge into json correctly" in {
 
-      implicit val formats = DefaultFormats
 
-      val schema = config.getString("order_cancel.schema")
 
-      val message = Map(
-        "id" -> "0x0",
-        "owner" -> "0xb94065482ad64d4c2b9252358d746b39e820a582",
-        "market" -> "0x0",
-        "time" -> "0x0"
-      )
 
-      val merged = parse(schema.stripMargin) merge render(
-        Map("message" -> message)
-      )
 
-      println(compact(merged))
+
+
 
     }
   }

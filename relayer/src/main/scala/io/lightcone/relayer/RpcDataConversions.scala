@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer
 
+import io.lightcone.core.RawOrder
 import io.lightcone.relayer.data._
 
 object RpcDataConversions {
@@ -35,5 +36,36 @@ object RpcDataConversions {
     new GetOrderbook.Res( /* select some fields only */ )
 
   implicit def cleanGetOrdersRes(res: GetOrders.Res) =
-    new GetOrders.Res( /* select some fields only */ )
+    res.copy(orders = res.orders.map(cleanRawOrder))
+
+  implicit def cleanRawOrder(order: RawOrder):RawOrder =
+    RawOrder(
+      hash = order.hash,
+      version = order.version,
+      owner = order.owner,
+      tokenS = order.tokenS,
+      tokenB = order.tokenB,
+      amountS = order.amountS,
+      amountB = order.amountB,
+      validSince = order.validSince,
+      params = order.params.map(
+        param =>
+          RawOrder.Params(
+            broker = param.broker,
+            orderInterceptor = param.orderInterceptor,
+            wallet = param.wallet,
+            validUntil = param.validUntil,
+            allOrNone = param.allOrNone
+          )
+      ),
+      feeParams = order.feeParams.map(param => RawOrder.FeeParams(
+        tokenFee = param.tokenFee,
+        amountFee = param.amountFee,
+        tokenSFeePercentage = param.tokenSFeePercentage,
+        tokenBFeePercentage = param.tokenBFeePercentage,
+        tokenRecipient = param.tokenRecipient
+      )),
+      state = order.state
+    )
+
 }
