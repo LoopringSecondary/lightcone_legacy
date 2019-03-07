@@ -61,7 +61,7 @@ class MockSpec
           req2.address == req1.address
         })
         .returns(
-          GetAccount.Res(Some(AccountBalance(address = "0xbbb", nonce = 190)))
+          GetAccount.Res(Some(AccountBalance(address = "0xbbb")))
         )
         .anyNumberOfTimes()
       val res1 = Await.result(

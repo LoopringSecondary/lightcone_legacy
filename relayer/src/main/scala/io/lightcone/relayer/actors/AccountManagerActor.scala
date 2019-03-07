@@ -62,6 +62,9 @@ class AccountManagerActor(
   import TxStatus._
   import MarketMetadata.Status._
 
+  private var jumpedPendingNonce = Set.empty[Long]
+  private var nonce: Long = 0
+
   val count = KamonSupport.counter("account_manager")
   val timer = KamonSupport.timer("account_manager")
 
@@ -71,6 +74,7 @@ class AccountManagerActor(
     AccountManager.default(owner, balanceRefreshIntervalSeconds, false)
 
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
+  @inline def activityActor = actors.get(ActivityActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
   @inline def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
@@ -105,7 +109,20 @@ class AccountManagerActor(
 
       val syncCutoff = for {
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
+        nonceRes <- (activityActor ? GetPendingActivityNonce.Req(
+          owner,
+          100 //TODO: set in config
+        )).mapAs[GetPendingActivityNonce.Res]
       } yield {
+        nonceRes.nonces
+          .sortWith(_ > _)
+          .foreach { n =>
+            if (nonce == 0 || n == nonce + 1) {
+              nonce = n
+            } else {
+              jumpedPendingNonce = jumpedPendingNonce + n
+            }
+          }
         res.resps foreach { cutoffRes =>
           assert(
             cutoffRes.cutoff.get.block >= 0,
@@ -239,9 +256,15 @@ class AccountManagerActor(
               )
           }
           //TODO(HONGYU):确认nonce的更新以及使用方式
-          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances, 0)))
+          result = GetAccount.Res(
+            Some(AccountBalance(owner, tokenBalances))
+          )
         } yield result).sendTo(sender)
       }
+
+    case GetAccountNonce.Req(addr, tag) =>
+      count.refine("label" -> "get_account_nonce").increment()
+      sender ! GetAccountNonce.Res(nonce)
 
     case req @ CancelOrder.Req("", addr, _, None, _) =>
       count.refine("label" -> "cancel_order").increment()
@@ -289,6 +312,25 @@ class AccountManagerActor(
             }
           }
         } yield result).sendTo(sender)
+      }
+
+    case evt: AddressNonceChangedEvent =>
+      count.refine("label" -> "address_nonce_changed").increment()
+      blocking {
+        Future {
+          assert(evt.from == owner)
+          if (evt.nonce == nonce) {
+            nonce = nonce + 1
+            while (jumpedPendingNonce.contains(nonce)) {
+              jumpedPendingNonce = jumpedPendingNonce - nonce
+              nonce = nonce + 1
+            }
+          } else {
+            if (jumpedPendingNonce.size < 10000) { //限制nonce跳跃的数量不超过10000
+              jumpedPendingNonce = jumpedPendingNonce + evt.nonce
+            }
+          }
+        }
       }
 
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent

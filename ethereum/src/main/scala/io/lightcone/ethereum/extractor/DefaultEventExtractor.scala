@@ -57,6 +57,8 @@ final class DefaultEventExtractor @Inject()(
       txEvents <- Future.sequence(
         transactions.map(txEventExtractor.extractEvents)
       )
+      //TODO(HONGYU): 可能需要理一下前端的展示流程，当前的是否满足，
+      //是否当没有任何Activity时，是否需要生成一个
       events = blockEvents ++ txEvents.flatten
     } yield events
 }

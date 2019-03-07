@@ -102,7 +102,7 @@ class EthereumQueryActor(
             )
         }.toMap
 
-        accountBalance = AccountBalance(owner, tokenBalances, 0) //TODO(HONGYU):确定nonce的获取方式
+        accountBalance = AccountBalance(owner, tokenBalances)
 
         ethRes <- ethToken match {
           case head :: tail =>
