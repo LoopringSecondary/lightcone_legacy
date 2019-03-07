@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.relayer
 
-import io.lightcone.persistence.TokenTickerRecord
-import scala.concurrent.Future
+import io.lightcone.core.Currency
 
-trait FiatExchangeRateFetcher {
+package object external {
 
-  def fetchExchangeRates(fiat: Seq[String]): Future[Seq[TokenTickerRecord]]
+  val USD_RMB = s"${Currency.USD.name}-${Currency.RMB.name}"
+  val USD_JPY = s"${Currency.USD.name}-${Currency.JPY.name}"
+  val USD_EUR = s"${Currency.USD.name}-${Currency.EUR.name}"
+  val USD_GBP = s"${Currency.USD.name}-${Currency.GBP.name}"
 
+  val CURRENCY_EXCHANGE_PAIR = Seq(
+    USD_RMB,
+    USD_JPY,
+    USD_EUR,
+    USD_GBP
+  )
+
+  val QUOTE_TOKEN = Seq(Currency.BTC.name, Currency.ETH.name)
 }

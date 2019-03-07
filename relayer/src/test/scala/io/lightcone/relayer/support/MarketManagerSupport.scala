@@ -42,7 +42,7 @@ trait MarketManagerSupport
       val f =
         Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY).map {
           meta =>
-            val marketPair = meta.marketPair.get
+            val marketPair = meta.getMetadata.marketPair.get
             actors.get(MarketManagerActor.name) ? GetOrderbookSlots
               .Req(Some(marketPair))
         })

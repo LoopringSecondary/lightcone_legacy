@@ -16,29 +16,21 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.core.ErrorCode
+import io.lightcone.persistence._
 import io.lightcone.persistence.base._
-import io.lightcone.core._
 import scala.concurrent._
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+trait CMCCrawlerConfigForTokenDal
+    extends BaseDalImpl[CMCCrawlerConfigForTokenTable, CMCCrawlerConfigForToken] {
 
-  def saveTokenMetadata(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def saveConfigs(configs: Seq[CMCCrawlerConfigForToken]): Future[ErrorCode]
 
-  def saveTokenMetadatas(
-      tokenMetadatas: Seq[TokenMetadata]
-    ): Future[Seq[String]]
+  def getConfigs(): Future[Seq[CMCCrawlerConfigForToken]]
 
-  def updateTokenMetadata(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def getConfigs(slugs: Seq[String]): Future[Seq[CMCCrawlerConfigForToken]]
 
-  def getTokenMetadatas(addresses: Seq[String]): Future[Seq[TokenMetadata]]
+  def updateConfig(ticker: CMCCrawlerConfigForToken): Future[ErrorCode]
 
-  def getTokenMetadatas(): Future[Seq[TokenMetadata]]
-
-  def updateBurnRate(
-      token: String,
-      burnRateForMarket: Double,
-      burnRateForP2P: Double
-    ): Future[ErrorCode]
-
-  def invalidateTokenMetadata(address: String): Future[ErrorCode]
+  def deleteConfigs(symbol: String): Future[Boolean]
 }

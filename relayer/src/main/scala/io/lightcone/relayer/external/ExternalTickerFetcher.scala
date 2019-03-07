@@ -20,5 +20,6 @@ import io.lightcone.persistence.TokenTickerRecord
 import scala.concurrent.Future
 
 trait ExternalTickerFetcher {
+
   def fetchExternalTickers(): Future[Seq[TokenTickerRecord]]
 }

@@ -44,7 +44,7 @@ class TokenMetadataDalImpl @Inject()(
   val query = TableQuery[TokenMetadataTable]
   implicit val statusColumnType = enumColumnType(TokenMetadata.Status)
 
-  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+  def saveTokenMetadata(tokenMetadata: TokenMetadata): Future[ErrorCode] =
     db.run((query += tokenMetadata).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) =>
         ERR_PERSISTENCE_DUPLICATE_INSERT
@@ -54,13 +54,15 @@ class TokenMetadataDalImpl @Inject()(
       case Success(x) => ERR_NONE
     }
 
-  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]] =
+  def saveTokenMetadatas(
+      tokenMetadatas: Seq[TokenMetadata]
+    ): Future[Seq[String]] =
     for {
-      _ <- Future.sequence(tokenMetadatas.map(saveToken))
-      query <- getTokens(tokenMetadatas.map(_.address))
+      _ <- Future.sequence(tokenMetadatas.map(saveTokenMetadata))
+      query <- getTokenMetadatas(tokenMetadatas.map(_.address))
     } yield query.map(_.address)
 
-  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+  def updateTokenMetadata(tokenMetadata: TokenMetadata): Future[ErrorCode] =
     for {
       result <- db.run(query.insertOrUpdate(tokenMetadata))
     } yield {
@@ -71,11 +73,11 @@ class TokenMetadataDalImpl @Inject()(
       }
     }
 
-  def getTokens() =
+  def getTokenMetadatas() =
     db.run(query.take(Int.MaxValue).result)
 
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]] =
-    db.run(query.filter(_.address inSet tokens).result)
+  def getTokenMetadatas(addresses: Seq[String]): Future[Seq[TokenMetadata]] =
+    db.run(query.filter(_.address inSet addresses).result)
 
   def updateBurnRate(
       token: String,
@@ -98,7 +100,7 @@ class TokenMetadataDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def invalidateToken(address: String): Future[ErrorCode] =
+  def invalidateTokenMetadata(address: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query

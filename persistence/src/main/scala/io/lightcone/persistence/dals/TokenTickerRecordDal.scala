@@ -14,13 +14,28 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.persistence.dals
 
+import io.lightcone.core.ErrorCode
 import io.lightcone.persistence.TokenTickerRecord
-import scala.concurrent.Future
+import io.lightcone.persistence.base._
+import scala.concurrent._
 
-trait FiatExchangeRateFetcher {
+trait TokenTickerRecordDal
+    extends BaseDalImpl[TokenTickerRecordTable, TokenTickerRecord] {
 
-  def fetchExchangeRates(fiat: Seq[String]): Future[Seq[TokenTickerRecord]]
+  def saveTickers(tickers: Seq[TokenTickerRecord]): Future[ErrorCode]
 
+  def getLastTickerTime(): Future[Option[Long]]
+
+  def getTickers(timestamp: Long): Future[Seq[TokenTickerRecord]]
+
+  def countTickers(timestamp: Long): Future[Int]
+
+  def getTickers(
+      timestamp: Long,
+      tokenSlugs: Seq[String]
+    ): Future[Seq[TokenTickerRecord]]
+
+  def setValid(timestamp: Long): Future[ErrorCode]
 }
