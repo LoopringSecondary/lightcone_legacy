@@ -124,8 +124,11 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
       tokenSymbolSlugs: Seq[CMCCrawlerConfigForToken],
       tokenTickers: Seq[TokenTickerRecord]
     ) = {
-    val slugs = tokenSymbolSlugs.map(_.slug)
-    tokenTickers.filter(t => slugs.contains(t.slug))
+    val slugMap = tokenSymbolSlugs.map(t => t.slug -> t.symbol).toMap
+    val slugs = slugMap.keySet
+    tokenTickers.filter(t => slugs.contains(t.slug)).map { t =>
+      t.copy(symbol = slugMap(t.slug))
+    }
   }
 
   private def getMockedCMCTickers(): Future[Seq[TokenTickerRecord]] = {
