@@ -66,6 +66,7 @@ class CoreDeployer @Inject()(
     eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     socketIONotifier: SocketIONotifier,
     splitMergerProvider: SplitMergerProvider,
+    eip712Support: EIP712Support,
     system: ActorSystem)
     extends Object
     with Logging {

@@ -115,6 +115,7 @@ enum ErrorCode{
     ERR_ETHEREUM_ILLEGAL_ADDRESS        = 5001;
     ERR_NO_ACCESSIBLE_ETHEREUM_NODE     = 5002;
     ERR_UNEXPECTED_RESPONSE             = 5003;
+    ERR_INVALID_SIG                     = 5004;
 
     //6001 -- 7000 rpc and socketio Error
     ERR_INVALID_SOCKETIO_SUBSCRIPTION = 6001;

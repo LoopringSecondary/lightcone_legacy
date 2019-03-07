@@ -40,6 +40,7 @@ final class MultiAccountManagerMessageValidator(
     timeProvider: TimeProvider,
     ec: ExecutionContext,
     metadataManager: MetadataManager,
+    eip712Support: EIP712Support,
     dbModule: DatabaseModule)
     extends MessageValidator {
 

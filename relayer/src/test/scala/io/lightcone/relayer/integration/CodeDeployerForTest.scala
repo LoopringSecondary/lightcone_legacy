@@ -61,6 +61,7 @@ class CoreDeployerForTest @Inject()(
     eventDispatcher: EventDispatcher,
     eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     socketIONotifier: SocketIONotifier,
+    eip712Support: EIP712Support,
     splitMergerProvider: SplitMergerProvider,
     system: ActorSystem)
     extends CoreDeployer {

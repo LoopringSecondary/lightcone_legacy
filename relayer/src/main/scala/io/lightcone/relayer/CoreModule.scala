@@ -128,6 +128,7 @@ class CoreModule(
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
+    bind[EIP712Support].to[DefaultEIP712Support]
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
 
