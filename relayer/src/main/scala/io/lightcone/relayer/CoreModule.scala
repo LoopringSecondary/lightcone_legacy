@@ -132,10 +132,6 @@ class CoreModule(
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
 
-//    bind[EventExtractor[BlockWithTxObject, AnyRef]]
-//      .to[DefaultEventExtractor]
-//      .asEagerSingleton
-
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
 
