@@ -1,10 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%msg%n</pattern>
+    <conversionRule conversionWord="traceID" converterClass="kamon.logback.LogbackTraceIDConverter" />
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} | %-5level | %traceID | %c{0} -> %m%n</pattern>
         </encoder>
     </appender>
-    <root level="OFF">
-        <appender-ref ref="CONSOLE"/>
+    <logger name="org.apache.cassandra" level="ERROR" />
+    <logger name="com.datastax.driver" level="WARN" />
+    <logger name="akka" level="WARN" />
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
     </root>
 </configuration>
