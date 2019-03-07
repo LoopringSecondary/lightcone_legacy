@@ -16,25 +16,58 @@
 
 package io.lightcone.relayer.jsonrpc
 
-import io.lightcone.relayer.support.CommonSpec
-import org.json4s.JsonDSL._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.native.JsonMethods.parse
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import io.lightcone.core.{ErrorCode, ErrorException}
+import io.lightcone.relayer.data.{GetOrders, SubmitOrder}
+import io.lightcone.relayer.support._
 
-class JsonSpec extends CommonSpec with EventEx{
+import scala.concurrent.{Await, Future}
+
+class JsonSpec extends CommonSpec with EventExtractorSupport {
 
   "merge json" must {
     "merge into json correctly" in {
 
+      val order1 = createRawOrder(
+        tokenS = LRC_TOKEN.address,
+        tokenB = WETH_TOKEN.address
+      )
+      Await.result(
+        singleRequest(SubmitOrder.Req(Some(order1)), "submit_order"),
+        timeout.duration
+      )
 
+      val reqJson = JsonRpcRequest(
+        "2.0",
+        "get_orders",
+        ps.serialize(GetOrders.Req(owner = accounts.head.getAddress)),
+        Some("1")
+      )
+      for {
+        response <- Http().singleRequest(
+          HttpRequest(
+            method = HttpMethods.POST,
+            entity = HttpEntity(
+              ContentTypes.`application/json`,
+              serialization.write(reqJson)
+            ),
+            uri = Uri(
+              s"http://127.0.0.1:${config.getString("jsonrpc.http.port")}/" +
+                s"${config.getString("jsonrpc.endpoint")}/${config.getString("jsonrpc.loopring")}"
+            )
+          )
+        )
+        res <- response.status match {
+          case StatusCodes.OK =>
+            response.entity.toStrict(timeout.duration).map(_.data.utf8String)
 
+          case _ => Future.successful("failed")
 
-
-
-
-
+        }
+      } yield {
+        println(res)
+      }
     }
   }
-
 }

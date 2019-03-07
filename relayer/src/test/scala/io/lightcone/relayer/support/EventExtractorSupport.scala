@@ -41,6 +41,7 @@ trait EventExtractorSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
+    with OrderGenerateSupport
     with DatabaseQueryMessageSupport {
 
   com: CommonSpec =>

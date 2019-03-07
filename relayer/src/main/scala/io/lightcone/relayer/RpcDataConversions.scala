@@ -38,7 +38,7 @@ object RpcDataConversions {
   implicit def cleanGetOrdersRes(res: GetOrders.Res) =
     res.copy(orders = res.orders.map(cleanRawOrder))
 
-  implicit def cleanRawOrder(order: RawOrder):RawOrder =
+  implicit def cleanRawOrder(order: RawOrder): RawOrder =
     RawOrder(
       hash = order.hash,
       version = order.version,
@@ -58,13 +58,16 @@ object RpcDataConversions {
             allOrNone = param.allOrNone
           )
       ),
-      feeParams = order.feeParams.map(param => RawOrder.FeeParams(
-        tokenFee = param.tokenFee,
-        amountFee = param.amountFee,
-        tokenSFeePercentage = param.tokenSFeePercentage,
-        tokenBFeePercentage = param.tokenBFeePercentage,
-        tokenRecipient = param.tokenRecipient
-      )),
+      feeParams = order.feeParams.map(
+        param =>
+          RawOrder.FeeParams(
+            tokenFee = param.tokenFee,
+            amountFee = param.amountFee,
+            tokenSFeePercentage = param.tokenSFeePercentage,
+            tokenBFeePercentage = param.tokenBFeePercentage,
+            tokenRecipient = param.tokenRecipient
+          )
+      ),
       state = order.state
     )
 
