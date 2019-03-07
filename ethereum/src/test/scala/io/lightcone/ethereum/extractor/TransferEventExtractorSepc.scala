@@ -17,7 +17,7 @@
 package io.lightcone.ethereum.extractor
 
 import io.lightcone.ethereum.BlockHeader
-import io.lightcone.ethereum.event.{EventHeader, TransferEvent}
+import io.lightcone.ethereum.event.EventHeader
 import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 import io.lightcone.ethereum.persistence.Activity
 import io.lightcone.lib.NumericConversion
