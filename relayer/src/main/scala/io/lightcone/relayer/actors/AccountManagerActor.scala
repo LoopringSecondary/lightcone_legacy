@@ -268,7 +268,7 @@ class AccountManagerActor(
         nonce = if (nonceFromEth >= nonceFromDb) nonceFromEth else nonceFromDb
         res = GetAccountNonce.Res(nonce)
       } yield res).sendTo(sender)
-      
+
     case req @ CancelOrder.Req("", addr, _, None, _, _) =>
       count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner取消订单
