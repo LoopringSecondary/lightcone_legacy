@@ -110,9 +110,10 @@ class MetadataRefresher(
                 "not found ticker ETH"
               )
             )
-          val currencySymbols = Currency.values.map(_.name)
           tokens
-            .filter(t => !currencySymbols.contains(t.getSymbol()))
+            .filter(
+              t => t.getMetadata.`type` != TokenMetadata.Type.TOKEN_TYPE_ETH
+            )
             .:+(eth)
         }
       } else {

@@ -168,8 +168,8 @@ message TokenMetadata {
     enum Type {
         TOKEN_TYPE_ERC20       = 0;
         TOKEN_TYPE_ERC1400     = 1;
+        TOKEN_TYPE_ETH         = 2;
     }
-    // TODO(yongfeng): 是否需要为ETH, BTC, RMB等法币增加类型？
 
     enum Status {
         VALID    = 0; // This token is NOT displyed in walelt

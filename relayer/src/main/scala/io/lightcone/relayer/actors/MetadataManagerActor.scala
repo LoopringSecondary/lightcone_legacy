@@ -303,8 +303,16 @@ class MetadataManagerActor(
       val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
       tokens = tokenTickers.map { ticker =>
         val symbol = ticker.symbol
+        // 以ticker为基准，组装成tokens，提供给metadataRefresher同步。因为ticker额外包含了(eth,btc,rmb）
+        // 不会在tokenMetadata里配置，只有eth需要返回前端，其他都作为内部使用，没有metadata的都赋值eth类型
         val meta =
-          tokenMetadataMap.getOrElse(symbol, TokenMetadata(symbol = symbol))
+          tokenMetadataMap.getOrElse(
+            symbol,
+            TokenMetadata(
+              `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
+              symbol = symbol
+            )
+          )
         val info = tokenInfoMap.getOrElse(symbol, TokenInfo(symbol = symbol))
         Token(
           Some(meta),
