@@ -22,6 +22,7 @@ import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
 
 // This class is not thread safe.
+// TODO(dongw): use ConcurrentHashMap
 final class AccountManagerImpl(
     val owner: String,
     val balanceRefreshIntervalSeconds: Int,
