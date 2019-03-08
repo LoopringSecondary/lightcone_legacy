@@ -21,14 +21,14 @@ import io.lightcone.relayer.jsonrpc.Linter
 
 object RpcDataConversions {
 
-  implicit val getOrderbookResLinter = new Linter[GetOrderbook.Res] {
+  implicit val GetOrderbookResLinter = new Linter[GetOrderbook.Res] {
 
     def lint(data: GetOrderbook.Res) = {
       new GetOrderbook.Res( /* select some fields only */ )
     }
   }
 
-  implicit val getGetOrdersResLinter = new Linter[GetOrders.Res] {
+  implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
 
     def lint(data: GetOrders.Res) = {
       new GetOrders.Res( /* select some fields only */ )
