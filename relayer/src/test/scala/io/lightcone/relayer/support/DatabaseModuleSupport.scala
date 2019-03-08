@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer.support
 
+import io.lightcone.core.TokenInfo
 import io.lightcone.relayer.actors._
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
@@ -27,6 +28,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val dbConfig = dbConfig1
 
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
+  implicit val tokenInfoDal = new TokenInfoDalImpl()
   implicit val orderDal = new OrderDalImpl
   implicit val fillDal = new FillDalImpl
   implicit val ringDal = new RingDalImpl
@@ -34,6 +36,9 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val settlementTxDal = new SettlementTxDalImpl
   implicit val marketMetadataDal = new MarketMetadataDalImpl()
   implicit val missingBlocksRecordDal = new MissingBlocksRecordDalImpl()
+  implicit val tokenTickerRecordDal = new TokenTickerRecordDalImpl()
+  implicit val cmcCrawlerConfigForTokenDal =
+    new CMCCrawlerConfigForTokenDalImpl()
   implicit val orderService = new OrderServiceImpl
   implicit val blockService = new BlockServiceImpl()
   implicit val settlementTxService = new SettlementTxServiceImpl
@@ -45,6 +50,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
 
   implicit val dbModule = new DatabaseModule(
     tokenMetadataDal,
+    tokenInfoDal,
     orderDal,
     fillDal,
     ringDal,
@@ -52,6 +58,8 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     settlementTxDal,
     marketMetadataDal,
     missingBlocksRecordDal,
+    tokenTickerRecordDal,
+    cmcCrawlerConfigForTokenDal,
     ohlcDataDal,
     orderService,
     blockService,
@@ -62,7 +70,13 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   dbModule.dropTables()
   dbModule.createTables()
 
-  tokenMetadataDal.saveTokens(TOKENS)
+  tokenMetadataDal.saveTokenMetadatas(TOKENS)
+  tokenInfoDal.saveTokenInfos(TOKENS.map { t =>
+    TokenInfo(t.symbol)
+  })
+  cmcCrawlerConfigForTokenDal.saveConfigs(TOKEN_SLUGS_SYMBOLS.map { t =>
+    CMCCrawlerConfigForToken(t._1, t._2)
+  })
   marketMetadataDal.saveMarkets(MARKETS)
 
   actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)

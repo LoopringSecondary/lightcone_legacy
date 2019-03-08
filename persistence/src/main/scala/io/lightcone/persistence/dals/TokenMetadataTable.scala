@@ -30,7 +30,7 @@ class TokenMetadataTable(tag: Tag)
 
   def `type` = column[TokenMetadata.Type]("type")
   def status = column[TokenMetadata.Status]("status")
-  def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
+  def symbol = column[String]("symbol", O.SqlType("VARCHAR(10)"))
   def name = column[String]("name", O.SqlType("VARCHAR(50)"))
   def address = columnAddress("address", O.PrimaryKey, O.Unique)
   def unit = column[String]("unit")

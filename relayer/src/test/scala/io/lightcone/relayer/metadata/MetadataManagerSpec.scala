@@ -22,7 +22,6 @@ import akka.testkit.TestProbe
 import io.lightcone.core._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
-import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
 import scala.concurrent.duration._
 import scala.concurrent.Await
@@ -41,7 +40,7 @@ class MetadataManagerSpec
   val mediator = DistributedPubSub(system).mediator
   mediator ! Subscribe(MetadataManagerActor.pubsubTopic, probe.ref)
 
-  def actor = actors.get(MetadataManagerValidator.name)
+  def actor = actors.get(MetadataManagerActor.name)
   def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   "load tokens config" must {
@@ -68,31 +67,37 @@ class MetadataManagerSpec
       )
       MARKETS.foreach { m =>
         val meta1 =
-          metadataManager.getMarket(m.marketHash.toLowerCase())
-        val meta2 = metadataManager.getMarket(
-          "0x" + m.marketHash.substring(2).toUpperCase()
-        )
+          metadataManager.getMarket(m.marketHash.toLowerCase()).getMetadata
+        val meta2 = metadataManager
+          .getMarket(
+            "0x" + m.marketHash.substring(2).toUpperCase()
+          )
+          .getMetadata
         assert(
           meta1.marketHash == meta2.marketHash && meta1.marketHash == meta1.marketHash
             .toLowerCase()
         )
 
-        val meta3 = metadataManager.getMarket(
-          MarketPair(
-            baseToken = m.marketPair.get.baseToken.toLowerCase(),
-            quoteToken = m.marketPair.get.quoteToken.toLowerCase()
+        val meta3 = metadataManager
+          .getMarket(
+            MarketPair(
+              baseToken = m.marketPair.get.baseToken.toLowerCase(),
+              quoteToken = m.marketPair.get.quoteToken.toLowerCase()
+            )
           )
-        )
-        val meta4 = metadataManager.getMarket(
-          MarketPair(
-            baseToken = "0x" + m.marketPair.get.baseToken
-              .substring(2)
-              .toUpperCase(),
-            quoteToken = "0x" + m.marketPair.get.quoteToken
-              .substring(2)
-              .toUpperCase()
+          .getMetadata
+        val meta4 = metadataManager
+          .getMarket(
+            MarketPair(
+              baseToken = "0x" + m.marketPair.get.baseToken
+                .substring(2)
+                .toUpperCase(),
+              quoteToken = "0x" + m.marketPair.get.quoteToken
+                .substring(2)
+                .toUpperCase()
+            )
           )
-        )
+          .getMetadata
         assert(meta3.marketHash == meta4.marketHash)
       }
     }
@@ -167,7 +172,7 @@ class MetadataManagerSpec
 
       info("send a message to load markets config")
       val q1 = Await.result(
-        (actor ? LoadMarketMetadata.Req()).mapTo[LoadMarketMetadata.Res],
+        (actor ? GetMarkets.Req()).mapTo[GetMarkets.Res],
         5.second
       )
       assert(q1.markets.length >= markets.length)
@@ -234,14 +239,16 @@ class MetadataManagerSpec
     }
   }
 
-//  "get metadatas" must {
-//    "call JRPC and get result" in {
-//      val r = singleRequest(GetMetadatas.Req(), "get_metadatas")
-//      val res = Await.result(r.mapTo[GetMetadatas.Res], timeout.duration)
-//      //TODO(du):tickers待cmc分支实现, 0改回4
-//      assert(res.tokens.length >= 0 && res.markets.length >= 4)
-//    }
-//  }
+  "get metadatas" must {
+    "call JRPC and get result" in {
+      val r1 = singleRequest(GetTokens.Req(), "get_tokens")
+      val res1 = Await.result(r1.mapTo[GetTokens.Res], timeout.duration)
+      assert(res1.tokens.nonEmpty)
+      val r2 = singleRequest(GetMarkets.Req(), "get_markets")
+      val res2 = Await.result(r2.mapTo[GetMarkets.Res], timeout.duration)
+      assert(res2.markets.nonEmpty)
+    }
+  }
 
   "token and market format" must {
     "format token address and symbol" in {

@@ -127,8 +127,12 @@ class MarketManagerActor(
   implicit val marketPair = {
     metadataManager
       .getMarkets(ACTIVE, READONLY)
-      .find(m => MarketManagerActor.getEntityId(m.marketPair.get) == entityId)
-      .map(_.marketPair.get)
+      .find(
+        m =>
+          MarketManagerActor
+            .getEntityId(m.metadata.get.marketPair.get) == entityId
+      )
+      .map(_.metadata.get.marketPair.get)
       .getOrElse {
         val error = s"unable to find market pair matching entity id ${entityId}"
         log.error(error)
@@ -178,7 +182,16 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  def marketMetadata = metadataManager.getMarket(marketPair)
+  def marketMetadata =
+    metadataManager
+      .getMarket(marketPair)
+      .metadata
+      .getOrElse(
+        throw ErrorException(
+          ERR_INTERNAL_UNKNOWN,
+          s"not found metadata with marketPair:$marketPair"
+        )
+      )
 
   implicit val aggregator = new OrderbookAggregatorImpl(
     marketMetadata.priceDecimals,
@@ -356,7 +369,7 @@ class MarketManagerActor(
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarket(marketPair))
+        Option(metadataManager.getMarket(marketPair).getMetadata)
       } catch {
         case _: Throwable => None
       }

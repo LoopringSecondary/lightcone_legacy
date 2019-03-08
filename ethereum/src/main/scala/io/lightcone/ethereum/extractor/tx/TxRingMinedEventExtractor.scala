@@ -30,7 +30,6 @@ import io.lightcone.ethereum.persistence._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import org.web3j.utils._
-
 import scala.concurrent._
 
 class TxRingMinedEventExtractor @Inject()(
@@ -188,7 +187,7 @@ class TxRingMinedEventExtractor @Inject()(
           None
         else {
           val marketMetadata =
-            metadataManager.getMarket(marketHash)
+            metadataManager.getMarket(marketHash).getMetadata
           val marketPair = marketMetadata.getMarketPair
           val baseToken =
             metadataManager.getTokenWithAddress(marketPair.baseToken).get
@@ -252,34 +251,43 @@ class TxRingMinedEventExtractor @Inject()(
         val nextFill =
           if (index + 1 >= fills.size) fills.head else fills(index + 1)
 
-        val market =
-          metadataManager.getMarket(
-            MarketPair(fill.tokenS, nextFill.tokenS)
-          )
-        val fillAmountS =
-          metadataManager.getTokenWithAddress(fill.tokenS) match {
-            case None        => BigInt(fill.amountS.get).doubleValue()
-            case Some(token) => token.fromWei(fill.amountS)
-          }
-        val fillAmountB =
-          metadataManager.getTokenWithAddress(nextFill.tokenS) match {
-            case None        => BigInt(fill.amountB.get).doubleValue()
-            case Some(token) => token.fromWei(fill.amountB)
-          }
-        val price = if (market.getMarketPair.baseToken == fill.tokenS) {
-          fillAmountS / fillAmountB
-        } else {
-          fillAmountB / fillAmountS
+        val marketOpt =
+          metadataManager
+            .getMarket(
+              MarketPair(fill.tokenS, nextFill.tokenS)
+            )
+            .metadata
+        val (baseTokenSymbol, quoteTokenSymbol, price) = marketOpt match {
+          case None => ("", "", "0.0")
+          case Some(market) =>
+            val fillAmountS =
+              metadataManager.getTokenWithAddress(fill.tokenS) match {
+                case None        => BigInt(fill.amountS.get).doubleValue()
+                case Some(token) => token.fromWei(fill.amountS)
+              }
+            val fillAmountB =
+              metadataManager.getTokenWithAddress(nextFill.tokenS) match {
+                case None        => BigInt(fill.amountB.get).doubleValue()
+                case Some(token) => token.fromWei(fill.amountB)
+              }
+            val p = (if (market.getMarketPair.baseToken == fill.tokenS) {
+                       fillAmountS / fillAmountB
+                     } else {
+                       fillAmountB / fillAmountS
+                     }).formatted(s"%.${market.priceDecimals}f")
+            (market.baseTokenSymbol, market.quoteTokenSymbol, p)
         }
+
         val trade = Activity.Trade(
           address = fill.owner,
-          tokenBase = market.baseTokenSymbol,
-          tokenQuote = market.quoteTokenSymbol,
+          tokenBase = baseTokenSymbol,
+          tokenQuote = quoteTokenSymbol,
           amountBase = fill.amountS,
           amountQuote = fill.amountB,
-          price = price.formatted(s"%.${market.priceDecimals}f"),
+          price = price,
           isP2P = isP2PRes
         )
+
         val activity = Activity(
           owner = fill.owner,
           block = eventHeader.getBlockHeader.height,

@@ -129,6 +129,7 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarket(market.hashString)
+              .getMetadata
               .copy(status = MarketMetadata.Status.ACTIVE)
           )
         )
@@ -163,6 +164,7 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarket(market.hashString)
+              .getMetadata
               .copy(status = MarketMetadata.Status.READONLY)
           )
         )

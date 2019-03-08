@@ -169,6 +169,7 @@ message TokenMetadata {
         TOKEN_TYPE_ERC20       = 0;
         TOKEN_TYPE_ERC1400     = 1;
     }
+    // TODO(yongfeng): 是否需要为ETH, BTC, RMB等法币增加类型？
 
     enum Status {
         VALID    = 0; // This token is NOT displyed in walelt
@@ -190,12 +191,13 @@ message TokenMetadata {
 
 message TokenInfo {
     string symbol = 1;
-    double circulating_supply = 2;
-    double total_supply = 3;
-    double max_supply = 4;
+    int64  circulating_supply = 2;
+    int64  total_supply = 3;
+    int64  max_supply = 4;
     int32  cmc_rank = 5;
-    string website_url = 6;
-    int64  updated_at = 7;
+    double ico_rate_with_eth = 6;
+    string website_url = 7;
+    int64  updated_at = 8;
 }
 
 message MarketMetadata {
@@ -331,9 +333,14 @@ message ChainReorganizationImpact {
 enum Currency {
     NOT_USE = 0;
 
+    // fiat currency
     USD = 1;
     RMB = 2;
+    JPY = 3; // 日元
+    EUR = 4; // 欧元
+    GBP = 5; // 英镑
 
+    // quote token
     BTC = 100;
     ETH = 101;
 }
