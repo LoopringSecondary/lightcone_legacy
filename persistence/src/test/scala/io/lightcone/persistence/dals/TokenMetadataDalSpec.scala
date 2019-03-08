@@ -64,12 +64,12 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         burnRateForP2P = 0.3
       )
     )
-    val r1 = dal.saveTokens(tokens1)
+    val r1 = dal.saveTokenMetadatas(tokens1)
     val res1 = Await.result(r1.mapTo[Seq[String]], 5.second)
     assert(res1.length == tokens1.length)
 
     info("query the token configs just saved")
-    val r2 = dal.getTokens(tokens1.map(_.address))
+    val r2 = dal.getTokenMetadatas(tokens1.map(_.address))
     val res2 = Await.result(r2.mapTo[Seq[TokenMetadata]], 5.second)
     assert(res2.length == tokens1.length)
     val lrc = res2.find(_.symbol == "T1").getOrElse(TokenMetadata())
@@ -88,10 +88,10 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
 
     info("duplicate token address save should return error")
     val token3 = lrc.copy(precision = 8)
-    val r3 = dal.saveToken(token3)
+    val r3 = dal.saveTokenMetadata(token3)
     val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
     assert(res3 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
-    val r4 = dal.getTokens(Seq(token3.address))
+    val r4 = dal.getTokenMetadatas(Seq(token3.address))
     val res4 = Await.result(r4.mapTo[Seq[TokenMetadata]], 5.second)
     assert(res4.length == 1)
     val lrc1 = res4.find(_.symbol == "T1")
@@ -100,12 +100,12 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     info(
       "should not save token with too long address :0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521"
     )
-    val r5 = dal.saveToken(
+    val r5 = dal.saveTokenMetadata(
       lrc.copy(address = "0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521")
     )
     val res5 = Await.result(r5.mapTo[ErrorCode], 5.second)
     assert(res5 == ErrorCode.ERR_PERSISTENCE_INTERNAL)
-    val r6 = dal.getTokens(Seq(lrc.address))
+    val r6 = dal.getTokenMetadatas(Seq(lrc.address))
     val res6 = Await.result(r6.mapTo[Seq[TokenMetadata]], 5.second)
     val lrc2 = res4.find(_.symbol == "T1")
     assert(lrc2.nonEmpty && lrc2.get.address == lrcAddress)
@@ -114,7 +114,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val r7 = dal.updateBurnRate(lrcAddress, 0.5, 0.6)
     val res7 = Await.result(r7.mapTo[ErrorCode], 5.second)
     assert(res7 == ErrorCode.ERR_NONE)
-    val r8 = dal.getTokens(Seq(lrcAddress))
+    val r8 = dal.getTokenMetadatas(Seq(lrcAddress))
     val res8 = Await.result(r8.mapTo[Seq[TokenMetadata]], 5.second)
     val lrc3 = res8.find(_.symbol == "T1")
     assert(
@@ -137,7 +137,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         bnb.burnRateForMarket == 0.2 &&
         bnb.burnRateForP2P == 0.2
     )
-    val r9 = dal.updateToken(
+    val r9 = dal.updateTokenMetadata(
       bnb.copy(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC1400,
         status = TokenMetadata.Status.INVALID,
@@ -152,7 +152,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     )
     val res9 = Await.result(r9.mapTo[ErrorCode], 5.second)
     assert(res9 == ErrorCode.ERR_NONE)
-    val r10 = dal.getTokens(Seq(bnb.address))
+    val r10 = dal.getTokenMetadatas(Seq(bnb.address))
     val res10 = Await.result(r10.mapTo[Seq[TokenMetadata]], 5.second)
     val bnb1 = res10.find(_.symbol == "T2_").getOrElse(TokenMetadata())
     assert(

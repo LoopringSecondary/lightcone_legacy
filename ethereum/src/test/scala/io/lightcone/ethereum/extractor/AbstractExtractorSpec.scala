@@ -24,7 +24,6 @@ import io.lightcone.lib._
 import io.lightcone.relayer.data.BlockWithTxObject
 import org.json4s.DefaultFormats
 import org.scalatest.{FlatSpec, Matchers}
-
 import scala.io.Source
 
 abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
@@ -68,11 +67,25 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
       MarketHash(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)).toString
   )
 
+  val tokens = Seq(WETH_TOKEN, LRC_TOKEN).map { t =>
+    Token(Some(t), Some(TokenInfo(symbol = t.symbol)), 0.1)
+  }
+
+  val markets = Seq(LRC_WETH_MARKET).map { m =>
+    Market(
+      Some(m),
+      Some(
+        MarketTicker(
+          baseTokenSymbol = m.baseTokenSymbol,
+          quoteTokenSymbol = m.quoteTokenSymbol,
+          price = 0.0001
+        )
+      )
+    )
+  }
   metadataManager.reset(
-    Seq(LRC_TOKEN, WETH_TOKEN),
-    Seq.empty,
-    Map.empty,
-    Seq(LRC_WETH_MARKET)
+    tokens,
+    markets
   )
 
   implicit val formats = DefaultFormats

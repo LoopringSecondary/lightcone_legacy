@@ -72,7 +72,7 @@ class EntryPointActor(
     case _: GetActivities.Req =>
       Some(ActivityValidator.name)
 
-    case _: GetAccount.Req | _: GetAccounts.Req =>
+    case _: GetAccount.Req | _: GetAccounts.Req | _: GetAccountNonce.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
     case _: SubmitOrder.Req | _: CancelOrder.Req =>

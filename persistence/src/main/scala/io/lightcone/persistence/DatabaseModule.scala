@@ -23,6 +23,7 @@ import scala.concurrent._
 
 class DatabaseModule @Inject()(
     val tokenMetadataDal: TokenMetadataDal,
+    val tokenInfoDal: TokenInfoDal,
     val orderDal: OrderDal,
     val fillDal: FillDal,
     val ringDal: RingDal,
@@ -30,6 +31,8 @@ class DatabaseModule @Inject()(
     val settlementTxDal: SettlementTxDal,
     val marketMetadataDal: MarketMetadataDal,
     val missingBlocksRecordDal: MissingBlocksRecordDal,
+    val tokenTickerRecordDal: TokenTickerRecordDal,
+    val cmcCrawlerConfigForTokenDal: CMCCrawlerConfigForTokenDal,
     val ohlcDataDal: OHLCDataDal,
     val orderService: OrderService,
     val blockService: BlockService,
@@ -42,6 +45,7 @@ class DatabaseModule @Inject()(
 
   val tables = Seq(
     tokenMetadataDal,
+    tokenInfoDal,
     orderDal,
     fillDal,
     ringDal,
@@ -49,7 +53,9 @@ class DatabaseModule @Inject()(
     settlementTxDal,
     marketMetadataDal,
     missingBlocksRecordDal,
-    ohlcDataDal
+    ohlcDataDal,
+    tokenTickerRecordDal,
+    cmcCrawlerConfigForTokenDal
   )
 
   createTables()

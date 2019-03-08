@@ -17,23 +17,21 @@
 package io.lightcone.relayer
 
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.jsonrpc.Linter
 
-object RpcDataConversions {
-  //  implicit def convertGetOrderbookReq(
-  //      r: ext.GetOrderbook.Req
-  //    ): GetOrderbook.Req =
-  //    null
-  //
-  //  implicit def convertGetOrderbookRes(
-  //      r: GetOrderbook.Res
-  //    ): ext.GetOrderbook.Res =
-  //    null
+object RpcDataLinters {
 
-  // TODO(yadong): def an implicit method as following and it will be
-  // called automatically by the RpcBinding.
-  implicit def cleanGetOrderboobRes(res: GetOrderbook.Res) =
-    new GetOrderbook.Res( /* select some fields only */ )
+  implicit val GetOrderbookResLinter = new Linter[GetOrderbook.Res] {
 
-  implicit def cleanGetOrdersRes(res: GetOrders.Res) =
-    new GetOrders.Res( /* select some fields only */ )
+    def lint(data: GetOrderbook.Res) = {
+      new GetOrderbook.Res( /* select some fields only */ )
+    }
+  }
+
+  implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
+
+    def lint(data: GetOrders.Res) = {
+      new GetOrders.Res( /* select some fields only */ )
+    }
+  }
 }

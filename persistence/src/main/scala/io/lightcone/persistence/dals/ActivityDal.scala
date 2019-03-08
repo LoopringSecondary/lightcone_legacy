@@ -41,4 +41,9 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
 
   def cleanActivitiesForReorg(req: BlockEvent): Future[Unit]
 
+  def getPendingActivityNonces(
+      from: String,
+      limit: Int
+    ): Future[Seq[Long]]
+
 }

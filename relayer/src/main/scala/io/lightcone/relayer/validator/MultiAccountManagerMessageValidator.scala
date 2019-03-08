@@ -98,6 +98,11 @@ final class MultiAccountManagerMessageValidator(
         )
       }
 
+    case req: GetAccountNonce.Req =>
+      Future {
+        req.copy(address = Address.normalize(req.address))
+      }
+
     case req @ SubmitOrder.Req(Some(order)) =>
       Future {
         orderValidator.validate(order) match {

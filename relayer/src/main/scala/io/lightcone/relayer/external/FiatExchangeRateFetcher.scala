@@ -16,13 +16,11 @@
 
 package io.lightcone.relayer.external
 
+import io.lightcone.persistence.TokenTickerRecord
 import scala.concurrent.Future
 
 trait FiatExchangeRateFetcher {
 
-  //默认为：usd -> cny
-  def fetchExchangeRates(
-      baseCurrency: String = "CNY",
-      quoteCurrency: String = "USD"
-    ): Future[Double]
+  def fetchExchangeRates(fiat: Seq[String]): Future[Seq[TokenTickerRecord]]
+
 }

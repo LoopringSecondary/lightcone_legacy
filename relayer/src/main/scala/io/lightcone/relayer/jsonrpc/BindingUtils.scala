@@ -27,6 +27,11 @@ import scala.reflect.runtime.universe.{typeOf, TypeTag}
 // B: Internal reqeust type
 // C: Internal response type
 // D: External response type
+
+trait Linter[T] {
+  def lint(data: T): T
+}
+
 class Method(
     method: String
   )(
@@ -71,9 +76,9 @@ class Accept[
       ca: ClassTag[A],
       pd: ProtoC[C],
       cd: ClassTag[C],
-      responseCleaner: C => C = null
+      responseLinter: Linter[C] = null
     ) =
-    new Reply[A, B, C, C](method, requestConverter, identity, responseCleaner)
+    new Reply[A, B, C, C](method, requestConverter, identity, responseLinter)
 
   def replies[
       C <: Proto[C]: TypeTag, //
@@ -99,7 +104,7 @@ class Reply[
   ](val method: String,
     requestConverter: A => B,
     responseConverter: C => D,
-    responseCleaner: D => D
+    responseLinter: Linter[D]
   )(
     implicit
     pa: ProtoC[A],
@@ -130,9 +135,9 @@ class Reply[
             s"expect ${typeOf[D].typeSymbol.name} get ${s.getClass.getName}"
           )
         val c = s.asInstanceOf[C]
-        val d = Option(responseCleaner) match {
-          case Some(f) => f(responseConverter(c))
-          case None    => responseConverter(c)
+        val d = Option(responseLinter) match {
+          case Some(linter) => linter.lint(responseConverter(c))
+          case None         => responseConverter(c)
         }
         ps.serialize[D](d).get
 

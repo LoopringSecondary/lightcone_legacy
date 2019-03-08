@@ -21,6 +21,7 @@ import io.lightcone.relayer.validator._
 
 trait MultiAccountManagerSupport
     extends DatabaseModuleSupport
+    with ActivitySupport
     with EthereumSupport {
   me: CommonSpec =>
   actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
