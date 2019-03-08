@@ -17,13 +17,12 @@
 package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
-import akka.actor.Props
 import akka.pattern._
-import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
+import io.lightcone.relayer._
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum._
 import io.lightcone.core._
@@ -33,7 +32,6 @@ import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-import scala.collection.JavaConverters._
 import scala.concurrent.Await
 
 trait EthereumSupport extends DatabaseModuleSupport {
@@ -310,11 +308,7 @@ trait EthereumSupport extends DatabaseModuleSupport {
   }
 
   def getUniqueAccountWithoutEth = {
-    val account = Credentials.create(
-      Numeric.toHexStringWithPrefix(
-        BigInt(addressGenerator.getAndIncrement()).bigInteger
-      )
-    )
+    val account = getUniqueAccount()
     info(
       s"${this.getClass.getSimpleName} got an uniqueAccount: ${account.getAddress()}"
     )

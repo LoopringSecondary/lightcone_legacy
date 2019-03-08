@@ -133,9 +133,6 @@ package object support {
   )
   ethContainer.starting()
 
-  //便于生成全局唯一的地址
-  val addressGenerator = new AtomicInteger(100000)
-
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)
   }

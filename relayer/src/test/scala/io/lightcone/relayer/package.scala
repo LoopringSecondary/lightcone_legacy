@@ -15,10 +15,16 @@
  */
 
 package io.lightcone
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.dimafeng.testcontainers.{MySQLContainer, PostgreSQLContainer}
 import org.junit.runner.Description
+import org.web3j.crypto.Credentials
+import org.web3j.utils.Numeric
 
 package object relayer {
+  //便于生成全局唯一的地址
+  private val addressGenerator = new AtomicInteger(100000)
 
   implicit private val suiteDescription =
     Description.createSuiteDescription(this.getClass)
@@ -42,5 +48,12 @@ package object relayer {
 
   Thread.sleep(5000)
 
+  def getUniqueAccount() = {
+    Credentials.create(
+      Numeric.toHexStringWithPrefix(
+        BigInt(addressGenerator.getAndIncrement()).bigInteger
+      )
+    )
+  }
   println(s"##### ${postgreContainer.jdbcUrl}")
 }
