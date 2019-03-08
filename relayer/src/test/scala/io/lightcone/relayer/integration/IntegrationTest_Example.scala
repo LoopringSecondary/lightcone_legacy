@@ -20,16 +20,33 @@ import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.core._
 import io.lightcone.relayer._
-import io.lightcone.relayer.support._
+import io.lightcone.relayer.Preparations._
 import io.lightcone.relayer.integration.intergration._
-import io.lightcone.relayer.data.{AccountBalance, BatchGetCutoffs, GetAccount}
+import io.lightcone.relayer.integration.AddedMatchers._
+import io.lightcone.relayer.data.{
+  AccountBalance,
+  BatchGetCutoffs,
+  GetAccount,
+  GetOrderbook,
+  SubmitOrder
+}
+import io.lightcone.relayer.support.{
+  LRC_TOKEN,
+  OrderGenerateSupport,
+  WETH_TOKEN
+}
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{FlatSpec, WordSpec}
+import org.scalatest._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class IntegrationTest_Example extends FlatSpec with MockFactory with testing.OrderHelper {
+class IntegrationTest_Example
+    extends FlatSpec
+    with MockFactory
+    with Matchers
+    with RpcHelper
+    with OrderGenerateSupport {
 
   "send a GetAccount.Req" must "get right response" in {
     implicit val timeout = Timeout(5.second)
@@ -67,6 +84,23 @@ class IntegrationTest_Example extends FlatSpec with MockFactory with testing.Ord
     val res11 = Await.result(entryPointActor ? req, timeout.duration)
 
     info(s"success, ${res11}")
+
+    //提交订单并检验
+    val rawOrder =
+      createRawOrder(amountS = "10".zeros(18), amountB = "1".zeros(18))
+
+    SubmitOrder
+      .Req(Some(rawOrder))
+      .expect(check((res: SubmitOrder.Res) => true))
+
+    GetOrderbook
+      .Req(
+        0,
+        100,
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
+      )
+      .expectUntil(check((res: GetOrderbook.Res) => res.orderbook.nonEmpty))
+
   }
 
 }

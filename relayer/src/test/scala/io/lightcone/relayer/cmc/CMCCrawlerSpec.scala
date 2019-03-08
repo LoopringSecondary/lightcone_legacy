@@ -24,6 +24,8 @@ import io.lightcone.relayer.external._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.implicits._
 import io.lightcone.relayer.data.{GetMarkets, GetTokens}
+import scalapb.json4s.Parser
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -36,6 +38,7 @@ class CMCCrawlerSpec
     with MetadataManagerSupport {
 
   val metadataManagerActor = actors.get(MetadataManagerActor.name)
+  val parser = new Parser(preservingProtoFieldNames = true)
 
   "cmc crawler" must {
     "sina currency rate" in {
@@ -81,7 +84,7 @@ class CMCCrawlerSpec
         ],
         50.second
       )
-      tickers = q1._3
+//      tickers = q1._3
       q1._1.length should be(1099)
       q1._2.length should be(CURRENCY_EXCHANGE_PAIR.length)
       q1._3.length should be(1099 + CURRENCY_EXCHANGE_PAIR.length)

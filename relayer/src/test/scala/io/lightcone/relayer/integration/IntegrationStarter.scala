@@ -22,10 +22,7 @@ import io.lightcone.relayer.actors.EntryPointActor
 import io.lightcone.relayer._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.ethereum.EventDispatcher
-import io.lightcone.relayer.integration.mock.{
-  EthereumAccessDataProvider,
-  EthereumQueryDataProvider
-}
+import io.lightcone.relayer.integration.mock._
 import org.scalamock.scalatest.MockFactory
 import net.codingwell.scalaguice.InjectorExtensions._
 

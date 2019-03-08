@@ -16,7 +16,10 @@
 
 package io.lightcone.relayer.integration
 
+import akka.actor.ActorSystem
 import io.lightcone.relayer._
+import net.codingwell.scalaguice.InjectorExtensions._
+import scala.math.BigInt
 
 package object intergration {
 
@@ -31,4 +34,11 @@ package object intergration {
   val entryPointActor = IntegrationStarter.starter.entrypointActor
   val eventDispatcher = IntegrationStarter.starter.eventDispatcher
 
+  implicit val system =
+    IntegrationStarter.starter.injector.instance[ActorSystem]
+  implicit val ec = system.dispatcher
+
+  implicit class RichString(s: String) {
+    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
+  }
 }

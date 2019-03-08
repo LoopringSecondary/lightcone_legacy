@@ -16,17 +16,19 @@
 
 package io.lightcone.relayer
 
-import java.util.concurrent.atomic.AtomicInteger
 import com.dimafeng.testcontainers._
+import io.lightcone.core.{MarketHash, MarketMetadata, MarketPair, TokenMetadata}
 import org.junit.runner.Description
 import io.lightcone.lib._
-import io.lightcone.core._
-import io.lightcone.relayer.implicits._
+import io.lightcone.relayer._
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
+
 import scala.math.BigInt
 
 package object support {
+
+  println(s"### mysqlContainer.jdbcUrl: ${mysqlContainer.jdbcUrl}")
 
   val WETH_TOKEN = TokenMetadata(
     address = Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
@@ -89,22 +91,6 @@ package object support {
     marketHash =
       MarketHash(MarketPair(GTO_TOKEN.address, WETH_TOKEN.address)).toString
   )
-
-  val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
-
-  val TOKEN_SLUGS_SYMBOLS = Seq(
-    ("ETH", "ethereum"),
-    ("BTC", "bitcoin"),
-    ("WETH", "weth"),
-    ("LRC", "loopring"),
-    ("GTO", "gifto"),
-    (Currency.RMB.name, Currency.RMB.getSlug()),
-    (Currency.JPY.name, Currency.JPY.getSlug()),
-    (Currency.EUR.name, Currency.EUR.getSlug()),
-    (Currency.GBP.name, Currency.GBP.getSlug())
-  )
-
-  val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET)
 
   //第一个地址为特殊地址，eth以及erc20金额和授权，都足够大
   val accounts = Seq(

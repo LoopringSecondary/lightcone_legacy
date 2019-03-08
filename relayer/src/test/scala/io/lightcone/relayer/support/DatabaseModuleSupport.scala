@@ -20,7 +20,7 @@ import io.lightcone.core.TokenInfo
 import io.lightcone.relayer.actors._
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
-import io.lightcone.relayer.DatabaseConfigManager
+import io.lightcone.relayer.{DatabaseConfigManager, Preparations}
 import org.scalatest.BeforeAndAfterAll
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
@@ -109,17 +109,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     ohlcDataService
   )
 
-  dbModule.dropTables()
-  dbModule.createTables()
-
-  tokenMetadataDal.saveTokenMetadatas(TOKENS)
-  tokenInfoDal.saveTokenInfos(TOKENS.map { t =>
-    TokenInfo(t.symbol)
-  })
-  cmcCrawlerConfigForTokenDal.saveConfigs(TOKEN_SLUGS_SYMBOLS.map { t =>
-    CMCCrawlerConfigForToken(t._1, t._2)
-  })
-  marketMetadataDal.saveMarkets(MARKETS)
+  Preparations.prepareDbModule(dbModule)
 
   actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
 }
