@@ -38,22 +38,11 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
             s"addresses shouldn't be empty and must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(
-          _,
-          Some(paramsForOrders),
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _
-          )
-          if paramsForOrders.addresses.isEmpty ||
-            !paramsForOrders.addresses.forall(Address.isValid) =>
+      case SocketIOSubscription(_, Some(params), _, _, _, _, _, _, _, _)
+          if params.addresses.isEmpty ||
+            !params.addresses.forall(Address.isValid) =>
         Some(
-          s"invalid ParamsForOrders:$paramsForOrders, " +
+          s"invalid ParamsForOrders:$params, " +
             s"addresses shouldn't be empty and must be valid ethereum addresses"
         )
 
@@ -72,60 +61,25 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
             s"market shouldn't be null and market token addresses must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          Some(paramsForTickers),
-          _,
-          _,
-          _
-          )
-          if paramsForTickers.market.isEmpty ||
-            !paramsForTickers.getMarket.isValid() =>
+      case SocketIOSubscription(_, _, _, _, _, _, Some(params), _, _, _)
+          if params.market.isEmpty || !params.getMarket.isValid() =>
         Some(
-          s"invalid paramsForTickers:$paramsForTickers," +
+          s"invalid paramsForTickers:$params," +
             s" market shouldn't be null and market token addresses must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          Some(paramsForLoopringTickers),
-          _,
-          _
-          )
-          if paramsForLoopringTickers.market.isEmpty ||
-            !paramsForLoopringTickers.getMarket.isValid() =>
+      case SocketIOSubscription(_, _, _, _, _, _, _, Some(params), _, _)
+          if params.market.isEmpty || !params.getMarket.isValid() =>
         Some(
-          s"invalid paramsForLoopringTickers:$paramsForLoopringTickers," +
+          s"invalid paramsForLoopringTickers:$params," +
             s" market shouldn't be null and market token addresses must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          Some(paramsForAccounts)
-          )
-          if paramsForAccounts.addresses.isEmpty ||
-            !paramsForAccounts.addresses.forall(Address.isValid) =>
+      case SocketIOSubscription(_, _, _, _, _, _, _, _, _, Some(params))
+          if params.addresses.isEmpty ||
+            !params.addresses.forall(Address.isValid) =>
         Some(
-          s"invalid ParamsForAccounts:$paramsForAccounts, " +
+          s"invalid ParamsForAccounts:$params, " +
             s"addresses shouldn't be empty and must be valid ethereum addresses"
         )
 
@@ -215,11 +169,11 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
           if (marketHash == MarketHash(params.getMarket))
             Some(Notification(ticker = Some(ticker)))
           else None
-          
+
         case _ => None
       }
-    case ticker: LoopringMarketTicker =>
-      subscription.paramsForLoopringTickers match {
+    case ticker: InternalMarketTicker =>
+      subscription.paramsForInternalTickers match {
         case Some(params) =>
           val baseTokenAddress = metadataManager
             .getTokenWithSymbol(ticker.baseTokenSymbol)
@@ -235,7 +189,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
             MarketPair(baseTokenAddress, quoteTokenAddress)
           )
           if (marketHash == MarketHash(params.getMarket))
-            Some(Notification(loopringTicker = Some(ticker)))
+            Some(Notification(internalTicker = Some(ticker)))
           else None
 
         case _ => None

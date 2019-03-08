@@ -76,8 +76,8 @@ message SocketIOSubscription {
         io.lightcone.core.MarketPair market = 1;
     }
 
-    // subscribe for message LoopringMarketTicker defined in core.proto
-    message ParamsForLoopringTickers{
+    // subscribe for message InternalMarketTicker defined in core.proto
+    message ParamsForInternalTickers{
         io.lightcone.core.MarketPair market = 1;
     }
 
@@ -100,7 +100,7 @@ message SocketIOSubscription {
         io.lightcone.core.MarketMetadata            market_metadata     = 6;
         io.lightcone.persistence.News               news                = 7;
         io.lightcone.core.MarketTicker              ticker              = 8;
-        io.lightcone.core.LoopringMarketTicker      loopring_ticker     = 9;
+        io.lightcone.core.InternalMarketTicker      internal_ticker     = 9;
         AccountUpdate                               account             = 10;
 
     }
@@ -112,7 +112,7 @@ message SocketIOSubscription {
     ParamsForTokens               params_for_tokens               = 5;
     ParamsForMarkets              params_for_markets              = 6;
     ParamsForTickers              params_for_tickers              = 7;
-    ParamsForLoopringTickers      params_for_loopring_tickers     = 8;
+    ParamsForInternalTickers      params_for_internal_tickers     = 8;
     ParamsForNews                 params_for_news                 = 9;
     ParamsForAccounts             params_for_accounts             = 10;
 
