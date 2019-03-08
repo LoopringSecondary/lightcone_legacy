@@ -77,6 +77,10 @@ class EthereumQueryActor(
 
   def ready = LoggingReceive {
     case req @ GetAccount.Req(owner, tokens, _, tag) =>
+    case req: GetNonce.Req =>
+      (ethereumAccessorActor ? req).sendTo(sender)
+
+    case req @ GetAccount.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
         brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))
@@ -102,7 +106,7 @@ class EthereumQueryActor(
             )
         }.toMap
 
-        accountBalance = AccountBalance(owner, tokenBalances, 0) //TODO(HONGYU):确定nonce的获取方式
+        accountBalance = AccountBalance(owner, tokenBalances)
 
         ethRes <- ethToken match {
           case head :: tail =>
@@ -215,6 +219,7 @@ class EthereumQueryActor(
             }
           }
       }
+
     case req @ Notify("echo", _) =>
       sender ! req
   }

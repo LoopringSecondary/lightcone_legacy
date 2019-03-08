@@ -124,6 +124,17 @@ message GetOrderFilledAmount {
     }
 }
 
+message GetAccountNonce {
+    message Req {
+        string address = 1;
+//        string tag = 2;
+    }
+
+    message Res {
+        int64 nonce = 1;
+    }
+}
+
 message GetAccount {
     message Req {
         string address = 1;
@@ -162,6 +173,16 @@ message GetActivities {
     }
 }
 
+message GetPendingActivityNonce {
+    message Req {
+        string from = 1;
+        int32 limit = 2;
+    }
+
+    message Res {
+        repeated int64 nonces = 2;
+    }
+}
 
 message UpdateFilledAmount {
     message Req {

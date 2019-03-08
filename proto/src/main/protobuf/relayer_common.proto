@@ -131,7 +131,6 @@ message AccountBalance {
 
     string address                                  = 1;
     map<string, TokenBalance> token_balance_map     = 2;
-    int32  nonce                                    = 3;
 }
 
 
