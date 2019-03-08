@@ -53,7 +53,7 @@ trait OrderbookManagerSupport
         val f =
           Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY).map {
             meta =>
-              val marketPair = meta.marketPair.get
+              val marketPair = meta.getMetadata.marketPair.get
               val orderBookInit = GetOrderbook.Req(0, 100, Some(marketPair))
               actors.get(OrderbookManagerActor.name) ? orderBookInit
           })
@@ -71,7 +71,7 @@ trait OrderbookManagerSupport
 
     // TODO：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
     metadataManager.getMarkets(ACTIVE, READONLY).map { meta =>
-      val marketPair = meta.marketPair.get
+      val marketPair = meta.getMetadata.marketPair.get
       val orderBookInit = GetOrderbook.Req(0, 100, Some(marketPair))
       val orderBookInitF = actors
         .get(OrderbookManagerActor.name) ? orderBookInit

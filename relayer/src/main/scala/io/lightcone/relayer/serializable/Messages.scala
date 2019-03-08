@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.external
+package io.lightcone.relayer.serializable
 
-import io.lightcone.persistence.TokenTickerRecord
-import scala.concurrent.Future
+// Owner: Daniel
 
-trait ExternalTickerFetcher {
-  def fetchExternalTickers(): Future[Seq[TokenTickerRecord]]
-}
+sealed trait AkkaSeralizableMessage
+
+final case class ShardingBroadcastEnvelope[
+    T <: scalapb.GeneratedMessage with scalapb.Message[T]
+  ](entityId: String,
+    msg: T)
+    extends AkkaSeralizableMessage

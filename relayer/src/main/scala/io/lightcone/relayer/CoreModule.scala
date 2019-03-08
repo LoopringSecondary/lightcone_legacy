@@ -44,9 +44,9 @@ import io.lightcone.ethereum.extractor.tx.{
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.external._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -83,6 +83,7 @@ class CoreModule(
 
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
+      "dbconfig-dal-token-info",
       "dbconfig-dal-order",
       "dbconfig-dal-ring",
       "dbconfig-dal-token-balance",
@@ -91,7 +92,9 @@ class CoreModule(
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-dal-ohlc-data",
-      "dbconfig-dal-fill"
+      "dbconfig-dal-fill",
+      "dbconfig-dal-token-ticker-record",
+      "dbconfig-dal-cmc-ticker-config"
     )
 
     // --- bind dals ---------------------
@@ -104,6 +107,11 @@ class CoreModule(
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
     bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
+    bind[TokenTickerRecordDal].to[TokenTickerRecordDalImpl].asEagerSingleton
+    bind[TokenInfoDal].to[TokenInfoDalImpl].asEagerSingleton
+    bind[CMCCrawlerConfigForTokenDal]
+      .to[CMCCrawlerConfigForTokenDalImpl]
+      .asEagerSingleton
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
@@ -131,6 +139,10 @@ class CoreModule(
     bind[EIP712Support].to[DefaultEIP712Support]
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
+    bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].asEagerSingleton
+    bind[FiatExchangeRateFetcher]
+      .to[SinaFiatExchangeRateFetcher]
+      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))

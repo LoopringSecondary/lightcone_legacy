@@ -29,6 +29,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.util._
+import io.lightcone.relayer.external._
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -62,13 +63,13 @@ class MetadataRefresher(
     extends InitializationRetryActor
     with Stash
     with ActorLogging {
+
   @inline def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
 
-  private var tokenMetadatas = Seq.empty[TokenMetadata]
-  private var tokenInfos = Seq.empty[TokenInfo]
-  private var markets = Seq.empty[MarketMetadata]
+  private var tokens = Seq.empty[Token]
+  private var markets = Seq.empty[Market]
 
   override def initialize() = {
     val f = for {
@@ -91,31 +92,79 @@ class MetadataRefresher(
         _ = getLocalActors().foreach(_ ! req)
       } yield Unit
 
-    case _: GetMarkets.Req =>
-      //TODO(du):
-      sender ! GetMarkets.Res()
+    case req: GetTokens.Req => {
+      val tokens_ = if (tokens.nonEmpty) {
+        if (req.tokens.nonEmpty) {
+          tokens
+            .filter(
+              t =>
+                t.metadata.nonEmpty && t.getMetadata.address.nonEmpty && req.tokens
+                  .contains(t.getMetadata.address)
+            )
+        } else {
+          val eth = tokens
+            .find(t => t.getSymbol() == Currency.ETH.name)
+            .getOrElse(
+              throw ErrorException(
+                ErrorCode.ERR_INTERNAL_UNKNOWN,
+                "not found ticker ETH"
+              )
+            )
+          val currencySymbols = Currency.values.map(_.name)
+          tokens
+            .filter(t => !currencySymbols.contains(t.getSymbol()))
+            .:+(eth)
+        }
+      } else {
+        Seq.empty
+      }
+      val res = tokens_.map { t =>
+        val metadata = if (req.requireMetadata) t.metadata else None
+        val info = if (req.requireInfo) t.info else None
+        val price = if (req.requirePrice) {
+          changeUsdPriceWithQuoteCurrency(t.price, req.quoteCurrencyForPrice)
+        } else 0.0
+        Token(metadata, info, price)
+      }
+      sender ! GetTokens.Res(res)
+    }
 
-    case _: GetTokens.Req =>
-      //TODO(du):tickers待cmc分支实现
-      sender ! GetTokens.Res()
+    case req: GetMarkets.Req =>
+      // TODO(yongfeng): req.queryLoopringTicker
+      val markets_ = if (req.marketPairs.nonEmpty) {
+        markets.filter(
+          m => req.marketPairs.contains(m.getMetadata.marketPair.get)
+        )
+      } else {
+        markets
+      }
+      val res = markets_.map { m =>
+        val metadata = if (req.requireMetadata) m.metadata else None
+        val ticker = if (req.requireTicker) {
+          val t = m.ticker.get
+          val price =
+            changeUsdPriceWithQuoteCurrency(t.price, req.quoteCurrencyForTicker)
+          Some(t.copy(price = price))
+        } else None
+        Market(metadata, ticker)
+      }
+      sender ! GetMarkets.Res(res)
   }
 
   private def refreshMetadata() =
     for {
-      tokenMetadatas_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
-        .mapTo[LoadTokenMetadata.Res]
+      tokens_ <- (metadataManagerActor ? GetTokens.Req())
+        .mapTo[GetTokens.Res]
         .map(_.tokens)
-      // TODO(du) tokeninfos
-      markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
-        .mapTo[LoadMarketMetadata.Res]
+      markets_ <- (metadataManagerActor ? GetMarkets.Req())
+        .mapTo[GetMarkets.Res]
         .map(_.markets)
     } yield {
-      assert(tokenMetadatas_.nonEmpty)
+      assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokenMetadatas = tokenMetadatas_.map(MetadataManager.normalize)
-      markets = markets_.map(MetadataManager.normalize)
-      //TODO(du):tickers待cmc分支实现
-      metadataManager.reset(tokenMetadatas, tokenInfos, Map.empty, markets_)
+      tokens = tokens_
+      markets = markets_
+      metadataManager.reset(tokens, markets)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
@@ -129,4 +178,34 @@ class MetadataRefresher(
     )
   }
 
+  private def changeUsdPriceWithQuoteCurrency(
+      priceInUsd: Double,
+      toCurrency: Currency
+    ) = {
+    toCurrency match {
+      case Currency.NOT_USE | Currency.USD =>
+        calculate(priceInUsd, 1, 2)
+      case m =>
+        val precision =
+          if (QUOTE_TOKEN.contains(m.name)) { // ETH, BTC will set to 8 or token's precision
+            val quoteTokenOpt = tokens.find(_.getSymbol() == m.name)
+            if (quoteTokenOpt.nonEmpty)
+              quoteTokenOpt.get.getMetadata.precision | 8
+            else 8
+          } else 2 // RMB, JPY
+        val currencyToken = tokens
+          .find(_.getSymbol() == m.name)
+          .getOrElse(Token()) // price = 0 if not found currency token
+        calculate(priceInUsd, currencyToken.price, precision)
+    }
+  }
+
+  private def calculate(
+      p1: Double,
+      p2: Double,
+      scale: Int
+    ) =
+    BigDecimal(p1 / p2)
+      .setScale(scale, BigDecimal.RoundingMode.HALF_UP)
+      .toDouble
 }

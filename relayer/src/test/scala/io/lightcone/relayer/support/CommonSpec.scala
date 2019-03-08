@@ -25,6 +25,7 @@ import io.lightcone.relayer.base.MapBasedLookup
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.core._
+import io.lightcone.relayer.external._
 import org.scalatest._
 import org.slf4s.Logging
 import scala.concurrent.duration._
@@ -69,6 +70,9 @@ abstract class CommonSpec(configStr: String = "")
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
+
+  implicit val externalTickerFetcher = new CMCExternalTickerFetcher()
+  implicit val fiatExchangeRateFetcher = new SinaFiatExchangeRateFetcher()
 
   //relay
   implicit val actors = new MapBasedLookup[ActorRef]()

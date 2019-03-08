@@ -35,6 +35,7 @@ import io.lightcone.ethereum.extractor._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.external._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
@@ -68,6 +69,8 @@ class CoreDeployer @Inject()(
     socketIONotifier: SocketIONotifier,
     splitMergerProvider: SplitMergerProvider,
     eip712Support: EIP712Support,
+    externalTickerFetcher: ExternalTickerFetcher,
+    fiatExchangeRateFetcher: FiatExchangeRateFetcher,
     system: ActorSystem)
     extends Object
     with Logging {
@@ -166,14 +169,6 @@ class CoreDeployer @Inject()(
         )
       )
       .add(
-        MetadataManagerValidator.name,
-        MessageValidationActor(
-          new MetadataManagerValidator(),
-          MetadataManagerActor.name,
-          MetadataManagerValidator.name
-        )
-      )
-      .add(
         ActivityValidator.name,
         MessageValidationActor(
           new ActivityValidator(),
@@ -213,6 +208,10 @@ class CoreDeployer @Inject()(
         .add(
           RingAndFillPersistenceActor.name,
           RingAndFillPersistenceActor.start
+        )
+        .add(
+          ExternalCrawlerActor.name,
+          ExternalCrawlerActor.start
         )
 
       //-----------deploy sharded actors-----------

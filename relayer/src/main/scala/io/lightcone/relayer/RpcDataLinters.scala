@@ -18,21 +18,25 @@ package io.lightcone.relayer
 
 import io.lightcone.core.RawOrder
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.jsonrpc.Linter
 
-object RpcDataConversions {
-  //  implicit def convertGetOrderbookReq(
-  //      r: ext.GetOrderbook.Req
-  //    ): GetOrderbook.Req =
-  //    null
-  //
-  //  implicit def convertGetOrderbookRes(
-  //      r: GetOrderbook.Res
-  //    ): ext.GetOrderbook.Res =
-  //    null
+object RpcDataLinters {
 
+  implicit val GetOrderbookResLinter = new Linter[GetOrderbook.Res] {
+
+    def lint(data: GetOrderbook.Res) = {
+      new GetOrderbook.Res( /* select some fields only */ )
+    }
+  }
   implicit def cleanSubmitOrderRes(res: SubmitOrder.Res) =
     SubmitOrder.Res(success = res.success)
 
+  implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
+
+    def lint(data: GetOrders.Res) = {
+      new GetOrders.Res( /* select some fields only */ )
+    }
+  }
   implicit def cleanGetOrdersRes(res: GetOrders.Res) =
     res.copy(orders = res.orders.map(cleanRawOrder))
 

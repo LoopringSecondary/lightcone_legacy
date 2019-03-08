@@ -18,6 +18,7 @@ object Settings {
 
   lazy val myScalafixSettings: Seq[Setting[_]] = Seq(
     addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
+    scalafixDependencies += "com.eed3si9n.fix" %% "scalafix-noinfer" % "0.1.0-M1",
     javacOptions := Seq( //"-source", Globals.jvmVersion,
     ),
     scalacOptions := Seq(

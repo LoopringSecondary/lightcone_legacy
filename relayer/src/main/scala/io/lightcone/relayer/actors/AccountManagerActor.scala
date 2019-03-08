@@ -100,7 +100,11 @@ class AccountManagerActor(
         BatchGetCutoffs.Req((metadataManager.getMarkets(ACTIVE, READONLY) map {
           meta =>
             GetCutoff
-              .Req(broker = owner, owner = owner, marketHash = meta.marketHash)
+              .Req(
+                broker = owner,
+                owner = owner,
+                marketHash = meta.metadata.get.marketHash
+              )
         }).toSeq :+ GetCutoff.Req(broker = owner, owner = owner))
 
       val syncCutoff = for {
@@ -379,7 +383,7 @@ class AccountManagerActor(
       val marketPairs =
         metadataManager
           .getMarkets(MarketMetadata.Status.TERMINATED)
-          .map(_.getMarketPair)
+          .map(_.metadata.get.getMarketPair)
       marketPairs map { marketPair =>
         manager.purgeOrders(marketPair)
       }
