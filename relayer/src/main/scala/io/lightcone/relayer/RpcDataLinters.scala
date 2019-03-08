@@ -19,7 +19,7 @@ package io.lightcone.relayer
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.jsonrpc.Linter
 
-object RpcDataConversions {
+object RpcDataLinters {
 
   implicit val GetOrderbookResLinter = new Linter[GetOrderbook.Res] {
 
