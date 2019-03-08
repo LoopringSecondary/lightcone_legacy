@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.support
+package io.lightcone.relayer.serializable
 
-import io.lightcone.relayer.actors._
-import io.lightcone.relayer.validator._
+// Owner: Daniel
 
-trait MultiAccountManagerSupport
-    extends DatabaseModuleSupport
-    with ActivitySupport
-    with EthereumSupport {
-  me: CommonSpec =>
-  actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
+sealed trait AkkaSeralizableMessage
 
-  actors.add(
-    MultiAccountManagerMessageValidator.name,
-    MessageValidationActor(
-      new MultiAccountManagerMessageValidator(),
-      MultiAccountManagerActor.name,
-      MultiAccountManagerMessageValidator.name
-    )
-  )
-}
+final case class ShardingBroadcastEnvelope[
+    T <: scalapb.GeneratedMessage with scalapb.Message[T]
+  ](entityId: String,
+    msg: T)
+    extends AkkaSeralizableMessage

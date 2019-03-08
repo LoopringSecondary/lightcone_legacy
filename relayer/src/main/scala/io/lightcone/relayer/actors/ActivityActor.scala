@@ -50,7 +50,8 @@ object ActivityActor extends DeployedAsShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractShardingObject: PartialFunction[Any, String] = {
-    case req: GetActivities.Req => req.owner
+    case req: GetActivities.Req           => req.owner
+    case req: GetPendingActivityNonce.Req => req.from
   }
 
 }
@@ -120,6 +121,11 @@ class ActivityActor(
         res = GetActivities.Res(activities)
       } yield res).sendTo(sender)
 
+    case req: GetPendingActivityNonce.Req =>
+      (for {
+        nonces <- activityDal.getPendingActivityNonces(req.from, req.limit)
+        res = GetPendingActivityNonce.Res(nonces)
+      } yield res).sendTo(sender)
   }
 
 }

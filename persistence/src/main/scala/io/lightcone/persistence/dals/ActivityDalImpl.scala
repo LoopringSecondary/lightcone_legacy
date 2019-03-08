@@ -157,4 +157,18 @@ class ActivityDalImpl @Inject()(
     }
   }
 
+  def getPendingActivityNonces(
+      from: String,
+      limit: Int
+    ): Future[Seq[Long]] = {
+    db.run(
+      query
+        .filter(_.owner === from)
+        .sortBy(_.nonce.desc)
+        .distinctOn(_.nonce)
+        .take(limit)
+        .map(_.nonce)
+        .result
+    )
+  }
 }
