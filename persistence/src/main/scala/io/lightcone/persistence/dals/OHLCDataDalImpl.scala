@@ -121,6 +121,38 @@ class OHLCDataDalImpl @Inject()(
     db.run(sql)
   }
 
+  // TODO(yangli):需要讨论下这个接口具体的需求场景，是前端直接调用，还是和CMC数据合并？
+  def getRecentOHLCData(
+      marketHash: String,
+      beginTime: Long
+    ): Future[Seq[Seq[Double]]] = {
+
+    implicit val result = GetResult[Seq[Double]](
+      r =>
+        Seq(
+          r.nextDouble,
+          r.nextDouble,
+          r.nextDouble,
+          r.nextDouble,
+          r.nextDouble,
+          r.nextDouble
+        )
+    )
+    val sql = sql"""select
+        SUM(base_amount) AS base_amount_sum,
+        SUM(quote_amount) AS quote_amount_sum,
+        FIRST(price, time) AS opening_price,
+        LAST(price, time) AS closing_price,
+        MAX(price) AS highest_price,
+        MIN(price) AS lowest_price
+        FROM "T_OHLC_DATA" t
+        WHERE market_hash = ${marketHash}
+        AND time > ${beginTime}
+        """.as[Seq[Double]]
+
+    db.run(sql)
+  }
+
   def cleanDataForReorg(req: BlockEvent): Future[Int] = db.run(
     query
       .filter(_.blockHeight >= req.blockNumber)

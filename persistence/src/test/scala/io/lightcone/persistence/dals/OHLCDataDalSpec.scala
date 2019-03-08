@@ -96,6 +96,20 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
         array0(6) == 50.0
     )
 
+    val queryRecent = dal.getRecentOHLCData(marketHash, beginTime)
+    val queryRecentRes =
+      Await.result(queryRecent.mapTo[Seq[Seq[Double]]], 5.second)
+    queryRecentRes.length == 1 should be(true)
+    val recentRes = queryRecentRes(0)
+    assert(
+      recentRes(0).toLong == 63 &&
+        recentRes(1) == 2550 &&
+        recentRes(2) == 400 &&
+        recentRes(3) == 100 &&
+        recentRes(4) == 400 &&
+        recentRes(5) == 50
+    )
+
     val req = BlockEvent(
       blockNumber = 10001
     )

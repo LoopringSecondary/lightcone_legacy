@@ -36,4 +36,9 @@ trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
     ): Future[Seq[Seq[Double]]]
 
   def cleanDataForReorg(req: BlockEvent): Future[Int]
+
+  def getRecentOHLCData(
+      marketHash: String,
+      beginTime: Long
+    ): Future[Seq[Seq[Double]]]
 }
