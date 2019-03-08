@@ -244,7 +244,6 @@ class AccountManagerActor(
                 ai.availableAllowance
               )
           }
-          //TODO(HONGYU):确认nonce的更新以及使用方式
           result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances)))
         } yield result).sendTo(sender)
       }
