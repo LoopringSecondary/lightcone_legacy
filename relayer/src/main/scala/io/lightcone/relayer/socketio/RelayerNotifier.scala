@@ -30,7 +30,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
       subscription: SocketIOSubscription
     ): Option[String] = {
     subscription match {
-      case SocketIOSubscription(Some(params), _, _, _, _, _, _, _, _)
+      case SocketIOSubscription(Some(params), _, _, _, _, _, _, _, _, _)
           if params.addresses.isEmpty ||
             !params.addresses.forall(Address.isValid) =>
         Some(
@@ -38,7 +38,18 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
             s"addresses shouldn't be empty and must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(_, Some(paramsForOrders), _, _, _, _, _, _, _)
+      case SocketIOSubscription(
+          _,
+          Some(paramsForOrders),
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _
+          )
           if paramsForOrders.addresses.isEmpty ||
             !paramsForOrders.addresses.forall(Address.isValid) =>
         Some(
@@ -46,7 +57,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
             s"addresses shouldn't be empty and must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(_, _, Some(paramsForFills), _, _, _, _, _, _)
+      case SocketIOSubscription(_, _, Some(paramsForFills), _, _, _, _, _, _, _)
           if paramsForFills.market.isEmpty ||
             !paramsForFills.getMarket.isValid() =>
         Some(
@@ -54,14 +65,25 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
             s" market shouldn't be null and market token addresses must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(_, _, _, Some(params), _, _, _, _, _)
+      case SocketIOSubscription(_, _, _, Some(params), _, _, _, _, _, _)
           if params.market.isEmpty || !params.getMarket.isValid() =>
         Some(
           s"invalid ParamsForOrderbook:$params, " +
             s"market shouldn't be null and market token addresses must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(_, _, _, _, _, _, Some(paramsForTickers), _, _)
+      case SocketIOSubscription(
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          Some(paramsForTickers),
+          _,
+          _,
+          _
+          )
           if paramsForTickers.market.isEmpty ||
             !paramsForTickers.getMarket.isValid() =>
         Some(
@@ -69,7 +91,37 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
             s" market shouldn't be null and market token addresses must be valid ethereum addresses"
         )
 
-      case SocketIOSubscription(_, _, _, _, _, _, _, _, Some(paramsForAccounts))
+      case SocketIOSubscription(
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          Some(paramsForLoopringTickers),
+          _,
+          _
+          )
+          if paramsForLoopringTickers.market.isEmpty ||
+            !paramsForLoopringTickers.getMarket.isValid() =>
+        Some(
+          s"invalid paramsForLoopringTickers:$paramsForLoopringTickers," +
+            s" market shouldn't be null and market token addresses must be valid ethereum addresses"
+        )
+
+      case SocketIOSubscription(
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          Some(paramsForAccounts)
+          )
           if paramsForAccounts.addresses.isEmpty ||
             !paramsForAccounts.addresses.forall(Address.isValid) =>
         Some(
@@ -146,7 +198,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
       }
     case ticker: MarketTicker =>
       subscription.paramsForTickers match {
-        case Some(market) =>
+        case Some(params) =>
           val baseTokenAddress = metadataManager
             .getTokenWithSymbol(ticker.baseTokenSymbol)
             .get
@@ -160,13 +212,34 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
           val marketHash = MarketHash(
             MarketPair(baseTokenAddress, quoteTokenAddress)
           )
-          if (marketHash == MarketHash(market))
+          if (marketHash == MarketHash(params.getMarket))
             Some(Notification(ticker = Some(ticker)))
+          else None
+          
+        case _ => None
+      }
+    case ticker: LoopringMarketTicker =>
+      subscription.paramsForLoopringTickers match {
+        case Some(params) =>
+          val baseTokenAddress = metadataManager
+            .getTokenWithSymbol(ticker.baseTokenSymbol)
+            .get
+            .getMetadata
+            .address
+          val quoteTokenAddress = metadataManager
+            .getTokenWithSymbol(ticker.quoteTokenSymbol)
+            .get
+            .getMetadata
+            .address
+          val marketHash = MarketHash(
+            MarketPair(baseTokenAddress, quoteTokenAddress)
+          )
+          if (marketHash == MarketHash(params.getMarket))
+            Some(Notification(loopringTicker = Some(ticker)))
           else None
 
         case _ => None
       }
     case _ => None
   }
-
 }

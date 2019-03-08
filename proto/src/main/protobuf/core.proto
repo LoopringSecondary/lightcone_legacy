@@ -356,6 +356,17 @@ message MarketTicker {
     double percent_change_7d = 8;
 }
 
+message LoopringMarketTicker {
+    string base_token_symbol = 1;  // GTO
+    string quote_token_symbol = 2; // WETH
+    double exchange_rate = 3; // exchange rate for base token to quote token
+    double price = 4; // price of quote currency
+    double volume_24h = 5; // volume of quote token
+    double percent_change_1h = 6;
+    double percent_change_24h = 7;
+    double percent_change_7d = 8;
+}
+
 message TokenTicker {
     string symbol = 1;  // GTO
     double price = 2; // price of current currency

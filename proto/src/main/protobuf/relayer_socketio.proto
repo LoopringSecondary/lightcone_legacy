@@ -71,8 +71,13 @@ message SocketIOSubscription {
     message ParamsForMarkets {
     }
 
-    // subscribe for message ExternalTicker defined in persistence.proto
+    // subscribe for message MarketTicker defined in core.proto
     message ParamsForTickers {
+        io.lightcone.core.MarketPair market = 1;
+    }
+
+    // subscribe for message LoopringMarketTicker defined in core.proto
+    message ParamsForLoopringTickers{
         io.lightcone.core.MarketPair market = 1;
     }
 
@@ -87,15 +92,16 @@ message SocketIOSubscription {
     }
 
     message Notification {
-        io.lightcone.ethereum.persistence.Activity  activity        = 1;
-        io.lightcone.core.RawOrder                  order           = 2;
-        io.lightcone.ethereum.persistence.Fill      fill            = 3;
-        io.lightcone.core.Orderbook.Update          orderbook       = 4;
-        io.lightcone.core.TokenMetadata             token_metadata  = 5;
-        io.lightcone.core.MarketMetadata            market_metadata = 6;
-        io.lightcone.persistence.News               news            = 7;
-        io.lightcone.core.MarketTicker              ticker          = 8;
-        AccountUpdate                               account         = 9;
+        io.lightcone.ethereum.persistence.Activity  activity            = 1;
+        io.lightcone.core.RawOrder                  order               = 2;
+        io.lightcone.ethereum.persistence.Fill      fill                = 3;
+        io.lightcone.core.Orderbook.Update          orderbook           = 4;
+        io.lightcone.core.TokenMetadata             token_metadata      = 5;
+        io.lightcone.core.MarketMetadata            market_metadata     = 6;
+        io.lightcone.persistence.News               news                = 7;
+        io.lightcone.core.MarketTicker              ticker              = 8;
+        io.lightcone.core.LoopringMarketTicker      loopring_ticker     = 9;
+        AccountUpdate                               account             = 10;
 
     }
 
@@ -106,7 +112,8 @@ message SocketIOSubscription {
     ParamsForTokens               params_for_tokens               = 5;
     ParamsForMarkets              params_for_markets              = 6;
     ParamsForTickers              params_for_tickers              = 7;
-    ParamsForNews                 params_for_news                 = 8;
-    ParamsForAccounts             params_for_accounts             = 9;
+    ParamsForLoopringTickers      params_for_loopring_tickers     = 8;
+    ParamsForNews                 params_for_news                 = 9;
+    ParamsForAccounts             params_for_accounts             = 10;
 
 }
