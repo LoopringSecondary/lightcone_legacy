@@ -9,7 +9,7 @@
     <logger name="org.apache.cassandra" level="ERROR" />
     <logger name="com.datastax.driver" level="WARN" />
     <logger name="akka" level="WARN" />
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

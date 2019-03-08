@@ -41,9 +41,9 @@ class EntryPointSpec_Depth
 
       val res1 = Await.result(f1, timeout.duration)
       res1 match {
-        case SubmitOrder.Res(Some(order), _) =>
-          info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
+        case SubmitOrder.Res(_, success) =>
+          info(s" response ${success}")
+          success should be(true)
         case _ => assert(false)
       }
 
@@ -53,9 +53,9 @@ class EntryPointSpec_Depth
 
       val res2 = Await.result(f2, timeout.duration)
       res2 match {
-        case SubmitOrder.Res(Some(order), _) =>
-          info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
+        case SubmitOrder.Res(_, success) =>
+          info(s" response ${success}")
+          success should be(true)
         case _ => assert(false)
       }
 
@@ -65,9 +65,9 @@ class EntryPointSpec_Depth
 
       val res3 = Await.result(f3, timeout.duration)
       res3 match {
-        case SubmitOrder.Res(Some(order), _) =>
-          info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
+        case SubmitOrder.Res(_, success) =>
+          info(s" response ${success}")
+          success should be(true)
         case _ => assert(false)
       }
 
@@ -77,9 +77,9 @@ class EntryPointSpec_Depth
 
       val res4 = Await.result(f4, timeout.duration)
       res4 match {
-        case SubmitOrder.Res(Some(order), _) =>
-          info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
+        case SubmitOrder.Res(_, success) =>
+          info(s" response ${success}")
+          success should be(true)
         case _ => assert(false)
       }
 
