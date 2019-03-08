@@ -66,7 +66,11 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
   )
 
   val tokens = Seq(WETH_TOKEN, LRC_TOKEN).map { t =>
-    Token(Some(t), Some(TokenInfo(symbol = t.symbol)), 0.1)
+    Token(
+      Some(t),
+      Some(TokenInfo(symbol = t.symbol)),
+      Some(TokenTicker(token = t.address, price = 0.1))
+    )
   }
 
   val markets = Seq(LRC_WETH_MARKET).map { m =>
@@ -74,8 +78,8 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
       Some(m),
       Some(
         MarketTicker(
-          baseTokenSymbol = m.baseTokenSymbol,
-          quoteTokenSymbol = m.quoteTokenSymbol,
+          baseToken = m.marketPair.get.baseToken,
+          quoteToken = m.marketPair.get.quoteToken,
           price = 0.0001
         )
       )

@@ -39,7 +39,11 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
   var tickers: Seq[TokenTickerRecord] = Seq.empty[TokenTickerRecord]
 
   val tokens = TOKENS.map { t =>
-    Token(Some(t), Some(TokenInfo(symbol = t.symbol)), 0.1)
+    Token(
+      Some(t),
+      Some(TokenInfo(symbol = t.symbol)),
+      Some(TokenTicker(token = t.address, price = 0.1))
+    )
   }
 
   val markets = MARKETS.map { m =>
@@ -47,8 +51,8 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
       Some(m),
       Some(
         MarketTicker(
-          baseTokenSymbol = m.baseTokenSymbol,
-          quoteTokenSymbol = m.quoteTokenSymbol,
+          baseToken = m.marketPair.get.baseToken,
+          quoteToken = m.marketPair.get.quoteToken,
           price = 0.0001
         )
       )
@@ -80,7 +84,7 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
   } yield { log.info(s"External Tickers initialize done...") }
   Await.result(initialize.mapTo[Unit], 50.second)
 
-  actors.add(ExternalCrawlerActor.name, ExternalCrawlerActor.start)
+  // actors.add(ExternalCrawlerActor.name, ExternalCrawlerActor.start)
 
   actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
   try Unreliables.retryUntilTrue(

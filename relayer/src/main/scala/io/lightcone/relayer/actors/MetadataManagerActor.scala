@@ -29,6 +29,7 @@ import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import scala.util._
+import io.lightcone.relayer.implicits._
 
 // Owner: Yongfeng
 object MetadataManagerActor extends DeployedAsSingleton {
@@ -315,21 +316,22 @@ class MetadataManagerActor(
             )
           )
         val info = tokenInfoMap.getOrElse(symbol, TokenInfo(symbol = symbol))
+        val tokenTicker: TokenTicker = ticker
         Token(
           Some(meta),
           Some(info),
-          ticker.price
+          Some(tokenTicker)
         )
       }
     }
     if (marketMetadatas.nonEmpty && marketTickers.nonEmpty) {
-      val marketTickerMap = marketTickers
-        .map(m => s"${m.baseTokenSymbol}-${m.quoteTokenSymbol}" -> m)
-        .toMap
+      val marketTickerMap = marketTickers.map { m =>
+        MarketHash(MarketPair(m.baseToken, m.quoteToken)).hashString() -> m
+      }.toMap
       markets = marketMetadatas.map { m =>
         Market(
           Some(m),
-          marketTickerMap.get(s"${m.baseTokenSymbol}-${m.quoteTokenSymbol}")
+          marketTickerMap.get(MarketHash(m.marketPair.get).hashString())
         )
       }
     }
@@ -365,8 +367,8 @@ class MetadataManagerActor(
     val percentChange7D =
       calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
     MarketTicker(
-      market.baseTokenSymbol,
-      market.quoteTokenSymbol,
+      market.marketPair.get.baseToken,
+      market.marketPair.get.quoteToken,
       rate,
       baseTicker.price,
       volume24H,
