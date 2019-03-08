@@ -22,7 +22,7 @@ import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data.CancelOrder
 import io.lightcone.relayer.validator._
-import org.web3j.crypto.{Credentials, Sign}
+import org.web3j.crypto._
 import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._

@@ -18,7 +18,7 @@ package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
 import io.lightcone.core.ErrorCode.ERR_INVALID_ARGUMENT
-import io.lightcone.core.{MetadataManager, _}
+import io.lightcone.core._
 import io.lightcone.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule

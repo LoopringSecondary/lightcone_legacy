@@ -17,7 +17,7 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
-import io.lightcone.core.MarketMetadata.Status.{ACTIVE, READONLY}
+import io.lightcone.core.MarketMetadata.Status._
 import io.lightcone.core._
 import io.lightcone.ethereum._
 import io.lightcone.lib._
@@ -46,7 +46,6 @@ final class CancelOrderValidator(
   val schemaJson = parse(schema)
   implicit val formats = DefaultFormats
 
-  //TODO：确定签名规则，单个订单，采用订单的签名简单测试
   def validate(
       req: CancelOrder.Req
     ): Future[Either[ErrorCode, CancelOrder.Req]] = {

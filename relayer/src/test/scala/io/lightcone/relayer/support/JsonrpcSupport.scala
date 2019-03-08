@@ -22,8 +22,8 @@ import akka.actor.Props
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import io.lightcone.relayer.RpcBinding
-import io.lightcone.relayer.actors.{ApplicationInfoActor, EntryPointActor}
-import io.lightcone.relayer.jsonrpc.{JsonRpcServer, JsonSupport}
+import io.lightcone.relayer.actors._
+import io.lightcone.relayer.jsonrpc._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException

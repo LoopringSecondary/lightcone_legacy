@@ -20,8 +20,8 @@ import akka.actor._
 import akka.util.Timeout
 import com.google.inject.Inject
 import com.typesafe.config.Config
-import io.lightcone.lib.{NumericConversion, TimeProvider}
-import io.lightcone.relayer.base.{DeployedAsSingleton, Lookup}
+import io.lightcone.lib._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data.GetTime
 
 import scala.concurrent.ExecutionContext
