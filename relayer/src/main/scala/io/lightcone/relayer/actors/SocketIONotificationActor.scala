@@ -22,7 +22,7 @@ import com.google.inject.Inject
 import io.lightcone.core.RawOrder
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.RpcDataConversions._
+import io.lightcone.relayer.RpcDataLinters._
 
 import scala.concurrent.ExecutionContext
 

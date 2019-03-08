@@ -22,25 +22,17 @@ import io.lightcone.relayer.jsonrpc.Linter
 
 object RpcDataLinters {
 
-  implicit val GetOrderbookResLinter = new Linter[GetOrderbook.Res] {
+  implicit val submitOrderResLinter = new Linter[SubmitOrder.Res] {
 
-    def lint(data: GetOrderbook.Res) = {
-      new GetOrderbook.Res( /* select some fields only */ )
-    }
+    def lint(data: SubmitOrder.Res) = SubmitOrder.Res(success = data.success)
   }
-  implicit def cleanSubmitOrderRes(res: SubmitOrder.Res) =
-    SubmitOrder.Res(success = res.success)
-
   implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
 
-    def lint(data: GetOrders.Res) = {
-      new GetOrders.Res( /* select some fields only */ )
-    }
+    def lint(data: GetOrders.Res) =
+      data.copy(orders = data.orders.map(cleanRawOrder))
   }
-  implicit def cleanGetOrdersRes(res: GetOrders.Res) =
-    res.copy(orders = res.orders.map(cleanRawOrder))
 
-  implicit def cleanRawOrder(order: RawOrder): RawOrder =
+  def cleanRawOrder(order: RawOrder): RawOrder =
     RawOrder(
       hash = order.hash,
       version = order.version,
