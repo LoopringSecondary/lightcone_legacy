@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration.mock
 
 import akka.actor._
 import io.lightcone.relayer.data.{GetNonce, SendRawTransaction}

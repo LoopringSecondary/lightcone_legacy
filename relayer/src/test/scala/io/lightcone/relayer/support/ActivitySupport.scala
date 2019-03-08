@@ -17,8 +17,6 @@
 package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
-import com.typesafe.config._
-import io.lightcone.relayer._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.validator._
@@ -32,29 +30,18 @@ import scala.concurrent.Await
 trait ActivitySupport extends DatabaseModuleSupport {
   me: CommonSpec =>
 
-  override def afterAll: Unit = {
-    dcm.close()
-    super.afterAll
-  }
-
-  val config1 = ConfigFactory
-    .parseString(activityConfigStr)
-    .withFallback(ConfigFactory.load())
-
-  val dcm = new DatabaseConfigManager(config1)
-
   actors.add(
     ActivityActor.name,
     ActivityActor
       .start(
         system,
-        config1,
+        config,
         ec,
         timeProvider,
         timeout,
         actors,
         dbModule,
-        dcm,
+        dbConfigManager,
         true
       )
   )

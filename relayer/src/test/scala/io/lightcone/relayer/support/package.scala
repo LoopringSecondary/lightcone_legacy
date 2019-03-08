@@ -18,15 +18,12 @@ package io.lightcone.relayer
 
 import java.util.concurrent.atomic.AtomicInteger
 import com.dimafeng.testcontainers._
-import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.relayer.implicits._
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 import scala.math.BigInt
 
 package object support {
@@ -126,113 +123,18 @@ package object support {
   implicit private val suiteDescription =
     Description.createSuiteDescription(this.getClass)
 
-  val mysqlContainer = new MySQLContainer(
-    mysqlImageVersion = Some("mysql:5.7.18"),
-    databaseName = Some("lightcone_test"),
-    mysqlUsername = Some("test"),
-    mysqlPassword = Some("test")
-  )
-  mysqlContainer.starting()
-
-  val postgreContainer = PostgreSQLContainer("timescale/timescaledb:latest")
-  postgreContainer.starting()
-
-  // TODO:暂时未生效
-  //  try Unreliables.retryUntilTrue(
-  //    10,
-  //    TimeUnit.SECONDS,
-  //    () => {
-  //      mysqlContainer.mappedPort(3306) > 0
-  //    }
-  //  )
-  //  catch {
-  //    case e: TimeoutException =>
-  //      throw new ContainerLaunchException(
-  //        "Timed out waiting for container port to open mysqlContainer should be listening)"
-  //      )
-  //  }
-
-  Thread.sleep(2000)
-
   val ethContainer = GenericContainer(
     "kongliangzhong/loopring-ganache:v2",
     exposedPorts = Seq(8545),
     waitStrategy = Wait.forListeningPort()
   )
-
+  ethContainer.container.setPortBindings(
+    java.util.Arrays.asList("8545:8545")
+  )
   ethContainer.starting()
-
-  val mysqlConfigStr = s"""
-        profile = "slick.jdbc.MySQLProfile$$"
-        maxConnections = 5
-        minConnections = 1
-        numThreads = 2
-        maxLifetime = 0
-        db {
-          url="${mysqlContainer.jdbcUrl}?useSSL=false"
-          user="${mysqlContainer.username}"
-          password="${mysqlContainer.password}"
-          driver="${mysqlContainer.driverClassName}"
-          maxThreads = 2
-        }"""
-
-  val dbConfig1: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig
-      .forConfig[JdbcProfile]("", ConfigFactory.parseString(mysqlConfigStr))
-
-  val postgreConfigStr = s"""
-        profile = "slick.jdbc.PostgresProfile$$"
-        db {
-          url="${postgreContainer.jdbcUrl}"
-          user="${postgreContainer.username}"
-          password="${postgreContainer.password}"
-          driver="${postgreContainer.driverClassName}"
-          maxThreads = 4
-        }"""
-
-  val dbConfig_postgre: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig
-      .forConfig[JdbcProfile]("", ConfigFactory.parseString(postgreConfigStr))
-
-  val transactionRecordConfigStr = s"""
-     db.transaction_record.entity_0 {
-         $mysqlConfigStr
-     }
-     db.transaction_record.entity_1 {
-         $mysqlConfigStr
-     }
-    """.stripMargin
-
-  val activityConfigStr = s"""
-     db.activity.entity_0 {
-         $mysqlConfigStr
-     }
-     db.activity.entity_1 {
-         $mysqlConfigStr
-     }
-    """.stripMargin
-
-  val ethNodesConfigStr = s"""|nodes:[
-                              | {
-                              |  host = "${ethContainer.containerIpAddress}"
-                              |  port = ${ethContainer.mappedPort(8545)}
-                              | }
-                              |]""".stripMargin
 
   //便于生成全局唯一的地址
   val addressGenerator = new AtomicInteger(100000)
-
-  val ethConfigStr = s"""ethereum_client_monitor {
-                        |    pool-size = 1
-                        |    check-interval-seconds = 10
-                        |    healthy-threshold = 0.2
-                        |    nodes = [
-                        |        {
-                        |        host = "${ethContainer.containerIpAddress}"
-                        |        port = ${ethContainer.mappedPort(8545)}
-                        |        }
-                        |    ]
-                        |}""".stripMargin
 
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)

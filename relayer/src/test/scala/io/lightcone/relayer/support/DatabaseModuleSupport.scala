@@ -20,33 +20,75 @@ import io.lightcone.core.TokenInfo
 import io.lightcone.relayer.actors._
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
+import io.lightcone.relayer.DatabaseConfigManager
 import org.scalatest.BeforeAndAfterAll
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
   me: CommonSpec =>
 
-  implicit val dbConfig = dbConfig1
+  val dbConfigManager = new DatabaseConfigManager(config)
 
-  implicit val tokenMetadataDal = new TokenMetadataDalImpl
-  implicit val tokenInfoDal = new TokenInfoDalImpl()
-  implicit val orderDal = new OrderDalImpl
-  implicit val fillDal = new FillDalImpl
-  implicit val ringDal = new RingDalImpl
-  implicit val blockDal = new BlockDalImpl
-  implicit val settlementTxDal = new SettlementTxDalImpl
-  implicit val marketMetadataDal = new MarketMetadataDalImpl()
-  implicit val missingBlocksRecordDal = new MissingBlocksRecordDalImpl()
-  implicit val tokenTickerRecordDal = new TokenTickerRecordDalImpl()
+  implicit val tokenMetadataDal = new TokenMetadataDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-token-metadata"),
+    timeProvider
+  )
+  implicit val tokenInfoDal = new TokenInfoDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-token-info"),
+    timeProvider
+  )
+  implicit val orderDal = new OrderDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-order"),
+    timeProvider
+  )
+  implicit val fillDal = new FillDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-ring"),
+    timeProvider
+  )
+  implicit val ringDal = new RingDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-token-balance"),
+    timeProvider
+  )
+  implicit val blockDal = new BlockDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-block")
+  )
+  implicit val settlementTxDal = new SettlementTxDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-settlement-tx")
+  )
+  implicit val marketMetadataDal = new MarketMetadataDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-market-metadata"),
+    timeProvider
+  )
+  implicit val missingBlocksRecordDal = new MissingBlocksRecordDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-missing-blocks-record")
+  )
+  implicit val tokenTickerRecordDal = new TokenTickerRecordDalImpl()(
+    ec,
+    dbConfigManager.getDatabaseConfig("db.dbconfig-dal-token-ticker-record")
+  )
   implicit val cmcCrawlerConfigForTokenDal =
-    new CMCCrawlerConfigForTokenDalImpl()
-  implicit val orderService = new OrderServiceImpl
+    new CMCCrawlerConfigForTokenDalImpl()(
+      ec,
+      dbConfigManager.getDatabaseConfig("db.dbconfig-dal-cmc-ticker-config")
+    )
+  implicit val orderService = new OrderServiceImpl()
   implicit val blockService = new BlockServiceImpl()
-  implicit val settlementTxService = new SettlementTxServiceImpl
+  implicit val settlementTxService = new SettlementTxServiceImpl()
 
   implicit val ohlcDataDal =
-    new OHLCDataDalImpl()(ec = ec, dbConfig = dbConfig_postgre)
-  implicit val ohlcDataService =
-    new OHLCDataServiceImpl()(ohlcDataDal = ohlcDataDal, ec = ec)
+    new OHLCDataDalImpl()(
+      ec = ec,
+      dbConfig = dbConfigManager.getDatabaseConfig("db.dbconfig-dal-ohlc-data")
+    )
+  implicit val ohlcDataService = new OHLCDataServiceImpl()
 
   implicit val dbModule = new DatabaseModule(
     tokenMetadataDal,

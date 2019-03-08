@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration.mock
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern._

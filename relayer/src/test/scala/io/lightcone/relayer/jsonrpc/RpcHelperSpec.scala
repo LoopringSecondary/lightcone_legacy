@@ -17,12 +17,13 @@
 package io.lightcone.relayer.jsonrpc
 
 import akka.actor.{Actor, ActorRef}
+import io.lightcone.relayer.actors.EntryPointActor
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.integration.HttpHelper
+import io.lightcone.relayer.integration.RpcHelper
 import io.lightcone.relayer.support._
-import org.scalatest.matchers.{MatchResult, Matcher}
+import io.lightcone.relayer.integration.AddedMatchers._
 
-class HttpHelperSpec
+class RpcHelperSpec
     extends CommonSpec
     with EthereumSupport
     with MetadataManagerSupport
@@ -31,7 +32,7 @@ class HttpHelperSpec
     with OrderHandleSupport
     with OrderbookManagerSupport
     with JsonrpcSupport
-    with HttpHelper {
+    with RpcHelper {
 
   override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
@@ -46,13 +47,10 @@ class HttpHelperSpec
           tokens = Seq(LRC_TOKEN.name, WETH_TOKEN.address)
         )
 
-      getBalanceReq.expect[GetAccount.Res](Matcher { res: GetAccount.Res =>
-        MatchResult(
-          res.accountBalance.nonEmpty,
-          res + " could not be empty",
-          res + " is empty"
-        )
-      })
+      getBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
+      )
     }
   }
+  val entryPointActor: ActorRef = actors.get(EntryPointActor.name)
 }

@@ -63,26 +63,17 @@ trait EthereumSupport extends DatabaseModuleSupport {
   val poolSize =
     config.getConfig(EthereumClientMonitor.name).getInt("pool-size")
 
-  val nodesConfig = ConfigFactory
-    .parseString(ethNodesConfigStr)
-    .getConfigList("nodes")
-    .asScala
-    .map { c =>
-      EthereumProxySettings
-        .Node(host = c.getString("host"), port = c.getInt("port"))
+  HttpConnector.start.foreach {
+    case (name, actor) => actors.add(name, actor)
+  }
+
+  val connectionPools = HttpConnector
+    .connectorNames(config)
+    .map {
+      case (nodeName, node) =>
+        actors.get(nodeName)
     }
-
-  val connectionPools = (nodesConfig.zipWithIndex.map {
-    case (node, index) =>
-      val nodeName = s"http_connector_$index"
-      val props =
-        Props(new HttpConnector(node))
-      val actor = system.actorOf(props, nodeName)
-      actors.add(nodeName, actor)
-      actor
-  }).toSeq
-
-  Thread.sleep(1000)
+    .toSeq
 
   val blockNumJsonRpcReq = JsonRpc.Request(
     "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":64}"

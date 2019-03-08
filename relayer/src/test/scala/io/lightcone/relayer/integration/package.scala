@@ -15,19 +15,16 @@
  */
 
 package io.lightcone.relayer.integration
-import akka.actor.{Actor, ActorRef, ActorSystem}
-import io.lightcone.relayer.RpcBinding
-import io.lightcone.relayer.data.GetAccount
-import io.lightcone.relayer.jsonrpc.Method
 
-trait RpcBindingForTest extends RpcBinding {
-  val requestHandler: ActorRef = Actor.noSender
+package object integration {
 
-  //TODO(HONGYU):应该由代码直接生成
-  var methods =
-    Map[Class[_], String](GetAccount.Req().getClass -> "get_account")
+  //start ActorySystem
+  IntegrationStarter.starting()
+  implicit val ethQueryDataProvider =
+    IntegrationStarter.starter.ethQueryDataProvider
+  implicit val ethAccessDataProvider =
+    IntegrationStarter.starter.ethQueryDataProvider
+  val entryPointActor = IntegrationStarter.starter.entrypointActor
+  val eventDispatcher = IntegrationStarter.starter.eventDispatcher
 
-  override def method(name: String): Method = {
-    super.method(name)
-  }
 }

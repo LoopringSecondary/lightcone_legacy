@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration.mock
 
 import akka.actor.Actor
 import akka.util.Timeout
@@ -22,7 +22,7 @@ import com.typesafe.config.Config
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 
-import scala.concurrent.{ExecutionContext}
+import scala.concurrent.ExecutionContext
 
 class MockEthereumQueryActor(
     implicit

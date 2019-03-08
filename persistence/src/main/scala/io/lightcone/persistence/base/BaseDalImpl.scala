@@ -69,7 +69,7 @@ private[persistence] trait BaseDalImpl[T <: BaseTable[A], A]
         logger.info(e.getMessage)
       case e: Exception =>
         logger.error(
-          s"Failed to create MySQL tables: ${e.getMessage}, ${db.source}"
+          s"Failed to create MySQL tables: ${e.getMessage}, ${db.source}, ${e.printStackTrace()}"
         )
         System.exit(0)
     }

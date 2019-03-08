@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration
+import org.scalatest.matchers.{MatchResult, Matcher}
 
-import io.lightcone.relayer.data._
-import io.lightcone.relayer.jsonrpc.Linter
+object AddedMatchers {
 
-object RpcDataLinters {
-
-  implicit val GetOrderbookResLinter = new Linter[GetOrderbook.Res] {
-
-    def lint(data: GetOrderbook.Res) = {
-//      new GetOrderbook.Res( /* select some fields only */ )
-      data
+  def check[T](checkFun: T => Boolean)(implicit m: Manifest[T]) = {
+    Matcher { res: T =>
+      MatchResult(
+        checkFun(res),
+        res + " doesn't match",
+        res + " matchs"
+      )
     }
   }
 
-  implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
-
-    def lint(data: GetOrders.Res) = {
-      new GetOrders.Res( /* select some fields only */ )
-    }
-  }
 }

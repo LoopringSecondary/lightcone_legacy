@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration
 
 import io.lightcone.core._
+import io.lightcone.relayer._
+import org.scalatest.{FlatSpec, WordSpec}
 
 // Please make sure in `mysql.conf` all database dals use the same database configuration.
 //TODO(hongyu):本测试可以运行但是需要提前在外部启动mysql以及postgres，并且需要创建lightcone，防止对其他测试造成影响，暂时去掉，
-class IntegrationTest_Example extends IntegrationTest with testing.Constants {
+class IntegrationTest_Example extends FlatSpec {
 
 //  "send a GetAccount.Req" must "get right response" in {
 //    //设置需要的金额
@@ -62,4 +64,8 @@ class IntegrationTest_Example extends IntegrationTest with testing.Constants {
 //
 //    info(s"success, ${res11}")
 //  }
+
+  "send a GetAccount.Req" must "get right response" in {
+    info(s"### ${mysqlContainer.jdbcUrl}")
+  }
 }
