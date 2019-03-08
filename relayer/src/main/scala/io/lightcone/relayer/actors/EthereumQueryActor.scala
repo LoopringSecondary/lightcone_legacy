@@ -76,6 +76,9 @@ class EthereumQueryActor(
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
+    case req: GetNonce.Req =>
+      (ethereumAccessorActor ? req).sendTo(sender)
+
     case req @ GetAccount.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
@@ -215,6 +218,7 @@ class EthereumQueryActor(
             }
           }
       }
+
     case req @ Notify("echo", _) =>
       sender ! req
   }

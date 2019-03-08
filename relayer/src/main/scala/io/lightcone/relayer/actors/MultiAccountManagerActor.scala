@@ -86,6 +86,7 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
       req.owner
 
     case req: GetAccount.Req                      => req.address
+    case req: GetAccountNonce.Req                 => req.address
     case req: AddressBalanceUpdatedEvent          => req.address
     case req: AddressBalanceAllowanceUpdatedEvent => req.address
     case req: AddressAllowanceUpdatedEvent        => req.address
