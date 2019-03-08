@@ -213,6 +213,10 @@ class CoreDeployer @Inject()(
           ExternalCrawlerActor.name,
           ExternalCrawlerActor.start
         )
+        .add(
+          ApplicationInfoActor.name,
+          ApplicationInfoActor.start
+        )
 
       //-----------deploy sharded actors-----------
       actors

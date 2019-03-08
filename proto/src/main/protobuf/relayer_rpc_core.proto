@@ -366,3 +366,15 @@ message GetRings {
         int32 total = 2;
     }
 }
+
+message GetTime{
+
+    message Req{
+
+    }
+
+    message Res{
+        io.lightcone.core.Amount timestamp = 1;
+    }
+
+}

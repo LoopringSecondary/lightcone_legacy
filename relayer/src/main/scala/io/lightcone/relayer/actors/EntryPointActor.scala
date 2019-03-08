@@ -90,6 +90,9 @@ class EntryPointActor(
 
     case _: GetMarketHistory.Req => Some(MarketHistoryActor.name)
 
+    case _: GetTime.Req =>
+      Some(ApplicationInfoActor.name)
+
     case _ => None
   }
 

@@ -23,6 +23,10 @@ import io.lightcone.relayer.data._
 trait RpcBinding extends JsonRpcModule {
   import RpcDataLinters._
 
+  method("get_time")
+    .accepts[GetTime.Req]
+    .replies[GetTime.Res]
+
   method("get_orderbook")
   // .accepts[ext.GetOrderbook.Req, GetOrderbook.Req]
   // .replies[GetOrderbook.Res, ext.GetOrderbook.Res]
