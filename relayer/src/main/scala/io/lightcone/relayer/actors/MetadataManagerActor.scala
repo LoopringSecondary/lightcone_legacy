@@ -93,19 +93,20 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
-          burnRate = burnRateRes.getBurnRate
-          _ <- if (token.burnRateForMarket != burnRate.forMarket || token.burnRateForP2P != burnRate.forP2P)
+          latestBurnRate = burnRateRes.getBurnRate
+          burnRateValue = token.burnRate.get
+          _ <- if (burnRateValue.forMarket != latestBurnRate.forMarket || burnRateValue.forP2P != latestBurnRate.forP2P)
             dbModule.tokenMetadataDal
               .updateBurnRate(
                 token.address,
-                burnRate.forMarket,
-                burnRate.forP2P
+                latestBurnRate.forMarket,
+                latestBurnRate.forP2P
               )
           else Future.unit
         } yield
           token.copy(
-            burnRateForMarket = burnRate.forMarket,
-            burnRateForP2P = burnRate.forP2P
+            burnRate =
+              Some(BurnRate(latestBurnRate.forMarket, latestBurnRate.forP2P))
           )
       })
       tickers_ <- getLastTickers()

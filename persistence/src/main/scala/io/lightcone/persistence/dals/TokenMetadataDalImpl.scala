@@ -88,7 +88,7 @@ class TokenMetadataDalImpl @Inject()(
       result <- db.run(
         query
           .filter(_.address === token)
-          .map(c => (c.burnRateForMarket, c.burnRateForP2P, c.updateAt))
+          .map(c => (c.forMarket, c.forP2P, c.updateAt))
           .update(
             burnRateForMarket,
             burnRateForP2P,

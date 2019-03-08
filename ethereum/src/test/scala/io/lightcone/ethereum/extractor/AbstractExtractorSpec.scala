@@ -35,8 +35,7 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
   val WETH_TOKEN = TokenMetadata(
     address = Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
     decimals = 18,
-    burnRateForMarket = 0.4,
-    burnRateForP2P = 0.5,
+    burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "WETH",
     name = "WETH",
     status = TokenMetadata.Status.VALID
@@ -45,8 +44,7 @@ abstract class AbstractExtractorSpec extends FlatSpec with Matchers {
   val LRC_TOKEN = TokenMetadata(
     address = Address("0x97241525fe425C90eBe5A41127816dcFA5954b06").toString,
     decimals = 18,
-    burnRateForMarket = 0.4,
-    burnRateForP2P = 0.5,
+    burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "LRC",
     name = "LRC",
     status = TokenMetadata.Status.VALID

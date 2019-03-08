@@ -36,14 +36,25 @@ class TokenMetadataTable(tag: Tag)
   def unit = column[String]("unit")
   def decimals = column[Int]("decimals")
   def precision = column[Int]("precision")
-  def burnRateForMarket = column[Double]("burn_rate_for_market")
-  def burnRateForP2P = column[Double]("burn_rate_for_p2p")
+  def forMarket = column[Double]("for_market")
+  def forP2P = column[Double]("for_p2p")
   def updateAt = column[Long]("update_at")
 
   def idx_type = index("idx_type", (`type`), unique = false)
   def idx_status = index("idx_status", (status), unique = false)
   def idx_symbol = index("idx_symbol", (symbol), unique = true)
   def idx_name = index("idx_name", (name), unique = true)
+
+  def burnRateProjection =
+    (
+      forMarket,
+      forP2P
+    ) <> ({ tuple =>
+      Option((BurnRate.apply _).tupled(tuple))
+    }, { paramsOpt: Option[BurnRate] =>
+      val params = paramsOpt.getOrElse(BurnRate())
+      BurnRate.unapply(params)
+    })
 
   def * =
     (
@@ -55,8 +66,7 @@ class TokenMetadataTable(tag: Tag)
       unit,
       decimals,
       precision,
-      burnRateForMarket,
-      burnRateForP2P,
+      burnRateProjection,
       updateAt
     ) <> ((TokenMetadata.apply _).tupled, TokenMetadata.unapply)
 }
