@@ -111,9 +111,7 @@ class MetadataRefresher(
               )
             )
           tokens
-            .filter(
-              t => t.getMetadata.`type` != TokenMetadata.Type.TOKEN_TYPE_ETH
-            )
+            .filter(_.getMetadata.`type` != TokenMetadata.Type.TOKEN_TYPE_ETH)
             .:+(eth)
         }
       } else {
