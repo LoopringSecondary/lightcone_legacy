@@ -40,7 +40,7 @@ import scala.util.{Failure, Success}
 class AccountManagerActor(
     val owner: String,
     val balanceRefreshIntervalSeconds: Int,
-    val pendingTxLength: Int
+    val numOfActivitiesForCalculatingNonce: Int
   )(
     implicit
     val config: Config,
@@ -245,9 +245,7 @@ class AccountManagerActor(
               )
           }
           //TODO(HONGYU):确认nonce的更新以及使用方式
-          result = GetAccount.Res(
-            Some(AccountBalance(owner, tokenBalances))
-          )
+          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances)))
         } yield result).sendTo(sender)
       }
 
