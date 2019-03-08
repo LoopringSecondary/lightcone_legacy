@@ -252,18 +252,21 @@ class AccountManagerActor(
     case GetAccountNonce.Req(addr) =>
       count.refine("label" -> "get_account_nonce").increment()
       for {
-        nonceFromEth <- (ethereumQueryActor ? GetNonce.Req(owner, "pending"))
+        nonceFromEth <- (ethereumQueryActor ? GetNonce
+          .Req(owner, "pending"))
           .mapAs[GetNonce.Res]
-            .map{
-              res => NumericConversion.toBigInt(res.result).longValue()
-            }
-        nonceFromDb <- (activityActor ? GetPendingActivityNonce.Req(owner, pendingTxLength))
+          .map { res =>
+            NumericConversion.toBigInt(res.result).longValue()
+          }
+        nonceFromDbRes <- (activityActor ? GetPendingActivityNonce
+          .Req(owner, numOfActivitiesForCalculatingNonce))
           .mapAs[GetPendingActivityNonce.Res]
-            .map {
-              res => res.nonces.sliding(2).find(s => s(1) - s(0) > 1).map(_(0)+1)
-                    .getOrElse(res.nonces.lastOption.getOrElse(0))
-            }
-        nonce = if (nonceFromEth > nonceFromDb) nonceFromEth else nonceFromDb
+        nonceFromDb = nonceFromDbRes.nonces
+          .sliding(2)
+          .find(s => s(1) - s(0) > 1)
+          .map(_(0) + 1)
+          .getOrElse(nonceFromDbRes.nonces.lastOption.getOrElse(0L))
+        nonce = if (nonceFromEth >= nonceFromDb) nonceFromEth else nonceFromDb
       } yield sender ! GetAccountNonce.Res(nonce)
 
     case req @ CancelOrder.Req("", addr, _, None, _) =>
