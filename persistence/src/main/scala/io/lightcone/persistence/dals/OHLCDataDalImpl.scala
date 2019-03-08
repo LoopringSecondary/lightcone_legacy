@@ -17,16 +17,19 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core.ErrorCode._
+
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.google.protobuf.any.Any
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic.DatabaseConfig
 import slick.lifted.TableQuery
+
 import scala.concurrent.duration._
 
 class OHLCDataDalImpl @Inject()(
@@ -104,8 +107,8 @@ class OHLCDataDalImpl @Inject()(
         TIME_BUCKET($interval, time) AS starting_point,
         SUM(base_amount) AS base_amount_sum,
         SUM(quote_amount) AS quote_amount_sum,
-        FIRST(price, time) AS closing_price,
-        LAST(price, time) AS opening_price,
+        FIRST(price, time) AS opening_price,
+        LAST(price, time) AS closing_price,
         MAX(price) AS highest_price,
         MIN(price) AS lowest_price
         FROM "T_OHLC_DATA" t
@@ -117,4 +120,10 @@ class OHLCDataDalImpl @Inject()(
 
     db.run(sql)
   }
+
+  def cleanDataForReorg(req: BlockEvent): Future[Int] = db.run(
+    query
+      .filter(_.blockHeight >= req.blockNumber)
+      .delete
+  )
 }

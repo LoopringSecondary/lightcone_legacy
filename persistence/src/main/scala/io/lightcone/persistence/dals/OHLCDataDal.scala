@@ -16,7 +16,9 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.persistence.base.BaseDalImpl
+
 import scala.concurrent.Future
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
@@ -33,4 +35,5 @@ trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
       endTime: Long
     ): Future[Seq[Seq[Double]]]
 
+  def cleanDataForReorg(req: BlockEvent): Future[Int]
 }
