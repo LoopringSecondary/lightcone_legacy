@@ -16,7 +16,11 @@
 
 package io.lightcone.relayer.integration
 
-package object integration {
+import io.lightcone.relayer._
+
+package object intergration {
+
+  println(s"### jdbcUrl ${mysqlContainer.jdbcUrl}")
 
   //start ActorySystem
   IntegrationStarter.starting()

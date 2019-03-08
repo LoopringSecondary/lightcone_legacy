@@ -16,56 +16,57 @@
 
 package io.lightcone.relayer.integration
 
+import akka.pattern._
+import akka.util.Timeout
 import io.lightcone.core._
 import io.lightcone.relayer._
+import io.lightcone.relayer.support._
+import io.lightcone.relayer.integration.intergration._
+import io.lightcone.relayer.data.{AccountBalance, BatchGetCutoffs, GetAccount}
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, WordSpec}
 
-// Please make sure in `mysql.conf` all database dals use the same database configuration.
-//TODO(hongyu):本测试可以运行但是需要提前在外部启动mysql以及postgres，并且需要创建lightcone，防止对其他测试造成影响，暂时去掉，
-class IntegrationTest_Example extends FlatSpec {
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
-//  "send a GetAccount.Req" must "get right response" in {
-//    //设置需要的金额
-//    val req = GetAccount.Req(
-//      "0x00000000000000000000000000000000aaaaabbb",
-//      tokens = Seq("0x0aaa0000000000000000000000000000000aaaaa")
-//    )
-//    val ethRes = GetAccount.Res(
-//      Some(
-//        AccountBalance(
-//          address = "0x00000000000000000000000000000000aaaaabbb",
-//          tokenBalanceMap = Map(
-//            "0xaaa0000000000000000000000000000000aaaaa" -> AccountBalance
-//              .TokenBalance(
-//                token = "0xaaa0000000000000000000000000000000aaaaa",
-//                balance = BigInt(1000)
-//              )
-//          ),
-//          nonce = 10000
-//        )
-//      )
-//    ) //这个变量不等于AccountManager中返回的数据，AccountManager中返回数据包含available
-//    (ethQueryDataProvider.getAccount _)
-//      .expects(where { req2: GetAccount.Req =>
-//        req2.address == req.address
-//      })
-//      .returns(ethRes)
-//      .atLeastOnce()
-//    //设置在AccountManager恢复时，需要的数据，cutoff等
-//    (ethQueryDataProvider.batchGetCutoffs _)
-//      .expects(*)
-//      .returns(BatchGetCutoffs.Res())
-//      .anyNumberOfTimes()
-//    val res11 = Await.result(entrypoint ? req, timeout.duration)
-//
-//    //发送事件，只是示例，但是没有检查结果
-//    val event = AddressBalanceUpdatedEvent()
-//    eventDispatcher.dispatch(event)
-//
-//    info(s"success, ${res11}")
-//  }
+class IntegrationTest_Example extends FlatSpec with MockFactory with testing.OrderHelper {
 
   "send a GetAccount.Req" must "get right response" in {
-    info(s"### ${mysqlContainer.jdbcUrl}")
+    implicit val timeout = Timeout(5.second)
+    val account = getUniqueAccount()
+    //设置需要的金额
+    val req = GetAccount.Req(
+      account.getAddress,
+      tokens = Seq(LRC_TOKEN.address)
+    )
+    val ethRes = GetAccount.Res(
+      Some(
+        AccountBalance(
+          address = account.getAddress,
+          tokenBalanceMap = Map(
+            LRC_TOKEN.address -> AccountBalance
+              .TokenBalance(
+                token = LRC_TOKEN.address,
+                balance = BigInt(1000)
+              )
+          )
+        )
+      )
+    ) //这个变量不等于AccountManager中返回的数据，AccountManager中返回数据包含available
+    (ethAccessDataProvider.getAccount _)
+      .expects(where { req2: GetAccount.Req =>
+        req2.address == req.address
+      })
+      .returns(ethRes)
+      .atLeastOnce()
+    //设置在AccountManager恢复时，需要的数据，cutoff等
+    (ethQueryDataProvider.batchGetCutoffs _)
+      .expects(*)
+      .returns(BatchGetCutoffs.Res())
+      .anyNumberOfTimes()
+    val res11 = Await.result(entryPointActor ? req, timeout.duration)
+
+    info(s"success, ${res11}")
   }
+
 }
