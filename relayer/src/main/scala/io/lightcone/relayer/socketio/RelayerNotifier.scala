@@ -16,12 +16,14 @@
 
 package io.lightcone.relayer.socketio
 
+import com.google.inject.Inject
 import io.lightcone.core._
 import io.lightcone.lib.Address
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 
-class RelayerNotifier() extends SocketIONotifier {
+class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
+    extends SocketIONotifier {
   import SocketIOSubscription._
 
   def checkSubscriptionValidation(
@@ -142,8 +144,29 @@ class RelayerNotifier() extends SocketIONotifier {
           Some(Notification(marketMetadata = Some(e)))
         case _ => None
       }
-    case ticker: AnyRef => None // TODO(yadong) 等待永丰的PR合并
-    case _              => None
+    case ticker: MarketTicker =>
+      subscription.paramsForTickers match {
+        case Some(market) =>
+          val baseTokenAddress = metadataManager
+            .getTokenWithSymbol(ticker.baseTokenSymbol)
+            .get
+            .getMetadata
+            .address
+          val quoteTokenAddress = metadataManager
+            .getTokenWithSymbol(ticker.quoteTokenSymbol)
+            .get
+            .getMetadata
+            .address
+          val marketHash = MarketHash(
+            MarketPair(baseTokenAddress, quoteTokenAddress)
+          )
+          if (marketHash == MarketHash(market))
+            Some(Notification(ticker = Some(ticker)))
+          else None
+
+        case _ => None
+      }
+    case _ => None
   }
 
 }

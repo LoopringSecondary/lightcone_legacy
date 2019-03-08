@@ -94,7 +94,9 @@ message SocketIOSubscription {
         io.lightcone.core.TokenMetadata             token_metadata  = 5;
         io.lightcone.core.MarketMetadata            market_metadata = 6;
         io.lightcone.persistence.News               news            = 7;
-        AccountUpdate                               account         = 8;
+        io.lightcone.core.MarketTicker              ticker          = 8;
+        AccountUpdate                               account         = 9;
+
     }
 
     ParamsForActivities           params_for_activities           = 1;
