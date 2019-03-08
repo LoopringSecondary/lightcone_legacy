@@ -18,6 +18,7 @@ package io.lightcone.relayer.integration
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern._
 import akka.util.Timeout
+import io.lightcone.relayer.integration.intergration._
 import org.scalatest.{Assertion, Matchers}
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.slf4s.Logging
@@ -27,9 +28,6 @@ import scala.concurrent._
 
 trait RpcHelper extends Logging {
   helper: Matchers =>
-
-  implicit val timeout: Timeout
-  val entryPointActor: ActorRef
 
   implicit class RichRequest[T <: GeneratedMessage](req: T) {
 

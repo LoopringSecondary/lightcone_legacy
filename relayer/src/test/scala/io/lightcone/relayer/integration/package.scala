@@ -17,8 +17,11 @@
 package io.lightcone.relayer.integration
 
 import akka.actor.ActorSystem
+import akka.util.Timeout
 import io.lightcone.relayer._
 import net.codingwell.scalaguice.InjectorExtensions._
+
+import scala.concurrent.duration._
 import scala.math.BigInt
 
 package object intergration {
@@ -37,7 +40,7 @@ package object intergration {
   implicit val system =
     IntegrationStarter.starter.injector.instance[ActorSystem]
   implicit val ec = system.dispatcher
-
+  implicit val timeout: Timeout = Timeout(5.second)
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)
   }
