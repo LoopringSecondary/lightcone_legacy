@@ -17,6 +17,7 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
+import io.lightcone.core.MarketMetadata.Status.{ACTIVE, READONLY}
 import io.lightcone.core._
 import io.lightcone.ethereum._
 import io.lightcone.lib._
@@ -66,7 +67,7 @@ final class CancelOrderValidator(
         case CancelOrder.Req("", owner, _, Some(marketPair), _, _) =>
           Future {
             try {
-              metadataManager.getMarket(marketPair)
+              metadataManager.isMarketStatus(marketPair, ACTIVE, READONLY)
               Right(
                 req.copy(
                   owner = Address.normalize(owner),

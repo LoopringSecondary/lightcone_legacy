@@ -59,6 +59,7 @@ class CoreDeployerForTest @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
+    txEventExtractor: EventExtractor[TransactionData, AnyRef],
     eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     socketIONotifier: SocketIONotifier,
     eip712Support: EIP712Support,

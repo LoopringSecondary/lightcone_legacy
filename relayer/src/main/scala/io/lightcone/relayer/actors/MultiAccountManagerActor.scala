@@ -78,7 +78,7 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
       raworder.owner
 
     case req: CancelOrder.Req
-        if req.marketPair.nonEmpty && metadataManager.isMarketStatus(
+        if req.marketPair.isEmpty || metadataManager.isMarketStatus(
           req.getMarketPair,
           ACTIVE,
           READONLY

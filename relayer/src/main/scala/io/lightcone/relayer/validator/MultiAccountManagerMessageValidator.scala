@@ -82,7 +82,7 @@ final class MultiAccountManagerMessageValidator(
 
     case req: GetAccounts.Req =>
       Future {
-        if (req.addresses.isEmpty || req.addresses.forall(Address.isValid)) {
+        if (req.addresses.isEmpty || !req.addresses.forall(Address.isValid)) {
           throw ErrorException(
             ERR_INVALID_ARGUMENT,
             message = s"invalid addresses in GetAccount.Req:$req"
@@ -108,7 +108,7 @@ final class MultiAccountManagerMessageValidator(
 
     case req: GetAccount.Req =>
       Future {
-        if (req.address.isEmpty || Address.isValid(req.address)) {
+        if (req.address.isEmpty || !Address.isValid(req.address)) {
           throw ErrorException(
             ERR_INVALID_ARGUMENT,
             message = s"invalid address in GetAccount.Req:$req"
