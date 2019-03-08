@@ -39,7 +39,8 @@ import scala.util.{Failure, Success}
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
     val owner: String,
-    val balanceRefreshIntervalSeconds: Int
+    val balanceRefreshIntervalSeconds: Int,
+    val numOfActivitiesForCalculatingNonce: Int
   )(
     implicit
     val config: Config,
@@ -71,6 +72,7 @@ class AccountManagerActor(
     AccountManager.default(owner, balanceRefreshIntervalSeconds, false)
 
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
+  @inline def activityActor = actors.get(ActivityActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
   @inline def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
@@ -242,10 +244,30 @@ class AccountManagerActor(
                 ai.availableAllowance
               )
           }
-          //TODO(HONGYU):确认nonce的更新以及使用方式
-          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances, 0)))
+          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances)))
         } yield result).sendTo(sender)
       }
+
+    case GetAccountNonce.Req(addr) =>
+      count.refine("label" -> "get_account_nonce").increment()
+      (for {
+        nonceFromEth <- (ethereumQueryActor ? GetNonce
+          .Req(owner, "pending"))
+          .mapAs[GetNonce.Res]
+          .map { res =>
+            NumericConversion.toBigInt(res.result).longValue()
+          }
+        nonceFromDbRes <- (activityActor ? GetPendingActivityNonce
+          .Req(owner, numOfActivitiesForCalculatingNonce))
+          .mapAs[GetPendingActivityNonce.Res]
+        nonceFromDb = nonceFromDbRes.nonces
+          .sliding(2)
+          .find(s => s(1) - s(0) > 1)
+          .map(_(0) + 1)
+          .getOrElse(nonceFromDbRes.nonces.lastOption.getOrElse(0L))
+        nonce = if (nonceFromEth >= nonceFromDb) nonceFromEth else nonceFromDb
+        res = GetAccountNonce.Res(nonce)
+      } yield res).sendTo(sender)
 
     case req @ CancelOrder.Req("", addr, _, None, _) =>
       count.refine("label" -> "cancel_order").increment()

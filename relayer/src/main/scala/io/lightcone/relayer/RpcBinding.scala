@@ -66,7 +66,10 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetActivities.Req]
     .replies[GetActivities.Res]
 
-  //Ethereum Query
+  method("get_account_nonce")
+    .accepts[GetAccountNonce.Req]
+    .replies[GetAccountNonce.Res]
+
   method("get_account")
     .accepts[GetAccount.Req]
     .replies[GetAccount.Res]

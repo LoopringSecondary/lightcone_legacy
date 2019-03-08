@@ -86,6 +86,7 @@ object MultiAccountManagerActor extends DeployedAsShardedByAddress {
       req.owner
 
     case req: GetAccount.Req                      => req.address
+    case req: GetAccountNonce.Req                 => req.address
     case req: AddressBalanceUpdatedEvent          => req.address
     case req: AddressBalanceAllowanceUpdatedEvent => req.address
     case req: AddressAllowanceUpdatedEvent        => req.address
@@ -129,6 +130,9 @@ class MultiAccountManagerActor(
     selfConfig.getInt("balance-allowance-refresh-interval-seconds")
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
+
+  val numOfActivitiesForCalculatingNonce =
+    selfConfig.getInt("num-activities-for-calculating-nonce")
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
@@ -273,7 +277,11 @@ class MultiAccountManagerActor(
           address,
           context.actorOf(
             Props(
-              new AccountManagerActor(address, balanceRefreshIntervalSeconds)
+              new AccountManagerActor(
+                address,
+                balanceRefreshIntervalSeconds,
+                numOfActivitiesForCalculatingNonce
+              )
             ),
             address
           )
