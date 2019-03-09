@@ -53,7 +53,7 @@ class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "addressValid" should "correctly check validity" in {
     val add1 = "0x000ee35D70AD6331000E370F079aD7df52E75005"
     val add2 = "0x1"
-    val add3 = "0x" + "0" * 41
+    val add3 = "0x" + "1" * 41
 
     // String address
     Address.isValid(add1) should be(true)
@@ -63,7 +63,7 @@ class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     //BigInt
     Address.isValid(NumericConversion.toBigInt(add1)) should be(true)
     Address.isValid(NumericConversion.toBigInt(add2)) should be(true)
-    Address.isValid(NumericConversion.toBigInt(add3)) should be(true)
+    Address.isValid(NumericConversion.toBigInt(add3)) should be(false)
 
     //Array[Byte]
     Address.isValid(Numeric.hexStringToByteArray(add1)) should be(true)

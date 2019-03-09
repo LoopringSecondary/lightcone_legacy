@@ -79,7 +79,7 @@ class EthereumQueryActor(
     case req: GetNonce.Req =>
       (ethereumAccessorActor ? req).sendTo(sender)
 
-    case req @ GetAccount.Req(owner, tokens, tag) =>
+    case req @ GetAccount.Req(owner, tokens, _, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =
         brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens))

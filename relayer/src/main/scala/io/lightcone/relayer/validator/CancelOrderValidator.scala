@@ -16,51 +16,107 @@
 
 package io.lightcone.relayer.validator
 
+import com.typesafe.config.Config
+import io.lightcone.core.MarketMetadata.Status._
 import io.lightcone.core._
-import io.lightcone.lib._
 import io.lightcone.ethereum._
+import io.lightcone.lib._
+import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
-import scala.concurrent._
+import org.json4s.JsonDSL._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.native.JsonMethods.parse
 import org.web3j.utils._
+
+import scala.concurrent._
 
 final class CancelOrderValidator(
     implicit
+    config: Config,
     ec: ExecutionContext,
-    metadataManager: MetadataManager)
-    extends MessageValidator {
+    metadataManager: MetadataManager,
+    timeProvider: TimeProvider,
+    eip712Support: EIP712Support,
+    dbModule: DatabaseModule) {
   import ErrorCode._
-  import MarketMetadata.Status._
 
-  //TODO：确定签名规则，单个订单，采用订单的签名简单测试
-  override def validate = {
-    case req: CancelOrder.Req =>
-      Future {
-        metadataManager.assertMarketStatus(req.getMarketPair, ACTIVE)
-        if (!checkSign(req.owner, req.id, req.sig))
-          throw ErrorException(
-            ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG,
-            s"not authorized to cancel this order $req.id"
-          )
-        req
+  val validityInSeconds = config.getInt("order_cancel.validity-in-seconds")
+  val schema = config.getString("order_cancel.schema").stripMargin
+  val schemaJson = parse(schema)
+  implicit val formats = DefaultFormats
+
+  def validate(
+      req: CancelOrder.Req
+    ): Future[Either[ErrorCode, CancelOrder.Req]] = {
+    val current = timeProvider.getTimeSeconds()
+
+    if (req.owner.isEmpty || !Address.isValid(req.owner) || req.time.isEmpty
+        || NumericConversion.toBigInt(req.getTime) < current - validityInSeconds
+        || NumericConversion.toBigInt(req.getTime) > current) {
+      Future.successful(Left(ERR_INVALID_ARGUMENT))
+
+    } else if (!checkSign(req)) {
+      Future.successful(Left(ERR_INVALID_SIG))
+    } else {
+      req match {
+        case CancelOrder.Req("", owner, _, None, _, _) =>
+          Future.successful(Right(req.copy(owner = Address.normalize(owner))))
+
+        case CancelOrder.Req("", owner, _, Some(marketPair), _, _) =>
+          Future {
+            try {
+              metadataManager.isMarketStatus(marketPair, ACTIVE, READONLY)
+              Right(
+                req.copy(
+                  owner = Address.normalize(owner),
+                  marketPair = Some(marketPair.normalize())
+                )
+              )
+            } catch {
+              case _: Throwable =>
+                Left(ERR_INVALID_MARKET)
+            }
+          }
+
+        case CancelOrder.Req(id, owner, _, _, _, _) =>
+          dbModule.orderService.getOrder(req.id).map {
+            case Some(order) if order.owner == owner =>
+              Right(req.copy(owner = Address.normalize(req.owner)))
+            case Some(_) =>
+              Left(ERR_ORDER_VALIDATION_INVALID_OWNER)
+
+            case None =>
+              Left(ERR_ORDER_NOT_EXIST)
+          }
       }
-    case _ => throw ErrorException(ERR_INVALID_ARGUMENT)
+    }
+
   }
 
-  private def checkSign(
-      owner: String,
-      data: String,
-      sig: String
-    ): Boolean = {
-    val sigBytes = Numeric.hexStringToByteArray(sig)
-    val v = sigBytes(2)
-    val r = sigBytes.slice(3, 35)
-    val s = sigBytes.slice(35, 67)
+  private def checkSign(req: CancelOrder.Req): Boolean = {
+    val cancelRequest = Map(
+      "id" -> req.id,
+      "owner" -> req.owner,
+      "market" -> req.marketPair
+        .map(
+          marketPair =>
+            NumericConversion.toHexString(MarketHash(marketPair).bigIntValue)
+        )
+        .getOrElse(""),
+      "time" -> NumericConversion.toHexString(req.getTime)
+    )
+    val message = Map("message" -> cancelRequest)
+    val completedMessage = compact(schemaJson merge render(message))
+    val typedData = eip712Support.jsonToTypedData(completedMessage)
+    val hash = eip712Support.getEIP712Message(typedData)
+    val sigBytes = Numeric.hexStringToByteArray(req.sig)
     verifyEthereumSignature(
-      Numeric.hexStringToByteArray(data),
-      r,
-      s,
-      v,
-      Address(owner)
+      Numeric.hexStringToByteArray(hash),
+      sigBytes.slice(0, 32),
+      sigBytes.slice(32, 64),
+      sigBytes(64),
+      Address(req.owner)
     )
   }
 }

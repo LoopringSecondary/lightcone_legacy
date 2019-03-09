@@ -22,8 +22,8 @@ import akka.actor.Props
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import io.lightcone.relayer.RpcBinding
-import io.lightcone.relayer.actors.EntryPointActor
-import io.lightcone.relayer.jsonrpc.{JsonRpcServer, JsonSupport}
+import io.lightcone.relayer.actors._
+import io.lightcone.relayer.jsonrpc._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
@@ -35,6 +35,11 @@ trait JsonrpcSupport extends JsonSupport {
   actors.add(
     EntryPointActor.name,
     system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
+  )
+
+  actors.add(
+    ApplicationInfoActor.name,
+    ApplicationInfoActor.start
   )
 
   val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
