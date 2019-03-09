@@ -99,7 +99,7 @@ message SocketIOSubscription {
         io.lightcone.core.MarketMetadata            market_metadata     = 6;
         io.lightcone.persistence.News               news                = 7;
         io.lightcone.core.MarketTicker              ticker              = 8;
-        io.lightcone.core.InternalMarketTicker      internal_ticker     = 9;
+        io.lightcone.core.MarketTicker              internal_ticker     = 9;
         AccountUpdate                               account             = 10;
 
     }

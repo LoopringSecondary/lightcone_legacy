@@ -227,7 +227,8 @@ class CoreModule(
       )
       .register(
         classOf[OHLCRawData], //
-        MarketHistoryActor.name
+        MarketHistoryActor.name,
+        SocketIONotificationActor.name
       )
       .register(
         classOf[BlockGasPricesExtractedEvent], //
@@ -241,6 +242,11 @@ class CoreModule(
         classOf[AddressBalanceUpdatedEvent],
         MultiAccountManagerActor.name,
         RingSettlementManagerActor.name
+      )
+      .register(
+        classOf[Activity],
+        ActivityActor.name,
+        SocketIONotificationActor.name
       )
   }
 
