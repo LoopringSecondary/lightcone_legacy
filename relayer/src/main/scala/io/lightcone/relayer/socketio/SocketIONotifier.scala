@@ -76,7 +76,7 @@ abstract class SocketIONotifier
       paramsForFills = subscription.paramsForFills.map { params =>
         params.copy(
           address =
-            if (params.address.isEmpty) params.address
+            if (params.address == null || params.address.isEmpty) ""
             else Address.normalize(params.address),
           market = params.market.map(_.normalize())
         )

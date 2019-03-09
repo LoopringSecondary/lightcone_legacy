@@ -55,7 +55,7 @@ class SocketIONotificationActor @Inject()(
       notifer.notifyEvent(rawOrderLinter.lint(order))
 
     case accountUpdate: AccountUpdate =>
-      accountBalanceUpdateLinter.lint(accountUpdate)
+      notifer.notifyEvent(accountUpdateLinter.lint(accountUpdate))
 
     case event: AnyRef => notifer.notifyEvent(event)
   }

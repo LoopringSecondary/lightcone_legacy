@@ -113,16 +113,17 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
       subscription.paramsForFills match {
         case Some(params)
             if (params.address.isEmpty || params.address == e.owner)
-              && (MarketHash(params.getMarket) == MarketHash(
-                MarketPair(e.tokenB, e.tokenS)
-              )) =>
+              && (params.getMarket.hashString ==
+                MarketPair(e.tokenB, e.tokenS).hashString) =>
           Some(Notification(fill = Some(e)))
         case _ => None
       }
 
     case e: Orderbook.Update =>
       subscription.paramsForOrderbook match {
-        case Some(params) if params.market == e.marketPair =>
+        case Some(params)
+            if params.market.map(_.hashString) == e.marketPair
+              .map(_.hashString) =>
           Some(Notification(orderbook = Some(e)))
         case _ => None
       }
@@ -131,9 +132,8 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
       subscription.paramsForOrders match {
         case Some(params)
             if params.addresses.contains(order.owner) && (params.market.isEmpty
-              || MarketHash(params.getMarket) == MarketHash(
-                MarketPair(order.tokenB, order.tokenS)
-              )) =>
+              || params.getMarket.hashString ==
+                MarketPair(order.tokenB, order.tokenS).hashString) =>
           Some(Notification(order = Some(order)))
         case _ => None
       }
@@ -153,9 +153,8 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case ticker: MarketTicker =>
       subscription.paramsForTickers match {
         case Some(params) =>
-          if (MarketHash(
-                MarketPair(ticker.baseToken, ticker.quoteToken)
-              ) == MarketHash(params.getMarket))
+          if (MarketPair(ticker.baseToken, ticker.quoteToken).hashString
+                == params.getMarket.hashString)
             Some(Notification(ticker = Some(ticker)))
           else None
 

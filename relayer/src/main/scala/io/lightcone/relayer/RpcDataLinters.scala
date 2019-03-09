@@ -81,14 +81,13 @@ object RpcDataLinters {
       )
   }
 
-  implicit val accountBalanceUpdateLinter = new Linter[AccountUpdate] {
+  implicit val accountUpdateLinter = new Linter[AccountUpdate] {
 
-    def lint(data: AccountUpdate): AccountUpdate = {
+    def lint(data: AccountUpdate): AccountUpdate =
       AccountUpdate(
         address = data.address,
         tokenBalance = data.tokenBalance.map(tokenBalanceLinter.lint)
       )
-    }
   }
 
 }

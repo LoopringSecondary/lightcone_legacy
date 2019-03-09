@@ -71,6 +71,7 @@ class ChainReorganizationManagerImpl(
           s"block reorgnaized at a block index ($blockIdx) smaller than the" +
             s"minimal knonw block ($idx)"
         )
+      case _ =>
     }
     val (remainingBlocks, expiredBlocks) = blocks.partition(_._1 < blockIdx)
     blocks = remainingBlocks

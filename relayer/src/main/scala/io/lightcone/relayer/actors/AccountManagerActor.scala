@@ -453,6 +453,7 @@ class AccountManagerActor(
         address = owner,
         tokenBalance = Some(
           TokenBalance(
+            token = token,
             balance =
               Some(NumericConversion.toAmount(balanceAndAllowance.balance)),
             allowance =
