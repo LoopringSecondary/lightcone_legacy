@@ -56,6 +56,12 @@ trait EventExtraction {
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
+  @inline def ringAndFillPersistenceActor =
+    actors.get(RingAndFillPersistenceActor.name)
+
+  @inline def chainReorganizationManagerActor =
+    actors.get(ChainReorganizationManagerActor.name)
+
   def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
@@ -79,7 +85,9 @@ trait EventExtraction {
               )
             )
 
-            //TODO(yadong) broadcast blockEvent
+            ActivityActor.broadcast(blockEvent)
+            ringAndFillPersistenceActor ! blockEvent
+            chainReorganizationManagerActor ! blockEvent
             self ! RETRIEVE_RECEIPTS
           } else {
             self ! BLOCK_REORG_DETECTED

@@ -76,13 +76,13 @@ object Address {
   def isValid(obj: Any): Boolean = {
     obj match {
       case add: String =>
-        Numeric.hexStringToByteArray(add).length <= 20
+        NumericConversion.toBigInt(add) <= MAX.value
       case add: Array[Byte] =>
-        add.length <= 20
+        BigInt(add) <= MAX.value
       case add: BigInt =>
         add <= MAX.value
       case add: ByteString =>
-        add.size() <= 20
+        NumericConversion.toBigInt(add) <= MAX.value
       case _ =>
         false
     }
