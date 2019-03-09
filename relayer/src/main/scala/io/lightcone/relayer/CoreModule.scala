@@ -245,9 +245,14 @@ class CoreModule(
       )
       .register(
         classOf[Activity],
-        ActivityActor.name,
         SocketIONotificationActor.name
       )
+      .register(
+        classOf[Fill],
+        SocketIONotificationActor.name
+      )
+    //TODO (Tx Event需要汇总)
+
   }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {

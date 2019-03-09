@@ -71,7 +71,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
       case SocketIOSubscription(_, _, _, _, _, _, _, Some(params), _, _)
           if params.market.isEmpty || !params.getMarket.isValid() =>
         Some(
-          s"invalid paramsForLoopringTickers:$params," +
+          s"invalid paramsForInternalTickers:$params," +
             s" market shouldn't be null and market token addresses must be valid ethereum addresses"
         )
 
@@ -153,20 +153,9 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case ticker: MarketTicker =>
       subscription.paramsForTickers match {
         case Some(params) =>
-          val baseTokenAddress = metadataManager
-            .getTokenWithSymbol(ticker.baseTokenSymbol)
-            .get
-            .getMetadata
-            .address
-          val quoteTokenAddress = metadataManager
-            .getTokenWithSymbol(ticker.quoteTokenSymbol)
-            .get
-            .getMetadata
-            .address
-          val marketHash = MarketHash(
-            MarketPair(baseTokenAddress, quoteTokenAddress)
-          )
-          if (marketHash == MarketHash(params.getMarket))
+          if (MarketHash(
+                MarketPair(ticker.baseToken, ticker.quoteToken)
+              ) == MarketHash(params.getMarket))
             Some(Notification(ticker = Some(ticker)))
           else None
 
@@ -175,9 +164,25 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case ticker: OHLCRawData =>
       subscription.paramsForInternalTickers match {
         case Some(params) =>
-          if (ticker.marketHash == MarketHash(params.getMarket).hashString())
-            Some(Notification(internalTicker = Some()))
-          else None
+          if (ticker.marketHash == MarketHash(params.getMarket).hashString()) {
+            try {
+              val market = metadataManager.getMarket(ticker.marketHash)
+              Some(
+                Notification(
+                  internalTicker = Some(
+                    MarketTicker(
+                      baseToken = market.getMetadata.getMarketPair.baseToken,
+                      quoteToken = market.getMetadata.getMarketPair.quoteToken,
+                      price = ticker.price
+                    )
+                  )
+                )
+              )
+            } catch {
+              case _: Throwable =>
+                None
+            }
+          } else None
 
         case _ => None
       }
