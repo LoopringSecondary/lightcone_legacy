@@ -27,7 +27,6 @@ import "ethereum_persistence.proto";
 message AccountUpdate {
     string address                      = 1;
     io.lightcone.relayer.data.AccountBalance.TokenBalance  token_balance = 2;
-    int32  nonce                        = 3;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
