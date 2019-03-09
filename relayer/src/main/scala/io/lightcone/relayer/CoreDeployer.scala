@@ -64,9 +64,11 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tve: TokenValueEvaluator,
     eventDispatcher: EventDispatcher,
-    eventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
+    txEventExtractor: EventExtractor[TransactionData, AnyRef],
+    blockEventExtractor: EventExtractor[BlockWithTxObject, AnyRef],
     socketIONotifier: SocketIONotifier,
     splitMergerProvider: SplitMergerProvider,
+    eip712Support: EIP712Support,
     externalTickerFetcher: ExternalTickerFetcher,
     fiatExchangeRateFetcher: FiatExchangeRateFetcher,
     system: ActorSystem)
@@ -210,6 +212,10 @@ class CoreDeployer @Inject()(
         .add(
           ExternalCrawlerActor.name,
           ExternalCrawlerActor.start
+        )
+        .add(
+          ApplicationInfoActor.name,
+          ApplicationInfoActor.start
         )
 
       //-----------deploy sharded actors-----------

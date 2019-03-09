@@ -44,9 +44,9 @@ class EntryPointSpec_SubmitOneOrder
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case SubmitOrder.Res(Some(order), _) =>
-          info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
+        case SubmitOrder.Res(_, success) =>
+          info(s" response $success")
+          success should be(true)
         case _ => assert(false)
       }
 

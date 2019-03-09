@@ -84,11 +84,9 @@ class OrderCutoffSpec
       val res = Await.result(f.mapTo[Seq[SubmitOrder.Res]], timeout.duration)
       res.map {
         _ match {
-          case SubmitOrder.Res(Some(order), _) =>
-            info(s" response ${order}")
-            (order.status.isStatusPending || order.status.isStatusNew) should be(
-              true
-            )
+          case SubmitOrder.Res(_, success) =>
+            info(s" response $success")
+            success should be(true)
           case _ => assert(false)
         }
       }
