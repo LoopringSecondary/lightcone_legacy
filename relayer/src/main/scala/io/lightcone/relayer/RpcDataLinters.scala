@@ -26,7 +26,7 @@ object RpcDataLinters {
 
     def lint(data: SubmitOrder.Res) = SubmitOrder.Res(success = data.success)
   }
-  implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
+  implicit val getOrdersResLinter = new Linter[GetOrders.Res] {
 
     def lint(data: GetOrders.Res) =
       data.copy(orders = data.orders.map(cleanRawOrder))
