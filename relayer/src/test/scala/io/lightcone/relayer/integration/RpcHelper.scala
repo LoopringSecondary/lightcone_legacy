@@ -18,6 +18,7 @@ package io.lightcone.relayer.integration
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern._
 import akka.util.Timeout
+import io.lightcone.core.ErrorException
 import io.lightcone.relayer.integration.intergration._
 import org.scalatest.{Assertion, Matchers}
 import org.scalatest.matchers.{MatchResult, Matcher}
@@ -73,9 +74,13 @@ trait RpcHelper extends Logging {
         system: ActorSystem,
         ec: ExecutionContext
       ): Assertion = {
-      Await
-        .result(entryPointActor ? req, timeout.duration)
-        .asInstanceOf[R] should matcher
+      val res = Await
+        .result(entryPointActor ? req, timeout.duration) match {
+        case err: ErrorException =>
+          throw err
+        case m => m.asInstanceOf[R]
+      }
+      res should matcher
     }
 
   }

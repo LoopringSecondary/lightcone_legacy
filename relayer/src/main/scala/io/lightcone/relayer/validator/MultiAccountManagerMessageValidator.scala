@@ -113,6 +113,9 @@ final class MultiAccountManagerMessageValidator(
             )
           case Right(rawOrder) =>
             val marketPair = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
+            println(
+              s"##### rawOrder ${rawOrder.tokenS}, ${rawOrder.tokenB}, ${metadataManager.getMarkets()}"
+            )
             metadataManager.assertMarketStatus(marketPair, ACTIVE)
 
             val marketId = MarketHash(marketPair).longId

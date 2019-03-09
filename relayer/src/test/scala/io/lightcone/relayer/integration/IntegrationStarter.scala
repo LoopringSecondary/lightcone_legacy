@@ -15,13 +15,16 @@
  */
 
 package io.lightcone.relayer.integration
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import com.google.inject.{Guice, Injector}
 import com.typesafe.config.ConfigFactory
+import io.lightcone.core.MetadataManager
+import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.actors.EntryPointActor
 import io.lightcone.relayer._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.ethereum.EventDispatcher
+import io.lightcone.relayer.external.FiatExchangeRateFetcher
 import io.lightcone.relayer.integration.mock._
 import org.scalamock.scalatest.MockFactory
 import net.codingwell.scalaguice.InjectorExtensions._
@@ -49,6 +52,13 @@ class IntegrationStarter extends MockFactory {
       .instance[CoreDeployerForTest]
       .deploy(ethAccessDataProvider, ethQueryDataProvider)
 
+    val dbModule = injector.instance[DatabaseModule]
+    val metaManager = injector.instance[MetadataManager]
+    val fiatExchangeRateFetcher = injector.instance[FiatExchangeRateFetcher]
+    implicit val ec = injector.instance[ActorSystem].dispatcher
+    Preparations.prepareDbModule(dbModule)
+    Preparations.prepareMetadata(metaManager, dbModule, fiatExchangeRateFetcher)
+
     Thread.sleep(5000) //waiting for system ready
 
     eventDispatcher = injector.instance[EventDispatcher]
@@ -56,4 +66,5 @@ class IntegrationStarter extends MockFactory {
       injector.instance[Lookup[ActorRef]].get(EntryPointActor.name)
 
   }
+
 }
