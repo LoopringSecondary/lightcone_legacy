@@ -163,17 +163,19 @@ class CMCCrawlerSpec
       lrc2.nonEmpty should be(true)
       val lrc3 = res3.tokens.find(_.getMetadata.symbol == LRC_TOKEN.symbol)
       lrc3.nonEmpty should be(true)
-      lrc1 != lrc2 && lrc1 != lrc3 && lrc2 != lrc3 should be(true)
+      lrc1 should not be lrc2
+      lrc1 should not be lrc3
+      lrc2 should not be lrc3
 
       val t1 = lrc1.get.getTicker
       val t2 = lrc2.get.getTicker
       val t3 = lrc3.get.getTicker
-      t1.price != t2.price && t2.price != t3.price && t1.price != t3.price should be(
-        true
-      )
-      t1.volume24H != t2.volume24H && t2.volume24H != t3.volume24H && t1.volume24H != t3.volume24H should be(
-        true
-      )
+      t1.price should not be t2.price
+      t1.price should not be t3.price
+      t2.price should not be t3.price
+      t1.volume24H should not be t2.volume24H
+      t1.volume24H should not be t3.volume24H
+      t2.volume24H should not be t3.volume24H
     }
 
     "getMarkets require [metadata]" in {
@@ -253,21 +255,23 @@ class CMCCrawlerSpec
       lrcWeth2.nonEmpty should be(true)
       val lrcWeth3 = res3.markets.find(_.getMetadata.marketHash == lrcWethHash)
       lrcWeth3.nonEmpty should be(true)
-      lrcWeth1 != lrcWeth2 && lrcWeth1 != lrcWeth3 && lrcWeth2 != lrcWeth3 should be(
-        true
-      )
+
+      lrcWeth1 should not be lrcWeth2
+      lrcWeth1 should not be lrcWeth3
+      lrcWeth2 should not be lrcWeth3
       val t1 = lrcWeth1.get.getTicker
       val t2 = lrcWeth2.get.getTicker
       val t3 = lrcWeth3.get.getTicker
-      t1.exchangeRate == t2.exchangeRate && t2.exchangeRate == t3.exchangeRate should be(
-        true
-      )
-      t1.price != t2.price && t2.price != t3.price && t1.price != t3.price should be(
-        true
-      )
-      t1.volume24H != t2.volume24H && t2.volume24H != t3.volume24H && t1.volume24H != t3.volume24H should be(
-        true
-      )
+
+      t1.exchangeRate should be(t2.exchangeRate)
+      t1.exchangeRate should be(t3.exchangeRate)
+      t2.exchangeRate should be(t3.exchangeRate)
+      t1.price should not be t2.price
+      t1.price should not be t3.price
+      t2.price should not be t3.price
+      t1.volume24H should not be t2.volume24H
+      t1.volume24H should not be t3.volume24H
+      t2.volume24H should not be t3.volume24H
     }
   }
 

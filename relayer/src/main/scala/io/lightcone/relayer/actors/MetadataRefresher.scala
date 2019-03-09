@@ -93,7 +93,9 @@ class MetadataRefresher(
       } yield Unit
 
     case req: GetTokens.Req => {
-      val tokens_ = if (tokens.nonEmpty) {
+      val tokens_ = if (tokens.isEmpty) {
+        Seq.empty
+      } else {
         if (req.tokens.nonEmpty) {
           tokens
             .filter(
@@ -114,20 +116,20 @@ class MetadataRefresher(
             .filter(_.getMetadata.`type` != TokenMetadata.Type.TOKEN_TYPE_ETH)
             .:+(eth)
         }
-      } else {
-        Seq.empty
       }
       val res = tokens_.map { t =>
-        val metadataOpt = if (req.requireMetadata) t.metadata else None
-        val infoOpt = if (req.requireInfo) t.info else None
-        val tickerOpt = if (req.requirePrice) {
+        val metadataOpt = if (!req.requireMetadata) None else t.metadata
+        val infoOpt = if (!req.requireInfo) None else t.info
+        val tickerOpt = if (!req.requirePrice) {
+          None
+        } else {
           Some(
             changeTokenTickerWithQuoteCurrency(
               t.getTicker,
               req.quoteCurrencyForPrice
             )
           )
-        } else None
+        }
         Token(metadataOpt, infoOpt, tickerOpt)
       }
       sender ! GetTokens.Res(res)
@@ -135,23 +137,25 @@ class MetadataRefresher(
 
     case req: GetMarkets.Req =>
       // TODO(yongfeng): req.queryLoopringTicker
-      val markets_ = if (req.marketPairs.nonEmpty) {
+      val markets_ = if (req.marketPairs.isEmpty) {
+        markets
+      } else {
         markets.filter(
           m => req.marketPairs.contains(m.getMetadata.marketPair.get)
         )
-      } else {
-        markets
       }
       val res = markets_.map { m =>
-        val metadataOpt = if (req.requireMetadata) m.metadata else None
-        val tickerOpt = if (req.requireTicker) {
+        val metadataOpt = if (!req.requireMetadata) None else m.metadata
+        val tickerOpt = if (!req.requireTicker) {
+          None
+        } else {
           Some(
             changeMarketTickerWithQuoteCurrency(
               m.ticker.get,
               req.quoteCurrencyForTicker
             )
           )
-        } else None
+        }
         Market(metadataOpt, tickerOpt)
       }
       sender ! GetMarkets.Res(res)
