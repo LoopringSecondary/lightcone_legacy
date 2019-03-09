@@ -113,10 +113,9 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val r8 = dal.getTokenMetadatas(Seq(lrcAddress))
     val res8 = Await.result(r8.mapTo[Seq[TokenMetadata]], 5.second)
     val lrc3 = res8.find(_.symbol == "T1")
-    assert(
-      lrc3.nonEmpty && lrc3.get.address == lrcAddress && lrc3.get.burnRate
-        .contains(BurnRate(0.5, 0.6))
-    )
+    lrc3.nonEmpty should be(true)
+    lrc3.get.address should be(lrcAddress)
+    lrc3.get.burnRate.contains(BurnRate(0.5, 0.6)) should be(true)
 
     info(
       "update T2's type, status, symbol, name, unit, decimal, website, precision, burn rate, usd price"

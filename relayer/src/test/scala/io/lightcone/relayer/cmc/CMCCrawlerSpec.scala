@@ -166,7 +166,6 @@ class CMCCrawlerSpec
       lrc1 should not be lrc2
       lrc1 should not be lrc3
       lrc2 should not be lrc3
-
       val t1 = lrc1.get.getTicker
       val t2 = lrc2.get.getTicker
       val t3 = lrc3.get.getTicker
@@ -255,14 +254,12 @@ class CMCCrawlerSpec
       lrcWeth2.nonEmpty should be(true)
       val lrcWeth3 = res3.markets.find(_.getMetadata.marketHash == lrcWethHash)
       lrcWeth3.nonEmpty should be(true)
-
       lrcWeth1 should not be lrcWeth2
       lrcWeth1 should not be lrcWeth3
       lrcWeth2 should not be lrcWeth3
       val t1 = lrcWeth1.get.getTicker
       val t2 = lrcWeth2.get.getTicker
       val t3 = lrcWeth3.get.getTicker
-
       t1.exchangeRate should be(t2.exchangeRate)
       t1.exchangeRate should be(t3.exchangeRate)
       t2.exchangeRate should be(t3.exchangeRate)
