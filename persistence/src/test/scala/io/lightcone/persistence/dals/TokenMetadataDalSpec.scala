@@ -36,8 +36,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         unit = "T1",
         decimals = 18,
         precision = 6,
-        burnRateForMarket = 0.1,
-        burnRateForP2P = 0.1
+        burnRate = Some(BurnRate(0.1, 0.1))
       ),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
@@ -48,8 +47,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         unit = "T2",
         decimals = 18,
         precision = 6,
-        burnRateForMarket = 0.2,
-        burnRateForP2P = 0.2
+        burnRate = Some(BurnRate(0.2, 0.2))
       ),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
@@ -60,8 +58,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         unit = "T3",
         decimals = 18,
         precision = 6,
-        burnRateForMarket = 0.3,
-        burnRateForP2P = 0.3
+        burnRate = Some(BurnRate(0.3, 0.3))
       )
     )
     val r1 = dal.saveTokenMetadatas(tokens1)
@@ -82,8 +79,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         lrc.unit == "T1" &&
         lrc.decimals == 18 &&
         lrc.precision == 6 &&
-        lrc.burnRateForMarket == 0.1 &&
-        lrc.burnRateForP2P == 0.1
+        lrc.burnRate.contains(BurnRate(0.1, 0.1))
     )
 
     info("duplicate token address save should return error")
@@ -117,9 +113,9 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val r8 = dal.getTokenMetadatas(Seq(lrcAddress))
     val res8 = Await.result(r8.mapTo[Seq[TokenMetadata]], 5.second)
     val lrc3 = res8.find(_.symbol == "T1")
-    assert(
-      lrc3.nonEmpty && lrc3.get.address == lrcAddress && lrc3.get.burnRateForMarket == 0.5 && lrc3.get.burnRateForP2P == 0.6
-    )
+    lrc3.nonEmpty should be(true)
+    lrc3.get.address should be(lrcAddress)
+    lrc3.get.burnRate.contains(BurnRate(0.5, 0.6)) should be(true)
 
     info(
       "update T2's type, status, symbol, name, unit, decimal, website, precision, burn rate, usd price"
@@ -134,8 +130,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         bnb.unit == "T2" &&
         bnb.decimals == 18 &&
         bnb.precision == 6 &&
-        bnb.burnRateForMarket == 0.2 &&
-        bnb.burnRateForP2P == 0.2
+        bnb.burnRate.contains(BurnRate(0.2, 0.2))
     )
     val r9 = dal.updateTokenMetadata(
       bnb.copy(
@@ -146,8 +141,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         unit = "T2_",
         decimals = 12,
         precision = 8,
-        burnRateForMarket = 0.5,
-        burnRateForP2P = 0.6
+        burnRate = Some(BurnRate(0.5, 0.6))
       )
     )
     val res9 = Await.result(r9.mapTo[ErrorCode], 5.second)
@@ -164,8 +158,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         bnb1.address == "0x222" &&
         bnb1.decimals == 12 &&
         bnb1.precision == 8 &&
-        bnb1.burnRateForMarket == 0.5 &&
-        bnb1.burnRateForP2P == 0.6
+        bnb1.burnRate.contains(BurnRate(0.5, 0.6))
     )
   }
 }

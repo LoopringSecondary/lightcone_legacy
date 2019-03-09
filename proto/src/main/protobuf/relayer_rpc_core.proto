@@ -324,7 +324,7 @@ message GetTokens {
         bool require_info = 2;
         bool require_price = 3;
         io.lightcone.core.Currency quote_currency_for_price = 4;  // USD, RMB
-        repeated string tokens = 5; //TODO(yongfeng) token address or symbol ?
+        repeated string tokens = 5; // addresses
     }
 
     message Res {
