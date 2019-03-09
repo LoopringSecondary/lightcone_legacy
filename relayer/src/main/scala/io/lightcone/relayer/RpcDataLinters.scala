@@ -26,43 +26,46 @@ object RpcDataLinters {
 
     def lint(data: SubmitOrder.Res) = SubmitOrder.Res(success = data.success)
   }
-  implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
+  implicit val getOrdersResLinter = new Linter[GetOrders.Res] {
 
     def lint(data: GetOrders.Res) =
-      data.copy(orders = data.orders.map(cleanRawOrder))
+      data.copy(orders = data.orders.map(rawOrderLinter.lint))
   }
 
-  def cleanRawOrder(order: RawOrder): RawOrder =
-    RawOrder(
-      hash = order.hash,
-      version = order.version,
-      owner = order.owner,
-      tokenS = order.tokenS,
-      tokenB = order.tokenB,
-      amountS = order.amountS,
-      amountB = order.amountB,
-      validSince = order.validSince,
-      params = order.params.map(
-        param =>
-          RawOrder.Params(
-            broker = param.broker,
-            orderInterceptor = param.orderInterceptor,
-            wallet = param.wallet,
-            validUntil = param.validUntil,
-            allOrNone = param.allOrNone
-          )
-      ),
-      feeParams = order.feeParams.map(
-        param =>
-          RawOrder.FeeParams(
-            tokenFee = param.tokenFee,
-            amountFee = param.amountFee,
-            tokenSFeePercentage = param.tokenSFeePercentage,
-            tokenBFeePercentage = param.tokenBFeePercentage,
-            tokenRecipient = param.tokenRecipient
-          )
-      ),
-      state = order.state
-    )
+  implicit val rawOrderLinter = new Linter[RawOrder] {
+
+    def lint(order: RawOrder) =
+      RawOrder(
+        hash = order.hash,
+        version = order.version,
+        owner = order.owner,
+        tokenS = order.tokenS,
+        tokenB = order.tokenB,
+        amountS = order.amountS,
+        amountB = order.amountB,
+        validSince = order.validSince,
+        params = order.params.map(
+          param =>
+            RawOrder.Params(
+              broker = param.broker,
+              orderInterceptor = param.orderInterceptor,
+              wallet = param.wallet,
+              validUntil = param.validUntil,
+              allOrNone = param.allOrNone
+            )
+        ),
+        feeParams = order.feeParams.map(
+          param =>
+            RawOrder.FeeParams(
+              tokenFee = param.tokenFee,
+              amountFee = param.amountFee,
+              tokenSFeePercentage = param.tokenSFeePercentage,
+              tokenBFeePercentage = param.tokenBFeePercentage,
+              tokenRecipient = param.tokenRecipient
+            )
+        ),
+        state = order.state
+      )
+  }
 
 }

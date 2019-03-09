@@ -50,7 +50,7 @@ class SocketIONotificationActor @Inject()(
     extends Actor {
 
   def receive: Receive = {
-    case order: RawOrder => notifer.notifyEvent(cleanRawOrder(order))
+    case order: RawOrder => notifer.notifyEvent(rawOrderLinter.lint(order))
     case event: AnyRef   => notifer.notifyEvent(event)
   }
 }
