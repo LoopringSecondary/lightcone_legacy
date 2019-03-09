@@ -36,19 +36,20 @@ final class RedisCache(redis: RedisCluster)(implicit val ex: ExecutionContext)
       }.toMap
     }
 
-  def get(key: String): Future[Option[Array[Byte]]] = {
-    redis.get(key).map(_.map(_.toArray))
-  }
-
-  def del(key: String): Future[Unit] =
+  def del(keys: Seq[String]): Future[Unit] =
     for {
-      _ <- redis.del(key)
+      _ <- Future.sequence(keys.map(k => redis.del(k)))
     } yield Unit
 
   def put(
-      key: String,
-      value: Array[Byte]
-    ): Future[Boolean] = {
-    redis.set(key, new String(value))
-  }
+      keyValues: Map[String, Array[Byte]],
+      expiry: Long
+    ): Future[Boolean] =
+    for {
+      _ <- Future.sequence(keyValues.map {
+        case (k, v) =>
+          if (expiry > 0) redis.set(k, new String(v), Some(expiry))
+          else redis.set(k, new String(v))
+      })
+    } yield true
 }

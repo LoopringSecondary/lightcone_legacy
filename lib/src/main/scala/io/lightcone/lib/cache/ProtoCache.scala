@@ -38,29 +38,26 @@ trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
 
   def keyToString(k: K): String
 
-  def get(key: K): Future[Option[V]] = {
-    underlying
-      .get(keyToString(key))
-      .map(_.map(serializer.fromBytes))
-  }
-
   def get(keys: Seq[K]): Future[Map[K, V]] = {
     val keyMap = keys.map(k => keyToString(k) -> k).toMap
-    underlying.get(keyMap.keys.toSeq).map {
-      _.map {
+    for {
+      cached <- underlying.get(keyMap.keys.toSeq)
+      res = cached.map {
         case (k, v) => keyMap(k) -> serializer.fromBytes(v)
       }
-    }
+    } yield res
   }
 
-  def del(key: K): Future[Unit] = underlying.del(keyToString(key))
+  def del(keys: Seq[K]): Future[Unit] =
+    underlying.del(keys.map(keyToString))
 
   def put(
-      key: K,
-      value: V
-    ) = {
-    underlying.put(keyToString(key), serializer.toBytes(value))
-  }
+      keyValues: Map[K, V],
+      expiry: Long
+    ): Future[Boolean] =
+    underlying.put(keyValues.map {
+      case (k, v) => keyToString(k) -> serializer.toBytes(v)
+    }, expiry)
 }
 
 final class StringToProtoCache[

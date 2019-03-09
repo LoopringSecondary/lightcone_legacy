@@ -25,25 +25,21 @@ trait CacheSerializer[T] {
 
 trait Cache[K, V] {
   implicit val ex: ExecutionContext
-  def get(key: K): Future[Option[V]]
   def get(keys: Seq[K]): Future[Map[K, V]]
+  def del(keys: Seq[K]): Future[Unit]
 
-  def del(key: K): Future[Unit]
+  def put(
+      keyValues: Map[K, V],
+      expiry: Long
+    ): Future[Boolean]
 
-  def del(keys: Seq[K]): Future[Unit] =
-    for {
-      _ <- Future.sequence(keys.map(del))
-    } yield Unit
+  def get(key: K): Future[Option[V]] = get(Seq(key)).map(_.get(key))
+  def del(key: K): Future[Unit] = del(Seq(key))
 
   def put(
       key: K,
-      value: V
-    ): Future[Boolean]
+      value: V,
+      expiry: Long
+    ): Future[Boolean] = put(Map(key -> value), expiry)
 
-  def put(keyValues: Map[K, V]): Future[Boolean] =
-    Future.sequence {
-      keyValues.map {
-        case (k, v) => put(k, v)
-      }.toSeq
-    }.map(_.reduce(_ && _))
 }
