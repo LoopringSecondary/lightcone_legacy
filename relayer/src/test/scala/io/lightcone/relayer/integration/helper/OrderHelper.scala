@@ -24,7 +24,7 @@ import org.web3j.utils.Numeric
 
 import scala.math.BigInt
 
-trait OrderGenerateSupport {
+trait OrderHelper {
 
   def createRawOrder(
       tokenS: String = LRC_TOKEN.address,
