@@ -15,18 +15,18 @@
  */
 
 package io.lightcone.relayer.integration
+import org.scalatest.matchers.{MatchResult, Matcher}
 
-import akka.actor._
-import io.lightcone.relayer.data.{GetNonce, SendRawTransaction}
+object AddedMatchers {
 
-class MockEthereumAccessActor() extends Actor with ActorLogging {
-
-  def receive: Receive = {
-    case req: SendRawTransaction.Req =>
-      sender ! ethAccessDataProvider.sendRawTransaction(req)
-    case req: GetNonce.Req =>
-      sender ! GetNonce.Res()
-    case msg =>
-      log.info(s"received msg: ${msg}")
+  def check[T](checkFun: T => Boolean)(implicit m: Manifest[T]) = {
+    Matcher { res: T =>
+      MatchResult(
+        checkFun(res),
+        res + " doesn't match",
+        res + " matchs"
+      )
+    }
   }
+
 }

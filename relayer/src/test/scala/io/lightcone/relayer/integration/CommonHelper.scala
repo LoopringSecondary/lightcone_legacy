@@ -15,18 +15,20 @@
  */
 
 package io.lightcone.relayer.integration
+import io.lightcone.core.testing.OrderHelper
+import io.lightcone.relayer.integration.helper._
+import org.scalatest.{BeforeAndAfterAll, Matchers}
 
-import akka.actor._
-import io.lightcone.relayer.data.{GetNonce, SendRawTransaction}
-
-class MockEthereumAccessActor() extends Actor with ActorLogging {
-
-  def receive: Receive = {
-    case req: SendRawTransaction.Req =>
-      sender ! ethAccessDataProvider.sendRawTransaction(req)
-    case req: GetNonce.Req =>
-      sender ! GetNonce.Res()
-    case msg =>
-      log.info(s"received msg: ${msg}")
+abstract class CommonHelper
+    extends MockHelper
+    with DbHelper
+    with Matchers
+    with RpcHelper
+    with BeforeAndAfterAll
+    with OrderHelper {
+  override def beforeAll(): Unit = {
+    info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
+    super.beforeAll()
   }
+
 }

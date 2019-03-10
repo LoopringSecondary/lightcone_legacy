@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -22,6 +22,7 @@ import akka.actor._
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
+import io.lightcone.relayer._
 import io.lightcone.relayer.actors.EntryPointActor
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.ethereum.EventDispatcher
@@ -77,7 +78,7 @@ class IntegrationTest
 
     injector
       .instance[CoreDeployerForTest]
-      .deploy(ethAccessDataProvider, ethQueryDataProvider)
+      .deploy()
 
     Thread.sleep(5000) //waiting for system ready
 

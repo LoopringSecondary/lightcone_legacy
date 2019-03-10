@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration
 
 import akka.actor.Actor
 import akka.util.Timeout
@@ -29,28 +29,27 @@ class MockEthereumQueryActor(
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val queryDataProvider: EthereumQueryDataProvider)
+    val timeout: Timeout)
     extends Actor {
 
   def receive: Receive = {
     case req: GetAccount.Req =>
-      sender ! queryDataProvider.getAccount(req)
+      sender ! ethQueryDataProvider.getAccount(req)
 
     case req: GetFilledAmount.Req =>
-      sender ! queryDataProvider.getFilledAmount(req)
+      sender ! ethQueryDataProvider.getFilledAmount(req)
 
     case req: GetOrderCancellation.Req =>
-      sender ! queryDataProvider.getOrderCancellation(req)
+      sender ! ethQueryDataProvider.getOrderCancellation(req)
 
     case req: GetCutoff.Req =>
-      sender ! queryDataProvider.getCutoff(req)
+      sender ! ethQueryDataProvider.getCutoff(req)
 
     case req: BatchGetCutoffs.Req =>
-      sender ! queryDataProvider.batchGetCutoffs(req)
+      sender ! ethQueryDataProvider.batchGetCutoffs(req)
 
     case req: GetBurnRate.Req =>
-      sender ! queryDataProvider.getBurnRate(req)
+      sender ! ethQueryDataProvider.getBurnRate(req)
 
     case req @ Notify("echo", _) =>
       sender ! req

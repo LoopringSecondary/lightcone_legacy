@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration
 
 import io.lightcone.core._
 import akka.actor.ActorRef

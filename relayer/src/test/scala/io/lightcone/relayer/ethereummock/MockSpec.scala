@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern._
@@ -22,6 +22,7 @@ import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
 import akka.util.Timeout
 import io.lightcone.lib.SystemTimeProvider
+import io.lightcone.relayer.EthereumQueryDataProvider
 import io.lightcone.relayer.data.{AccountBalance, GetAccount}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
