@@ -197,6 +197,7 @@ class TxRingMinedEventExtractor @Inject()(
             getAmounts(fill, baseToken, quoteToken, marketMetadata)
           Some(
             OHLCRawData(
+              blockHeight = eventHeader.getBlockHeader.height,
               ringIndex = ringIndex,
               txHash = eventHeader.txHash,
               marketHash = marketHash,
