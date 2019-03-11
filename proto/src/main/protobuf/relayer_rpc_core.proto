@@ -345,11 +345,6 @@ message GetOrderbookSlots {
 
 message GetFills {
     message Req {
-        message MarketFilter {
-            string token_s = 1;
-            string token_b = 2;
-            bool   is_query_both_side = 3; // 是否查询两个方向的订单
-        }
         message RingFilter {
             string  ring_hash         = 1;
             string  ring_index        = 2; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
@@ -358,7 +353,7 @@ message GetFills {
         string        owner      = 1;
         string        tx_hash    = 2;
         string        order_hash = 3;
-        MarketFilter  market     = 4;
+        io.lightcone.core.MarketPair  market_pair = 4;
         RingFilter    ring       = 5;
         string        wallet     = 6;
         string        miner      = 7;
@@ -369,6 +364,16 @@ message GetFills {
     message Res {
         repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
         int32   total  = 2;
+    }
+}
+
+message GetFillHistory {
+    message Req {
+        io.lightcone.core.MarketPair  market_pair = 1;
+    }
+
+    message Res {
+        repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
     }
 }
 

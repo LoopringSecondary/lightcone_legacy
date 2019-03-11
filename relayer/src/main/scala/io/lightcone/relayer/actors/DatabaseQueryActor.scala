@@ -61,6 +61,8 @@ class DatabaseQueryActor(
   val logger = Logger(this.getClass)
   val selfConfig = config.getConfig(DatabaseQueryActor.name)
 
+  val getFillHistoryNum = selfConfig.getInt("get_fill_history_num")
+
   def ready: Receive = LoggingReceive {
     case req: GetOrders.Req =>
       val (tokensOpt, tokenbOpt, marketIdOpt) =
@@ -117,6 +119,25 @@ class DatabaseQueryActor(
           )
         }
         GetFills.Res(fills_, total)
+      }).sendTo(sender)
+
+    case req: GetFillHistory.Req =>
+      (for {
+        fills <- dbModule.fillDal
+          .getFillsHistory(req.marketPair, getFillHistoryNum)
+      } yield {
+        val fills_ = fills.map { f =>
+          new Fill(
+            blockTimestamp = f.blockTimestamp,
+            tokenS = f.tokenS,
+            tokenB = f.tokenB,
+            amountS = f.amountS,
+            amountB = f.amountB,
+            orderHash = f.orderHash,
+            txHash = f.txHash
+          )
+        }
+        GetFillHistory.Res(fills_)
       }).sendTo(sender)
 
     case req: GetRings.Req =>

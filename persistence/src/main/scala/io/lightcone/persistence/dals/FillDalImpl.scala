@@ -44,7 +44,8 @@ class FillDalImpl @Inject()(
   def saveFill(fill: Fill): Future[ErrorCode] = {
     db.run(
         (query += fill.copy(
-          marketId = MarketHash(MarketPair(fill.tokenS, fill.tokenB)).longId
+          marketHash =
+            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).hashString()
         )).asTry
       )
       .map {
@@ -62,9 +63,10 @@ class FillDalImpl @Inject()(
     Future.sequence(fills.map(saveFill))
 
   def getFills(request: GetFills.Req): Future[Seq[Fill]] = {
-    val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
-      request.market
-    )
+    val marketHashOpt = request.marketPair match {
+      case None    => None
+      case Some(m) => Some(MarketHash(m).hashString())
+    }
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
       request.ring
     )
@@ -75,9 +77,9 @@ class FillDalImpl @Inject()(
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
-      tokensOpt,
-      tokenbOpt,
-      marketIdOpt,
+      None,
+      None,
+      marketHashOpt,
       getOptString(request.wallet),
       getOptString(request.miner),
       Some(request.sort),
@@ -87,9 +89,10 @@ class FillDalImpl @Inject()(
   }
 
   def countFills(request: GetFills.Req): Future[Int] = {
-    val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
-      request.market
-    )
+    val marketHashOpt = request.marketPair match {
+      case None    => None
+      case Some(m) => Some(MarketHash(m).hashString())
+    }
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
       request.ring
     )
@@ -100,15 +103,29 @@ class FillDalImpl @Inject()(
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
-      tokensOpt,
-      tokenbOpt,
-      marketIdOpt,
+      None,
+      None,
+      marketHashOpt,
       getOptString(request.wallet),
       getOptString(request.miner),
       None,
       None
     )
     db.run(filters.size.result)
+  }
+
+  def getFillsHistory(
+      marketPairOpt: Option[MarketPair],
+      num: Int
+    ): Future[Seq[Fill]] = {
+    var filter = query.filter(_.isTaker === true)
+    filter = marketPairOpt match {
+      case None => filter
+      case Some(m) =>
+        val marketHash = MarketHash(m).hashString()
+        filter.filter(_.marketHash === marketHash)
+    }
+    db.run(filter.sortBy(_.blockHeight.desc).take(num).result)
   }
 
   def cleanActivitiesForReorg(req: BlockEvent): Future[Int] =
@@ -131,7 +148,7 @@ class FillDalImpl @Inject()(
       fillIndex: Option[Int] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
+      marketHashOpt: Option[String] = None,
       wallet: Option[String] = None,
       miner: Option[String] = None,
       sort: Option[SortingType] = None,
@@ -149,8 +166,8 @@ class FillDalImpl @Inject()(
       filters = filters.filter(_.fillIndex === fillIndex.get)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
-    if (marketId.nonEmpty)
-      filters = filters.filter(_.marketId === marketId.get)
+    if (marketHashOpt.nonEmpty)
+      filters = filters.filter(_.marketHash === marketHashOpt.get)
     if (wallet.nonEmpty) filters = filters.filter(_.wallet === wallet.get)
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
     filters = sort match {
@@ -163,23 +180,6 @@ class FillDalImpl @Inject()(
       case None         => filters
     }
     filters
-  }
-
-  private def getMarketQueryParameters(
-      marketOpt: Option[GetFills.Req.MarketFilter]
-    ) = {
-    marketOpt match {
-      case Some(m)
-          if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
-        (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).longId))
-
-      case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
-        (Some(m.tokenS), Some(m.tokenB), None)
-
-      case Some(m) if m.tokenS.nonEmpty => (Some(m.tokenS), None, None)
-      case Some(m) if m.tokenB.nonEmpty => (None, Some(m.tokenB), None)
-      case None                         => (None, None, None)
-    }
   }
 
   private def getRingQueryParameters(
