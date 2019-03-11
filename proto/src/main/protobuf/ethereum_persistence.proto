@@ -154,13 +154,14 @@ message Fill {
     io.lightcone.core.Amount amount_b           = 8;
     string token_s                              = 9;
     string token_b                              = 10;
-    int64  market_id                            = 11;
+    string market_hash                          = 11;
     io.lightcone.core.Amount split              = 12; // tokenS
     Fee    fee                                  = 13;
     string wallet                               = 14;
     string miner                                = 15;
     int64  block_height                         = 16;
     int64  block_timestamp                      = 17;
+    bool   is_taker                             = 18;
 }
 
 message TxEvents {

@@ -50,6 +50,10 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetFills.Req]
     .replies[GetFills.Res]
 
+  method("get_fill_history")
+    .accepts[GetFillHistory.Req]
+    .replies[GetFillHistory.Res]
+
   method("get_rings")
     .accepts[GetRings.Req]
     .replies[GetRings.Res]

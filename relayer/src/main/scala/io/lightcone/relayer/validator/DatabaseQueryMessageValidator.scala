@@ -67,6 +67,11 @@ final class DatabaseQueryMessageValidator(
 
     case req: GetFills.Req =>
       Future {
+        if (req.owner.isEmpty)
+          throw ErrorException(
+            ERR_INVALID_ARGUMENT,
+            "Parameter owner could not be empty"
+          )
         val ringOpt = req.ring match {
           case Some(r) =>
             val ringHash =
@@ -92,11 +97,11 @@ final class DatabaseQueryMessageValidator(
             Some(GetFills.Req.RingFilter(ringHash, ringIndex, fillIndex))
           case _ => None
         }
-        val marketOpt = req.market match {
+        val marketOpt = req.marketPair match {
           case Some(m) =>
-            val tokenS = MessageValidator.normalizeAddress(m.tokenS)
-            val tokenB = MessageValidator.normalizeAddress(m.tokenB)
-            Some(GetFills.Req.MarketFilter(tokenS, tokenB, m.isQueryBothSide))
+            val base = MessageValidator.normalizeAddress(m.baseToken)
+            val quote = MessageValidator.normalizeAddress(m.quoteToken)
+            Some(MarketPair(base, quote))
           case _ => None
         }
         GetFills.Req(
@@ -110,6 +115,20 @@ final class DatabaseQueryMessageValidator(
           req.sort,
           MessageValidator.getValidPaging(req.paging)
         )
+      }
+
+    case req: GetFillHistory.Req =>
+      Future {
+        if (req.marketPair.nonEmpty) {
+          val pair = req.marketPair.get
+          if (pair.baseToken.isEmpty || pair.quoteToken.isEmpty) {
+            throw ErrorException(
+              ERR_INVALID_ARGUMENT,
+              s"invalid marketPiar:${req.marketPair}"
+            )
+          }
+        }
+        req
       }
 
     case req: GetRings.Req =>
