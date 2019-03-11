@@ -175,7 +175,7 @@ class MetadataRefresher(
       assert(markets_.nonEmpty)
       tokens = tokens_
       markets = markets_
-      metadataManager.reset(tokens: Seq[Token], markets: Seq[Market])
+      metadataManager.reset(tokens, markets)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
