@@ -242,4 +242,3 @@ message TerminateMarket {
     }
 }
 
-message TokenTickerChanged {}

@@ -145,33 +145,57 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
         case _ => None
       }
 
-    case e: TokenMetadata =>
+    case e: TokenMetadataChanged =>
       subscription.paramsForTokens match {
         case Some(_) => Some(Notification(tokenMetadata = Some(e)))
         case _       => None
       }
 
-    case e: MarketMetadata =>
+    case e: MarketMetadataChanged =>
       subscription.paramsForMarkets match {
         case Some(_) =>
           Some(Notification(marketMetadata = Some(e)))
         case _ => None
       }
-    case ticker: MarketTicker =>
+    case ticker: MarketTickerChanged =>
       subscription.paramsForMarketTickers match {
         case Some(params) =>
-          if (params.markets.isEmpty || params.markets
-                .map(_.hashString)
-                .contains(
-                  MarketPair(ticker.baseToken, ticker.quoteToken).hashString
-                ))
-            Some(Notification(ticker = Some(ticker)))
-          else None
+          val marketIds = params.markets.map(_.hashString)
+          val marketTickers = ticker.tickers.filter { marketTicker =>
+            val hash = MarketPair(
+              marketTicker.baseToken,
+              marketTicker.quoteToken
+            ).hashString
+            marketIds.isEmpty || marketIds.contains(hash)
+          }
+
+          if (marketTickers.nonEmpty) {
+            Some(
+              Notification(
+                marketTicker = Some(ticker.copy(tickers = marketTickers))
+              )
+            )
+          } else None
 
         case _ => None
       }
 
-    case ticker: TokenTicker => None
+    case ticker: TokenTickerChanged =>
+      subscription.paramsForTokenTickers match {
+        case Some(params) =>
+          val tokenTickers = ticker.tickers.filter { tokenTicker =>
+            params.tokens.isEmpty || params.tokens.contains(tokenTicker.token)
+          }
+          if (tokenTickers.nonEmpty) {
+            Some(
+              Notification(
+                tokenTicker = Some(ticker.copy(tickers = tokenTickers))
+              )
+            )
+          } else None
+
+        case _ => None
+      }
 
     case ticker: OHLCRawData =>
       subscription.paramsForInternalTickers match {
