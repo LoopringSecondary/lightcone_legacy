@@ -251,7 +251,11 @@ class CoreModule(
         classOf[Fill],
         SocketIONotificationActor.name
       )
-    //TODO (Tx Event需要汇总)
+      .register(
+        classOf[TxEvents],
+        ActivityActor.name,
+        RingAndFillPersistenceActor.name
+      )
 
   }
 

@@ -19,7 +19,8 @@ import com.google.inject.Inject
 import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
 import io.lightcone.ethereum.event.EventHeader
-import io.lightcone.lib.NumericConversion
+import io.lightcone.ethereum.persistence.{Activity, Fill, TxEvents}
+import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,9 +55,88 @@ final class DefaultEventExtractor @Inject()(
           TransactionData(tx, Some(receipt, eventHeader))
       }
 
-      txEvents <- Future.sequence(
-        transactions.map(txEventExtractor.extractEvents)
-      )
-      events = blockEvents ++ txEvents.flatten
+      txEvents <- Future
+        .sequence(
+          transactions.map { txData =>
+            txEventExtractor.extractEvents(txData).map { events =>
+              if (!events.exists(_.isInstanceOf[Activity]))
+                events ++ extractDefaultActivity(
+                  txData.tx,
+                  txData.receiptAndHeaderOpt.get._1,
+                  txData.receiptAndHeaderOpt.get._2
+                )
+              else events
+            }
+          }
+        )
+        .map(_.flatten)
+
+      txActivities = txEvents
+        .filter(_.isInstanceOf[Activity])
+        .map(_.asInstanceOf[Activity])
+
+      txActivityEvents: Seq[TxEvents] = txActivities
+        .groupBy(_.txHash)
+        .values
+        .map(
+          activities =>
+            TxEvents(
+              TxEvents.Events.Activities(
+                TxEvents.Activities(activities)
+              )
+            )
+        )
+        .toSeq
+
+      txFillEvents: Seq[TxEvents] = txEvents
+        .filter(_.isInstanceOf[Fill])
+        .map(_.asInstanceOf[Fill])
+        .groupBy(_.txHash)
+        .values
+        .map(
+          fills =>
+            TxEvents(
+              TxEvents.Events.Fills(
+                TxEvents.Fills(fills)
+              )
+            )
+        )
+        .toSeq
+
+      events = blockEvents ++ txEvents ++ txActivityEvents ++ txFillEvents
     } yield events
+
+  def extractDefaultActivity(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      header: EventHeader
+    ) = {
+    val activity = Activity(
+      owner = tx.from,
+      block = NumericConversion.toBigInt(tx.getBlockNumber).longValue(),
+      txHash = tx.hash,
+      timestamp = header.getBlockHeader.timestamp,
+      token = Address.ZERO.toString(),
+      from = tx.from,
+      nonce = NumericConversion.toBigInt(tx.getNonce).longValue(),
+      txStatus = receipt.status,
+      detail = Activity.Detail.EtherTransfer(
+        Activity.EtherTransfer(
+          address = tx.to,
+          amount = Some(NumericConversion.toAmount(BigInt(0)))
+        )
+      )
+    )
+
+    Seq(
+      activity.copy(
+        owner = tx.from,
+        activityType = Activity.ActivityType.ETHER_TRANSFER_OUT
+      ),
+      activity.copy(
+        owner = tx.to,
+        activityType = Activity.ActivityType.ETHER_TRANSFER_IN
+      )
+    )
+  }
 }

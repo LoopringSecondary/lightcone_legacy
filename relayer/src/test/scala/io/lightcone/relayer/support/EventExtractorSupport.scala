@@ -83,6 +83,11 @@ trait EventExtractorSupport
         classOf[Fill],
         SocketIONotificationActor.name
       )
+      .register(
+        classOf[TxEvents],
+        ActivityActor.name,
+        RingAndFillPersistenceActor.name
+      )
 
   implicit val txEventExtractor: EventExtractor[TransactionData, AnyRef] =
     EventExtractor.compose[TransactionData, AnyRef]( //
