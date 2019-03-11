@@ -119,16 +119,20 @@ final class DatabaseQueryMessageValidator(
 
     case req: GetFillHistory.Req =>
       Future {
-        if (req.marketPair.nonEmpty) {
-          val pair = req.marketPair.get
-          if (pair.baseToken.isEmpty || pair.quoteToken.isEmpty) {
-            throw ErrorException(
-              ERR_INVALID_ARGUMENT,
-              s"invalid marketPiar:${req.marketPair}"
-            )
-          }
+        val marketOpt = req.marketPair match {
+          case Some(m) =>
+            if (m.baseToken.isEmpty || m.quoteToken.isEmpty) {
+              throw ErrorException(
+                ERR_INVALID_ARGUMENT,
+                s"invalid marketPiar:${req.marketPair}"
+              )
+            }
+            val base = MessageValidator.normalizeAddress(m.baseToken)
+            val quote = MessageValidator.normalizeAddress(m.quoteToken)
+            Some(MarketPair(base, quote))
+          case _ => None
         }
-        req
+        req.copy(marketPair = marketOpt)
       }
 
     case req: GetRings.Req =>
