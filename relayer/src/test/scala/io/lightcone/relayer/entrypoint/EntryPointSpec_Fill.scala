@@ -117,9 +117,6 @@ class EntryPointSpec_Fill
       marketHash = MarketHash(MarketPair(tokenS, tokenB)).hashString(),
       txHash = txHash
     )
-    log.info(
-      s"---1 $tokenS $tokenB => ${MarketHash(MarketPair(tokenS, tokenB)).hashString()}"
-    )
     dbModule.fillDal.saveFill(fill)
     dbModule.fillDal.saveFill(
       fill.copy(tokenB = tokenS, tokenS = tokenB, isTaker = true, fillIndex = 1)
