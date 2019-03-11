@@ -332,6 +332,10 @@ class TxRingMinedEventExtractor @Inject()(
         val orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1))
         val order = orders.getOrElse(orderHash, RawOrder())
         val nextFillData = Numeric.cleanHexPrefix(nextFill)
+        val nextOrder = orders.getOrElse(
+          Numeric.prependHexPrefix(nextFillData.substring(0, 64 * 1)),
+          RawOrder()
+        )
         Fill(
           owner = Address.normalize(data.substring(64 * 1, 64 * 2)),
           orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1)),
@@ -361,7 +365,8 @@ class TxRingMinedEventExtractor @Inject()(
           wallet = order.getParams.wallet,
           miner = tx.from,
           blockHeight = blockHeader.height,
-          blockTimestamp = blockHeader.timestamp
+          blockTimestamp = blockHeader.timestamp,
+          isTaker = order.validSince >= nextOrder.validSince
         )
     }
   }

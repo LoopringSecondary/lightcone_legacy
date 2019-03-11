@@ -37,44 +37,57 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
         s"invalid ParamsForActivities:${subscription.getParamsForActivities}, " +
           s"addresses shouldn't be empty and must be valid ethereum addresses"
       )
-    else if (subscription.paramsForOrders.isDefined && (subscription.getParamsForOrders.addresses.isEmpty || !subscription.getParamsForOrders.addresses
-               .forall(Address.isValid)))
+    else if (subscription.paramsForOrders.isDefined &&
+             (subscription.getParamsForOrders.addresses.isEmpty ||
+             !subscription.getParamsForOrders.addresses.forall(
+               Address.isValid
+             )))
       Some(
         s"invalid ParamsForOrders:${subscription.getParamsForOrders}, " +
           s"addresses shouldn't be empty and must be valid ethereum addresses"
       )
-    else if (subscription.paramsForFills.isDefined && (subscription.getParamsForFills.market.isEmpty ||
+    else if (subscription.paramsForFills.isDefined &&
+             (subscription.getParamsForFills.market.isEmpty ||
              !subscription.getParamsForFills.getMarket.isValid()))
       Some(
         s"invalid ParamsForFills:${subscription.getParamsForFills}," +
           s" market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
-    else if (subscription.paramsForOrderbook.isDefined && (subscription.getParamsForOrderbook.market.isEmpty || !subscription.getParamsForOrderbook.getMarket
-               .isValid()))
+    else if (subscription.paramsForOrderbook.isDefined &&
+             (subscription.getParamsForOrderbook.market.isEmpty ||
+             !subscription.getParamsForOrderbook.getMarket.isValid()))
       Some(
         s"invalid ParamsForOrderbook:${subscription.getParamsForOrderbook}, " +
           s"market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
-    else if (subscription.paramsForMarketTickers.isDefined && !subscription.getParamsForMarketTickers.markets
-               .forall(_.isValid()))
+    else if (subscription.paramsForMarketTickers.isDefined &&
+             !subscription.getParamsForMarketTickers.markets.forall(
+               _.isValid()
+             ))
       Some(
         s"invalid paramsForMarketTickers:${subscription.getParamsForMarketTickers}," +
           s" market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
-    else if (subscription.paramsForTokenTickers.isDefined && !subscription.getParamsForTokenTickers.tokens
-               .forall(Address.isValid))
+    else if (subscription.paramsForTokenTickers.isDefined &&
+             !subscription.getParamsForTokenTickers.tokens.forall(
+               Address.isValid
+             ))
       Some(
         s"invalid paramsForTokenTickers:${subscription.getParamsForTokenTickers}," +
           s" tokens must be valid ethereum addresses"
       )
-    else if (subscription.paramsForInternalTickers.isDefined && (subscription.getParamsForInternalTickers.market.isEmpty || !subscription.getParamsForInternalTickers.getMarket
-               .isValid()))
+    else if (subscription.paramsForInternalTickers.isDefined &&
+             (subscription.getParamsForInternalTickers.market.isEmpty ||
+             !subscription.getParamsForInternalTickers.getMarket.isValid()))
       Some(
         s"invalid paramsForInternalTickers:${subscription.getParamsForInternalTickers}," +
           s" market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
-    else if (subscription.paramsForAccounts.isDefined && (subscription.getParamsForAccounts.addresses.isEmpty || !subscription.getParamsForAccounts.addresses
-               .forall(Address.isValid)))
+    else if (subscription.paramsForAccounts.isDefined &&
+             (subscription.getParamsForAccounts.addresses.isEmpty ||
+             !subscription.getParamsForAccounts.addresses.forall(
+               Address.isValid
+             )))
       Some(
         s"invalid ParamsForAccounts:${subscription.getParamsForAccounts}, " +
           s"addresses shouldn't be empty and must be valid ethereum addresses"
@@ -106,9 +119,9 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case e: Fill =>
       subscription.paramsForFills match {
         case Some(params)
-            if (params.address.isEmpty || params.address == e.owner)
-              && (params.getMarket.hashString ==
-                MarketPair(e.tokenB, e.tokenS).hashString) =>
+            if (params.getMarket.hashString ==
+              MarketPair(e.tokenB, e.tokenS).hashString) &&
+              ((params.address.isEmpty && e.isTaker) || params.address == e.owner) =>
           Some(Notification(fill = Some(e)))
         case _ => None
       }

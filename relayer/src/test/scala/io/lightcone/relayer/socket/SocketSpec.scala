@@ -107,4 +107,3 @@ class SocketSpec extends CommonSpec with EventExtractorSupport {
     }
   }
 }
-
