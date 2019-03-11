@@ -147,7 +147,8 @@ class TxRingMinedEventExtractor @Inject()(
               event._ringIndex.longValue(),
               eventHeader
             )
-            val orderFilledEvents = fills.map(fill =>
+            val orderFilledEvents = fills.map(
+              fill =>
                 OrderFilledEvent(
                   header = Some(eventHeader),
                   owner = fill.owner,
