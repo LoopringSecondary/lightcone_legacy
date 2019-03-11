@@ -88,8 +88,13 @@ class MetadataRefresher(
   def ready: Receive = {
     case req: MetadataChanged =>
       for {
-        _ <- refreshMetadata()
+        (tokenMetadatas, marketMetadatas, tickerChanged) <- refreshMetadata()
         _ = getLocalActors().foreach(_ ! req)
+        _ = notifyLocalSocketActor(
+          tokenMetadatas,
+          marketMetadatas,
+          tickerChanged
+        )
       } yield Unit
 
     case req: GetTokens.Req => {
@@ -172,10 +177,28 @@ class MetadataRefresher(
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
+      val diff = calculateDiff(tokens_, markets_)
       tokens = tokens_
       markets = markets_
-      metadataManager.reset(tokens, markets)
+      metadataManager.reset(tokens: Seq[Token], markets: Seq[Market])
+      diff
     }
+
+  private def calculateDiff(
+      tokens_ : Seq[Token],
+      markets_ : Seq[Market]
+    ) = {
+    val tokenMetadata_ = tokens_.map(_.getMetadata)
+    val tokenMetadata = tokens.map(_.getMetadata)
+    val tokenTicker_ = tokens_.map(_.getTicker)
+    val tokenTicker = tokens.map(_.getTicker)
+    val marketMetadata_ = markets_.map(_.getMetadata)
+    val marketMetadata = markets.map(_.getMetadata)
+    val tokenMetadataChanged = tokenMetadata_.diff(tokenMetadata)
+    val marketMetadataChanged = marketMetadata_.diff(marketMetadata)
+    val tickerChanged = tokenTicker_.diff(tokenTicker)
+    (tokenMetadataChanged, marketMetadataChanged, tickerChanged.nonEmpty)
+  }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
   private def getLocalActors() = {
@@ -186,6 +209,19 @@ class MetadataRefresher(
       context.system.actorSelection(str.format(OrderbookManagerActor.name)),
       context.system.actorSelection(str.format(MultiAccountManagerActor.name))
     )
+  }
+
+  private def notifyLocalSocketActor(
+      tokenMetadatas: Seq[TokenMetadata],
+      marketMetadatas: Seq[MarketMetadata],
+      tickerChanged: Boolean
+    ) = {
+    val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
+    val targetActor =
+      context.system.actorSelection(str.format(SocketIONotificationActor.name))
+    tokenMetadatas.foreach(t => targetActor ! t)
+    marketMetadatas.foreach(t => targetActor ! t)
+    if (tickerChanged) targetActor ! TokenTickerChanged
   }
 
   private def changeTokenTickerWithQuoteCurrency(
