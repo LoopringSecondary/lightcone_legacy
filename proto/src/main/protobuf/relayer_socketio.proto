@@ -71,8 +71,12 @@ message SocketIOSubscription {
     }
 
     // subscribe for message MarketTicker defined in core.proto
-    message ParamsForTickers {
-        io.lightcone.core.MarketPair market = 1;
+    message ParamsForMarketTickers {
+       repeated io.lightcone.core.MarketPair markets = 1;
+    }
+
+    message ParamsForTokenTickers{
+        repeated string tokens = 1;
     }
 
     // subscribe for message InternalMarketTicker defined in core.proto
@@ -110,9 +114,10 @@ message SocketIOSubscription {
     ParamsForOrderbook            params_for_orderbook            = 4;
     ParamsForTokens               params_for_tokens               = 5;
     ParamsForMarkets              params_for_markets              = 6;
-    ParamsForTickers              params_for_tickers              = 7;
-    ParamsForInternalTickers      params_for_internal_tickers     = 8;
-    ParamsForNews                 params_for_news                 = 9;
-    ParamsForAccounts             params_for_accounts             = 10;
+    ParamsForMarketTickers        params_for_market_tickers       = 7;
+    ParamsForTokenTickers         params_for_token_tickers        = 8;
+    ParamsForInternalTickers      params_for_internal_tickers     = 9;
+    ParamsForNews                 params_for_news                 = 10;
+    ParamsForAccounts             params_for_accounts             = 11;
 
 }

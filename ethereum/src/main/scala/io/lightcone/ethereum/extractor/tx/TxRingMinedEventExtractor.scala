@@ -147,8 +147,15 @@ class TxRingMinedEventExtractor @Inject()(
               event._ringIndex.longValue(),
               eventHeader
             )
+            val orderFilledEvents = fills.map(fill =>
+                OrderFilledEvent(
+                  header = Some(eventHeader),
+                  owner = fill.owner,
+                  orderHash = fill.orderHash
+                )
+            )
             val activities = genereateActivity(fills, eventHeader, isP2PRes)
-            fills ++ ringMinedEvents ++ ohlcDatas ++ activities
+            fills ++ ringMinedEvents ++ ohlcDatas ++ activities ++ orderFilledEvents
           case _ =>
             Seq.empty
         }

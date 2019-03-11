@@ -29,63 +29,57 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
   def checkSubscriptionValidation(
       subscription: SocketIOSubscription
     ): Option[String] = {
-    subscription match {
-      case SocketIOSubscription(Some(params), _, _, _, _, _, _, _, _, _)
-          if params.addresses.isEmpty ||
-            !params.addresses.forall(Address.isValid) =>
-        Some(
-          s"invalid ParamsForActivities:$params, " +
-            s"addresses shouldn't be empty and must be valid ethereum addresses"
-        )
 
-      case SocketIOSubscription(_, Some(params), _, _, _, _, _, _, _, _)
-          if params.addresses.isEmpty ||
-            !params.addresses.forall(Address.isValid) =>
-        Some(
-          s"invalid ParamsForOrders:$params, " +
-            s"addresses shouldn't be empty and must be valid ethereum addresses"
-        )
-
-      case SocketIOSubscription(_, _, Some(paramsForFills), _, _, _, _, _, _, _)
-          if paramsForFills.market.isEmpty ||
-            !paramsForFills.getMarket.isValid() =>
-        Some(
-          s"invalid ParamsForFills:$paramsForFills," +
-            s" market shouldn't be null and market token addresses must be valid ethereum addresses"
-        )
-
-      case SocketIOSubscription(_, _, _, Some(params), _, _, _, _, _, _)
-          if params.market.isEmpty || !params.getMarket.isValid() =>
-        Some(
-          s"invalid ParamsForOrderbook:$params, " +
-            s"market shouldn't be null and market token addresses must be valid ethereum addresses"
-        )
-
-      case SocketIOSubscription(_, _, _, _, _, _, Some(params), _, _, _)
-          if params.market.isEmpty || !params.getMarket.isValid() =>
-        Some(
-          s"invalid paramsForTickers:$params," +
-            s" market shouldn't be null and market token addresses must be valid ethereum addresses"
-        )
-
-      case SocketIOSubscription(_, _, _, _, _, _, _, Some(params), _, _)
-          if params.market.isEmpty || !params.getMarket.isValid() =>
-        Some(
-          s"invalid paramsForInternalTickers:$params," +
-            s" market shouldn't be null and market token addresses must be valid ethereum addresses"
-        )
-
-      case SocketIOSubscription(_, _, _, _, _, _, _, _, _, Some(params))
-          if params.addresses.isEmpty ||
-            !params.addresses.forall(Address.isValid) =>
-        Some(
-          s"invalid ParamsForAccounts:$params, " +
-            s"addresses shouldn't be empty and must be valid ethereum addresses"
-        )
-
-      case _ => None
-    }
-
+    if (subscription.paramsForActivities.isDefined &&
+        (subscription.getParamsForActivities.addresses.isEmpty ||
+        !subscription.getParamsForActivities.addresses.forall(Address.isValid)))
+      Some(
+        s"invalid ParamsForActivities:${subscription.getParamsForActivities}, " +
+          s"addresses shouldn't be empty and must be valid ethereum addresses"
+      )
+    else if (subscription.paramsForOrders.isDefined && (subscription.getParamsForOrders.addresses.isEmpty || !subscription.getParamsForOrders.addresses
+               .forall(Address.isValid)))
+      Some(
+        s"invalid ParamsForOrders:${subscription.getParamsForOrders}, " +
+          s"addresses shouldn't be empty and must be valid ethereum addresses"
+      )
+    else if (subscription.paramsForFills.isDefined && (subscription.getParamsForFills.market.isEmpty ||
+             !subscription.getParamsForFills.getMarket.isValid()))
+      Some(
+        s"invalid ParamsForFills:${subscription.getParamsForFills}," +
+          s" market shouldn't be null and market token addresses must be valid ethereum addresses"
+      )
+    else if (subscription.paramsForOrderbook.isDefined && (subscription.getParamsForOrderbook.market.isEmpty || !subscription.getParamsForOrderbook.getMarket
+               .isValid()))
+      Some(
+        s"invalid ParamsForOrderbook:${subscription.getParamsForOrderbook}, " +
+          s"market shouldn't be null and market token addresses must be valid ethereum addresses"
+      )
+    else if (subscription.paramsForMarketTickers.isDefined && !subscription.getParamsForMarketTickers.markets
+               .forall(_.isValid()))
+      Some(
+        s"invalid paramsForMarketTickers:${subscription.getParamsForMarketTickers}," +
+          s" market shouldn't be null and market token addresses must be valid ethereum addresses"
+      )
+    else if (subscription.paramsForTokenTickers.isDefined && !subscription.getParamsForTokenTickers.tokens
+               .forall(Address.isValid))
+      Some(
+        s"invalid paramsForTokenTickers:${subscription.getParamsForTokenTickers}," +
+          s" tokens must be valid ethereum addresses"
+      )
+    else if (subscription.paramsForInternalTickers.isDefined && (subscription.getParamsForInternalTickers.market.isEmpty || !subscription.getParamsForInternalTickers.getMarket
+               .isValid()))
+      Some(
+        s"invalid paramsForInternalTickers:${subscription.getParamsForInternalTickers}," +
+          s" market shouldn't be null and market token addresses must be valid ethereum addresses"
+      )
+    else if (subscription.paramsForAccounts.isDefined && (subscription.getParamsForAccounts.addresses.isEmpty || !subscription.getParamsForAccounts.addresses
+               .forall(Address.isValid)))
+      Some(
+        s"invalid ParamsForAccounts:${subscription.getParamsForAccounts}, " +
+          s"addresses shouldn't be empty and must be valid ethereum addresses"
+      )
+    else None
   }
 
   def generateNotification(
@@ -151,15 +145,21 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
         case _ => None
       }
     case ticker: MarketTicker =>
-      subscription.paramsForTickers match {
+      subscription.paramsForMarketTickers match {
         case Some(params) =>
-          if (MarketPair(ticker.baseToken, ticker.quoteToken).hashString
-                == params.getMarket.hashString)
+          if (params.markets.isEmpty || params.markets
+                .map(_.hashString)
+                .contains(
+                  MarketPair(ticker.baseToken, ticker.quoteToken).hashString
+                ))
             Some(Notification(ticker = Some(ticker)))
           else None
 
         case _ => None
       }
+
+    case ticker: TokenTicker => None
+
     case ticker: OHLCRawData =>
       subscription.paramsForInternalTickers match {
         case Some(params) =>

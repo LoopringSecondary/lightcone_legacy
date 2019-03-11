@@ -94,7 +94,19 @@ abstract class SocketIONotifier
             market = params.market.map(_.normalize())
           )
       ),
-      paramsForTickers = subscription.paramsForTickers.map(
+      paramsForMarketTickers = subscription.paramsForMarketTickers.map(
+        params =>
+          params.copy(
+            markets = params.markets.map(_.normalize())
+          )
+      ),
+      paramsForTokenTickers = subscription.paramsForTokenTickers.map(
+        params =>
+          params.copy(
+            tokens = params.tokens.map(Address.normalize)
+          )
+      ),
+      paramsForInternalTickers = subscription.paramsForInternalTickers.map(
         params =>
           params.copy(
             market = params.market.map(_.normalize())
