@@ -222,7 +222,7 @@ class MetadataManagerActor(
           tokenTickers = tickers_
           marketTickers = fillSupportMarketTickers(tickers_)
           refreshTokenAndMarket()
-          publish()
+          publish(false, false, true)
         }
       }
     }
@@ -267,13 +267,11 @@ class MetadataManagerActor(
       tokenInfosOpt: Option[Seq[TokenInfo]],
       marketsOpt: Option[Seq[MarketMetadata]]
     ): Unit = {
-    var notify = false
     var tokenMetadataChanged = false
     var tokenInfoChanged = false
     var marketMetadataChanged = false
     tokenMetadatasOpt foreach { tokenMetadatas_ =>
       if (tokenMetadatas_ != tokenMetadatas) {
-        notify = true
         tokenMetadataChanged = true
         tokenMetadatas = tokenMetadatas_
       }
@@ -281,7 +279,6 @@ class MetadataManagerActor(
 
     tokenInfosOpt foreach { tokenInfos_ =>
       if (tokenInfos_ != tokenInfos) {
-        notify = true
         tokenInfoChanged = true
         tokenInfos = tokenInfos_
       }
@@ -289,8 +286,7 @@ class MetadataManagerActor(
 
     marketsOpt foreach { markets_ =>
       if (markets_ != marketMetadatas) {
-        notify = true
-        marketMetadataChanged = false
+        marketMetadataChanged = true
         marketMetadatas = markets_
       }
     }
