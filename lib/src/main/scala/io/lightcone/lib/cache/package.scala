@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package io.lightcone.lib
 
 package object cache {
   implicit def cache2CacheAccess[K, V](cache: Cache[K, V]) =

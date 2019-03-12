@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib.cache
+package io.lightcone.lib.cache
 
 import scala.concurrent._
 

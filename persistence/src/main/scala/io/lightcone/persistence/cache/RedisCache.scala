@@ -16,7 +16,7 @@
 
 package io.lightcone.persistence.cache
 
-import org.loopring.lightcone.lib.cache._
+import io.lightcone.lib.cache._
 import redis._
 import scala.concurrent._
 
