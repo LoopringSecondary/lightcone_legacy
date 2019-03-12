@@ -5,10 +5,29 @@
 - ### ETH 转账
 
   - ##### ETH转账成功
-
-    | 步骤            | 预期输出结果                                                 |
-    | --------------- | ------------------------------------------------------------ |
-    | A ->  B  10 ETH | A地址有一个成功的转出ETH的Activity，ETH 余额减少10 + 油费；<br />B地址有一个成功的转入ETH的Activity事件，ETH余额增加更加10。 |
+<table>
+  <tr>
+    <th>前置条件</th>
+    <th>分支</th>
+    <th>步骤</th>
+    <th>预期输出结果</th>
+  </tr>
+  <tr>
+    <td rowspan="2">A账户余额：20 ETH</td>
+    <td rowspan="2">转账成功</td>
+    <td rowspan="2">A 转账到 B 10 ETH </td>
+    <td>A有一个pending的ETH转出Activity，B有一个pending的ETH转出Activity；<br>A、B余额不变<br><br></td>
+  </tr>
+  <tr>
+    <td>A的pending Activity 状态变成 success，B的pending Activity 变成success；<br>A的ETH减少10 + 油费，B的ETH增加10</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
 
   - ##### ETH转账失败
 
