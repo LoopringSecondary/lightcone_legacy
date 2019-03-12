@@ -103,7 +103,7 @@ class CoreModule(
       .toProvider[cache.RedisClusterProvider]
       .in[Singleton]
 
-    if (config.getBoolean("disable-redis-cache")) {
+    if (config.getBoolean("cache.disable-redis-cache")) {
       log.warn("redis cluster caching is disabled")
 
       bind[Cache[String, Array[Byte]]]

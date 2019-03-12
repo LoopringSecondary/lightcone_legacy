@@ -32,14 +32,13 @@ class OHLCDataServiceImpl @Inject()(
     extends OHLCDataService {
 
   private val cache = ProtoCache[GetMarketHistory.Res]("ohlc")
-  val expiry = 60
 
   def saveData(req: PersistOHLCData.Req): Future[PersistOHLCData.Res] =
     ohlcDataDal.saveData(req.data.get)
 
   def getOHLCData(request: GetMarketHistory.Req): Future[GetMarketHistory.Res] =
     cache
-      .read(request, expiry) {
+      .read(request, 60 /*seconds*/ ) {
         ohlcDataDal
           .getOHLCData(
             request.marketHash,
