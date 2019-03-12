@@ -121,7 +121,7 @@ class OHLCDataDalImpl @Inject()(
     db.run(sql)
   }
 
-  // TODO(yangli):需要讨论下这个接口具体的需求场景，是前端直接调用，还是和CMC数据合并？
+  // TODO(yangli):根据当前讨论，先保留查询接口，目前前端只显示relayer的最新价格，看将来需求是否启用这个接口
   def getRecentOHLCData(
       marketHash: String,
       beginTime: Long
