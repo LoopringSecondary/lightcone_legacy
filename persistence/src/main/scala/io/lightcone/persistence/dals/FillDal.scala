@@ -26,11 +26,11 @@ import scala.concurrent._
 trait FillDal extends BaseDalImpl[FillTable, Fill] {
   def saveFill(fill: Fill): Future[ErrorCode]
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
-  def getFills(request: GetFills.Req): Future[Seq[Fill]]
-  def countFills(request: GetFills.Req): Future[Int]
+  def getFills(request: GetUserFills.Req): Future[Seq[Fill]]
+  def countFills(request: GetUserFills.Req): Future[Int]
 
-  def getFillsHistory(
-      marketPairOpt: Option[MarketPair],
+  def getMarketFills(
+      marketPair: MarketPair,
       num: Int
     ): Future[Seq[Fill]]
   def cleanActivitiesForReorg(req: BlockEvent): Future[Int]

@@ -60,12 +60,12 @@ class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_FILLS") {
   def idx_order_hash = index("idx_order_hash", (orderHash), unique = false)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
-  def idx_market_hash = index("idx_market_id", (marketHash), unique = false)
+  def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_miner = index("idx_miner", (miner), unique = false)
 
   def idx_owner_market =
-    index("idx_owner_market", (owner, marketHash), unique = false)
+    index("idx_owner_markethash", (owner, marketHash), unique = false)
 
   def idx_block_height =
     index("idx_block_height", (blockHeight), unique = false)

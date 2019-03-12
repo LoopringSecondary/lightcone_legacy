@@ -17,7 +17,7 @@
 package io.lightcone.relayer.entrypoint
 
 import io.lightcone.core.{MarketHash, MarketPair}
-import io.lightcone.relayer.data.GetFillHistory
+import io.lightcone.relayer.data.GetMarketFills
 import io.lightcone.relayer.support._
 import scala.concurrent.Await
 import io.lightcone.ethereum.persistence.Fill
@@ -63,15 +63,9 @@ class EntryPointSpec_Fill
       }
     }
 
-    "query fill history without filter market" in {
-      val f1 = singleRequest(GetFillHistory.Req(None), "get_fill_history")
-      val res1 = Await.result(f1.mapTo[GetFillHistory.Res], timeout.duration)
-      res1.fills.length should be(2)
-    }
-
     "query fill history with filter not exist market" in {
       val f1 = singleRequest(
-        GetFillHistory.Req(
+        GetMarketFills.Req(
           Some(
             MarketPair(
               "0x7189ff502fb784c49202507f5e41a7fb4a313721",
@@ -79,27 +73,27 @@ class EntryPointSpec_Fill
             )
           )
         ),
-        "get_fill_history"
+        "get_market_fills"
       )
-      val res1 = Await.result(f1.mapTo[GetFillHistory.Res], timeout.duration)
+      val res1 = Await.result(f1.mapTo[GetMarketFills.Res], timeout.duration)
       res1.fills.length should be(0)
     }
 
     "query fill history with filter market" in {
       val f1 = singleRequest(
-        GetFillHistory.Req(Some(MarketPair(tokenB1, tokenS1))),
-        "get_fill_history"
+        GetMarketFills.Req(Some(MarketPair(tokenB1, tokenS1))),
+        "get_market_fills"
       )
-      val res1 = Await.result(f1.mapTo[GetFillHistory.Res], timeout.duration)
+      val res1 = Await.result(f1.mapTo[GetMarketFills.Res], timeout.duration)
       res1.fills.length should be(1)
     }
 
     "query fill history with filter market in different side" in {
       val f1 = singleRequest(
-        GetFillHistory.Req(Some(MarketPair(tokenS1, tokenB1))),
-        "get_fill_history"
+        GetMarketFills.Req(Some(MarketPair(tokenS1, tokenB1))),
+        "get_market_fills"
       )
-      val res1 = Await.result(f1.mapTo[GetFillHistory.Res], timeout.duration)
+      val res1 = Await.result(f1.mapTo[GetMarketFills.Res], timeout.duration)
       res1.fills.length should be(1)
     }
   }

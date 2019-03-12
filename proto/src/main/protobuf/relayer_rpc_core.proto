@@ -298,9 +298,10 @@ message GetNodeBlockHeight {
 }
 
 message MetadataChanged {
-    bool token_metadata_changed = 1;
-    bool market_metadata_changed = 2;
-    bool ticker_changed = 3;
+    bool  token_metadata_changed = 1;
+    bool  token_info_changed = 2;
+    bool  market_metadata_changed = 3;
+    bool  ticker_changed = 4;
 }
 
 message SubscribeMetadataChanged {
@@ -345,7 +346,7 @@ message GetOrderbookSlots {
     }
 }
 
-message GetFills {
+message GetUserFills {
     message Req {
         message RingFilter {
             string  ring_hash         = 1;
@@ -369,7 +370,7 @@ message GetFills {
     }
 }
 
-message GetFillHistory {
+message GetMarketFills {
     message Req {
         io.lightcone.core.MarketPair  market_pair = 1;
     }

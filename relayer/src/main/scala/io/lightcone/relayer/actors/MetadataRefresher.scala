@@ -30,6 +30,7 @@ import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.util._
 import io.lightcone.relayer.external._
+import scala.concurrent.duration._
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -89,9 +90,17 @@ class MetadataRefresher(
     case req: MetadataChanged =>
       for {
         _ <- refreshMetadata()
-        _ = getLocalActors().foreach(_ ! req)
-        _ = notifyLocalSocketActor(req)
+        _ = getLocalActors(
+          OrderbookManagerActor.name,
+          OrderbookManagerActor.name,
+          MultiAccountManagerActor.name
+        ).foreach(_ ! req)
+        _ = delayNotify(req)
       } yield Unit
+
+    case req: NotifyChanged =>
+      getLocalActors(SocketIONotificationActor.name)
+        .foreach(_ ! req.metadataChanged)
 
     case req: GetTokens.Req => {
       val tokens_ = if (tokens.isEmpty) {
@@ -179,32 +188,22 @@ class MetadataRefresher(
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
-  private def getLocalActors() = {
+  private def getLocalActors(actorNames: String*) = {
     val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
 
-    Seq(
-      context.system.actorSelection(str.format(OrderbookManagerActor.name)),
-      context.system.actorSelection(str.format(OrderbookManagerActor.name)),
-      context.system.actorSelection(str.format(MultiAccountManagerActor.name))
-    )
+    actorNames map { n =>
+      context.system.actorSelection(str.format(n))
+    }
   }
 
-  private def notifyLocalSocketActor(changed: MetadataChanged) = {
+  private def delayNotify(changed: MetadataChanged) = {
     if (changed.marketMetadataChanged || changed.tokenMetadataChanged || changed.tickerChanged) {
-      val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
-      val targetActor =
-        context.system.actorSelection(
-          str.format(SocketIONotificationActor.name)
+      context.system.scheduler
+        .scheduleOnce(
+          30 second,
+          self,
+          NotifyChanged(changed.copy(tokenInfoChanged = false))
         )
-
-      if (changed.tokenMetadataChanged)
-        targetActor ! TokenMetadataChanged(tokens.map(_.getMetadata))
-      if (changed.marketMetadataChanged)
-        targetActor ! MarketMetadataChanged(markets.map(_.getMetadata))
-      if (changed.tickerChanged) {
-        targetActor ! TokenTickerChanged(tokens.map(_.getTicker))
-        targetActor ! MarketTickerChanged(markets.map(_.getTicker))
-      }
     }
   }
 
@@ -314,3 +313,5 @@ class MetadataRefresher(
       )
   }
 }
+
+case class NotifyChanged(metadataChanged: MetadataChanged)
