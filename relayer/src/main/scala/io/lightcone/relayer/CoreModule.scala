@@ -227,7 +227,8 @@ class CoreModule(
       )
       .register(
         classOf[OHLCRawData], //
-        MarketHistoryActor.name
+        MarketHistoryActor.name,
+        SocketIONotificationActor.name
       )
       .register(
         classOf[BlockGasPricesExtractedEvent], //
@@ -242,6 +243,20 @@ class CoreModule(
         MultiAccountManagerActor.name,
         RingSettlementManagerActor.name
       )
+      .register(
+        classOf[Activity],
+        SocketIONotificationActor.name
+      )
+      .register(
+        classOf[Fill],
+        SocketIONotificationActor.name
+      )
+      .register(
+        classOf[TxEvents],
+        ActivityActor.name,
+        RingAndFillPersistenceActor.name
+      )
+
   }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {

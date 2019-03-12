@@ -19,7 +19,8 @@ import com.google.inject.Inject
 import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
 import io.lightcone.ethereum.event.EventHeader
-import io.lightcone.lib.NumericConversion
+import io.lightcone.ethereum.persistence._
+import io.lightcone.lib._
 import io.lightcone.relayer.data._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,9 +55,30 @@ final class DefaultEventExtractor @Inject()(
           TransactionData(tx, Some(receipt, eventHeader))
       }
 
-      txEvents <- Future.sequence(
-        transactions.map(txEventExtractor.extractEvents)
+      txEvents <- Future
+        .sequence(
+          transactions.map { txData =>
+            txEventExtractor.extractEvents(txData).map { events =>
+              if (!events.exists(_.isInstanceOf[Activity]))
+                events ++ EventExtractor.extractDefaultActivity(txData)
+              else events
+            }
+          }
+        )
+        .map(_.flatten)
+
+      txActivities = txEvents
+        .filter(_.isInstanceOf[Activity])
+        .map(_.asInstanceOf[Activity])
+
+      txActivityEvents: Seq[TxEvents] = EventExtractor.composeActivities(
+        txActivities
       )
-      events = blockEvents ++ txEvents.flatten
+
+      fills = txEvents.filter(_.isInstanceOf[Fill]).map(_.asInstanceOf[Fill])
+
+      txFillEvents: Seq[TxEvents] = EventExtractor.composeFills(fills)
+
+      events = txEvents ++ blockEvents ++ txActivityEvents ++ txFillEvents
     } yield events
 }

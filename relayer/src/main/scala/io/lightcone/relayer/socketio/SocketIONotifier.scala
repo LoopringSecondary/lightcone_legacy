@@ -55,7 +55,9 @@ abstract class SocketIONotifier
       case _ =>
     }
 
-    log.debug(s"socketio notify: $event to ${targets.size} subscribers")
+    log.debug(
+      s"socketio notify: $event to ${targets.count(_._2.isDefined)} subscribers"
+    )
   }
 
   def normalizeSubscription(
@@ -76,7 +78,7 @@ abstract class SocketIONotifier
       paramsForFills = subscription.paramsForFills.map { params =>
         params.copy(
           address =
-            if (params.address.isEmpty) params.address
+            if (params.address == null || params.address.isEmpty) ""
             else Address.normalize(params.address),
           market = params.market.map(_.normalize())
         )
@@ -94,7 +96,7 @@ abstract class SocketIONotifier
             market = params.market.map(_.normalize())
           )
       ),
-      paramsForTickers = subscription.paramsForTickers.map(
+      paramsForInternalTickers = subscription.paramsForInternalTickers.map(
         params =>
           params.copy(
             market = params.market.map(_.normalize())

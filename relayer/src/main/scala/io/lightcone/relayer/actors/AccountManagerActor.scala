@@ -29,8 +29,10 @@ import io.lightcone.ethereum.event._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import kamon.metric._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -75,6 +77,7 @@ class AccountManagerActor(
   @inline def activityActor = actors.get(ActivityActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
   @inline def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
+  @inline def socketIONotifierActor = actors.get(SocketIONotificationActor.name)
 
   @inline def chainReorgManagerActor =
     actors.get(ChainReorganizationManagerActor.name)
@@ -327,6 +330,8 @@ class AccountManagerActor(
           .setBalance(evt.block, evt.token, BigInt(evt.balance.toByteArray))
       }
 
+      notifyAccountUpdate(evt.token)
+
     case evt: AddressAllowanceUpdatedEvent =>
       count.refine("label" -> "allowance_updated").increment()
 
@@ -335,6 +340,8 @@ class AccountManagerActor(
         manager
           .setAllowance(evt.block, evt.token, BigInt(evt.allowance.toByteArray))
       }
+
+      notifyAccountUpdate(evt.token)
 
     case evt: AddressBalanceAllowanceUpdatedEvent =>
       count.refine("label" -> "balance_allowance_updated").increment()
@@ -348,6 +355,8 @@ class AccountManagerActor(
           BigInt(evt.allowance.toByteArray)
         )
       }
+
+      notifyAccountUpdate(evt.token)
 
     case evt: CutoffEvent if evt.header.nonEmpty =>
       val header = evt.header.get
@@ -436,6 +445,24 @@ class AccountManagerActor(
         throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
       }
     } yield Unit
+  }
+
+  private def notifyAccountUpdate(token: String) = {
+    manager.getBalanceOfToken(token).map { balanceAndAllowance =>
+      AccountUpdate(
+        address = owner,
+        tokenBalance = Some(
+          TokenBalance(
+            token = token,
+            balance =
+              Some(NumericConversion.toAmount(balanceAndAllowance.balance)),
+            allowance =
+              Some(NumericConversion.toAmount(balanceAndAllowance.allowance)),
+            block = balanceAndAllowance.block
+          )
+        )
+      )
+    } sendTo socketIONotifierActor
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {
