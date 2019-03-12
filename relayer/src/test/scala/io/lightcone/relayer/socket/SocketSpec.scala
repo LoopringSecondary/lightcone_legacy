@@ -16,15 +16,7 @@
 
 package io.lightcone.relayer.socketio
 
-import io.lightcone.relayer.actors._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
-import akka.pattern._
-import io.lightcone.lib.NumericConversion
-import io.lightcone.relayer.base._
-
-import scala.concurrent.Await
-import scala.math.BigInt
 
 class SocketSpec extends CommonSpec with EventExtractorSupport {
 
