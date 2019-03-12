@@ -123,7 +123,7 @@ final class DefaultEventExtractor @Inject()(
       detail = Activity.Detail.EtherTransfer(
         Activity.EtherTransfer(
           address = tx.to,
-          amount = Some(NumericConversion.toAmount(BigInt(0)))
+          amount = tx.value
         )
       )
     )
