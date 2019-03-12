@@ -17,24 +17,14 @@
 package io.lightcone.lib.cache
 
 import scala.concurrent._
-
-private[cache] final class ProtoCacheSerializer[
-    T <: scalapb.GeneratedMessage with scalapb.Message[T]
-  ](
-    implicit
-    c: scalapb.GeneratedMessageCompanion[T])
-    extends CacheSerializer[T] {
-
-  def toBytes(obj: T): Array[Byte] = obj.toByteArray
-  def fromBytes(bytes: Array[Byte]): T = c.parseFrom(bytes)
-}
+import com.google.protobuf.ByteString
 
 trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
     extends Cache[K, V] {
 
   val underlying: Cache[String, Array[Byte]]
+  val domain: String
   implicit val c: scalapb.GeneratedMessageCompanion[V]
-  private val serializer = new ProtoCacheSerializer[V]
 
   def keyToString(k: K): String
 
@@ -48,7 +38,7 @@ trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
     for {
       cached <- underlying.get(keyMap.keys.toSeq)
       res = cached.map {
-        case (k, v) => keyMap(k) -> serializer.fromBytes(v)
+        case (k, v) => keyMap(k) -> c.parseFrom(v)
       }
     } yield res
   }
@@ -61,42 +51,43 @@ trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
       expiry: Long
     ): Future[Boolean] =
     underlying.put(keyValues.map {
-      case (k, v) => k2S(k) -> serializer.toBytes(v)
+      case (k, v) => k2S(k) -> v.toByteArray
     }, expiry)
 }
 
-final class StringToProtoCache[
-    V <: scalapb.GeneratedMessage with scalapb.Message[V]
-  ](val domain: String = ""
-  )(
-    implicit
-    val underlying: Cache[String, Array[Byte]],
-    val ec: ExecutionContext,
-    val c: scalapb.GeneratedMessageCompanion[V])
-    extends ProtoCache[String, V] {
-  @inline def keyToString(key: String) = key
-}
+object ProtoCache {
 
-final class BigIntToProtoCache[
-    V <: scalapb.GeneratedMessage with scalapb.Message[V]
-  ](val domain: String = ""
-  )(
-    implicit
-    val underlying: Cache[String, Array[Byte]],
-    val ec: ExecutionContext,
-    val c: scalapb.GeneratedMessageCompanion[V])
-    extends ProtoCache[BigInt, V] {
-  @inline def keyToString(key: BigInt) = new String(key.toByteArray)
-}
+  def apply[V <: scalapb.GeneratedMessage with scalapb.Message[V]](
+      domain: String
+    )(
+      implicit
+      underlying: Cache[String, Array[Byte]],
+      ec: ExecutionContext,
+      c: scalapb.GeneratedMessageCompanion[V]
+    ) = new AnyToProtoCache(domain)
 
-final class ByteArrayToProtoCache[
-    V <: scalapb.GeneratedMessage with scalapb.Message[V]
-  ](val domain: String = ""
-  )(val underlying: Cache[String, Array[Byte]]
-  )(
-    implicit
-    val ec: ExecutionContext,
-    val c: scalapb.GeneratedMessageCompanion[V])
-    extends ProtoCache[Array[Byte], V] {
-  @inline def keyToString(key: Array[Byte]) = new String(key)
+  final class AnyToProtoCache[
+      V <: scalapb.GeneratedMessage with scalapb.Message[V]
+    ](val domain: String = ""
+    )(
+      implicit
+      val underlying: Cache[String, Array[Byte]],
+      val ec: ExecutionContext,
+      val c: scalapb.GeneratedMessageCompanion[V])
+      extends ProtoCache[Any, V] {
+
+    def keyToString(key: Any) = key match {
+      case k: Array[Byte]           => new String(k)
+      case k: String                => k
+      case k: ByteString            => k.toStringUtf8
+      case k: BigInt                => new String(k.toByteArray)
+      case k: scalapb.GeneratedEnum => s"${k.getClass.getSimpleName}${k.value}"
+      case k: Int                   => s"I${k}"
+      case k: Long                  => s"L${k}"
+      case k: Double                => s"D${k}"
+      case k: Float                 => s"F${k}"
+      case k =>
+        throw new Exception(s"unsupported key type: ${k.getClass.getName}")
+    }
+  }
 }

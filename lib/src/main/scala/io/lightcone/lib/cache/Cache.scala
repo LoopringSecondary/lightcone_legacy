@@ -18,13 +18,7 @@ package io.lightcone.lib.cache
 
 import scala.concurrent._
 
-trait CacheSerializer[T] {
-  def toBytes(obj: T): Array[Byte]
-  def fromBytes(bytes: Array[Byte]): T
-}
-
 trait Cache[K, V] {
-  val domain: String
 
   implicit val ec: ExecutionContext
   def get(keys: Seq[K]): Future[Map[K, V]]
