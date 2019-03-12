@@ -8,34 +8,51 @@
 <table>
   <tr>
     <th>前置条件</th>
-    <th>分支</th>
     <th>步骤</th>
     <th>预期输出结果</th>
   </tr>
   <tr>
-    <td rowspan="2">A账户余额：20 ETH</td>
-    <td rowspan="2">转账成功</td>
-    <td rowspan="2">A 转账到 B 10 ETH </td>
-    <td>A有一个pending的ETH转出Activity，B有一个pending的ETH转出Activity；<br>A、B余额不变<br><br></td>
+    <td rowspan="4">A账户余额 20 ETH；<br>B账户余额 不限制</td>
+    <td>发送A转账到B的Ethereum Transaction</td>
+    <td></td>
   </tr>
   <tr>
-    <td>A的pending Activity 状态变成 success，B的pending Activity 变成success；<br>A的ETH减少10 + 油费，B的ETH增加10</td>
+    <td>发出A和B的pending 转账 Activity</td>
+    <td>db 存入一条A的转出 10 ETH 的pending Activity；<br>db 存入一条B的转出10 ETH的pending Activity；<br>socket 推送A 的pending Activity 给A;<br>socket 推送B 的 pending Activity给B；<br><br>A，B的ETH余额没有变化</td>
   </tr>
   <tr>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td>发出A和B的成功的转账Activity</td>
+    <td>db删除上面两条Activity，重新存入两条成功的转账Activity；<br>socket推送成功的转出10 ETH的Activity给A；<br>socket推送成功的转入10 ETH的Activity给B；</td>
+  </tr>
+  <tr>
+    <td>发出A的AddressBalanceUpdated事件<br>和B的AddressBalanceUpdated事件</td>
+    <td>socket 推送给A包含A最新ETH余额的Account事件；<br>socket推送给B包含B最新ETH余额的Account事件；<br>A的ETH余额为 10ETH - 油费，B的余额 + 10ETH</td>
   </tr>
 </table>
 
   - ##### ETH转账失败
 
-    | 步骤            | 预期输出结果                                                 |
-    | --------------- | ------------------------------------------------------------ |
-    | A ->  B  10 ETH | A地址有一个失败的转出ETH的Activity，ETH 余额减少油费；<br />B地址有一个失败的转入ETH的Activity，ETH余额不变。 |
+<table>
+  <tr>
+    <th>前置条件</th>
+    <th>步骤</th>
+    <th>预期输出结果</th>
+  </tr>
+  <tr>
+    <td rowspan="3">设置A的ETH余额为20 ETH；<br>B的余额不限制</td>
+    <td>设置Tx的gas Limit&nbsp;&nbsp;为10000，<br>生成一个A转10 ETH到B的Ethereum transaction,<br>发送该 transaction </td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>发出A和B的pending 转账 Activity</td>
+    <td>db 存入一条A的转出 10 ETH 的pending Activity；<br>db 存入一条B的转出10 ETH的pending Activity；<br>socket 推送A 的pending Activity 给A; <br>socket 推送B 的 pending Activity给B；<br>A，B的ETH余额没有变化</td>
+  </tr>
+  <tr>
+    <td>发出A和B的失败转账 Activity</td>
+    <td>db删除上面两条Activity，重新存入两条失败的转账Activity；<br>socket推送失败的转出10 ETH的Activity给A；<br>socket推送失败的转入10 ETH的Activity给B；<br>A的ETH余额减少油费，B的余额没有发生变化；</td>
+  </tr>
+</table>
 
-    
 
 - ### WETH wrap 与unwrap
 
