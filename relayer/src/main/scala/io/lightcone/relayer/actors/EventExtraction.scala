@@ -61,6 +61,7 @@ trait EventExtraction {
 
   @inline def chainReorganizationManagerActor =
     actors.get(ChainReorganizationManagerActor.name)
+  @inline def marketHistoryActor = actors.get(MarketHistoryActor.name)
 
   def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
@@ -88,6 +89,7 @@ trait EventExtraction {
             ActivityActor.broadcast(blockEvent)
             ringAndFillPersistenceActor ! blockEvent
             chainReorganizationManagerActor ! blockEvent
+            marketHistoryActor ! blockEvent
             self ! RETRIEVE_RECEIPTS
           } else {
             self ! BLOCK_REORG_DETECTED
