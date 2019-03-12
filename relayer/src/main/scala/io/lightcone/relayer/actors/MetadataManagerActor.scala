@@ -222,7 +222,7 @@ class MetadataManagerActor(
           tokenTickers = tickers_
           marketTickers = fillSupportMarketTickers(tickers_)
           refreshTokenAndMarket()
-          publish()
+          publish(false, false, true)
         }
       }
     }
@@ -247,8 +247,19 @@ class MetadataManagerActor(
       }
     } yield tickers_
 
-  private def publish() = {
-    mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
+  private def publish(
+      tokenMetadataChanged: Boolean,
+      marketMetadataChanged: Boolean,
+      tickerChanged: Boolean
+    ) = {
+    mediator ! Publish(
+      MetadataManagerActor.pubsubTopic,
+      MetadataChanged(
+        tokenMetadataChanged,
+        marketMetadataChanged,
+        tickerChanged
+      )
+    )
   }
 
   private def checkAndPublish(
@@ -256,31 +267,33 @@ class MetadataManagerActor(
       tokenInfosOpt: Option[Seq[TokenInfo]],
       marketsOpt: Option[Seq[MarketMetadata]]
     ): Unit = {
-    var notify = false
+    var tokenMetadataChanged = false
+    var tokenInfoChanged = false
+    var marketMetadataChanged = false
     tokenMetadatasOpt foreach { tokenMetadatas_ =>
       if (tokenMetadatas_ != tokenMetadatas) {
-        notify = true
+        tokenMetadataChanged = true
         tokenMetadatas = tokenMetadatas_
       }
     }
 
     tokenInfosOpt foreach { tokenInfos_ =>
       if (tokenInfos_ != tokenInfos) {
-        notify = true
+        tokenInfoChanged = true
         tokenInfos = tokenInfos_
       }
     }
 
     marketsOpt foreach { markets_ =>
       if (markets_ != marketMetadatas) {
-        notify = true
+        marketMetadataChanged = true
         marketMetadatas = markets_
       }
     }
 
-    if (notify) {
+    if (tokenMetadataChanged || tokenInfoChanged || marketMetadataChanged) {
       refreshTokenAndMarket()
-      publish()
+      publish(tokenMetadataChanged, marketMetadataChanged, false)
     }
   }
 

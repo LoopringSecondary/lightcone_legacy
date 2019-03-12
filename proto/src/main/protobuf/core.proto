@@ -373,19 +373,3 @@ message Token {
     TokenInfo     info     = 2;
     TokenTicker   ticker   = 3;
 }
-
-message TokenMetadataChanged {
-    repeated TokenMetadata metadatas = 1;
-}
-
-message TokenTickerChanged {
-    repeated TokenTicker tickers   = 1;
-}
-
-message MarketMetadataChanged {
-    repeated MarketMetadata metadatas = 1;
-}
-
-message MarketTickerChanged {
-    repeated MarketTicker   tickers   = 2;
-}

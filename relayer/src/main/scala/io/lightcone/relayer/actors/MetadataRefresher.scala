@@ -90,6 +90,7 @@ class MetadataRefresher(
       for {
         _ <- refreshMetadata()
         _ = getLocalActors().foreach(_ ! req)
+        _ = notifyLocalSocketActor(req)
       } yield Unit
 
     case req: GetTokens.Req => {
@@ -186,6 +187,25 @@ class MetadataRefresher(
       context.system.actorSelection(str.format(OrderbookManagerActor.name)),
       context.system.actorSelection(str.format(MultiAccountManagerActor.name))
     )
+  }
+
+  private def notifyLocalSocketActor(changed: MetadataChanged) = {
+    if (changed.marketMetadataChanged || changed.tokenMetadataChanged || changed.tickerChanged) {
+      val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
+      val targetActor =
+        context.system.actorSelection(
+          str.format(SocketIONotificationActor.name)
+        )
+
+      if (changed.tokenMetadataChanged)
+        targetActor ! TokenMetadataChanged(tokens.map(_.getMetadata))
+      if (changed.marketMetadataChanged)
+        targetActor ! MarketMetadataChanged(markets.map(_.getMetadata))
+      if (changed.tickerChanged) {
+        targetActor ! TokenTickerChanged(tokens.map(_.getTicker))
+        targetActor ! MarketTickerChanged(markets.map(_.getTicker))
+      }
+    }
   }
 
   private def changeTokenTickerWithQuoteCurrency(
