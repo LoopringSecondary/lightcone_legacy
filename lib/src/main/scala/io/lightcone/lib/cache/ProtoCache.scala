@@ -24,7 +24,7 @@ trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
 
   val underlying: Cache[String, Array[Byte]]
   val domain: String
-  implicit val c: scalapb.GeneratedMessageCompanion[V]
+  implicit val companion: scalapb.GeneratedMessageCompanion[V]
 
   def keyToString(k: K): String
 
@@ -38,7 +38,7 @@ trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
     for {
       cached <- underlying.get(keyMap.keys.toSeq)
       res = cached.map {
-        case (k, v) => keyMap(k) -> c.parseFrom(v)
+        case (k, v) => keyMap(k) -> companion.parseFrom(v)
       }
     } yield res
   }
@@ -63,7 +63,7 @@ object ProtoCache {
       implicit
       underlying: Cache[String, Array[Byte]],
       ec: ExecutionContext,
-      c: scalapb.GeneratedMessageCompanion[V]
+      companion: scalapb.GeneratedMessageCompanion[V]
     ) = new AnyToProtoCache(domain)
 
   final class AnyToProtoCache[
@@ -73,21 +73,30 @@ object ProtoCache {
       implicit
       val underlying: Cache[String, Array[Byte]],
       val ec: ExecutionContext,
-      val c: scalapb.GeneratedMessageCompanion[V])
+      val companion: scalapb.GeneratedMessageCompanion[V])
       extends ProtoCache[Any, V] {
 
-    def keyToString(key: Any) = key match {
-      case k: Array[Byte]           => new String(k)
-      case k: String                => k
-      case k: ByteString            => k.toStringUtf8
-      case k: BigInt                => new String(k.toByteArray)
-      case k: scalapb.GeneratedEnum => s"${k.getClass.getSimpleName}${k.value}"
-      case k: Int                   => s"I${k}"
-      case k: Long                  => s"L${k}"
-      case k: Double                => s"D${k}"
-      case k: Float                 => s"F${k}"
-      case k =>
-        throw new Exception(s"unsupported key type: ${k.getClass.getName}")
+    def keyToString(key: Any) = {
+      if (key == null) {
+        throw new Exception("null key found for cache")
+      }
+
+      key match {
+        case k: Array[Byte] => new String(k)
+        case k: String      => k
+        case k: ByteString  => k.toStringUtf8
+        case k: BigInt      => new String(k.toByteArray)
+        case k: scalapb.GeneratedMessage with scalapb.Message[_] =>
+          new String(k.toByteArray)
+        case k: scalapb.GeneratedEnum =>
+          s"${k.getClass.getSimpleName}${k.value}"
+        case k: Int    => s"I${k}"
+        case k: Long   => s"L${k}"
+        case k: Double => s"D${k}"
+        case k: Float  => s"F${k}"
+        case k =>
+          throw new Exception(s"unsupported key type: ${k.getClass.getName}")
+      }
     }
   }
 }

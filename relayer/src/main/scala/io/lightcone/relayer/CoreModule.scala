@@ -27,6 +27,7 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.core._
 import io.lightcone.lib._
+import io.lightcone.lib.cache._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
@@ -97,32 +98,51 @@ class CoreModule(
       "dbconfig-dal-cmc-ticker-config"
     )
 
+    // --- bind cache ---------------------
+    bind[redis.RedisCluster]
+      .toProvider[cache.RedisClusterProvider]
+      .in[Singleton]
+
+    if (config.getBoolean("disable-redis-cache")) {
+      log.warn("redis cluster caching is disabled")
+
+      bind[Cache[String, Array[Byte]]]
+        .to[NoopCache[String, Array[Byte]]]
+        .in[Singleton]
+    } else {
+      log.info("redis cluster caching is enabled")
+
+      bind[Cache[String, Array[Byte]]] //
+        .to[cache.RedisClusterCache]
+        .in[Singleton]
+    }
+
     // --- bind dals ---------------------
-    bind[OrderDal].to[OrderDalImpl].asEagerSingleton
-    bind[FillDal].to[FillDalImpl].asEagerSingleton
-    bind[RingDal].to[RingDalImpl].asEagerSingleton
-    bind[BlockDal].to[BlockDalImpl].asEagerSingleton
-    bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
-    bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
-    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
-    bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
-    bind[OHLCDataDal].to[OHLCDataDalImpl].asEagerSingleton
-    bind[TokenTickerRecordDal].to[TokenTickerRecordDalImpl].asEagerSingleton
-    bind[TokenInfoDal].to[TokenInfoDalImpl].asEagerSingleton
+    bind[OrderDal].to[OrderDalImpl].in[Singleton]
+    bind[FillDal].to[FillDalImpl].in[Singleton]
+    bind[RingDal].to[RingDalImpl].in[Singleton]
+    bind[BlockDal].to[BlockDalImpl].in[Singleton]
+    bind[SettlementTxDal].to[SettlementTxDalImpl].in[Singleton]
+    bind[MarketMetadataDal].to[MarketMetadataDalImpl].in[Singleton]
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
+    bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].in[Singleton]
+    bind[OHLCDataDal].to[OHLCDataDalImpl].in[Singleton]
+    bind[TokenTickerRecordDal].to[TokenTickerRecordDalImpl].in[Singleton]
+    bind[TokenInfoDal].to[TokenInfoDalImpl].in[Singleton]
     bind[CMCCrawlerConfigForTokenDal]
       .to[CMCCrawlerConfigForTokenDalImpl]
-      .asEagerSingleton
+      .in[Singleton]
 
     // --- bind db services ---------------------
-    bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
-    bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-    bind[OHLCDataService].to[OHLCDataServiceImpl].asEagerSingleton
+    bind[OrderService].to[OrderServiceImpl].in[Singleton]
+    bind[SettlementTxService].to[SettlementTxServiceImpl].in[Singleton]
+    bind[BlockService].to[BlockServiceImpl].in[Singleton]
+    bind[OHLCDataService].to[OHLCDataServiceImpl].in[Singleton]
 
-    bind[SocketIONotifier].to[RelayerNotifier].asEagerSingleton
+    bind[SocketIONotifier].to[RelayerNotifier].in[Singleton]
 
     // --- bind local singletons ---------------------
-    bind[DatabaseModule].asEagerSingleton
+    bind[DatabaseModule].in[Singleton]
     bind[MetadataManager].toInstance(new MetadataManagerImpl(0.6, 0.06))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
@@ -138,11 +158,11 @@ class CoreModule(
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
     bind[EIP712Support].to[DefaultEIP712Support]
 
-    bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
-    bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].asEagerSingleton
+    bind[SplitMergerProvider].to[DefaultSplitMergerProvider].in[Singleton]
+    bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].in[Singleton]
     bind[FiatExchangeRateFetcher]
       .to[SinaFiatExchangeRateFetcher]
-      .asEagerSingleton
+      .in[Singleton]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -243,14 +263,8 @@ class CoreModule(
         MultiAccountManagerActor.name,
         RingSettlementManagerActor.name
       )
-      .register(
-        classOf[Activity],
-        SocketIONotificationActor.name
-      )
-      .register(
-        classOf[Fill],
-        SocketIONotificationActor.name
-      )
+      .register(classOf[Activity], SocketIONotificationActor.name)
+      .register(classOf[Fill], SocketIONotificationActor.name)
       .register(
         classOf[TxEvents],
         ActivityActor.name,

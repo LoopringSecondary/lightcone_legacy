@@ -40,35 +40,30 @@ trait Cache[K, V] {
 
   // advanced methods
   def read(
-      key: K
-    )(load: K => Future[Option[V]],
+      key: K,
       expiry: Long
+    )(load: => Future[Option[V]]
     ): Future[Option[V]] = {
-
-    def _load(keys: Seq[K]): Future[Map[K, V]] =
-      for {
-        loaded <- load(keys(0))
-        map_ = {
-          if (loaded.isEmpty) Map.empty[K, V]
-          else Map(keys(0) -> loaded.get)
-        }
-      } yield map_
-
     for {
-      map_ <- read(Seq(key))(_load, expiry)
+      map_ <- read(Seq(key), expiry)(load.map { opt =>
+        opt match {
+          case Some(res) => Map(key -> res)
+          case None      => Map.empty[K, V]
+        }
+      })
       res = map_.get(key)
     } yield res
   }
 
   def read(
-      keys: Seq[K]
-    )(load: Seq[K] => Future[Map[K, V]],
+      keys: Seq[K],
       expiry: Long
+    )(load: => Future[Map[K, V]]
     ): Future[Map[K, V]] =
     for {
       cached <- get(keys)
       missingKeys = keys.filterNot(cached.contains)
-      loaded <- load(missingKeys)
+      loaded <- load
       _ <- if (loaded.isEmpty) Future.unit
       else put(loaded, expiry)
       res = cached ++ loaded
