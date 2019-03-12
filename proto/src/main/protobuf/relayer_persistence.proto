@@ -241,5 +241,3 @@ message TerminateMarket {
         io.lightcone.core.ErrorCode  error = 1;
     }
 }
-
-message TokenTickerChanged {}

@@ -151,7 +151,10 @@ class ExternalCrawlerActor(
     }
 
   private def publish() = {
-    mediator ! Publish(ExternalCrawlerActor.pubsubTopic, TokenTickerChanged())
+    mediator ! Publish(
+      ExternalCrawlerActor.pubsubTopic,
+      MetadataChanged()
+    )
   }
 
 }

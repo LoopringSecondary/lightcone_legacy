@@ -35,7 +35,7 @@ class CMCCrawlerConfigForTokenTable(tag: Tag)
 
   def * =
     (
-      slug,
-      symbol
+      symbol,
+      slug
     ) <> ((CMCCrawlerConfigForToken.apply _).tupled, CMCCrawlerConfigForToken.unapply)
 }

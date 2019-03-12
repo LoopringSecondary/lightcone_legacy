@@ -69,5 +69,4 @@ object RpcDataLinters {
       data.copy(orders = data.orders.map(rawOrderLinter.lint))
   }
 
-
 }
