@@ -70,7 +70,10 @@ class AllowanceUpdateAddressExtractor @Inject()(
           .extractApproveEvents(
             TransactionData(tx, Some(receipt -> eventHeader))
           )
-    }.filter(event =>event.spender == delegateAddress && event.getHeader.txStatus.isTxStatusSuccess)
+    }.filter(
+        event =>
+          event.spender == delegateAddress && event.getHeader.txStatus.isTxStatusSuccess
+      )
       .map { approval =>
         AddressAllowanceUpdatedEvent(
           address = approval.owner,
