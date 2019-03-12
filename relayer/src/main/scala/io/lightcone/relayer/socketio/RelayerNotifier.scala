@@ -60,22 +60,6 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
         s"invalid ParamsForOrderbook:${subscription.getParamsForOrderbook}, " +
           s"market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
-    else if (subscription.paramsForMarketTickers.isDefined &&
-             !subscription.getParamsForMarketTickers.markets.forall(
-               _.isValid()
-             ))
-      Some(
-        s"invalid paramsForMarketTickers:${subscription.getParamsForMarketTickers}," +
-          s" market shouldn't be null and market token addresses must be valid ethereum addresses"
-      )
-    else if (subscription.paramsForTokenTickers.isDefined &&
-             !subscription.getParamsForTokenTickers.tokens.forall(
-               Address.isValid
-             ))
-      Some(
-        s"invalid paramsForTokenTickers:${subscription.getParamsForTokenTickers}," +
-          s" tokens must be valid ethereum addresses"
-      )
     else if (subscription.paramsForInternalTickers.isDefined &&
              (subscription.getParamsForInternalTickers.market.isEmpty ||
              !subscription.getParamsForInternalTickers.getMarket.isValid()))
@@ -145,56 +129,10 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
         case _ => None
       }
 
-    case e: TokenMetadataChanged =>
-      subscription.paramsForTokens match {
-        case Some(_) => Some(Notification(tokenMetadata = Some(e)))
+    case e: MetadataChanged =>
+      subscription.paramsForMetadata match {
+        case Some(_) => Some(Notification(metadataChanged = Some(e)))
         case _       => None
-      }
-
-    case e: MarketMetadataChanged =>
-      subscription.paramsForMarkets match {
-        case Some(_) =>
-          Some(Notification(marketMetadata = Some(e)))
-        case _ => None
-      }
-    case ticker: MarketTickerChanged =>
-      subscription.paramsForMarketTickers match {
-        case Some(params) =>
-          val marketIds = params.markets.map(_.hashString)
-          val marketTickers = ticker.tickers.filter { marketTicker =>
-            val hash = MarketPair(
-              marketTicker.baseToken,
-              marketTicker.quoteToken
-            ).hashString
-            marketIds.isEmpty || marketIds.contains(hash)
-          }
-
-          if (marketTickers.nonEmpty) {
-            Some(
-              Notification(
-                marketTicker = Some(ticker.copy(tickers = marketTickers))
-              )
-            )
-          } else None
-
-        case _ => None
-      }
-
-    case ticker: TokenTickerChanged =>
-      subscription.paramsForTokenTickers match {
-        case Some(params) =>
-          val tokenTickers = ticker.tickers.filter { tokenTicker =>
-            params.tokens.isEmpty || params.tokens.contains(tokenTicker.token)
-          }
-          if (tokenTickers.nonEmpty) {
-            Some(
-              Notification(
-                tokenTicker = Some(ticker.copy(tickers = tokenTickers))
-              )
-            )
-          } else None
-
-        case _ => None
       }
 
     case ticker: OHLCRawData =>

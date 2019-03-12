@@ -23,6 +23,7 @@ import "core.proto";
 import "relayer_common.proto";
 import "persistence.proto";
 import "ethereum_persistence.proto";
+import "relayer_rpc_core.proto";
 
 message AccountUpdate {
     string address                      = 1;
@@ -63,20 +64,7 @@ message SocketIOSubscription {
 
 
     // subscribe for message TokenMetadata defined in core.proto
-    message ParamsForTokens {
-    }
-
-    // subscribe for message MarketMetadata defined in core.proto
-    message ParamsForMarkets {
-    }
-
-    // subscribe for message MarketTicker defined in core.proto
-    message ParamsForMarketTickers {
-       repeated io.lightcone.core.MarketPair markets = 1;
-    }
-
-    message ParamsForTokenTickers{
-        repeated string tokens = 1;
+    message ParamsForMetadata {
     }
 
     // subscribe for message InternalMarketTicker defined in core.proto
@@ -99,13 +87,10 @@ message SocketIOSubscription {
         io.lightcone.core.RawOrder                          order               = 2;
         io.lightcone.ethereum.persistence.Fill              fill                = 3;
         io.lightcone.core.Orderbook.Update                  orderbook           = 4;
-        io.lightcone.core.TokenMetadataChanged              token_metadata      = 5;
-        io.lightcone.core.MarketMetadataChanged             market_metadata     = 6;
-        io.lightcone.persistence.News                       news                = 7;
-        io.lightcone.core.TokenTickerChanged                token_ticker        = 8;
-        io.lightcone.core.MarketTickerChanged               market_ticker       = 9;
-        io.lightcone.core.MarketTicker                      internal_ticker     = 10;
-        AccountUpdate                                       account             = 11;
+        io.lightcone.relayer.data.MetadataChanged           metadata_changed    = 5;
+        io.lightcone.persistence.News                       news                = 6;
+        io.lightcone.core.MarketTicker                      internal_ticker     = 7;
+        AccountUpdate                                       account             = 8;
 
     }
 
@@ -113,12 +98,9 @@ message SocketIOSubscription {
     ParamsForOrders               params_for_orders               = 2;
     ParamsForFills                params_for_fills                = 3;
     ParamsForOrderbook            params_for_orderbook            = 4;
-    ParamsForTokens               params_for_tokens               = 5;
-    ParamsForMarkets              params_for_markets              = 6;
-    ParamsForMarketTickers        params_for_market_tickers       = 7;
-    ParamsForTokenTickers         params_for_token_tickers        = 8;
-    ParamsForInternalTickers      params_for_internal_tickers     = 9;
-    ParamsForNews                 params_for_news                 = 10;
-    ParamsForAccounts             params_for_accounts             = 11;
+    ParamsForMetadata             params_for_metadata             = 5;
+    ParamsForInternalTickers      params_for_internal_tickers     = 6;
+    ParamsForNews                 params_for_news                 = 7;
+    ParamsForAccounts             params_for_accounts             = 8;
 
 }

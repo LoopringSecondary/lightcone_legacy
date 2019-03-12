@@ -103,8 +103,8 @@ final class DefaultEventExtractor @Inject()(
         )
         .toSeq
 
-      events = blockEvents ++ txEvents ++ txActivityEvents ++ txFillEvents
-    } yield events
+      events =  txEvents ++ blockEvents ++ txActivityEvents ++ txFillEvents
+    } yield events.so
 
   def extractDefaultActivity(
       tx: Transaction,
