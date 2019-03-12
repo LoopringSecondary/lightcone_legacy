@@ -47,6 +47,6 @@
   <tr>
     <td>提交第二个订单</td>
     <td>sell:8, fee:2</td>
-    <td>提交成功 <br> orderbook更改为12 <br> 改订单的可撮合金额为4 <br> 订单列表第一个订单状态为Pending <br> 账户余额的可用金额为0 </td>
+    <td>提交成功 <br> orderbook更改为12 <br> 该订单的可撮合金额为4 <br> 订单列表该订单状态为Pending <br> 账户余额的可用金额为0 </td>
   </tr>
 </table>
