@@ -153,7 +153,7 @@ class ExternalCrawlerActor(
   private def publish() = {
     mediator ! Publish(
       ExternalCrawlerActor.pubsubTopic,
-      MetadataChanged(false, false, false, true)
+      MetadataChanged()
     )
   }
 
