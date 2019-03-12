@@ -24,8 +24,10 @@ final class RedisClusterCache(
     redis: RedisCluster
   )(
     implicit
-    val ex: ExecutionContext)
+    val ec: ExecutionContext)
     extends Cache[String, Array[Byte]] {
+
+  val domain = ""
 
   def get(keys: Seq[String]): Future[Map[String, Array[Byte]]] =
     Future.sequence {

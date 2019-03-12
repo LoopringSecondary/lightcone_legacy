@@ -38,8 +38,13 @@ trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
 
   def keyToString(k: K): String
 
+  private def k2S(k: K) = {
+    if (domain.isEmpty) keyToString(k)
+    else s"${domain}@${keyToString(k)}"
+  }
+
   def get(keys: Seq[K]): Future[Map[K, V]] = {
-    val keyMap = keys.map(k => keyToString(k) -> k).toMap
+    val keyMap = keys.map(k => k2S(k) -> k).toMap
     for {
       cached <- underlying.get(keyMap.keys.toSeq)
       res = cached.map {
@@ -49,34 +54,48 @@ trait ProtoCache[K, V <: scalapb.GeneratedMessage with scalapb.Message[V]]
   }
 
   def del(keys: Seq[K]): Future[Unit] =
-    underlying.del(keys.map(keyToString))
+    underlying.del(keys.map(k2S))
 
   def put(
       keyValues: Map[K, V],
       expiry: Long
     ): Future[Boolean] =
     underlying.put(keyValues.map {
-      case (k, v) => keyToString(k) -> serializer.toBytes(v)
+      case (k, v) => k2S(k) -> serializer.toBytes(v)
     }, expiry)
 }
 
 final class StringToProtoCache[
     V <: scalapb.GeneratedMessage with scalapb.Message[V]
-  ](val underlying: Cache[String, Array[Byte]]
+  ](val domain: String = ""
   )(
     implicit
-    val ex: ExecutionContext,
+    val underlying: Cache[String, Array[Byte]],
+    val ec: ExecutionContext,
     val c: scalapb.GeneratedMessageCompanion[V])
     extends ProtoCache[String, V] {
   @inline def keyToString(key: String) = key
 }
 
-final class ByteArrayToProtoCache[
+final class BigIntToProtoCache[
     V <: scalapb.GeneratedMessage with scalapb.Message[V]
-  ](val underlying: Cache[String, Array[Byte]]
+  ](val domain: String = ""
   )(
     implicit
-    val ex: ExecutionContext,
+    val underlying: Cache[String, Array[Byte]],
+    val ec: ExecutionContext,
+    val c: scalapb.GeneratedMessageCompanion[V])
+    extends ProtoCache[BigInt, V] {
+  @inline def keyToString(key: BigInt) = new String(key.toByteArray)
+}
+
+final class ByteArrayToProtoCache[
+    V <: scalapb.GeneratedMessage with scalapb.Message[V]
+  ](val domain: String = ""
+  )(val underlying: Cache[String, Array[Byte]]
+  )(
+    implicit
+    val ec: ExecutionContext,
     val c: scalapb.GeneratedMessageCompanion[V])
     extends ProtoCache[Array[Byte], V] {
   @inline def keyToString(key: Array[Byte]) = new String(key)

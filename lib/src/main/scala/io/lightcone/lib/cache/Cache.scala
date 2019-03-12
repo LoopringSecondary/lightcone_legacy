@@ -24,7 +24,9 @@ trait CacheSerializer[T] {
 }
 
 trait Cache[K, V] {
-  implicit val ex: ExecutionContext
+  val domain: String
+
+  implicit val ec: ExecutionContext
   def get(keys: Seq[K]): Future[Map[K, V]]
   def del(keys: Seq[K]): Future[Unit]
 
@@ -42,4 +44,39 @@ trait Cache[K, V] {
       expiry: Long
     ): Future[Boolean] = put(Map(key -> value), expiry)
 
+  // advanced methods
+  def read(
+      key: K
+    )(load: K => Future[Option[V]],
+      expiry: Long
+    ): Future[Option[V]] = {
+
+    def _load(keys: Seq[K]): Future[Map[K, V]] =
+      for {
+        loaded <- load(keys(0))
+        map_ = {
+          if (loaded.isEmpty) Map.empty[K, V]
+          else Map(keys(0) -> loaded.get)
+        }
+      } yield map_
+
+    for {
+      map_ <- read(Seq(key))(_load, expiry)
+      res = map_.get(key)
+    } yield res
+  }
+
+  def read(
+      keys: Seq[K]
+    )(load: Seq[K] => Future[Map[K, V]],
+      expiry: Long
+    ): Future[Map[K, V]] =
+    for {
+      cached <- get(keys)
+      missingKeys = keys.filterNot(cached.contains)
+      loaded <- load(missingKeys)
+      _ <- if (loaded.isEmpty) Future.unit
+      else put(loaded, expiry)
+      res = cached ++ loaded
+    } yield res
 }
