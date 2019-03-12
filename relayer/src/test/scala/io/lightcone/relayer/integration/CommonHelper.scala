@@ -15,20 +15,6 @@
  */
 
 package io.lightcone.relayer.integration
-import io.lightcone.core.testing.OrderHelper
-import io.lightcone.relayer.integration.helper._
-import org.scalatest.{BeforeAndAfterAll, Matchers}
+import org.scalatest.Matchers
 
-abstract class CommonHelper
-    extends MockHelper
-    with DbHelper
-    with Matchers
-    with RpcHelper
-    with BeforeAndAfterAll
-    with OrderHelper {
-  override def beforeAll(): Unit = {
-    info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-    super.beforeAll()
-  }
-
-}
+abstract class CommonHelper extends Matchers with RpcHelper with OrderHelper {}

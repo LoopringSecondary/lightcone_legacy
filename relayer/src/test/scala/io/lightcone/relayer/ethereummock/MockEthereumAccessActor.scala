@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.integration
+package io.lightcone.relayer.ethereummock
 
 import akka.actor._
-import io.lightcone.relayer.data.{GetNonce, SendRawTransaction}
+import io.lightcone.relayer.data._
 
 class MockEthereumAccessActor() extends Actor with ActorLogging {
 
   def receive: Receive = {
     case req: SendRawTransaction.Req =>
-      sender ! ethAccessDataProvider.sendRawTransaction(req)
+      sender ! accessProvider.sendRawTransaction(req)
     case req: GetNonce.Req =>
       sender ! GetNonce.Res()
     case msg =>

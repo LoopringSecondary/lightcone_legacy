@@ -18,6 +18,7 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.core._
 import io.lightcone.ethereum._
+import io.lightcone.lib.SystemTimeProvider
 import io.lightcone.relayer.actors._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
@@ -26,12 +27,14 @@ import scala.math.BigInt
 
 trait OrderHelper {
 
+  val timeProvider = new SystemTimeProvider()
+
   def createRawOrder(
-      tokenS: String = LRC_TOKEN.address,
-      tokenB: String = WETH_TOKEN.address,
+      tokenS: String = Metadatas.LRC_TOKEN.address,
+      tokenB: String = Metadatas.WETH_TOKEN.address,
       amountS: BigInt = "10".zeros(18),
       amountB: BigInt = "1".zeros(18),
-      tokenFee: String = LRC_TOKEN.address,
+      tokenFee: String = Metadatas.LRC_TOKEN.address,
       amountFee: BigInt = "3".zeros(18),
       validSince: Int = (timeProvider.getTimeMillis / 1000).toInt,
       validUntil: Int = (timeProvider.getTimeMillis / 1000).toInt + 20000
