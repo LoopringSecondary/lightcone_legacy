@@ -55,7 +55,7 @@ abstract class SocketIONotifier
       case _ =>
     }
 
-    log.debug(s"socketio notify: $event to ${targets.size} subscribers")
+    log.debug(s"socketio notify: $event to ${targets.count(_._2.isDefined)} subscribers")
   }
 
   def normalizeSubscription(
