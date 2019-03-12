@@ -41,7 +41,7 @@ package io.lightcone.relayer.entrypoint
 //      info("query fills: by owner")
 //      val q3 = GetFills.Req(owner = owner1)
 //      val r3 = Await.result(
-//        singleRequest(q3, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q3, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r3.fills.length == 4 && r3.total == 4)
@@ -49,7 +49,7 @@ package io.lightcone.relayer.entrypoint
 //      info("query fills: sort")
 //      val q3_2 = GetFills.Req(owner = owner1, sort = SortingType.DESC)
 //      val r3_2 = Await.result(
-//        singleRequest(q3_2, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q3_2, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r3_2.fills.length == 4 && r3_2.total == 4)
@@ -58,7 +58,7 @@ package io.lightcone.relayer.entrypoint
 //      info("query fills: skip")
 //      val q3_3 = GetFills.Req(skip = Some(Paging(skip = 1, size = 10)))
 //      val r3_3 = Await.result(
-//        singleRequest(q3_3, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q3_3, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r3_3.fills.length == 5 && r3_3.total == 6)
@@ -69,7 +69,7 @@ package io.lightcone.relayer.entrypoint
 //        market = Some(GetFills.Req.Market(tokenS1, tokenB1))
 //      )
 //      val r4 = Await.result(
-//        singleRequest(q4, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q4, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r4.fills.length == 1 && r4.total == 1)
@@ -79,7 +79,7 @@ package io.lightcone.relayer.entrypoint
 //          market = Some(GetFills.Req.Market(tokenS1, tokenB1, true))
 //        )
 //      val r5 = Await.result(
-//        singleRequest(q5, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q5, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r5.fills.length == 2 && r5.total == 2)
@@ -87,19 +87,19 @@ package io.lightcone.relayer.entrypoint
 //      info("query fills: by ring")
 //      val q6 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2)))
 //      val r6 = Await.result(
-//        singleRequest(q6, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q6, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r6.fills.length == 2 && r6.total == 2)
 //      val q7 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "11", "1")))
 //      val r7 = Await.result(
-//        singleRequest(q7, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q7, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r7.fills.length == 1 && r7.total == 1)
 //      val q8 = GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "11", "2")))
 //      val r8 = Await.result(
-//        singleRequest(q8, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q8, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r8.fills.isEmpty && r8.total == 0)
@@ -115,7 +115,7 @@ package io.lightcone.relayer.entrypoint
 //        miner = miner
 //      )
 //      val r9 = Await.result(
-//        singleRequest(q9, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q9, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r9.fills.length == 1 && r9.total == 1)
@@ -129,7 +129,7 @@ package io.lightcone.relayer.entrypoint
 //        miner = miner
 //      )
 //      val r10 = Await.result(
-//        singleRequest(q10, "get_fills").mapTo[GetFills.Res],
+//        singleRequest(q10, "get_user_fills").mapTo[GetFills.Res],
 //        5.second
 //      )
 //      assert(r10.fills.isEmpty && r10.total == 0)
@@ -139,7 +139,7 @@ package io.lightcone.relayer.entrypoint
 //        GetFills.Req(ring = Some(GetFills.Req.Ring2(hash2, "invalidIndex")))
 //      try {
 //        Await.result(
-//          singleRequest(q11, "get_fills").mapTo[GetFills.Res],
+//          singleRequest(q11, "get_user_fills").mapTo[GetFills.Res],
 //          5.second
 //        )
 //        assert(false)
@@ -156,7 +156,7 @@ package io.lightcone.relayer.entrypoint
 //        )
 //      try {
 //        Await.result(
-//          singleRequest(q12, "get_fills").mapTo[GetFills.Res],
+//          singleRequest(q12, "get_user_fills").mapTo[GetFills.Res],
 //          5.second
 //        )
 //        assert(false)

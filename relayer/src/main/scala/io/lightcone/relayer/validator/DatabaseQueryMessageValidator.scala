@@ -65,7 +65,7 @@ final class DatabaseQueryMessageValidator(
         )
       }
 
-    case req: GetFills.Req =>
+    case req: GetUserFills.Req =>
       Future {
         if (req.owner.isEmpty)
           throw ErrorException(
@@ -94,7 +94,7 @@ final class DatabaseQueryMessageValidator(
                   s"invalid fillIndex:${r.fillIndex}"
                 )
               else r.fillIndex
-            Some(GetFills.Req.RingFilter(ringHash, ringIndex, fillIndex))
+            Some(GetUserFills.Req.RingFilter(ringHash, ringIndex, fillIndex))
           case _ => None
         }
         val marketOpt = req.marketPair match {
@@ -104,7 +104,7 @@ final class DatabaseQueryMessageValidator(
             Some(MarketPair(base, quote))
           case _ => None
         }
-        GetFills.Req(
+        GetUserFills.Req(
           MessageValidator.normalizeAddress(req.owner),
           MessageValidator.normalizeHash(req.txHash),
           MessageValidator.normalizeHash(req.orderHash),
@@ -117,20 +117,24 @@ final class DatabaseQueryMessageValidator(
         )
       }
 
-    case req: GetFillHistory.Req =>
+    case req: GetMarketFills.Req =>
       Future {
         val marketOpt = req.marketPair match {
           case Some(m) =>
             if (m.baseToken.isEmpty || m.quoteToken.isEmpty) {
               throw ErrorException(
                 ERR_INVALID_ARGUMENT,
-                s"invalid marketPiar:${req.marketPair}"
+                s"invalid marketPair:${req.marketPair}"
               )
             }
             val base = MessageValidator.normalizeAddress(m.baseToken)
             val quote = MessageValidator.normalizeAddress(m.quoteToken)
             Some(MarketPair(base, quote))
-          case _ => None
+          case _ =>
+            throw ErrorException(
+              ERR_INVALID_ARGUMENT,
+              s"marketPair is required"
+            )
         }
         req.copy(marketPair = marketOpt)
       }

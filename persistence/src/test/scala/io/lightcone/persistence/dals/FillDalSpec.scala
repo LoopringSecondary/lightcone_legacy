@@ -18,7 +18,7 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.core._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data.GetFills.Req
+import io.lightcone.relayer.data.GetUserFills.Req
 import scala.concurrent.Await
 import io.lightcone.ethereum.persistence._
 import scala.concurrent.duration._

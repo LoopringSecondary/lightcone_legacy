@@ -62,7 +62,7 @@ class FillDalImpl @Inject()(
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]] =
     Future.sequence(fills.map(saveFill))
 
-  def getFills(request: GetFills.Req): Future[Seq[Fill]] = {
+  def getFills(request: GetUserFills.Req): Future[Seq[Fill]] = {
     val marketHashOpt = request.marketPair match {
       case None    => None
       case Some(m) => Some(MarketHash(m).hashString())
@@ -88,7 +88,7 @@ class FillDalImpl @Inject()(
     db.run(filters.result)
   }
 
-  def countFills(request: GetFills.Req): Future[Int] = {
+  def countFills(request: GetUserFills.Req): Future[Int] = {
     val marketHashOpt = request.marketPair match {
       case None    => None
       case Some(m) => Some(MarketHash(m).hashString())
@@ -114,18 +114,18 @@ class FillDalImpl @Inject()(
     db.run(filters.size.result)
   }
 
-  def getFillsHistory(
-      marketPairOpt: Option[MarketPair],
+  def getMarketFills(
+      marketPair: MarketPair,
       num: Int
     ): Future[Seq[Fill]] = {
-    var filter = query.filter(_.isTaker === true)
-    filter = marketPairOpt match {
-      case None => filter
-      case Some(m) =>
-        val marketHash = MarketHash(m).hashString()
-        filter.filter(_.marketHash === marketHash)
-    }
-    db.run(filter.sortBy(_.blockHeight.desc).take(num).result)
+    db.run(
+      query
+        .filter(_.marketHash === MarketHash(marketPair).hashString())
+        .filter(_.isTaker === true)
+        .sortBy(_.blockHeight.desc)
+        .take(num)
+        .result
+    )
   }
 
   def cleanActivitiesForReorg(req: BlockEvent): Future[Int] =
@@ -183,7 +183,7 @@ class FillDalImpl @Inject()(
   }
 
   private def getRingQueryParameters(
-      ringOpt: Option[GetFills.Req.RingFilter]
+      ringOpt: Option[GetUserFills.Req.RingFilter]
     ) = {
     ringOpt match {
       case Some(r) =>

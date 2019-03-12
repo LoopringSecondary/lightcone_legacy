@@ -65,11 +65,11 @@ class DatabaseQuerySpec
 
   "send an trades request" must {
     "receive a response without trades" in {
-      val method = "get_fills"
+      val method = "get_user_fills"
       val tokenS = "0xaaaaaaa2"
       val tokenB = "0xbbbbbbb2"
       val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
-      val tradesReq = GetFills.Req(
+      val tradesReq = GetUserFills.Req(
         owner = owner,
         marketPair = Some(MarketPair(tokenS, tokenB)),
         paging = Some(Paging(0, 10)),
@@ -90,7 +90,7 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetFills.Res(trades, total) =>
+        case GetUserFills.Res(trades, total) =>
           assert(trades.nonEmpty && trades.length === 5 && total == 5)
         case _ => assert(false)
       }

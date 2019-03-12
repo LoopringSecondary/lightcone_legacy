@@ -343,7 +343,7 @@ message GetOrderbookSlots {
     }
 }
 
-message GetFills {
+message GetUserFills {
     message Req {
         message RingFilter {
             string  ring_hash         = 1;
@@ -367,7 +367,7 @@ message GetFills {
     }
 }
 
-message GetFillHistory {
+message GetMarketFills {
     message Req {
         io.lightcone.core.MarketPair  market_pair = 1;
     }
