@@ -50,10 +50,8 @@ object ActivityActor extends DeployedAsShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractShardingObject: PartialFunction[Any, String] = {
-    case req: GetActivities.Req => req.owner
-    // TODO (yongfeng)：分片逻辑待完善
-    case req: TxEvents   => "0x0"
-    case req: BlockEvent => "0x0"
+    case req: GetActivities.Req           => req.owner
+    case req: GetPendingActivityNonce.Req => req.from
   }
 
 }
@@ -89,9 +87,7 @@ class ActivityActor(
 
   def ready: Receive = {
 
-    // TODO yongfeng: 这个事件可以发给所有分片，每个分片过滤自己需要存储的activity ，一组activities txHash应一致
-    //  分片广播逻辑确认后可能会修改这里
-    case req: TxEvents => {
+    case req: TxEvents => { // shard-broadcast message
       // filter activities which current shard care
       val activities = req.getActivities.events
         .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
@@ -110,7 +106,7 @@ class ActivityActor(
       }
     }
 
-    case req: BlockEvent =>
+    case req: BlockEvent => // shard-broadcast message
       (for {
         _ <- activityDal.cleanActivitiesForReorg(req)
       } yield {}).sendTo(sender)
@@ -125,6 +121,11 @@ class ActivityActor(
         res = GetActivities.Res(activities)
       } yield res).sendTo(sender)
 
+    case req: GetPendingActivityNonce.Req =>
+      (for {
+        nonces <- activityDal.getPendingActivityNonces(req.from, req.limit)
+        res = GetPendingActivityNonce.Res(nonces)
+      } yield res).sendTo(sender)
   }
 
 }

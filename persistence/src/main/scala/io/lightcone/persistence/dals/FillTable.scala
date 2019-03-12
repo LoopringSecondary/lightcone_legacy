@@ -33,7 +33,7 @@ class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_FILLS") {
   def amountB = columnAmount("amount_b")
   def tokenS = columnAddress("token_s")
   def tokenB = columnAddress("token_b")
-  def marketId = column[Long]("market_id")
+  def marketHash = columnAddress("market_hash")
   def split = columnAmount("split")
 
   // fees
@@ -49,6 +49,7 @@ class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_FILLS") {
   def miner = columnAddress("miner")
   def blockHeight = column[Long]("block_height")
   def blockTimestamp = column[Long]("block_timestamp")
+  def isTaker = column[Boolean]("is_taker")
 
   // indexes
   def pk = primaryKey("pk_txhash_fillindex", (txHash, fillIndex))
@@ -59,9 +60,12 @@ class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_FILLS") {
   def idx_order_hash = index("idx_order_hash", (orderHash), unique = false)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
-  def idx_market_id = index("idx_market_id", (marketId), unique = false)
+  def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_miner = index("idx_miner", (miner), unique = false)
+
+  def idx_owner_market =
+    index("idx_owner_markethash", (owner, marketHash), unique = false)
 
   def idx_block_height =
     index("idx_block_height", (blockHeight), unique = false)
@@ -94,12 +98,13 @@ class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_FILLS") {
       amountB,
       tokenS,
       tokenB,
-      marketId,
+      marketHash,
       split,
       feeParamsProjection,
       wallet,
       miner,
       blockHeight,
-      blockTimestamp
+      blockTimestamp,
+      isTaker
     ) <> ((Fill.apply _).tupled, Fill.unapply)
 }

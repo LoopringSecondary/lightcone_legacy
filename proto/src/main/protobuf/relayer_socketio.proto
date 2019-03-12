@@ -23,11 +23,11 @@ import "core.proto";
 import "relayer_common.proto";
 import "persistence.proto";
 import "ethereum_persistence.proto";
+import "relayer_rpc_core.proto";
 
 message AccountUpdate {
     string address                      = 1;
     io.lightcone.relayer.data.AccountBalance.TokenBalance  token_balance = 2;
-    int32  nonce                        = 3;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,15 +64,11 @@ message SocketIOSubscription {
 
 
     // subscribe for message TokenMetadata defined in core.proto
-    message ParamsForTokens {
+    message ParamsForMetadata {
     }
 
-    // subscribe for message MarketMetadata defined in core.proto
-    message ParamsForMarkets {
-    }
-
-    // subscribe for message ExternalTicker defined in persistence.proto
-    message ParamsForTickers {
+    // subscribe for message InternalMarketTicker defined in core.proto
+    message ParamsForInternalTickers{
         io.lightcone.core.MarketPair market = 1;
     }
 
@@ -87,24 +83,24 @@ message SocketIOSubscription {
     }
 
     message Notification {
-        io.lightcone.ethereum.persistence.Activity  activity        = 1;
-        io.lightcone.core.RawOrder                  order           = 2;
-        io.lightcone.ethereum.persistence.Fill      fill            = 3;
-        io.lightcone.core.Orderbook.Update          orderbook       = 4;
-        io.lightcone.core.TokenMetadata             token_metadata  = 5;
-        io.lightcone.core.MarketMetadata            market_metadata = 6;
-        io.lightcone.persistence.News               news            = 7;
-        AccountUpdate                               account         = 8;
+        io.lightcone.ethereum.persistence.Activity          activity            = 1;
+        io.lightcone.core.RawOrder                          order               = 2;
+        io.lightcone.ethereum.persistence.Fill              fill                = 3;
+        io.lightcone.core.Orderbook.Update                  orderbook           = 4;
+        io.lightcone.relayer.data.MetadataChanged           metadata_changed    = 5;
+        io.lightcone.persistence.News                       news                = 6;
+        io.lightcone.core.MarketTicker                      internal_ticker     = 7;
+        AccountUpdate                                       account             = 8;
+
     }
 
     ParamsForActivities           params_for_activities           = 1;
     ParamsForOrders               params_for_orders               = 2;
     ParamsForFills                params_for_fills                = 3;
     ParamsForOrderbook            params_for_orderbook            = 4;
-    ParamsForTokens               params_for_tokens               = 5;
-    ParamsForMarkets              params_for_markets              = 6;
-    ParamsForTickers              params_for_tickers              = 7;
-    ParamsForNews                 params_for_news                 = 8;
-    ParamsForAccounts             params_for_accounts             = 9;
+    ParamsForMetadata             params_for_metadata             = 5;
+    ParamsForInternalTickers      params_for_internal_tickers     = 6;
+    ParamsForNews                 params_for_news                 = 7;
+    ParamsForAccounts             params_for_accounts             = 8;
 
 }

@@ -29,6 +29,7 @@ import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import scala.util._
+import io.lightcone.relayer.implicits._
 
 // Owner: Yongfeng
 object MetadataManagerActor extends DeployedAsSingleton {
@@ -93,19 +94,20 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
-          burnRate = burnRateRes.getBurnRate
-          _ <- if (token.burnRateForMarket != burnRate.forMarket || token.burnRateForP2P != burnRate.forP2P)
+          latestBurnRate = burnRateRes.getBurnRate
+          burnRateValue = token.burnRate.get
+          _ <- if (burnRateValue.forMarket != latestBurnRate.forMarket || burnRateValue.forP2P != latestBurnRate.forP2P)
             dbModule.tokenMetadataDal
               .updateBurnRate(
                 token.address,
-                burnRate.forMarket,
-                burnRate.forP2P
+                latestBurnRate.forMarket,
+                latestBurnRate.forP2P
               )
           else Future.unit
         } yield
           token.copy(
-            burnRateForMarket = burnRate.forMarket,
-            burnRateForP2P = burnRate.forP2P
+            burnRate =
+              Some(BurnRate(latestBurnRate.forMarket, latestBurnRate.forP2P))
           )
       })
       tickers_ <- getLastTickers()
@@ -212,7 +214,7 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case _: TokenTickerChanged => { // subscribe message from ExternalCrawlerActor
+    case _: MetadataChanged => { // subscribe message from ExternalCrawlerActor
       for {
         tickers_ <- getLastTickers()
       } yield {
@@ -220,7 +222,7 @@ class MetadataManagerActor(
           tokenTickers = tickers_
           marketTickers = fillSupportMarketTickers(tickers_)
           refreshTokenAndMarket()
-          publish()
+          publish(false, false, false, true)
         }
       }
     }
@@ -245,8 +247,21 @@ class MetadataManagerActor(
       }
     } yield tickers_
 
-  private def publish() = {
-    mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
+  private def publish(
+      tokenMetadataChanged: Boolean,
+      tokenInfoChanged: Boolean,
+      marketMetadataChanged: Boolean,
+      tickerChanged: Boolean
+    ) = {
+    mediator ! Publish(
+      MetadataManagerActor.pubsubTopic,
+      MetadataChanged(
+        tokenMetadataChanged,
+        tokenInfoChanged,
+        marketMetadataChanged,
+        tickerChanged
+      )
+    )
   }
 
   private def checkAndPublish(
@@ -254,31 +269,38 @@ class MetadataManagerActor(
       tokenInfosOpt: Option[Seq[TokenInfo]],
       marketsOpt: Option[Seq[MarketMetadata]]
     ): Unit = {
-    var notify = false
+    var tokenMetadataChanged = false
+    var tokenInfoChanged = false
+    var marketMetadataChanged = false
     tokenMetadatasOpt foreach { tokenMetadatas_ =>
       if (tokenMetadatas_ != tokenMetadatas) {
-        notify = true
+        tokenMetadataChanged = true
         tokenMetadatas = tokenMetadatas_
       }
     }
 
     tokenInfosOpt foreach { tokenInfos_ =>
       if (tokenInfos_ != tokenInfos) {
-        notify = true
+        tokenInfoChanged = true
         tokenInfos = tokenInfos_
       }
     }
 
     marketsOpt foreach { markets_ =>
       if (markets_ != marketMetadatas) {
-        notify = true
+        marketMetadataChanged = true
         marketMetadatas = markets_
       }
     }
 
-    if (notify) {
+    if (tokenMetadataChanged || tokenInfoChanged || marketMetadataChanged) {
       refreshTokenAndMarket()
-      publish()
+      publish(
+        tokenMetadataChanged,
+        tokenInfoChanged,
+        marketMetadataChanged,
+        false
+      )
     }
   }
 
@@ -303,24 +325,33 @@ class MetadataManagerActor(
       val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
       tokens = tokenTickers.map { ticker =>
         val symbol = ticker.symbol
+        // 以ticker为基准，组装成tokens，提供给metadataRefresher同步。因为ticker额外包含了(eth,btc,rmb）
+        // 不会在tokenMetadata里配置，只有eth需要返回前端，其他都作为内部使用，没有metadata的都赋值eth类型
         val meta =
-          tokenMetadataMap.getOrElse(symbol, TokenMetadata(symbol = symbol))
+          tokenMetadataMap.getOrElse(
+            symbol,
+            TokenMetadata(
+              `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
+              symbol = symbol
+            )
+          )
         val info = tokenInfoMap.getOrElse(symbol, TokenInfo(symbol = symbol))
+        val tokenTicker: TokenTicker = ticker
         Token(
           Some(meta),
           Some(info),
-          ticker.price
+          Some(tokenTicker)
         )
       }
     }
     if (marketMetadatas.nonEmpty && marketTickers.nonEmpty) {
-      val marketTickerMap = marketTickers
-        .map(m => s"${m.baseTokenSymbol}-${m.quoteTokenSymbol}" -> m)
-        .toMap
+      val marketTickerMap = marketTickers.map { m =>
+        MarketHash(MarketPair(m.baseToken, m.quoteToken)).hashString() -> m
+      }.toMap
       markets = marketMetadatas.map { m =>
         Market(
           Some(m),
-          marketTickerMap.get(s"${m.baseTokenSymbol}-${m.quoteTokenSymbol}")
+          marketTickerMap.get(MarketHash(m.marketPair.get).hashString())
         )
       }
     }
@@ -356,8 +387,8 @@ class MetadataManagerActor(
     val percentChange7D =
       calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
     MarketTicker(
-      market.baseTokenSymbol,
-      market.quoteTokenSymbol,
+      market.marketPair.get.baseToken,
+      market.marketPair.get.quoteToken,
       rate,
       baseTicker.price,
       volume24H,

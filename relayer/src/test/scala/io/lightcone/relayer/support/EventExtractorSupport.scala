@@ -17,19 +17,12 @@
 package io.lightcone.relayer.support
 import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.extractor._
-import io.lightcone.ethereum.extractor.block.{
-  AllowanceUpdateAddressExtractor,
-  BalanceUpdateAddressExtractor
-}
+import io.lightcone.ethereum.extractor.block._
 import io.lightcone.ethereum.extractor.tx._
-import io.lightcone.ethereum.persistence.OHLCRawData
+import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data.BlockWithTxObject
-import io.lightcone.relayer.ethereum.{
-  EthereumAccessActor,
-  EventDispatcher,
-  EventDispatcherImpl
-}
+import io.lightcone.relayer.ethereum._
 
 trait EventExtractorSupport
     extends DatabaseModuleSupport
@@ -41,6 +34,9 @@ trait EventExtractorSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
+    with OrderGenerateSupport
+    with SocketSupport
+    with RingAndFillPersistenceSupport
     with DatabaseQueryMessageSupport {
 
   com: CommonSpec =>
@@ -78,6 +74,19 @@ trait EventExtractorSupport
         classOf[AddressBalanceUpdatedEvent],
         MultiAccountManagerActor.name,
         RingSettlementManagerActor.name
+      )
+      .register(
+        classOf[Activity],
+        SocketIONotificationActor.name
+      )
+      .register(
+        classOf[Fill],
+        SocketIONotificationActor.name
+      )
+      .register(
+        classOf[TxEvents],
+        ActivityActor.name,
+        RingAndFillPersistenceActor.name
       )
 
   implicit val txEventExtractor: EventExtractor[TransactionData, AnyRef] =

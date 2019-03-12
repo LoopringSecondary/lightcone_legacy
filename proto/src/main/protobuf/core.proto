@@ -114,6 +114,7 @@ enum ErrorCode{
     ERR_ETHEREUM_ILLEGAL_ADDRESS        = 5001;
     ERR_NO_ACCESSIBLE_ETHEREUM_NODE     = 5002;
     ERR_UNEXPECTED_RESPONSE             = 5003;
+    ERR_INVALID_SIG                     = 5004;
 
     //6001 -- 7000 rpc and socketio Error
     ERR_INVALID_SOCKETIO_SUBSCRIPTION = 6001;
@@ -168,8 +169,8 @@ message TokenMetadata {
     enum Type {
         TOKEN_TYPE_ERC20       = 0;
         TOKEN_TYPE_ERC1400     = 1;
+        TOKEN_TYPE_ETH         = 2;
     }
-    // TODO(yongfeng): 是否需要为ETH, BTC, RMB等法币增加类型？
 
     enum Status {
         VALID    = 0; // This token is NOT displyed in walelt
@@ -184,9 +185,8 @@ message TokenMetadata {
     string   unit                   = 6;
     int32    decimals               = 7;
     int32    precision              = 8;
-    double   burn_rate_for_market   = 9; //TODO(yongfeng):使用BurnRate替换该属性
-    double   burn_rate_for_p2p      = 10;
-    int64    updated_at             = 11;
+    BurnRate burn_rate              = 9;
+    int64    updated_at             = 10;
 }
 
 message TokenInfo {
@@ -331,14 +331,12 @@ message ChainReorganizationImpact {
 }
 
 enum Currency {
-    NOT_USE = 0;
-
     // fiat currency
-    USD = 1;
-    RMB = 2;
-    JPY = 3; // 日元
-    EUR = 4; // 欧元
-    GBP = 5; // 英镑
+    USD = 0;
+    RMB = 1;
+    JPY = 2; // 日元
+    EUR = 3; // 欧元
+    GBP = 4; // 英镑
 
     // quote token
     BTC = 100;
@@ -346,8 +344,8 @@ enum Currency {
 }
 
 message MarketTicker {
-    string base_token_symbol = 1;  // GTO
-    string quote_token_symbol = 2; // WETH
+    string base_token = 1;  // base token address
+    string quote_token = 2; // quote token address
     double exchange_rate = 3; // exchange rate for base token to quote token
     double price = 4; // price of quote currency
     double volume_24h = 5; // volume of quote token
@@ -357,7 +355,7 @@ message MarketTicker {
 }
 
 message TokenTicker {
-    string symbol = 1;  // GTO
+    string token = 1;  // token address
     double price = 2; // price of current currency
     double volume_24h = 3; // volume of current currency
     double percent_change_1h = 4;
@@ -373,5 +371,5 @@ message Market {
 message Token {
     TokenMetadata metadata = 1;
     TokenInfo     info     = 2;
-    double        price    = 3; // to given quote token in request
+    TokenTicker   ticker   = 3;
 }

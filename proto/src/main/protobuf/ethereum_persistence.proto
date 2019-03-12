@@ -154,13 +154,14 @@ message Fill {
     io.lightcone.core.Amount amount_b           = 8;
     string token_s                              = 9;
     string token_b                              = 10;
-    int64  market_id                            = 11;
+    string market_hash                          = 11;
     io.lightcone.core.Amount split              = 12; // tokenS
     Fee    fee                                  = 13;
     string wallet                               = 14;
     string miner                                = 15;
     int64  block_height                         = 16;
     int64  block_timestamp                      = 17;
+    bool   is_taker                             = 18;
 }
 
 message TxEvents {
@@ -180,10 +181,11 @@ message TxEvents {
 
 // TODO(yangli): rename to SpotPrice???
 message OHLCRawData {
-    int64      ring_index     = 1;
-    string     tx_hash        = 2;
-    string     market_hash     = 3;
-    int64      time           = 4;
+    int64      block_height   = 1;
+    int64      ring_index     = 2;
+    string     tx_hash        = 3;
+    string     market_hash    = 4;
+    int64      time           = 5;
     double     base_amount    = 6;
     double     quote_amount   = 7;
     double     price          = 8;

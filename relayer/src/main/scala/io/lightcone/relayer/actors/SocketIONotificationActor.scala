@@ -19,8 +19,11 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.google.inject.Inject
+import io.lightcone.core.RawOrder
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.RpcDataLinters._
+import io.lightcone.relayer.data.AccountUpdate
 
 import scala.concurrent.ExecutionContext
 
@@ -48,6 +51,12 @@ class SocketIONotificationActor @Inject()(
     extends Actor {
 
   def receive: Receive = {
+    case order: RawOrder =>
+      notifer.notifyEvent(rawOrderLinter.lint(order))
+
+    case accountUpdate: AccountUpdate =>
+      notifer.notifyEvent(accountUpdateLinter.lint(accountUpdate))
+
     case event: AnyRef => notifer.notifyEvent(event)
   }
 }

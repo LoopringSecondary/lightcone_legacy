@@ -136,16 +136,13 @@ class CoreModule(
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
+    bind[EIP712Support].to[DefaultEIP712Support]
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
     bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].asEagerSingleton
     bind[FiatExchangeRateFetcher]
       .to[SinaFiatExchangeRateFetcher]
       .asEagerSingleton
-
-//    bind[EventExtractor[BlockWithTxObject, AnyRef]]
-//      .to[DefaultEventExtractor]
-//      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -187,7 +184,7 @@ class CoreModule(
       txEventExtractor: EventExtractor[TransactionData, AnyRef]
     ): EventExtractor[BlockWithTxObject, AnyRef] = {
 
-    val ethereumAccess = () => actors.get(EthereumAccessActor.name)
+    def ethereumAccess = () => actors.get(EthereumAccessActor.name)
     val approvalEventExtractor = new TxApprovalEventExtractor()
     val txTransferEventExtractor = new TxTransferEventExtractor()
 
@@ -230,7 +227,8 @@ class CoreModule(
       )
       .register(
         classOf[OHLCRawData], //
-        MarketHistoryActor.name
+        MarketHistoryActor.name,
+        SocketIONotificationActor.name
       )
       .register(
         classOf[BlockGasPricesExtractedEvent], //
@@ -245,6 +243,20 @@ class CoreModule(
         MultiAccountManagerActor.name,
         RingSettlementManagerActor.name
       )
+      .register(
+        classOf[Activity],
+        SocketIONotificationActor.name
+      )
+      .register(
+        classOf[Fill],
+        SocketIONotificationActor.name
+      )
+      .register(
+        classOf[TxEvents],
+        ActivityActor.name,
+        RingAndFillPersistenceActor.name
+      )
+
   }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {

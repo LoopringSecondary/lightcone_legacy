@@ -16,22 +16,78 @@
 
 package io.lightcone.relayer
 
+import io.lightcone.core.RawOrder
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.jsonrpc.Linter
 
 object RpcDataLinters {
 
-  implicit val GetOrderbookResLinter = new Linter[GetOrderbook.Res] {
+  implicit val submitOrderResLinter = new Linter[SubmitOrder.Res] {
 
-    def lint(data: GetOrderbook.Res) = {
-      new GetOrderbook.Res( /* select some fields only */ )
-    }
+    def lint(data: SubmitOrder.Res) = SubmitOrder.Res(success = data.success)
   }
 
-  implicit val GetGetOrdersResLinter = new Linter[GetOrders.Res] {
+  implicit val rawOrderLinter = new Linter[RawOrder] {
 
-    def lint(data: GetOrders.Res) = {
-      new GetOrders.Res( /* select some fields only */ )
-    }
+    def lint(order: RawOrder) =
+      RawOrder(
+        hash = order.hash,
+        version = order.version,
+        owner = order.owner,
+        tokenS = order.tokenS,
+        tokenB = order.tokenB,
+        amountS = order.amountS,
+        amountB = order.amountB,
+        validSince = order.validSince,
+        params = order.params.map(
+          param =>
+            RawOrder.Params(
+              broker = param.broker,
+              orderInterceptor = param.orderInterceptor,
+              wallet = param.wallet,
+              validUntil = param.validUntil,
+              allOrNone = param.allOrNone
+            )
+        ),
+        feeParams = order.feeParams.map(
+          param =>
+            RawOrder.FeeParams(
+              tokenFee = param.tokenFee,
+              amountFee = param.amountFee,
+              tokenSFeePercentage = param.tokenSFeePercentage,
+              tokenBFeePercentage = param.tokenBFeePercentage,
+              tokenRecipient = param.tokenRecipient
+            )
+        ),
+        state = order.state
+      )
   }
+
+  implicit val getOrdersResLinter = new Linter[GetOrders.Res] {
+
+    def lint(data: GetOrders.Res) =
+      data.copy(orders = data.orders.map(rawOrderLinter.lint))
+  }
+
+  implicit val tokenBalanceLinter = new Linter[TokenBalance] {
+
+    def lint(data: TokenBalance): TokenBalance =
+      TokenBalance(
+        token = data.token,
+        balance = data.balance,
+        allowance = data.allowance,
+        block = data.block
+      )
+  }
+
+  implicit val accountUpdateLinter = new Linter[AccountUpdate] {
+
+    def lint(data: AccountUpdate): AccountUpdate =
+      AccountUpdate(
+        address = data.address,
+        tokenBalance = data.tokenBalance.map(tokenBalanceLinter.lint)
+      )
+  }
+
 }

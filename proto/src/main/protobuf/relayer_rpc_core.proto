@@ -84,7 +84,8 @@ message CancelOrder {
         string owner = 2;
         io.lightcone.core.OrderStatus status = 3; //取消的类型
         io.lightcone.core.MarketPair market_pair = 4;
-        string sig = 5;
+        io.lightcone.core.Amount time = 5;
+        string sig = 6;
     }
 
     message Res {
@@ -123,11 +124,23 @@ message GetOrderFilledAmount {
     }
 }
 
+message GetAccountNonce {
+    message Req {
+        string address = 1;
+//        string tag = 2;
+    }
+
+    message Res {
+        int64 nonce = 1;
+    }
+}
+
 message GetAccount {
     message Req {
         string address = 1;
         repeated string tokens = 2;
-        string tag = 3;
+        bool all_tokens = 3;
+        string tag = 4;
     }
 
     message Res {
@@ -139,7 +152,8 @@ message GetAccounts {
     message Req {
         repeated string addresses = 1;
         repeated string tokens = 2;
-        string tag = 3;
+        bool all_tokens = 3;
+        string tag = 4;
     }
 
     message Res {
@@ -159,6 +173,16 @@ message GetActivities {
     }
 }
 
+message GetPendingActivityNonce {
+    message Req {
+        string from = 1;
+        int32 limit = 2;
+    }
+
+    message Res {
+        repeated int64 nonces = 2;
+    }
+}
 
 message UpdateFilledAmount {
     message Req {
@@ -274,7 +298,10 @@ message GetNodeBlockHeight {
 }
 
 message MetadataChanged {
-
+    bool  token_metadata_changed = 1;
+    bool  token_info_changed = 2;
+    bool  market_metadata_changed = 3;
+    bool  ticker_changed = 4;
 }
 
 message SubscribeMetadataChanged {
@@ -300,7 +327,7 @@ message GetTokens {
         bool require_info = 2;
         bool require_price = 3;
         io.lightcone.core.Currency quote_currency_for_price = 4;  // USD, RMB
-        repeated string tokens = 5; //TODO(yongfeng) token address or symbol ?
+        repeated string tokens = 5; // addresses
     }
 
     message Res {
@@ -319,13 +346,8 @@ message GetOrderbookSlots {
     }
 }
 
-message GetFills {
+message GetUserFills {
     message Req {
-        message MarketFilter {
-            string token_s = 1;
-            string token_b = 2;
-            bool   is_query_both_side = 3; // 是否查询两个方向的订单
-        }
         message RingFilter {
             string  ring_hash         = 1;
             string  ring_index        = 2; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
@@ -334,7 +356,7 @@ message GetFills {
         string        owner      = 1;
         string        tx_hash    = 2;
         string        order_hash = 3;
-        MarketFilter  market     = 4;
+        io.lightcone.core.MarketPair  market_pair = 4;
         RingFilter    ring       = 5;
         string        wallet     = 6;
         string        miner      = 7;
@@ -345,6 +367,16 @@ message GetFills {
     message Res {
         repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
         int32   total  = 2;
+    }
+}
+
+message GetMarketFills {
+    message Req {
+        io.lightcone.core.MarketPair  market_pair = 1;
+    }
+
+    message Res {
+        repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
     }
 }
 
@@ -362,4 +394,16 @@ message GetRings {
         repeated io.lightcone.ethereum.persistence.Ring rings = 1;
         int32 total = 2;
     }
+}
+
+message GetTime{
+
+    message Req{
+
+    }
+
+    message Res{
+        io.lightcone.core.Amount timestamp = 1;
+    }
+
 }

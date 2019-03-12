@@ -29,8 +29,10 @@ import io.lightcone.ethereum.event._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import kamon.metric._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -39,7 +41,8 @@ import scala.util.{Failure, Success}
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
     val owner: String,
-    val balanceRefreshIntervalSeconds: Int
+    val balanceRefreshIntervalSeconds: Int,
+    val numOfActivitiesForCalculatingNonce: Int
   )(
     implicit
     val config: Config,
@@ -71,8 +74,10 @@ class AccountManagerActor(
     AccountManager.default(owner, balanceRefreshIntervalSeconds, false)
 
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
+  @inline def activityActor = actors.get(ActivityActor.name)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
   @inline def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
+  @inline def socketIONotifierActor = actors.get(SocketIONotificationActor.name)
 
   @inline def chainReorgManagerActor =
     actors.get(ChainReorganizationManagerActor.name)
@@ -223,7 +228,7 @@ class AccountManagerActor(
 
         f1.sendTo(sender)
       }
-    case GetAccount.Req(addr, tokens, _) =>
+    case GetAccount.Req(addr, tokens, _, _) =>
       count.refine("label" -> "get_account").increment()
       blocking(timer, "get_account") {
         (for {
@@ -242,12 +247,32 @@ class AccountManagerActor(
                 ai.availableAllowance
               )
           }
-          //TODO(HONGYU):确认nonce的更新以及使用方式
-          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances, 0)))
+          result = GetAccount.Res(Some(AccountBalance(owner, tokenBalances)))
         } yield result).sendTo(sender)
       }
 
-    case req @ CancelOrder.Req("", addr, _, None, _) =>
+    case GetAccountNonce.Req(addr) =>
+      count.refine("label" -> "get_account_nonce").increment()
+      (for {
+        nonceFromEth <- (ethereumQueryActor ? GetNonce
+          .Req(owner, "pending"))
+          .mapAs[GetNonce.Res]
+          .map { res =>
+            NumericConversion.toBigInt(res.result).longValue()
+          }
+        nonceFromDbRes <- (activityActor ? GetPendingActivityNonce
+          .Req(owner, numOfActivitiesForCalculatingNonce))
+          .mapAs[GetPendingActivityNonce.Res]
+        nonceFromDb = nonceFromDbRes.nonces
+          .sliding(2)
+          .find(s => s(1) - s(0) > 1)
+          .map(_(0) + 1)
+          .getOrElse(nonceFromDbRes.nonces.lastOption.getOrElse(0L))
+        nonce = if (nonceFromEth >= nonceFromDb) nonceFromEth else nonceFromDb
+        res = GetAccountNonce.Res(nonce)
+      } yield res).sendTo(sender)
+
+    case req @ CancelOrder.Req("", addr, _, None, _, _) =>
       count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner取消订单
         (for {
@@ -260,7 +285,7 @@ class AccountManagerActor(
       }
 
     case req @ CancelOrder
-          .Req("", owner, _, Some(marketPair), _) =>
+          .Req("", owner, _, Some(marketPair), _, _) =>
       count.refine("label" -> "cancel_order").increment()
       blocking { //按照Owner-MarketPair取消订单
         (for {
@@ -272,7 +297,7 @@ class AccountManagerActor(
         } yield result).sendTo(sender)
       }
 
-    case req @ CancelOrder.Req(id, addr, status, _, _) =>
+    case req @ CancelOrder.Req(id, addr, status, _, _, _) =>
       count.refine("label" -> "cancel_order").increment()
 
       blocking {
@@ -305,6 +330,8 @@ class AccountManagerActor(
           .setBalance(evt.block, evt.token, BigInt(evt.balance.toByteArray))
       }
 
+      notifyAccountUpdate(evt.token)
+
     case evt: AddressAllowanceUpdatedEvent =>
       count.refine("label" -> "allowance_updated").increment()
 
@@ -313,6 +340,8 @@ class AccountManagerActor(
         manager
           .setAllowance(evt.block, evt.token, BigInt(evt.allowance.toByteArray))
       }
+
+      notifyAccountUpdate(evt.token)
 
     case evt: AddressBalanceAllowanceUpdatedEvent =>
       count.refine("label" -> "balance_allowance_updated").increment()
@@ -326,6 +355,8 @@ class AccountManagerActor(
           BigInt(evt.allowance.toByteArray)
         )
       }
+
+      notifyAccountUpdate(evt.token)
 
     case evt: CutoffEvent if evt.header.nonEmpty =>
       val header = evt.header.get
@@ -414,6 +445,24 @@ class AccountManagerActor(
         throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
       }
     } yield Unit
+  }
+
+  private def notifyAccountUpdate(token: String) = {
+    manager.getBalanceOfToken(token).map { balanceAndAllowance =>
+      AccountUpdate(
+        address = owner,
+        tokenBalance = Some(
+          TokenBalance(
+            token = token,
+            balance =
+              Some(NumericConversion.toAmount(balanceAndAllowance.balance)),
+            allowance =
+              Some(NumericConversion.toAmount(balanceAndAllowance.allowance)),
+            block = balanceAndAllowance.block
+          )
+        )
+      )
+    } sendTo socketIONotifierActor
   }
 
   private def resubmitOrder(rawOrder: RawOrder): Future[Order] = {

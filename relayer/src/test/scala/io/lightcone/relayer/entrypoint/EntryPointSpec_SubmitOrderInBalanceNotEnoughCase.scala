@@ -20,9 +20,10 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-import scala.concurrent.{Await, Future}
 
+import scala.concurrent.{Await, Future}
 import OrderStatus._
+import io.lightcone.lib.NumericConversion
 
 class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
     extends CommonSpec
@@ -136,10 +137,13 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         rawOrders(0).owner,
         STATUS_SOFT_CANCELLED_BY_USER,
         Some(MarketPair(rawOrders(0).tokenS, rawOrders(0).tokenB)),
-        rawOrders(0).getParams.sig
+        Some(NumericConversion.toAmount(BigInt(timeProvider.getTimeSeconds())))
       )
 
-      val cancelF = singleRequest(cancelReq, "cancel_order")
+      val cancelF = singleRequest(
+        cancelReq.withSig(generateCancelOrderSig(cancelReq)(account)),
+        "cancel_order"
+      )
       Await.result(cancelF, timeout.duration)
 
       info(

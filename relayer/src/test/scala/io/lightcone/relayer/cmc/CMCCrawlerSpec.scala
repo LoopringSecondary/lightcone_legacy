@@ -61,30 +61,21 @@ class CMCCrawlerSpec
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
       val f = for {
         tokenTickers <- getMockedCMCTickers()
-        _ = assert(tokenTickers.nonEmpty)
         currencyTickers <- fiatExchangeRateFetcher.fetchExchangeRates(
           CURRENCY_EXCHANGE_PAIR
         )
-        _ = assert(currencyTickers.nonEmpty)
-        persistTickers <- persistTickers(
-          currencyTickers,
-          tokenTickers
-        )
-      } yield (tokenTickers, currencyTickers, persistTickers)
+      } yield (tokenTickers, currencyTickers)
       val q1 = Await.result(
         f.mapTo[
           (
-              Seq[TokenTickerRecord],
               Seq[TokenTickerRecord],
               Seq[TokenTickerRecord]
           )
         ],
         50.second
       )
-      tickers = q1._3
       q1._1.length should be(1099)
       q1._2.length should be(CURRENCY_EXCHANGE_PAIR.length)
-      q1._3.length should be(1099 + CURRENCY_EXCHANGE_PAIR.length)
     }
 
     "getTokens require [metadata]" in {
@@ -94,7 +85,7 @@ class CMCCrawlerSpec
       res1.tokens.foreach { t =>
         t.metadata.nonEmpty should be(true)
         t.info.isEmpty should be(true)
-        t.price should be(0.0)
+        t.ticker.isEmpty should be(true)
       }
     }
 
@@ -108,7 +99,7 @@ class CMCCrawlerSpec
       val lrc = res1.tokens.head
       lrc.metadata.nonEmpty should be(true)
       lrc.info.isEmpty should be(true)
-      lrc.price should be(0.0)
+      lrc.ticker.isEmpty should be(true)
     }
 
     "getTokens require [metadata, info]" in {
@@ -118,7 +109,7 @@ class CMCCrawlerSpec
       res1.tokens.foreach { t =>
         t.metadata.nonEmpty should be(true)
         t.info.nonEmpty should be(true)
-        t.price should be(0.0)
+        t.ticker.isEmpty should be(true)
       }
     }
 
@@ -129,7 +120,7 @@ class CMCCrawlerSpec
       res1.tokens.foreach { t =>
         t.metadata.nonEmpty should be(true)
         t.info.nonEmpty should be(true)
-        t.price > 0 should be(true)
+        t.ticker.nonEmpty should be(true)
       }
     }
 
@@ -140,7 +131,7 @@ class CMCCrawlerSpec
       res1.tokens.foreach { t =>
         t.metadata.nonEmpty should be(true)
         t.info.nonEmpty should be(true)
-        t.price > 0 should be(true)
+        t.ticker.nonEmpty should be(true)
       }
       val f2 = singleRequest(
         GetTokens.Req(true, true, true, Currency.ETH),
@@ -151,7 +142,7 @@ class CMCCrawlerSpec
       res2.tokens.foreach { t =>
         t.metadata.nonEmpty should be(true)
         t.info.nonEmpty should be(true)
-        t.price > 0 should be(true)
+        t.ticker.nonEmpty should be(true)
       }
 
       val f3 = singleRequest(
@@ -163,7 +154,7 @@ class CMCCrawlerSpec
       res3.tokens.foreach { t =>
         t.metadata.nonEmpty should be(true)
         t.info.nonEmpty should be(true)
-        t.price > 0 should be(true)
+        t.ticker.nonEmpty should be(true)
       }
 
       val lrc1 = res1.tokens.find(_.getMetadata.symbol == LRC_TOKEN.symbol)
@@ -172,7 +163,18 @@ class CMCCrawlerSpec
       lrc2.nonEmpty should be(true)
       val lrc3 = res3.tokens.find(_.getMetadata.symbol == LRC_TOKEN.symbol)
       lrc3.nonEmpty should be(true)
-      lrc1 != lrc2 && lrc1 != lrc3 && lrc2 != lrc3 should be(true)
+      lrc1 should not be lrc2
+      lrc1 should not be lrc3
+      lrc2 should not be lrc3
+      val t1 = lrc1.get.getTicker
+      val t2 = lrc2.get.getTicker
+      val t3 = lrc3.get.getTicker
+      t1.price should not be t2.price
+      t1.price should not be t3.price
+      t2.price should not be t3.price
+      t1.volume24H should not be t2.volume24H
+      t1.volume24H should not be t3.volume24H
+      t2.volume24H should not be t3.volume24H
     }
 
     "getMarkets require [metadata]" in {
@@ -252,9 +254,21 @@ class CMCCrawlerSpec
       lrcWeth2.nonEmpty should be(true)
       val lrcWeth3 = res3.markets.find(_.getMetadata.marketHash == lrcWethHash)
       lrcWeth3.nonEmpty should be(true)
-      lrcWeth1 != lrcWeth2 && lrcWeth1 != lrcWeth3 && lrcWeth2 != lrcWeth3 should be(
-        true
-      )
+      lrcWeth1 should not be lrcWeth2
+      lrcWeth1 should not be lrcWeth3
+      lrcWeth2 should not be lrcWeth3
+      val t1 = lrcWeth1.get.getTicker
+      val t2 = lrcWeth2.get.getTicker
+      val t3 = lrcWeth3.get.getTicker
+      t1.exchangeRate should be(t2.exchangeRate)
+      t1.exchangeRate should be(t3.exchangeRate)
+      t2.exchangeRate should be(t3.exchangeRate)
+      t1.price should not be t2.price
+      t1.price should not be t3.price
+      t2.price should not be t3.price
+      t1.volume24H should not be t2.volume24H
+      t1.volume24H should not be t3.volume24H
+      t2.volume24H should not be t3.volume24H
     }
   }
 

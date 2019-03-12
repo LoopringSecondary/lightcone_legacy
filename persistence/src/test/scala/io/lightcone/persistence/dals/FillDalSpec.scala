@@ -18,7 +18,7 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.core._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data.GetFills.Req
+import io.lightcone.relayer.data.GetUserFills.Req
 import scala.concurrent.Await
 import io.lightcone.ethereum.persistence._
 import scala.concurrent.duration._
@@ -56,18 +56,10 @@ class FillDalSpec extends DalSpec[FillDal] {
 
     info("query fills: by owner and market")
     val q4 =
-      Req(owner = owner1, market = Some(Req.MarketFilter(tokenS1, tokenB1)))
+      Req(owner = owner1, marketPair = Some(MarketPair(tokenS1, tokenB1)))
     val r4 = Await.result(dal.getFills(q4).mapTo[Seq[Fill]], 5.second)
     val c4 = Await.result(dal.countFills(q4).mapTo[Int], 5.second)
-    assert(r4.length == 1 && c4 == 1)
-    val q5 =
-      Req(
-        owner = owner1,
-        market = Some(Req.MarketFilter(tokenS1, tokenB1, true))
-      )
-    val r5 = Await.result(dal.getFills(q5).mapTo[Seq[Fill]], 5.second)
-    val c5 = Await.result(dal.countFills(q5).mapTo[Int], 5.second)
-    assert(r5.length == 2 && c5 == 2)
+    assert(r4.length == 2 && c4 == 2)
 
     info("query fills: by ring")
     val q6 = Req(ring = Some(Req.RingFilter(hash2)))
@@ -88,7 +80,7 @@ class FillDalSpec extends DalSpec[FillDal] {
       owner = owner1,
       txHash = hash1,
       orderHash = hash1,
-      market = Some(Req.MarketFilter(tokenS1, tokenB1)),
+      marketPair = Some(MarketPair(tokenS1, tokenB1)),
       ring = Some(Req.RingFilter(hash1, "1", "0")),
       wallet = wallet,
       miner = miner
@@ -100,7 +92,7 @@ class FillDalSpec extends DalSpec[FillDal] {
       owner = owner2,
       txHash = hash1,
       orderHash = hash1,
-      market = Some(Req.MarketFilter(tokenS1, tokenB1)),
+      marketPair = Some(MarketPair(tokenS1, tokenB1)),
       ring = Some(Req.RingFilter(hash1, "1", "0")),
       wallet = wallet,
       miner = miner

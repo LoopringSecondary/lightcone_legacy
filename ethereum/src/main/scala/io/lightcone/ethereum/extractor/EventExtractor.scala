@@ -16,9 +16,13 @@
 
 package io.lightcone.ethereum.extractor
 
+import io.lightcone.ethereum.TxStatus
+import io.lightcone.ethereum.persistence.{Activity, Fill, TxEvents}
+import io.lightcone.lib.{Address, NumericConversion}
+import org.slf4s.Logging
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
-import org.slf4s.Logging
 
 trait EventExtractor[S, +E] {
   def extractEvents(source: S): Future[Seq[E]]
@@ -69,6 +73,74 @@ object EventExtractor extends Object with Logging {
 
       f
     }
-
   }
+
+  def extractDefaultActivity(txData: TransactionData) = {
+    val activity = Activity(
+      owner = txData.tx.from,
+      block = txData.receiptAndHeaderOpt
+        .map(_._1.getBlockNumber)
+        .map(NumericConversion.toBigInt)
+        .map(_.longValue())
+        .getOrElse(-1L),
+      txHash = txData.tx.hash,
+      timestamp = txData.receiptAndHeaderOpt
+        .map(_._2.getBlockHeader.timestamp)
+        .getOrElse(0L),
+      token = Address.ZERO.toString(),
+      from = txData.tx.from,
+      nonce = NumericConversion.toBigInt(txData.tx.getNonce).longValue(),
+      txStatus = txData.receiptAndHeaderOpt
+        .map(_._1.status)
+        .getOrElse(TxStatus.TX_STATUS_PENDING),
+      detail = Activity.Detail.EtherTransfer(
+        Activity.EtherTransfer(
+          address = txData.tx.to,
+          amount = txData.tx.value
+        )
+      )
+    )
+
+    Seq(
+      activity.copy(
+        owner = txData.tx.from,
+        activityType = Activity.ActivityType.ETHER_TRANSFER_OUT
+      ),
+      activity.copy(
+        owner = txData.tx.to,
+        activityType = Activity.ActivityType.ETHER_TRANSFER_IN
+      )
+    )
+  }
+
+  def composeActivities(activities: Seq[Activity]): Seq[TxEvents] = {
+    activities
+      .groupBy(_.txHash)
+      .values
+      .map(
+        activities =>
+          TxEvents(
+            TxEvents.Events.Activities(
+              TxEvents.Activities(activities)
+            )
+          )
+      )
+      .toSeq
+  }
+
+  def composeFills(fills: Seq[Fill]): Seq[TxEvents] = {
+    fills
+      .groupBy(_.txHash)
+      .values
+      .map(
+        fills =>
+          TxEvents(
+            TxEvents.Events.Fills(
+              TxEvents.Fills(fills)
+            )
+          )
+      )
+      .toSeq
+  }
+
 }

@@ -26,6 +26,8 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.ethereum.event.BlockEvent
+
 import scala.concurrent.ExecutionContext
 
 object MarketHistoryActor extends DeployedAsSingleton {
@@ -76,5 +78,10 @@ class MarketHistoryActor(
 
     case req: GetMarketHistory.Req =>
       dbModule.ohlcDataService.getOHLCData(req).sendTo(sender)
+
+    case req: BlockEvent =>
+      (for {
+        result <- dbModule.ohlcDataDal.cleanDataForReorg(req)
+      } yield result).sendTo(sender)
   }
 }

@@ -19,6 +19,8 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.extractor._
+import io.lightcone.ethereum.persistence.{Activity, Fill}
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
@@ -37,6 +39,8 @@ object PendingTxEventExtractorActor extends DeployedAsSingleton {
       ec: ExecutionContext,
       timeout: Timeout,
       actors: Lookup[ActorRef],
+      eventDispatcher: EventDispatcher,
+      eventExtractor: EventExtractor[TransactionData, AnyRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new PendingTxEventExtractorActor()))
@@ -50,6 +54,8 @@ class PendingTxEventExtractorActor @Inject()(
     val system: ActorSystem,
     val ec: ExecutionContext,
     val timeout: Timeout,
+    val eventDispatcher: EventDispatcher,
+    val eventExtractor: EventExtractor[TransactionData, AnyRef],
     val actors: Lookup[ActorRef])
     extends InitializationRetryActor {
 
@@ -65,8 +71,23 @@ class PendingTxEventExtractorActor @Inject()(
 
   def ready: Receive = {
     case tx: Transaction =>
-    //TODO(yadong) 解析Transaction，把事件发送到对应的Actor
-
+      eventExtractor
+        .extractEvents(TransactionData(tx))
+        .map { events =>
+          if (!events.exists(_.isInstanceOf[Activity])) {
+            events ++ EventExtractor.extractDefaultActivity(TransactionData(tx))
+          } else events
+        }
+        .map { events =>
+          val activities = events
+            .filter(_.isInstanceOf[Activity])
+            .map(_.asInstanceOf[Activity])
+          val fills =
+            events.filter(_.isInstanceOf[Fill]).map(_.asInstanceOf[Fill])
+          events ++ EventExtractor.composeFills(fills) ++ EventExtractor
+            .composeActivities(activities)
+        }
+        .foreach(_.foreach(eventDispatcher.dispatch))
   }
 
 }

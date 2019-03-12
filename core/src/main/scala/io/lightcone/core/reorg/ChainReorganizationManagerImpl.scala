@@ -71,11 +71,14 @@ class ChainReorganizationManagerImpl(
           s"block reorgnaized at a block index ($blockIdx) smaller than the" +
             s"minimal knonw block ($idx)"
         )
+      case _ =>
     }
     val (remainingBlocks, expiredBlocks) = blocks.partition(_._1 < blockIdx)
     blocks = remainingBlocks
 
-    val aggregated = expiredBlocks.values.reduce(_ + _)
+    val aggregated =
+      if (expiredBlocks.isEmpty) BlockData()
+      else expiredBlocks.values.reduce(_ + _)
 
     val orderIds = aggregated.orderIds.toSeq
     val accounts = aggregated.accounts.map {

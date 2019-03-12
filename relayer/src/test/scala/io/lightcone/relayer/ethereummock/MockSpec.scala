@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.ethereummock
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern._
@@ -22,9 +22,9 @@ import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
 import akka.util.Timeout
 import io.lightcone.lib.SystemTimeProvider
-import io.lightcone.relayer.data.{AccountBalance, GetAccount}
+import io.lightcone.relayer.data._
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
+import org.scalatest._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -61,7 +61,7 @@ class MockSpec
           req2.address == req1.address
         })
         .returns(
-          GetAccount.Res(Some(AccountBalance(address = "0xbbb", nonce = 190)))
+          GetAccount.Res(Some(AccountBalance(address = "0xbbb")))
         )
         .anyNumberOfTimes()
       val res1 = Await.result(

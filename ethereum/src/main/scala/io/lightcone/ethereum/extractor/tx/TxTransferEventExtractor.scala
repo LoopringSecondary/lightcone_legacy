@@ -39,10 +39,10 @@ final class TxTransferEventExtractor @Inject()(
     val config: Config)
     extends EventExtractor[TransactionData, AnyRef] {
 
-  val wethAddress =
+  def wethAddress =
     metadataManager.getTokenWithSymbol("weth").get.getMetadata.address
 
-  val protocolAddress =
+  def protocolAddress =
     Address.normalize(config.getString("loopring_protocol.protocol-address"))
 
   def extractEvents(txData: TransactionData): Future[Seq[AnyRef]] = Future {

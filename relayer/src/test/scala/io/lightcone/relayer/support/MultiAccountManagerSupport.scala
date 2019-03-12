@@ -16,14 +16,59 @@
 
 package io.lightcone.relayer.support
 
+import io.lightcone.core.MarketHash
+import io.lightcone.ethereum.DefaultEIP712Support
+import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.actors._
+import io.lightcone.relayer.data.CancelOrder
 import io.lightcone.relayer.validator._
+import org.web3j.crypto._
+import org.json4s.JsonDSL._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.native.JsonMethods.parse
+import org.web3j.utils.Numeric
 
 trait MultiAccountManagerSupport
     extends DatabaseModuleSupport
+    with ActivitySupport
     with EthereumSupport {
   me: CommonSpec =>
+  implicit val eip712Support = new DefaultEIP712Support()
   actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
+
+  val cancelOrderSchema = parse(
+    config.getString("order_cancel.schema").stripMargin
+  )
+
+  def generateCancelOrderSig(
+      req: CancelOrder.Req
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val cancelRequest = Map(
+      "id" -> req.id,
+      "owner" -> req.owner,
+      "market" -> req.marketPair
+        .map(
+          marketPair =>
+            NumericConversion.toHexString(MarketHash(marketPair).bigIntValue)
+        )
+        .getOrElse(""),
+      "time" -> NumericConversion.toHexString(req.getTime)
+    )
+    val message = Map("message" -> cancelRequest)
+    val completedMessage = compact(cancelOrderSchema merge render(message))
+    val typedData = eip712Support.jsonToTypedData(completedMessage)
+    val hash = eip712Support.getEIP712Message(typedData)
+    val sigData = Sign.signPrefixedMessage(
+      Numeric.hexStringToByteArray(hash),
+      credentials.getEcKeyPair
+    )
+    val sig = sigData.getR.toSeq ++ sigData.getS.toSeq ++ Seq(sigData.getV)
+    Numeric.toHexString(sig.toArray)
+  }
 
   actors.add(
     MultiAccountManagerMessageValidator.name,

@@ -72,13 +72,14 @@ class EntryPointActor(
     case _: GetActivities.Req =>
       Some(ActivityValidator.name)
 
-    case _: GetAccount.Req | _: GetAccounts.Req =>
+    case _: GetAccount.Req | _: GetAccounts.Req | _: GetAccountNonce.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
     case _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: GetOrders.Req | _: GetRings.Req | _: GetFills.Req =>
+    case _: GetOrders.Req | _: GetRings.Req | _: GetUserFills.Req |
+        _: GetMarketFills.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
     case _: JsonRpc.Request =>
@@ -89,6 +90,9 @@ class EntryPointActor(
     case _: GetMarkets.Req | _: GetTokens.Req => Some(MetadataRefresher.name)
 
     case _: GetMarketHistory.Req => Some(MarketHistoryActor.name)
+
+    case _: GetTime.Req =>
+      Some(ApplicationInfoActor.name)
 
     case _ => None
   }

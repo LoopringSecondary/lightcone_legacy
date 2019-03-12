@@ -27,7 +27,7 @@ package object implicits {
 
   implicit def tickerRecordConvertor(ticker: TokenTickerRecord): TokenTicker =
     TokenTicker(
-      ticker.symbol,
+      ticker.tokenAddress,
       ticker.price,
       ticker.volume24H,
       ticker.percentChange1H,

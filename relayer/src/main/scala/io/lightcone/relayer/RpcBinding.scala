@@ -23,6 +23,10 @@ import io.lightcone.relayer.data._
 trait RpcBinding extends JsonRpcModule {
   import RpcDataLinters._
 
+  method("get_time")
+    .accepts[GetTime.Req]
+    .replies[GetTime.Res]
+
   method("get_orderbook")
   // .accepts[ext.GetOrderbook.Req, GetOrderbook.Req]
   // .replies[GetOrderbook.Res, ext.GetOrderbook.Res]
@@ -42,9 +46,13 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetOrders.Req]
     .replies[GetOrders.Res]
 
-  method("get_fills")
-    .accepts[GetFills.Req]
-    .replies[GetFills.Res]
+  method("get_user_fills")
+    .accepts[GetUserFills.Req]
+    .replies[GetUserFills.Res]
+
+  method("get_market_fills")
+    .accepts[GetMarketFills.Req]
+    .replies[GetMarketFills.Res]
 
   method("get_rings")
     .accepts[GetRings.Req]
@@ -66,7 +74,10 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetActivities.Req]
     .replies[GetActivities.Res]
 
-  //Ethereum Query
+  method("get_account_nonce")
+    .accepts[GetAccountNonce.Req]
+    .replies[GetAccountNonce.Res]
+
   method("get_account")
     .accepts[GetAccount.Req]
     .replies[GetAccount.Res]
