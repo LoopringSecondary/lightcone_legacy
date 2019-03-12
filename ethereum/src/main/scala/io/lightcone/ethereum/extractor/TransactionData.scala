@@ -21,4 +21,4 @@ import io.lightcone.relayer.data._
 
 case class TransactionData(
     tx: Transaction,
-    receiptAndHeaderOpt: Option[(TransactionReceipt, EventHeader)])
+    receiptAndHeaderOpt: Option[(TransactionReceipt, EventHeader)] = None)

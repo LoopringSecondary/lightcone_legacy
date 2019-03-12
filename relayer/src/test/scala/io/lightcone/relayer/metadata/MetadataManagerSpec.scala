@@ -258,8 +258,7 @@ class MetadataManagerSpec
         symbol = "aaa",
         name = "aaa Token",
         address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
-        burnRateForMarket = 0.1,
-        burnRateForP2P = 0.2
+        burnRate = Some(BurnRate(0.1, 0.2))
       )
       val b = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
@@ -267,8 +266,7 @@ class MetadataManagerSpec
         symbol = "abc",
         name = "ABC Token",
         address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
-        burnRateForMarket = 0.3,
-        burnRateForP2P = 0.4
+        burnRate = Some(BurnRate(0.3, 0.4))
       )
       info("token A and formatedA should same")
       val formatedA = MetadataManager.normalize(a)

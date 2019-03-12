@@ -21,6 +21,8 @@ import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
+import io.lightcone.lib.NumericConversion
+
 import scala.concurrent.Await
 
 class CoreActorsIntegrationSpec_CancelOneOrder
@@ -62,12 +64,13 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       val cancelReq = CancelOrder.Req(
         id = rawOrder.hash,
         owner = rawOrder.owner,
-        status = STATUS_SOFT_CANCELLED_BY_USER,
-        sig = rawOrder.getParams.sig,
-        marketPair = Some(MarketPair(rawOrder.tokenS, rawOrder.tokenB))
+        time = Some(
+          NumericConversion.toAmount(BigInt(timeProvider.getTimeSeconds()))
+        )
       )
 
       val cancelResF = actors.get(MultiAccountManagerMessageValidator.name) ? cancelReq
+        .withSig(generateCancelOrderSig(cancelReq)(accounts.head))
 
       val cancelRes = Await.result(cancelResF, timeout.duration)
       info(s"submit res: ${cancelRes}")

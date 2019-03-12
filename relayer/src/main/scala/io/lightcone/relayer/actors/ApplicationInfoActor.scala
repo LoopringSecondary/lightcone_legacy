@@ -19,38 +19,50 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.google.inject.Inject
-import io.lightcone.core.RawOrder
+import com.typesafe.config.Config
+import io.lightcone.lib._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.socketio._
-import io.lightcone.relayer.RpcDataLinters._
+import io.lightcone.relayer.data.GetTime
 
 import scala.concurrent.ExecutionContext
 
-object SocketIONotificationActor extends DeployedAsSingleton {
-  val name = "socketio_notifier"
+object ApplicationInfoActor extends DeployedAsSingleton {
+  val name = "application_info"
 
   def start(
       implicit
       system: ActorSystem,
+      config: Config,
       ec: ExecutionContext,
+      timeProvider: TimeProvider,
       timeout: Timeout,
-      notifer: SocketIONotifier,
+      actors: Lookup[ActorRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    startSingleton(Props(new SocketIONotificationActor()))
+    startSingleton(Props(new ApplicationInfoActor()))
   }
 }
 
-class SocketIONotificationActor @Inject()(
+class ApplicationInfoActor @Inject()(
     implicit
     val system: ActorSystem,
+    val config: Config,
     val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val notifer: SocketIONotifier)
-    extends Actor {
+    val actors: Lookup[ActorRef])
+    extends Actor
+    with Stash
+    with ActorLogging {
 
   def receive: Receive = {
-    case order: RawOrder => notifer.notifyEvent(rawOrderLinter.lint(order))
-    case event: AnyRef   => notifer.notifyEvent(event)
+
+    case _: GetTime.Req =>
+      sender ! GetTime.Res(
+        timestamp = Some(
+          NumericConversion.toAmount(BigInt(timeProvider.getTimeSeconds()))
+        )
+      )
   }
+
 }

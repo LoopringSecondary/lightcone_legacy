@@ -66,7 +66,9 @@ private[core] class RichToken(token: Token) {
           s"not found metadata of token $token"
         )
       )
-      .burnRateForMarket
+      .burnRate
+      .getOrElse(BurnRate())
+      .forMarket
   }
 
   def getBurnRateForP2P() = {
@@ -77,6 +79,8 @@ private[core] class RichToken(token: Token) {
           s"not found metadata of token $token"
         )
       )
-      .burnRateForP2P
+      .burnRate
+      .getOrElse(BurnRate())
+      .forP2P
   }
 }

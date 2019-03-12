@@ -53,9 +53,9 @@ class DynamicAdjustMarketsSpec
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case SubmitOrder.Res(Some(order), _) =>
+        case SubmitOrder.Res(_, success) =>
           //          info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
+          success should be(true)
         case _ => assert(false)
       }
 

@@ -136,16 +136,13 @@ class CoreModule(
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
     bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
+    bind[EIP712Support].to[DefaultEIP712Support]
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].asEagerSingleton
     bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].asEagerSingleton
     bind[FiatExchangeRateFetcher]
       .to[SinaFiatExchangeRateFetcher]
       .asEagerSingleton
-
-//    bind[EventExtractor[BlockWithTxObject, AnyRef]]
-//      .to[DefaultEventExtractor]
-//      .asEagerSingleton
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))

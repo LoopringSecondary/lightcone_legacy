@@ -28,6 +28,7 @@ class OHLCDataTable(tag: Tag)
     extends BaseTable[OHLCRawData](tag, OHLCDataTable.tableName) {
 
   def id = txHash
+  def blockHeight = column[Long]("block_height")
   def ringIndex = column[Long]("ring_index")
   def txHash = columnHash("tx_hash")
   def marketHash = column[String]("market_hash")
@@ -39,7 +40,16 @@ class OHLCDataTable(tag: Tag)
   def price = column[Double]("price", O.SqlType("DOUBLE PRECISION"))
 
   def * =
-    (ringIndex, txHash, marketHash, time, baseAmount, quoteAmount, price) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
+    (
+      blockHeight,
+      ringIndex,
+      txHash,
+      marketHash,
+      time,
+      baseAmount,
+      quoteAmount,
+      price
+    ) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
 
   def pk = primaryKey("pk", (ringIndex, txHash, time))
   def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
