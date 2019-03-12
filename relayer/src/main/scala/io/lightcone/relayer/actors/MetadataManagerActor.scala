@@ -214,7 +214,7 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case _: TokenTickerChanged => { // subscribe message from ExternalCrawlerActor
+    case _: MetadataChanged => { // subscribe message from ExternalCrawlerActor
       for {
         tickers_ <- getLastTickers()
       } yield {
@@ -222,7 +222,7 @@ class MetadataManagerActor(
           tokenTickers = tickers_
           marketTickers = fillSupportMarketTickers(tickers_)
           refreshTokenAndMarket()
-          publish(false, false, true)
+          publish(false, false, false, true)
         }
       }
     }
@@ -249,6 +249,7 @@ class MetadataManagerActor(
 
   private def publish(
       tokenMetadataChanged: Boolean,
+      tokenInfoChanged: Boolean,
       marketMetadataChanged: Boolean,
       tickerChanged: Boolean
     ) = {
@@ -256,6 +257,7 @@ class MetadataManagerActor(
       MetadataManagerActor.pubsubTopic,
       MetadataChanged(
         tokenMetadataChanged,
+        tokenInfoChanged,
         marketMetadataChanged,
         tickerChanged
       )
@@ -293,7 +295,12 @@ class MetadataManagerActor(
 
     if (tokenMetadataChanged || tokenInfoChanged || marketMetadataChanged) {
       refreshTokenAndMarket()
-      publish(tokenMetadataChanged, marketMetadataChanged, false)
+      publish(
+        tokenMetadataChanged,
+        tokenInfoChanged,
+        marketMetadataChanged,
+        false
+      )
     }
   }
 

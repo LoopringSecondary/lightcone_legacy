@@ -298,9 +298,10 @@ message GetNodeBlockHeight {
 }
 
 message MetadataChanged {
-    bool token_metadata_changed = 1;
-    bool market_metadata_changed = 2;
-    bool ticker_changed = 3;
+    bool  token_metadata_changed = 1;
+    bool  token_info_changed = 2;
+    bool  market_metadata_changed = 3;
+    bool  ticker_changed = 4;
 }
 
 message SubscribeMetadataChanged {
