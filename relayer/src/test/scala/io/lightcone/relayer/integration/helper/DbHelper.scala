@@ -20,6 +20,7 @@ import io.lightcone.core._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence._
 import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.support.TOKENS
 import org.slf4s.Logging
 
 import scala.concurrent._
@@ -56,7 +57,11 @@ trait DbHelper extends Logging {
     dbModule.marketMetadataDal.saveMarkets(MARKETS)
 
     val tokens = TOKENS.map { t =>
-      Token(Some(t), Some(TokenInfo(symbol = t.symbol)), 0.1)
+      Token(
+        Some(t),
+        Some(TokenInfo(symbol = t.symbol)),
+        Some(TokenTicker(token = t.address, price = 0.1))
+      )
     }
 
     val markets = MARKETS.map { m =>
@@ -64,8 +69,8 @@ trait DbHelper extends Logging {
         Some(m),
         Some(
           MarketTicker(
-            baseTokenSymbol = m.baseTokenSymbol,
-            quoteTokenSymbol = m.quoteTokenSymbol,
+            baseToken = m.marketPair.get.baseToken,
+            quoteToken = m.marketPair.get.quoteToken,
             price = 0.0001
           )
         )
