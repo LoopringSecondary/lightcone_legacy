@@ -20,6 +20,7 @@ import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.ethereum.extractor._
+import io.lightcone.ethereum.persistence.{Activity, Fill}
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereum._
@@ -72,6 +73,20 @@ class PendingTxEventExtractorActor @Inject()(
     case tx: Transaction =>
       eventExtractor
         .extractEvents(TransactionData(tx))
+        .map { events =>
+          if (!events.exists(_.isInstanceOf[Activity])) {
+            events ++ EventExtractor.extractDefaultActivity(TransactionData(tx))
+          } else events
+        }
+        .map { events =>
+          val activities = events
+            .filter(_.isInstanceOf[Activity])
+            .map(_.asInstanceOf[Activity])
+          val fills =
+            events.filter(_.isInstanceOf[Fill]).map(_.asInstanceOf[Fill])
+          events ++ EventExtractor.composeFills(fills) ++ EventExtractor
+            .composeActivities(activities)
+        }
         .foreach(_.foreach(eventDispatcher.dispatch))
   }
 
