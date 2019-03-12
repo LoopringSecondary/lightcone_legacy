@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.integration
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.Cluster
@@ -28,13 +28,16 @@ import io.lightcone.ethereum._
 import io.lightcone.ethereum.extractor._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer._
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data.BlockWithTxObject
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.external._
+import io.lightcone.relayer.ethereummock._
 import io.lightcone.relayer.socketio._
+import io.lightcone.relayer.splitmerge._
+
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class CoreDeployerForTest @Inject()(
@@ -69,9 +72,6 @@ class CoreDeployerForTest @Inject()(
     system: ActorSystem)
     extends CoreDeployer {
 
-  implicit var queryDataProvider: EthereumQueryDataProvider = _
-  implicit var accessDataProvider: EthereumAccessDataProvider = _
-
   override def deployEthereum(): Lookup[ActorRef] = {
     actors
       .add(
@@ -82,15 +82,6 @@ class CoreDeployerForTest @Inject()(
         EthereumQueryActor.name, //
         system.actorOf(Props(new MockEthereumQueryActor()))
       )
-  }
-
-  def deploy(
-      ethAccessDataProvider: EthereumAccessDataProvider,
-      ethQueryDataProvider: EthereumQueryDataProvider
-    ) = {
-    queryDataProvider = ethQueryDataProvider
-    accessDataProvider = ethAccessDataProvider
-    super.deploy()
   }
 
 }

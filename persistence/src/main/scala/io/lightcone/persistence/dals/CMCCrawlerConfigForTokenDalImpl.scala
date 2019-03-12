@@ -40,7 +40,8 @@ class CMCCrawlerConfigForTokenDalImpl @Inject()(
   def saveConfigs(configs: Seq[CMCCrawlerConfigForToken]): Future[ErrorCode] =
     db.run((query ++= configs).asTry).map {
       case Failure(ex) => {
-        logger.error(s"save ticker configs error : ${ex.getMessage}")
+        logger
+          .error(s"save ticker configs error : ${ex.getMessage}, ${configs}")
         ERR_PERSISTENCE_INTERNAL
       }
       case Success(x) =>

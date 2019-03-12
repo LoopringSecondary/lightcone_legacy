@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.ethereummock
+package io.lightcone.relayer.integration
+import org.scalatest.matchers.{MatchResult, Matcher}
 
-import io.lightcone.relayer.data._
+object AddedMatchers {
 
-trait EthereumQueryDataProvider {
-  def getAccount(req: GetAccount.Req): GetAccount.Res
-  def getFilledAmount(req: GetFilledAmount.Req): GetFilledAmount.Res
+  def check[T](checkFun: T => Boolean)(implicit m: Manifest[T]) = {
+    Matcher { res: T =>
+      MatchResult(
+        checkFun(res),
+        res + " doesn't match",
+        res + " matchs"
+      )
+    }
+  }
 
-  def getOrderCancellation(
-      req: GetOrderCancellation.Req
-    ): GetOrderCancellation.Res
-  def getCutoff(req: GetCutoff.Req): GetCutoff.Res
-  def batchGetCutoffs(req: BatchGetCutoffs.Req): BatchGetCutoffs.Res
-  def getBurnRate(req: GetBurnRate.Req): GetBurnRate.Res
 }

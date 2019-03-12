@@ -184,7 +184,7 @@ class CoreModule(
       txEventExtractor: EventExtractor[TransactionData, AnyRef]
     ): EventExtractor[BlockWithTxObject, AnyRef] = {
 
-    val ethereumAccess = () => actors.get(EthereumAccessActor.name)
+    def ethereumAccess = () => actors.get(EthereumAccessActor.name)
     val approvalEventExtractor = new TxApprovalEventExtractor()
     val txTransferEventExtractor = new TxTransferEventExtractor()
 
