@@ -29,8 +29,9 @@ class RpcHelperSpec
     with Matchers {
 
   feature("an example of RpcHelper") {
-    scenario("receive a response") {
+    scenario("submit one order") {
       implicit val account = getUniqueAccount()
+
       Given("an account with Balance")
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
