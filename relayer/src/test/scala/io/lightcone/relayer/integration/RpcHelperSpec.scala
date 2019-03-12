@@ -19,18 +19,19 @@ import io.lightcone.core.MarketPair
 import io.lightcone.relayer._
 import io.lightcone.relayer.data.{GetAccount, GetOrderbook, SubmitOrder}
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.support.{LRC_TOKEN, WETH_TOKEN}
-import org.scalatest.{Matchers, WordSpec}
+import io.lightcone.relayer.integration.Metadatas._
+import org.scalatest._
 
 class RpcHelperSpec
-    extends WordSpec
-    with Matchers
-    with RpcHelper
-    with OrderHelper {
+    extends FeatureSpec
+    with GivenWhenThen
+    with CommonHelper
+    with Matchers {
 
-  "an example of HttpHelper" must {
-    "receive a response " in {
+  feature("an example of RpcHelper") {
+    scenario("receive a response") {
       implicit val account = getUniqueAccount()
+      Given("an account with Balance")
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
         tokens = Seq(LRC_TOKEN.name, WETH_TOKEN.address)
@@ -39,18 +40,17 @@ class RpcHelperSpec
       val res = getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(s"####111 an example of HttpHelper ${res}")
+      When("submit an order.")
       val submitRes = SubmitOrder
         .Req(Some(createRawOrder()))
         .expect(check((res: SubmitOrder.Res) => true))
-      info(s"### submitRes ${submitRes}")
+      info(s"the result of submit order is ${submitRes.success}")
 
+      Then("the orderbook should not be empty.")
       val orderbook = GetOrderbook
         .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)))
         .expect(check((res: GetOrderbook.Res) => res.orderbook.nonEmpty))
-      info(s"##orderbook ${orderbook}")
-
+      info(s"the orderbook is ${orderbook}")
     }
   }
-
 }

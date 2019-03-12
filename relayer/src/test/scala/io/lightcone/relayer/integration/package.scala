@@ -17,7 +17,9 @@
 package io.lightcone.relayer
 import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
+import io.lightcone.core.MetadataManager
 import io.lightcone.lib.SystemTimeProvider
+import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.ethereum.EventDispatcher
@@ -41,6 +43,8 @@ package object integration extends MockFactory {
   val injector = integrationStarter.injector
 
   val eventDispatcher = injector.instance[EventDispatcher]
+  val dbModule = injector.instance[DatabaseModule]
+  val metadataManager = injector.instance[MetadataManager]
 
   //  //start ActorySystem
   val entryPointActor =

@@ -22,13 +22,11 @@ import org.scalamock.scalatest.MockFactory
 
 import scala.math.BigInt
 
-//eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
 trait MockHelper extends MockFactory {
 
-  //mock 的问题
-  //架构是否合适
-  //整理
-  def setDefaultExpects() = {
+  //eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
+  //重设时，不能直接设置新的expects来覆盖旧有的expects，但是可以通过使用新变量或者针对每个expect进行操作，但是后者比较繁琐
+  def setDefaultEthExpects() = {
     queryProvider = mock[EthereumQueryDataProvider]
     accessProvider = mock[EthereumAccessDataProvider]
     //账户余额
@@ -89,6 +87,7 @@ trait MockHelper extends MockFactory {
         )
       })
       .anyNumberOfTimes()
+
     //getFilledAmount
     (queryProvider.getFilledAmount _)
       .expects(*)
@@ -102,4 +101,5 @@ trait MockHelper extends MockFactory {
       })
       .anyNumberOfTimes()
   }
+
 }

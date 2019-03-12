@@ -15,6 +15,24 @@
  */
 
 package io.lightcone.relayer.integration
-import org.scalatest.Matchers
+import io.lightcone.relayer.integration.helper.{DbHelper, MockHelper}
+import org.scalatest.{BeforeAndAfterEach, Matchers}
 
-abstract class CommonHelper extends Matchers with RpcHelper with OrderHelper {}
+trait CommonHelper
+    extends MockHelper
+    with DbHelper
+    with Matchers
+    with RpcHelper
+    with OrderHelper
+    with BeforeAndAfterEach {
+
+  //保证每次都重置ethmock和数据库，
+  //当需要不同的重置条件时，需要覆盖该方法
+  override protected def beforeEach(): Unit = {
+    setDefaultEthExpects()
+    prepareDbModule(dbModule)
+    prepareMetadata(dbModule, metadataManager)(timeout, timeProvider)
+    super.beforeEach()
+  }
+
+}

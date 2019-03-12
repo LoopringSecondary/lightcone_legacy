@@ -50,7 +50,7 @@ class IntegrationStarter extends MockHelper with DbHelper {
       timeout: Timeout,
       timeProvider: TimeProvider
     ) = {
-    setDefaultExpects()
+    setDefaultEthExpects()
     val config = ConfigFactory.load()
     injector = Guice.createInjector(new CoreModule(config, true))
     val dbModule = injector.instance[DatabaseModule]

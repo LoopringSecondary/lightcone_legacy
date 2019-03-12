@@ -19,7 +19,7 @@ import akka.util.Timeout
 import io.lightcone.core._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence._
-import io.lightcone.relayer.integration.Metadatas
+import io.lightcone.relayer.integration.Metadatas._
 import org.slf4s.Logging
 
 import scala.concurrent._
@@ -44,22 +44,22 @@ trait DbHelper extends Logging {
       timeProvider: TimeProvider
     ) = {
 
-    dbModule.tokenMetadataDal.saveTokenMetadatas(Metadatas.TOKENS)
-    dbModule.tokenInfoDal.saveTokenInfos(Metadatas.TOKENS.map { t =>
+    dbModule.tokenMetadataDal.saveTokenMetadatas(TOKENS)
+    dbModule.tokenInfoDal.saveTokenInfos(TOKENS.map { t =>
       TokenInfo(t.symbol)
     })
     dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(
-      Metadatas.TOKEN_SLUGS_SYMBOLS.map { t =>
+      TOKEN_SLUGS_SYMBOLS.map { t =>
         CMCCrawlerConfigForToken(t._1, t._2)
       }
     )
-    dbModule.marketMetadataDal.saveMarkets(Metadatas.MARKETS)
+    dbModule.marketMetadataDal.saveMarkets(MARKETS)
 
-    val tokens = Metadatas.TOKENS.map { t =>
+    val tokens = TOKENS.map { t =>
       Token(Some(t), Some(TokenInfo(symbol = t.symbol)), 0.1)
     }
 
-    val markets = Metadatas.MARKETS.map { m =>
+    val markets = MARKETS.map { m =>
       Market(
         Some(m),
         Some(
@@ -75,7 +75,7 @@ trait DbHelper extends Logging {
       tokens,
       markets
     )
-    val tickers_ = Metadatas.externalTickers
+    val tickers_ = externalTickers
     Await.result(
       dbModule.tokenTickerRecordDal.saveTickers(tickers_),
       timeout.duration
