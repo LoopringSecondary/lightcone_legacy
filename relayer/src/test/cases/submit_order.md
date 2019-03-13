@@ -1,6 +1,6 @@
 ## 提交订单流程(不涉及撮合)
 
-在以下4种不同情形下提交订单的表现，分别根据[账户余额](#different-balance) ，[Market状态](#market-status) ， [账户取消状态](#owner-cutoff) ， [参数](#system-config)
+在以下4种不同情形下提交订单的表现，分别根据[账户余额](#different-balance) ，[Market状态](#market-status) ， [账户取消状态](#owner-cutoff) ， [系统参数](#system-config) ，[订单自身参数影响](#order-argument)
 
 ### <a name="different-balance"></a>不同账户余额情况
 --- 
@@ -293,6 +293,51 @@
 		        1. **读取我的成交**：为空
 		        1. **读取市场成交**：为空
 		        1. **读取我的账号**：LRC的余额为：`balance=1000,allowance=1000,avaliableBalance=80,avaliableAllowance=80`
+    - **状态**: Planned
+    - **拥有者**: 红雨
+    - **其他信息**：NA
+
+### <a name="order-argument"></a> 订单参数的影响
+---
+ 分为两种情况 订单参数检验，延迟生效订单
+ 
+---
+1. 订单参数的检验
+    - **Objective**：设置新账户有足够的余额授权，提交n笔订单，分别为订单签名错误、dualAuth签名错误、地址错误、
+     - **测试设置和验证**：
+        1. 设置新账户，订单余额设置为1000LRC，授权为1000LRC
+        2. 提交第一个订单，验证签名错误，sell:100LRC, buy:1WETH, fee:20LRC 签名之后，重新设置hash => 
+        	- **验证**：
+		        1. **返回结果**：提交失败
+		        1. **读取我的订单**：getOrders空
+		        1. **读取市场深度**：为空
+		        1. **读取我的成交**：为空
+		        1. **读取市场成交**：为空
+		        1. **读取我的账号**：LRC的余额为：`balance=1000,allowance=1000,avaliableBalance=1000,avaliableAllowance=1000`
+		2. 提交第二个订单，验证签名错误，sell:100LRC, buy:1WETH, fee:20LRC 签名之后，重设owner => 
+        	- **验证**：
+		        1. **返回结果**：提交失败
+		        1. **读取我的订单**：getOrders为空
+		        1. **读取市场深度**：为空
+		        1. **读取我的成交**：为空
+		        1. **读取市场成交**：为空
+		        1. **读取我的账号**：LRC的余额为：`balance=1000,allowance=1000,avaliableBalance=1000,avaliableAllowance=1000`
+		2. 提交第三个订单，验证dualAuth签名错误，sell:100LRC, buy:1WETH, fee:20LRC 签名之后，重设dualAuthAddress => 
+        	- **验证**：
+		        1. **返回结果**：提交失败
+		        1. **读取我的订单**：getOrders为空
+		        1. **读取市场深度**：为空
+		        1. **读取我的成交**：为空
+		        1. **读取市场成交**：为空
+		        1. **读取我的账号**：LRC的余额为：`balance=1000,allowance=1000,avaliableBalance=1000,avaliableAllowance=1000`
+		2. 提交第四个订单，验证地址格式的检验，sell:100LRC, buy:1WETH, fee:20LRC 设置TokenS为去掉0x或其他的错误格式 => 
+        	- **验证**：
+		        1. **返回结果**：提交失败
+		        1. **读取我的订单**：getOrders为空
+		        1. **读取市场深度**：为空
+		        1. **读取我的成交**：为空
+		        1. **读取市场成交**：为空
+		        1. **读取我的账号**：LRC的余额为：`balance=1000,allowance=1000,avaliableBalance=1000,avaliableAllowance=1000`
     - **状态**: Planned
     - **拥有者**: 红雨
     - **其他信息**：NA
