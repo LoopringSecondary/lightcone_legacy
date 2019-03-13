@@ -47,11 +47,15 @@
   
           1. 在tokenMetadata里新增一个token配置 ZRX
           1. 依次启动ExternalTicker，MetadataManagerActor，MetadataRefresher
+            - 结果验证：
+                1. **给market发消息**：给ZRX-WETH marketActor shard（通过entityId查找shard）发消息，不会正常返回
+                1. **给orderbook发消息**：给ZRX-WETH orderbookActor shard（通过entityId查找shard）发消息，不会正常返回
           1. 调用TokenBurnRateChangedEvent接口更新GTO的metadata，burnRateForP2P从0.0到0.5，为了触发tokens重新加载。
           调用SaveMarketMetadatas接口新增ZRX-WETH market配置
           1. 等待3s，确定已经同步完成
             - 结果验证：
                 1. **给market发消息**：给新增的ZRX-WETH marketActor shard（通过entityId查找shard）发消息，应正常返回
+                1. **给orderbook发消息**：给新增的ZRX-WETH orderbookActor shard（通过entityId查找shard）发消息，应正常返回
   
       - **状态**: Planned
   
@@ -65,10 +69,14 @@
        - **测试设置**：
    
            1. 依次启动ExternalTicker，MetadataManagerActor，MetadataRefresher
+             - 结果验证：
+                 1. **给market-shard发消息**：给GTO-WETH marketActor shard（通过entityId查找shard）发消息，应返正常返回
+                 1. **给orderbook发消息**：给GTO-WETH orderbookActor shard（通过entityId查找shard）发消息，应返正常返回
            1. 调用TerminateMarket接口更新GTO-WETH市场为终结状态
            1. 等待3s，确定已经同步完成
              - 结果验证：
                  1. **给market-shard发消息**：给GTO-WETH marketActor shard（通过entityId查找shard）发消息，不应返回消息
+                 1. **给orderbook发消息**：给GTO-WETH orderbookActor shard（通过entityId查找shard）发消息，不应返回消息
    
        - **状态**: Planned
    
