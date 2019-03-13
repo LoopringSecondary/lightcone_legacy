@@ -1,97 +1,361 @@
 ## 转账事件测试用例
 
-主要测试ETH转账，ERC20 token 转账，WETH的wrap 和 unwrap事件，系统的反应正确与否。转账分为转出和转入。转账事件会对order的可成交量产生影响，从而影响order book。因此这次还需要覆盖到转账事件对order和orderbook的影响
+### ETH转账
 
-- ### ETH 转账
+1. 测试成功的ETH转账事件流程
 
-  - ##### ETH转账成功
-<table>
-  <tr>
-    <th>前置条件</th>
-    <th>步骤</th>
-    <th>预期输出结果</th>
-  </tr>
-  <tr>
-    <td rowspan="4">A账户余额 20 ETH；<br>B账户余额 不限制</td>
-    <td>发送A转账到B的Ethereum Transaction</td>
-    <td></td>
-  </tr>
-  <tr>
-    <td>发出A和B的pending 转账 Activity</td>
-    <td>db 存入一条A的转出 10 ETH 的pending Activity；<br>db 存入一条B的转出10 ETH的pending Activity；<br>socket 推送A 的pending Activity 给A;<br>socket 推送B 的 pending Activity给B；<br><br>A，B的ETH余额没有变化</td>
-  </tr>
-  <tr>
-    <td>发出A和B的成功的转账Activity</td>
-    <td>db删除上面两条Activity，重新存入两条成功的转账Activity；<br>socket推送成功的转出10 ETH的Activity给A；<br>socket推送成功的转入10 ETH的Activity给B；</td>
-  </tr>
-  <tr>
-    <td>发出A的AddressBalanceUpdated事件<br>和B的AddressBalanceUpdated事件</td>
-    <td>socket 推送给A包含A最新ETH余额的Account事件；<br>socket推送给B包含B最新ETH余额的Account事件；<br>A的ETH余额为 10ETH - 油费，B的余额 + 10ETH</td>
-  </tr>
-</table>
+   - 目标：测试成功的ETH转账过程中，Activity 的解析与推送，账户余额的更新，发送地址Nonce的更新。
 
-  - ##### ETH转账失败
+   - 测试前置条件：
 
-<table>
-  <tr>
-    <th>前置条件</th>
-    <th>步骤</th>
-    <th>预期输出结果</th>
-  </tr>
-  <tr>
-    <td rowspan="3">设置A的ETH余额为20 ETH；<br>B的余额不限制</td>
-    <td>设置Tx的gas Limit&nbsp;&nbsp;为10000，<br>生成一个A转10 ETH到B的Ethereum transaction,<br>发送该 transaction </td>
-    <td></td>
-  </tr>
-  <tr>
-    <td>发出A和B的pending 转账 Activity</td>
-    <td>db 存入一条A的转出 10 ETH 的pending Activity；<br>db 存入一条B的转出10 ETH的pending Activity；<br>socket 推送A 的pending Activity 给A; <br>socket 推送B 的 pending Activity给B；<br>A，B的ETH余额没有变化</td>
-  </tr>
-  <tr>
-    <td>发出A和B的失败转账 Activity</td>
-    <td>db删除上面两条Activity，重新存入两条失败的转账Activity；<br>socket推送失败的转出10 ETH的Activity给A；<br>socket推送失败的转入10 ETH的Activity给B；<br>A的ETH余额减少油费，B的余额没有发生变化；</td>
-  </tr>
-</table>
+     1. A地址余额为 20 ETH；B地址余额不限制；
+     2. 正确设置一个A转账 10 ETH到B的Ethereum transaction
 
+   - 测试步骤及结果验证：
 
-- ### WETH wrap 与unwrap
+     1. 发送转账 transaction
 
-  - ##### 场景：没有卖出WETH或者作为手续费的相关订单
+     2. 发出 A 转出10 ETH的Activity，B转入10ETH的Activity, A 的最新pending nonce 
 
-    | 分支        | 步骤           | 预期输出结果                                                 |
-    | ----------- | -------------- | ------------------------------------------------------------ |
-    | wrap 成功   | wrap 10 WETH   | ETH 和WETH各有一个成功的 wrap Acitivity；<br />ETH减少 10 +油费；WETH增加10 |
-    | wrap 失败   | wrap 10 WETH   | ETH 和WETH各有一个失败的 wrap Acitivity；<br />ETH减少油费，WETH余额不变 |
-    | unwrap成功  | unwrap 10 WETH | ETH 和WETH 各有一个成功的unwrap Activity；<br />ETH 增加10 -油费，WETH减少10 |
-    | unwrap 失败 | unwrap 10 WETH | ETH 和WETH各有一个失败的 unwrap Acitivity；<br /> ETH 减少 油费，WETH 余额不变 |
+        ==> 验证 db 正确存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
 
-  - ##### 场景：有卖出WETH的相关订单
+     3. 发出A转出10ETH的成功的Activity，B转入10ETH成功的Acitivity, A 地址AddressBalanceUpdatedEvent 和 B地址 AddressBalanceUpdatedEvent
 
-    | 分支                                    | 步骤           | 预期输出结果                                                 |
-    | --------------------------------------- | -------------- | ------------------------------------------------------------ |
-    | wrap 成功                               | wrap 10 WETH   | ETH 和WETH各有一个成功的 wrap Acitivity；ETH减少 10 +油费，WETH增加10； 订单可成交量增加，Order book 增大； |
-    | wrap 失败                               | wrap 10 WETH   | ETH 和WETH各有一个失败的 wrap Acitivity；ETH减少油费，WETH余额不变；订单的可成交量不变，Order book 不变； |
-    | unwrap 成功余额仍然充足                 | unwrap 10 WETH | ETH 和WETH 各有一个成功的unwrap Activity；ETH 增加10 -油费，WETH减少10； |
-    | unwrap 成功；余额不足，订单可成交不为零 | unwrap 10 weth | ETH 和WETH 各有一个成功的unwrap Activity；ETH 增加10 -油费，WETH减少10；Order 的可成交量减少，order book 减少 |
-    | unwrap 成功，余额不足，订单可成交额为零 | unwrap 10 weth | ETH 和WETH 各有一个成功的unwrap Activity；ETH 增加10 -油费，WETH减少10；Order 被取消，order book 减少。 |
-    | unwrap 失败                             | unwrap 10 WETH | ETH 和WETH各有一个失败的 unwrap Acitivity； ETH 减少 油费，WETH 余额不变； 订单的可成交量不变，Order book 不变； |
+        ==>  验证db正确更新Activity的状态更新为Success ;
 
-- ### ERC20 token 转账
+        ​	socket 正确推送这两条成功的转账Activity；
 
-  - ##### 场景：没有卖出或者作为支付手续费的订单
+        ​	A的ETH余额为10 ETH - 油费，B的余额 + 10 ETH；
 
-    | 分支     | 步骤            | 预期输出结果                                                 |
-    | -------- | --------------- | ------------------------------------------------------------ |
-    | 转账成功 | A —> B  100 LRC | A 有一个 成功的token 转出 Activity，B 有一个成功的 token转入Activity；A余额减少 100，B余额增加100 |
-    | 转账失败 | A —> B  100 LRC | A 有一个 失败的token 转出 Activity，B 有一个失败的 token转入Activity；A，B的token余额都不变 |
+   - 状态: Planned
 
-  - ##### 场景：有卖出或者作为支付手续费的订单
+   - 拥有者: 亚东
 
-    | 分支                                                         | 步骤           | 预期输出结果                                                 |
-    | :----------------------------------------------------------- | -------------- | ------------------------------------------------------------ |
-    | 转出成功，余额不足以让订单完全成交，但是订单可成交金额大于零 | A—>B 100 LRC   | A 有一个 成功的token 转出 Activity，B 有一个成功的 token转入Activity；A余额减少 100，B余额增加100；A的订单可成交量减少，order book减少。 |
-    | 转出成功，订单可成交金额为零                                 | A —>B  100 LRC | A 有一个 成功的token 转出 Activity，B 有一个成功的 token转入Activity；A余额减少 100，B余额增加100；A的订单被取消，order book减少。 |
-    | 转账失败                                                     | A —>B  100 LRC | A 有一个 失败的token 转出 Activity，B 有一个失败的 token转入Activity；A，B的token余额都不变。A，B的订单状态不受影响，order book 不受影响。 |
-    | 转入成功                                                     | B—>A 100 LRC   | A 有一个 成功的token 转入 Activity，B 有一个成功的 token转出Activity；A余额增加 100，B余额减少100；A的订单可成交量增加，A因为余额不足而取消的订单没有恢复，order book增加。 |
+   - 其他信息：NA
 
-    
+2. 测试失败的ETH转账事件流程
+
+   - 目标：测试失败的ETH转账过程中，Activity 的解析与推送，账户余额不变，发送地址Nonce的更新。
+
+   - 测试前置条件：
+
+     1. A地址余额为 20 ETH；B地址余额不限制；
+     2. 设置一个A转账 10 ETH到B的Ethereum transaction，transaction的gas limit 设置为20000.
+
+   - 测试步骤和结果验证：
+
+     1. 发送转账transaction
+
+     2. 发出 A 转出10 ETH的Activity，B转入10ETH的Activity, A 的最新pending nonce 
+
+        ==> 验证 db 正确存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
+
+     3. 发出A转出10ETH的失败的Activity，B转入10ETH失败的Acitivity, A地址的AddressBalanceUpdatedEvent
+
+        ==> db把 Pending的Activity 状态改成Failed；
+
+        ​	socket推送这两条失败的Activity；
+
+        ​	A的ETH余额减少油费，B的余额不变；
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
+### WETH wrap 与unwrap
+
+1. 测试WETH Wrap成功的事件流程
+   - 目标：测试在成功的WETH Wrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+
+   - 测试前置条件：
+     1. 设置A地址 ETH余额为20ETH
+     2. 正确设置A地址Wrap 10 ETH的Ethereum transaction
+
+   - 测试步骤及结果验证：
+
+     1. 发送Wrap transaction
+
+     2. 发出 A地址 token 为ETH的pending wrap activity 和token为WETH的pending wrap activity
+
+        ==> 验证 db存入了上面两条pending 的activity；
+
+        ​	socket  正确推送过去这两条activity；
+
+     3. 发出A地址 token为ETH成功的wrap activity和token为WETH成功的wrap activity，A地址ETH变化和WETH的AddressBalanceUpdatedEvent
+
+        ==>  db把pending的activity更新为成功状态；
+
+        ​	socket 推送这两条成功的activity；
+
+        ​	A  的ETH 余额 - （10+油费），WETH 余额 + 10
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：
+
+     1. 在ETH转账中已经测试了账户nonce，因此这里不再重复测试。
+     2. socket的推送是根据订阅条件来推送的，可能两条activity不会同时都推送
+
+2. 测试WETH Wrap失败的事件流程
+
+   - 目标：测试在失败的WETH Wrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新情况。
+
+   - 测试前置条件：
+
+     1. 设置A地址 ETH余额为20ETH
+     2. 设置A地址Wrap 10 ETH的Ethereum transaction，transaction的gas limit设置为20000
+
+   - 测试步骤及结果验证：
+
+     1. 发送wrap transaction
+
+     2. 发出 A地址 token 为ETH的pending wrap activity 和token为WETH的pending wrap activity
+
+        ==> 验证 db存入了上面两条pending 的activity；
+
+        ​	socket  正确推送过去这两条activity；
+
+     3. 发出A地址 token为ETH失败的wrap activity和token为WETH失败的wrap activity，A地址ETH变化的AddressBalanceUpdatedEvent
+
+        ==>  db把pending的activity更新为失败状态；
+
+        ​	socket 推送这两条失败的activity；
+
+        ​	A 的ETH 余额 - 油费，WETH 余额 不变
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：
+
+     1. 在ETH转账中已经测试了账户nonce，因此这里不再重复测试。
+     2. socket的推送是根据订阅条件来推送的，可能两条activity不会同时都推送
+
+3. 测试WETH Unwrap成功的事件流程
+
+   - 目标：测试在成功的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+
+   - 测试前置条件：
+
+     1. 设置A的ETH余额为10，WETH余额为20
+     2. 正确设置A unwrap 10 个WETH的Ethereum Transaction
+
+   - 测试步骤及结果验证：
+
+     1. 发送unwarp transaction
+
+     2. 发出A地址token为ETH的pending unwarp activity 和token 为weth 的pending unwrap activity
+
+        ==> db 存入上面两条pending 的activity；
+        	socket 正确推送这两条activity
+
+     3. 发出A地址token为ETH的成功的 unwarp activity 和token 为weth 的成功的 unwrap activity；A地址 Eth 和Weth变化的AddressBalanceUpdatedEvent
+
+        ==> db将两条pending的activity改为success状态；
+
+        ​	A的ETH增加 10-油费；Weth减少10
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：
+
+     1. socket的推送是根据订阅条件来推送的，需要收到两条activity需要启动两个客户端分别订阅。
+
+4. 测试weth unwrap 失败的事件流程
+
+   - 目标：测试在失败的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+
+   - 测试前置条件：
+
+     1. 设置A的ETH余额为10，WETH余额为20
+     2. 设置A unwrap 30 个WETH的Ethereum Transaction
+
+   - 测试步骤及结果验证：
+
+     1. 发送unwarp transaction
+
+     2. 发出A地址token为ETH的pending unwarp activity 和token 为weth 的pending unwrap activity
+
+        ==> db 存入上面两条pending 的activity；
+        	socket 正确推送这两条activity
+
+     3. 发出A地址token为ETH的失败的 unwarp activity 和token 为weth 的失败的 unwrap activity；A地址 Eth 变化的AddressBalanceUpdatedEvent
+
+        ==> db将两条pending的activity改为failed状态；
+
+        ​	A的ETH减少 油费；Weth不变
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：
+
+     1. socket的推送是根据订阅条件来推送的，需要收到两条activity需要启动两个客户端分别订阅。
+
+### ERC20 token 转账
+
+1. 测试成功的token转账流程
+
+   - 目标：测试成功的token转账流程中，activity的解析，存储和推送，以及发送者和接收者余额的变化。
+
+     ​	   该测试中不涉及token的余额变化引起的order可成交量和状态的变化以及orderbook的变化；
+
+   - 测试前置条件：
+
+     1. 设置A的ETH余额为10,LRC 余额为1000
+     2. 正确设置A转100LRC到B的Ethereum transaction
+
+   - 测试步骤及结果验证：
+
+     1. 发送token transfer transaction
+
+     2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+        ==> db 存入上面两条pending 的activity；
+        	socket 正确推送这两条activity
+
+     3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
+
+        ==> db 把pending的activity更新为成功的activity；
+
+        ​	socket 正确推送activity到A和B；
+
+        ​	A的LRC 余额减少 100，B的LRC余额减少 100；
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
+2. 测试失败的转账流程
+
+   - 目标：测试失败的token转账流程中，activity的解析，存储和推送，发送者和接收者余额的变化情况。
+
+   - 测试前置条件：
+
+     1. 设置A的ETH余额为10,LRC 余额为50
+     2. 设置A转100LRC到B的Ethereum transaction
+
+   - 测试步骤和结果验证：
+
+     1. 发送token transfer transaction
+
+     2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+        ==> db 存入上面两条pending 的activity；
+        	socket 正确推送这两条activity
+
+     3. 发出 A 转出LRC的失败的 activity，B转入LRC的失败的activity
+
+        ==> db 把pending的activity更新为失败的activity；
+
+        ​	socket 正确推送activity 到A和B；
+
+        ​	A 和B的LRC余额不变；
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
+### 测试成功的token转账引起订单和orderbook的变化
+
+1.    测试token转出引起order可成交量影响的流程
+
+   - 目标：测试token转账流程中，引起余额的变化，进而引起订单可成交量的变化和orderbook的变化
+
+   - 前置条件：
+
+     1. A的LRC 余额为200
+     2. A的有一个卖出200 LRC的订单
+     3. 设置A转出 100LRC到B的Ethereum transaction
+
+   - 测试步骤和结果验证：
+
+     1. 发送transfer Ethereum transaction
+
+     2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+     3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
+
+        ==> A 的订单可卖出量减少 100LRC；
+
+        ​	order book 的sells中对应的价格中量减少100LRC；
+
+        ​	socket推送A的订单变化和orderbook的变化
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：
+
+     1. 对于Activity的推送和余额更新的推送已经在上面的测试中覆盖，这里不再重复测试。
+
+2. 测试token转账引起order被取消的流程
+
+   - 目标：测试token转账，因为order 的可成交量降为零而被取消，order book 跟着变化
+
+   - 测试前置条件：
+
+     1. A的LRC 余额为100
+     2. A的有一个卖出100 LRC的订单
+     3. 设置A转出 100LRC到B的Ethereum transaction
+
+   - 测试步骤和结果验证：
+
+     1. 发送transfer Ethereum transaction
+
+     2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+     3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
+
+        ==> A 的订单被取消；
+
+        ​	order book 的sells中对应的价格中量减少100LRC；
+
+        ​	socket推送A的订单变化和orderbook的变化;
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：
+
+     1. 对于Activity的推送和余额更新的推送已经在上面的测试中覆盖，这里不再重复测试。
+
+3. 测试token转账之后余额仍然充足的流程
+
+   - 目标：测试token转账，余额仍然充足情况，订单和orderbook是不是受到影响。
+
+   - 测试前置条件：
+
+     1. A的LRC 余额为1000
+     2. A的有一个卖出100 LRC的订单
+     3. 设置A转出 100LRC到B的Ethereum transaction
+
+   - 测试步骤及结果验证：
+
+     1. 发送transfer Ethereum transaction
+
+     2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+     3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
+
+        ==> A 的订单大小和状态不变；
+
+        ​	order book 的大小不变；
+
+   - 状态: Planned
+   - 拥有者: 亚东
+   - 其他信息：NA
