@@ -18,6 +18,7 @@ package io.lightcone.persistence
 
 import com.google.inject.Inject
 import io.lightcone.persistence.dals._
+import io.lightcone.lib.cache._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
 import scala.concurrent._
@@ -25,6 +26,7 @@ import scala.concurrent._
 class OrderServiceImpl @Inject()(
     implicit
     val ec: ExecutionContext,
+    basicCache: Cache[String, Array[Byte]],
     orderDal: OrderDal)
     extends OrderService {
 
