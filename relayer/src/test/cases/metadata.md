@@ -2,7 +2,7 @@
 
 测试爬取的CMC ticker和Sina的法币兑换率后的影响，包括ticker价格和metadata变动对市场的影响
 
- ###  <a name="pending"></a> Ticker
+ ### Ticker和metadata信息改变
 
  1. **测试爬取CMC ticker，Sina法币兑换率流程**
     - **Objective**：测试从CMC爬取的ticker信息和从Sina爬取的对美元兑换率正确的存入db，并更新metadataManager对象
