@@ -43,4 +43,4 @@
 
    - 状态: Planned
    - 拥有者: 亚东
-   - 其他信息：推荐的gas price降低应该可以引发原本没有收益的订单变得有收益，从而可以重新加入撮合队列中，这样就触发了rematch事件。rematch事件同样可能由token burn rate事件触发，因为在token burn rate测试中一并进行。
+   - 其他信息：暂时不考虑gas price降低引发rematch。 rematch采用定时尝试。
