@@ -121,18 +121,18 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消
 
         1. 发送CutoffEvent，参数broker=A2, owner=A2
             - 结果验证：
-                2. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
-                3. **读取市场深度**：两个市场分别有10个卖单深度
-                4. **读取我的成交**: 无
-                5. **读取市场成交**：无
-                6. **读取我的账号**: 余额不变
+                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
+                1. **读取市场深度**：两个市场分别有10个卖单深度
+                1. **读取我的成交**: 无
+                1. **读取市场成交**：无
+                1. **读取我的账号**: 余额不变
         1. 发送CutoffEvent，参数broker=A1, owner=A1
             - 结果验证：
-                2. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
-                3. **读取市场深度**：2个市场卖单深度应该变为0
-                4. **读取我的成交**: 无
-                5. **读取市场成交**：无
-                6. **读取我的账号**: 余额不变
+                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
+                1. **读取市场深度**：2个市场卖单深度应该变为0
+                1. **读取我的成交**: 无
+                1. **读取市场成交**：无
+                1. **读取我的账号**: 余额不变
 
     - **状态**: Planned
 
@@ -158,19 +158,19 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消
                 1. **读取我的账号**: LRC 可用余额应为1000，GTO可用余额应为1000
         1. 发送CutoffEvent，参数broker=A1, owner=A1, marketHash=ZRX-WETH
             - 结果验证：
-                2. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
-                3. **读取市场深度**：两个市场分别有10个卖单深度
-                4. **读取我的成交**: 无
-                5. **读取市场成交**：无
-                6. **读取我的账号**: 余额不变
+                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
+                1. **读取市场深度**：两个市场分别有10个卖单深度
+                1. **读取我的成交**: 无
+                1. **读取市场成交**：无
+                1. **读取我的账号**: 余额不变
         1. 发送CutoffEvent，参数broker=A1, owner=A1, marketHash=LRC-WETH
             - 结果验证：
-                2. **读取我的订单**：通过getOrders应该看到该订单，其中LRC-WETH的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER,
+                1. **读取我的订单**：通过getOrders应该看到该订单，其中LRC-WETH的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER,
                 GTO-WETH的status应该为STATUS_PENDING
-                3. **读取市场深度**：LRC-WETH深度变为0，GTO-WETH 10个卖单
-                4. **读取我的成交**: 无
-                5. **读取市场成交**：无
-                6. **读取我的账号**: 余额不变
+                1. **读取市场深度**：LRC-WETH深度变为0，GTO-WETH 10个卖单
+                1. **读取我的成交**: 无
+                1. **读取市场成交**：无
+                1. **读取我的账号**: 余额不变
 
     - **状态**: Planned
 
@@ -196,11 +196,11 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消
                 1. **读取我的账号**: LRC 可用余额应为1000，GTO可用余额应为1000
         1. 发送OrdersCancelledOnChainEvent，参数Seq(O1, O2)
             - 结果验证：
-                2. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
-                3. **读取市场深度**：2个市场卖单深度应该变为0
-                4. **读取我的成交**: 无
-                5. **读取市场成交**：无
-                6. **读取我的账号**: 余额不变
+                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
+                1. **读取市场深度**：2个市场卖单深度应该变为0
+                1. **读取我的成交**: 无
+                1. **读取市场成交**：无
+                1. **读取我的账号**: 余额不变
 
     - **状态**: Planned
 
@@ -223,11 +223,11 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消
         1. 发送OrderFilledEvent事件，模拟成交1个LRC
             - 结果验证：
                 1. **返回结果**：Unit
-                2. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING，actualAmountS为99
-                3. **读取市场深度**：卖单深度应该变为99
-                4. **读取我的成交**: 有1LRC卖单成交
-                5. **读取市场成交**： 有1LRC卖单成交
-                6. **读取我的账号**: LRC 可用余额应为999
+                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING，actualAmountS为99
+                1. **读取市场深度**：卖单深度应该变为99
+                1. **读取我的成交**: 有1LRC卖单成交
+                1. **读取市场成交**： 有1LRC卖单成交
+                1. **读取我的账号**: LRC 可用余额应为999
 
         1. 发送CancelOrder请求，请求参数orderHash：O1，status：STATUS_SOFT_CANCELLED_BY_USER
             - 结果验证：
@@ -261,11 +261,11 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消
         1. 发送OrdersCancelledOnChainEvent事件，传入orderHash：O1
             - 结果验证：
                 1. **返回结果**：Unit
-                2. **读取我的订单**：通过getOrders查看订单status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
-                3. **读取市场深度**：卖单深度应该变为0
-                4. **读取我的成交**:  无
-                5. **读取市场成交**：无
-                6. **读取我的账号**: LRC 可用余额应为1000
+                1. **读取我的订单**：通过getOrders查看订单status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
+                1. **读取市场深度**：卖单深度应该变为0
+                1. **读取我的成交**:  无
+                1. **读取市场成交**：无
+                1. **读取我的账号**: LRC 可用余额应为1000
 
         1. 发送CancelOrder请求，请求参数orderHash：O1，status：STATUS_SOFT_CANCELLED_BY_USER
             - 结果验证：
