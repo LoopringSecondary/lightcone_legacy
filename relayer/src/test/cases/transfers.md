@@ -1,6 +1,8 @@
 ## 转账事件测试用例
 
-### ETH转账
+转账事件流程测试主要分为[ETH转账](#eth-transfer)，[WETH的Warp](#weth-wrap), [WETH的Unwrap](#weth-unwrap), [ERC20 Token Transfer](#erc20-transfer), [转账对订单的影响](#transfer-order)
+
+###  <a name="eth-transfer"></a> ETH转账
 
 1. 测试成功的ETH转账事件流程
 
@@ -56,7 +58,7 @@
 
    - 其他信息：NA
 
-### WETH wrap 与unwrap
+### <a name="weth-wrap"></a> WETH Wrap 
 
 1. 测试WETH Wrap成功的事件流程
 
@@ -118,7 +120,9 @@
      1. 在ETH转账中已经测试了账户nonce，因此这里不再重复测试。
      2. socket的推送是根据订阅条件来推送的，可能两条activity不会同时都推送
 
-3. 测试WETH Unwrap成功的事件流程
+### <a name="weth-unwrap"></a> WETH Unwrap
+
+1. 测试WETH Unwrap成功的事件流程
 
    - 目标：测试在成功的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
 
@@ -147,7 +151,7 @@
 
      1. socket的推送是根据订阅条件来推送的，需要收到两条activity需要启动两个客户端分别订阅。
 
-4. 测试weth unwrap 失败的事件流程
+2. 测试weth unwrap 失败的事件流程
 
    - 目标：测试在失败的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
 
@@ -176,7 +180,7 @@
 
      1. socket的推送是根据订阅条件来推送的，需要收到两条activity需要启动两个客户端分别订阅。
 
-### ERC20 token 转账
+###  <a name="erc20-transfer"></a>ERC20 token 转账
 
 1. 测试成功的token转账流程
 
@@ -234,7 +238,7 @@
 
    - 其他信息：NA
 
-### 测试成功的token转账引起订单和orderbook的变化
+###  <a name="transfer-order"></a>测试成功的token转账引起订单和orderbook的变化
 
 1.    测试token转出引起order可成交量影响的流程
 
