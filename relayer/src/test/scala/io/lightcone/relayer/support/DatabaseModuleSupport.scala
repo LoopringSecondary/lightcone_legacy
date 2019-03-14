@@ -17,6 +17,7 @@
 package io.lightcone.relayer.support
 
 import io.lightcone.core.TokenInfo
+import io.lightcone.lib.cache._
 import io.lightcone.relayer.actors._
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
@@ -26,6 +27,8 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   me: CommonSpec =>
 
   implicit val dbConfig = dbConfig1
+
+  implicit val cache = new NoopCache[String, Array[Byte]]
 
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
   implicit val tokenInfoDal = new TokenInfoDalImpl()
@@ -46,7 +49,11 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val ohlcDataDal =
     new OHLCDataDalImpl()(ec = ec, dbConfig = dbConfig_postgre)
   implicit val ohlcDataService =
-    new OHLCDataServiceImpl()(ohlcDataDal = ohlcDataDal, ec = ec)
+    new OHLCDataServiceImpl()(
+      basicCache = cache,
+      ohlcDataDal = ohlcDataDal,
+      ec = ec
+    )
 
   implicit val dbModule = new DatabaseModule(
     tokenMetadataDal,

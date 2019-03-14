@@ -64,7 +64,10 @@ class BalanceUpdateAddressExtractor @Inject()(
           .extractTransferEvents(
             TransactionData(tx, Some(receipt -> eventHeader))
           )
-          .filter(event => event.getHeader.txStatus.isTxStatusSuccess || event.owner == event.from)
+          .filter { event =>
+            event.getHeader.txStatus.isTxStatusSuccess ||
+            event.owner == event.from
+          }
           .map { transfer =>
             AddressBalanceUpdatedEvent(
               address = transfer.owner,
