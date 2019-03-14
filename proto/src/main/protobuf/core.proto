@@ -148,7 +148,7 @@ message Orderbook {
         double total = 3;
     }
 
-    message Update {
+    message InternalUpdate {
         repeated Slot sells = 1;
         repeated Slot buys = 2;
         double latest_price = 3;

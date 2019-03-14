@@ -29,7 +29,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
 
   private var latestPrice: Double = 0
 
-  def processUpdate(update: Orderbook.Update) = this.synchronized {
+  def processUpdate(update: Orderbook.InternalUpdate) = this.synchronized {
     if (update.latestPrice > 0) {
       latestPrice = update.latestPrice
     }
@@ -81,13 +81,13 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
         false
       ) with ConverstionSupport
 
-    def processUpdate(update: Orderbook.Update): Unit = {
+    def processUpdate(update: Orderbook.InternalUpdate): Unit = {
       update.sells.foreach(sellSide.increase)
       update.buys.foreach(buySide.increase)
     }
 
-    def getDiff(update: Orderbook.Update) = {
-      Orderbook.Update(
+    def getDiff(update: Orderbook.InternalUpdate) = {
+      Orderbook.InternalUpdate(
         update.sells.map(sellSide.getDiff),
         update.buys.map(buySide.getDiff)
       )

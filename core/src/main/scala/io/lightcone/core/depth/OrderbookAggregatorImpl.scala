@@ -43,10 +43,13 @@ class OrderbookAggregatorImpl(
   private val lastPrice: Double = 0
 
   def getOrderbookUpdate() =
-    Orderbook.Update(sells.takeUpdatedSlots, buys.takeUpdatedSlots)
+    Orderbook.InternalUpdate(sells.takeUpdatedSlots, buys.takeUpdatedSlots)
 
   def getOrderbookSlots(num: Int) =
-    Orderbook.Update(sells.getSlots(num, None), buys.getSlots(num, None))
+    Orderbook.InternalUpdate(
+      sells.getSlots(num, None),
+      buys.getSlots(num, None)
+    )
 
   def addOrder(order: Matchable) =
     adjustAmount(

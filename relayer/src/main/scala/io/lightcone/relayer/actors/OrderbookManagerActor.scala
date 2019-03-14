@@ -53,7 +53,7 @@ object OrderbookManagerActor extends DeployedAsShardedByMarket with Logging {
   val extractShardingObject: PartialFunction[Any, MarketPair] = {
     case GetOrderbook.Req(_, _, Some(marketPair)) => marketPair
 
-    case Orderbook.Update(_, _, _, Some(marketPair)) => marketPair
+    case Orderbook.InternalUpdate(_, _, _, Some(marketPair)) => marketPair
 
     case Notify(KeepAliveActor.NOTIFY_MSG, marketPairStr) =>
       val tokens = marketPairStr.split("-")
@@ -122,8 +122,8 @@ class OrderbookManagerActor(
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
-    case req: Orderbook.Update =>
-      log.info(s"receive Orderbook.Update ${req}")
+    case req: Orderbook.InternalUpdate =>
+      log.info(s"receive Orderbook.InternalUpdate ${req}")
       manager.processUpdate(req)
 
     case GetOrderbook.Req(level, size, Some(marketPair)) =>

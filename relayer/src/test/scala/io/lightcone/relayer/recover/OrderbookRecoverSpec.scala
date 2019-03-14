@@ -100,7 +100,7 @@ class OrderbookRecoverSpec
           .Req(Some(marketPair), 100)).mapTo[GetOrderbookSlots.Res],
         timeout.duration
       )
-      val orderbookRes = r1.update.getOrElse(Orderbook.Update())
+      val orderbookRes = r1.update.getOrElse(Orderbook.InternalUpdate())
       checkOrderbookUpdateAsExpected(orderbookRes)
 
       info("kill orderbookManagerActor")
@@ -184,7 +184,9 @@ class OrderbookRecoverSpec
     }
   }
 
-  private def checkOrderbookUpdateAsExpected(update: Orderbook.Update): Unit = {
+  private def checkOrderbookUpdateAsExpected(
+      update: Orderbook.InternalUpdate
+    ): Unit = {
     assert(update.sells.nonEmpty && update.sells.length == 4)
     assert(update.buys.nonEmpty && update.buys.length == 3)
     update.sells.foreach {
