@@ -92,7 +92,7 @@ class MarketManagerImpl(
   // part of the order will not be cancelled.
   def cancelOrder(orderId: String): Option[Orderbook.InternalUpdate] =
     removeOrder(orderId) map { _ =>
-      aggregator.getOrderbookUpdate()
+      aggregator.getOrderbookInternalUpdate()
     }
 
   def deleteRing(
@@ -211,7 +211,7 @@ class MarketManagerImpl(
       ordersToAddBack.foreach(addOrder)
 
       val orderbookUpdate = aggregator
-        .getOrderbookUpdate()
+        .getOrderbookInternalUpdate()
         .copy(latestPrice = latestPrice)
 
       // println("MMI: orderbookUpdate: " + orderbookUpdate)

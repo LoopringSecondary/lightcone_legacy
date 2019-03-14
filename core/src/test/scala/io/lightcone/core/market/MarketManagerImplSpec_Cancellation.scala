@@ -30,7 +30,7 @@ class MarketManagerImplSpec_Cancellation extends MarketManagerImplSpec {
   //   "and should put order inside the orderbook" in {
   //   var order = actualNotDust(sellGTO(100000, 101))
   //   (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-  //   (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.InternalUpdate())
+  //   (fakeAggregator.getOrderbookInternalUpdate _).when().returns(Orderbook.InternalUpdate())
 
   //   val result = marketManager.submitOrder(order, 0)
   //   result should be(emptyMatchingResult(order, STATUS_PENDING))

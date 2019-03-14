@@ -47,7 +47,7 @@
 //     var order2 = actualNotDust(sellGTO(100000, 101))
 
 //     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.InternalUpdate())
+//     (fakeAggregator.getOrderbookInternalUpdate _).when().returns(Orderbook.InternalUpdate())
 
 //     var result = marketManager.submitOrder(order1, 0)
 //     result should be(emptyMatchingResult(order1, STATUS_PENDING))
@@ -75,7 +75,7 @@
 //     var order2 = actualNotDust(buyGTO(101, 100000))
 
 //     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.InternalUpdate())
+//     (fakeAggregator.getOrderbookInternalUpdate _).when().returns(Orderbook.InternalUpdate())
 
 //     var result = marketManager.submitOrder(order1, 0)
 //     result should be(emptyMatchingResult(order1, STATUS_PENDING))

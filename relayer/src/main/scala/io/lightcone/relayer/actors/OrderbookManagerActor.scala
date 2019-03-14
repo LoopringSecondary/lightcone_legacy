@@ -124,7 +124,7 @@ class OrderbookManagerActor(
 
     case req: Orderbook.InternalUpdate =>
       log.info(s"receive Orderbook.InternalUpdate ${req}")
-      manager.processUpdate(req)
+      manager.processInternalUpdate(req)
 
     case GetOrderbook.Req(level, size, Some(marketPair)) =>
       Future {
@@ -169,7 +169,7 @@ class OrderbookManagerActor(
       _ = log.debug(s"orderbook synced: ${res}")
     } yield {
       if (res.update.nonEmpty) {
-        manager.processUpdate(res.update.get)
+        manager.processInternalUpdate(res.update.get)
       }
     }
 

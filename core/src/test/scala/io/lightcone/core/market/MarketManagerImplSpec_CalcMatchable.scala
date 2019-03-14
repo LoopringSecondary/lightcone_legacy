@@ -30,7 +30,7 @@
 //     (fakePendingRingPool.getOrderPendingAmountS _)
 //       .when(buyOrder.id)
 //       .returns(66)
-//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.InternalUpdate())
+//     (fakeAggregator.getOrderbookInternalUpdate _).when().returns(Orderbook.InternalUpdate())
 
 //     val ring = MatchableRing(null, null)
 //     (fakeRingMatcher

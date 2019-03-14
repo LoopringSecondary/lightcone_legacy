@@ -29,13 +29,14 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
 
   private var latestPrice: Double = 0
 
-  def processUpdate(update: Orderbook.InternalUpdate) = this.synchronized {
-    if (update.latestPrice > 0) {
-      latestPrice = update.latestPrice
+  def processInternalUpdate(update: Orderbook.InternalUpdate) =
+    this.synchronized {
+      if (update.latestPrice > 0) {
+        latestPrice = update.latestPrice
+      }
+      val diff = viewMap(0).getDiff(update)
+      viewMap.values.foreach(_.processUpdate(diff))
     }
-    val diff = viewMap(0).getDiff(update)
-    viewMap.values.foreach(_.processUpdate(diff))
-  }
 
   def getOrderbook(
       level: Int,

@@ -29,7 +29,7 @@
 
 //     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
 //     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-//     (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.InternalUpdate())
+//     (fakeAggregator.getOrderbookInternalUpdate _).when().returns(Orderbook.InternalUpdate())
 
 //     marketManager.submitOrder(buy1, 0)
 //     marketManager.submitOrder(buy2, 0)
