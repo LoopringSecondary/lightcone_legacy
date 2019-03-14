@@ -163,7 +163,7 @@ message Orderbook {
         MarketPair market_pair  = 5;
     }
 
-    double latestPrice  = 1;
+    double latestPrice = 1;
     repeated Item sells = 2;
     repeated Item buys  = 3;
 }

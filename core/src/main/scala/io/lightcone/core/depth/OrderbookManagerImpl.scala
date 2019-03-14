@@ -37,7 +37,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
         latestPrice = update.latestPrice
       }
       val diff = viewMap(0).getDiff(update)
-      viewMap.values.toSeq.map(_.processInternalUpdate(diff))
+      viewMap.values.map(_.processInternalUpdate(diff)).toSeq
     }
 
   def getOrderbook(
@@ -87,6 +87,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
     def processInternalUpdate(
         update: Orderbook.InternalUpdate
       ): Orderbook.Update = {
+<<<<<<< HEAD
       val updatedSellItems = update.sells.map { u =>
         sellSide.slotToItem(sellSide.increase(u))
       }
@@ -99,6 +100,17 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
         aggregationLevel,
         updatedSellItems,
         updatedBuyItems,
+=======
+
+      Orderbook.Update(
+        aggregationLevel,
+        update.sells.map { u =>
+          sellSide.slotToItem(sellSide.increase(u))
+        },
+        update.buys.map { u =>
+          buySide.slotToItem(buySide.increase(u))
+        },
+>>>>>>> 84917a1f0b9161badc8f9203d39a77b63275a431
         latestPrice,
         metadata.marketPair
       )

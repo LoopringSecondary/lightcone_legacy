@@ -155,11 +155,15 @@ class OrderbookManagerActor()(
         Some(marketPair),
         orderbookRecoverSize)).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
-    } yield {
-      if (res.update.nonEmpty) {
-        val updates = manager.processInternalUpdate(res.update.get)
+      updates = {
+        if (res.update.nonEmpty) Nil
+        else manager.processInternalUpdate(res.update.get)
+      }
+      _ = log.debug(s"orderbook incremental updates: $updates")
+      _ <- {
+        Future.unit
         // TODO(yadong): send updates to socket io.
       }
-    }
+    } yield Unit
 
 }
