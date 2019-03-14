@@ -8,9 +8,8 @@
 
    - 测试前置条件：
 
-     1. 设置一个订单，订单的在成交记录block设置为100，成交量为100LRC
-     2. 设置一条Fill，block 设置为100。db存入该条Fill
-     3. 设置一条block event。设置block为99
+     1. 设置一条Fill，block 设置为100。db存入该条Fill
+     2. 设置一条block event。设置block为99
 
    - 测试步骤和结果校验：
 
@@ -22,6 +21,24 @@
 
    - 拥有者: 亚东
 
+   - 其他信息：NA
+
+### 测试分叉事件中的Order
+
+1. 测试分叉事件影响的order
+
+   - 目标：测试分叉事件影响的order是不是被正确重新提交，order book有没有重新变化
+   - 测试前置条件：
+
+     1. 设置卖出 100 LRC 的order，提交该订单
+     2. 设置 该订单在block 为100 时成交50 LRC
+     3. 设置一条block event。设置block为99
+   - 测试步骤和结果校验：
+
+     1. 发出block event
+        ==> 验证Order的成交量减少50LRC，可成交量是不是增加50LRC；Order book对应价格的amount是不是增加50LRC。
+   - 状态: Planned
+   - 拥有者: 亚东
    - 其他信息：NA
 
 ### 测试分叉事件中的Activity
