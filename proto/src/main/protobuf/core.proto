@@ -149,15 +149,23 @@ message Orderbook {
     }
 
     message InternalUpdate {
-        repeated Slot sells = 1;
-        repeated Slot buys = 2;
-        double latest_price = 3;
-        MarketPair market_pair = 4;
+        repeated Slot sells     = 1;
+        repeated Slot buys      = 2;
+        double latest_price     = 3;
+        MarketPair market_pair  = 4;
     }
 
-    double latestPrice = 1;
+    message Update {
+        int32 level             = 1;
+        repeated Item sells     = 2;
+        repeated Item buys      = 3;
+        double latest_price     = 4;
+        MarketPair market_pair  = 5;
+    }
+
+    double latestPrice  = 1;
     repeated Item sells = 2;
-    repeated Item buys = 3;
+    repeated Item buys  = 3;
 }
 
 message BurnRate {

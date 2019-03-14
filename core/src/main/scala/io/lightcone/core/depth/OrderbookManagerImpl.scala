@@ -29,13 +29,15 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
 
   private var latestPrice: Double = 0
 
-  def processInternalUpdate(update: Orderbook.InternalUpdate) =
+  def processInternalUpdate(
+      update: Orderbook.InternalUpdate
+    ): Seq[Orderbook.Update] =
     this.synchronized {
       if (update.latestPrice > 0) {
         latestPrice = update.latestPrice
       }
       val diff = viewMap(0).getDiff(update)
-      viewMap.values.foreach(_.processUpdate(diff))
+      viewMap.values.toSeq.map(_.processInternalUpdate(diff))
     }
 
   def getOrderbook(
@@ -82,9 +84,24 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
         false
       ) with ConverstionSupport
 
-    def processUpdate(update: Orderbook.InternalUpdate): Unit = {
-      update.sells.foreach(sellSide.increase)
-      update.buys.foreach(buySide.increase)
+    def processInternalUpdate(
+        update: Orderbook.InternalUpdate
+      ): Orderbook.Update = {
+      val updatedSellItems = update.sells.map { u =>
+        sellSide.slotToItem(sellSide.increase(u))
+      }
+
+      val updatedBuyItems = update.buys.map { u =>
+        buySide.slotToItem(buySide.increase(u))
+      }
+
+      Orderbook.Update(
+        aggregationLevel,
+        updatedSellItems,
+        updatedBuyItems,
+        latestPrice,
+        metadata.marketPair
+      )
     }
 
     def getDiff(update: Orderbook.InternalUpdate) = {
@@ -94,6 +111,22 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
       )
     }
 
+    private def calculateMeanPrice(): Double = {
+      val sellPrice = sellSide
+        .getDepth(1, None)
+        .headOption
+        .map(_.price.toDouble)
+        .getOrElse(Double.MaxValue)
+
+      val buyPrice = buySide
+        .getDepth(1, None)
+        .headOption
+        .map(_.price.toDouble)
+        .getOrElse(0.0)
+
+      (sellPrice + buyPrice) / 2
+    }
+
     def getOrderbook(
         size: Int,
         price: Double
@@ -101,21 +134,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
 
       val priceOpt =
         if (price > 0) Some(price)
-        else {
-          val sellPrice = sellSide
-            .getDepth(1, None)
-            .headOption
-            .map(_.price.toDouble)
-            .getOrElse(Double.MaxValue)
-
-          val buyPrice = buySide
-            .getDepth(1, None)
-            .headOption
-            .map(_.price.toDouble)
-            .getOrElse(0.0)
-
-          Some((sellPrice + buyPrice) / 2)
-        }
+        else Some(calculateMeanPrice())
 
       val buys = buySide.getDepth(size, priceOpt)
       var sells = sellSide.getDepth(size + 1, priceOpt)
@@ -138,7 +157,8 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
     }
 
     trait ConverstionSupport { self: OrderbookSide =>
-      private def slotToItem(slot: Orderbook.Slot) =
+
+      def slotToItem(slot: Orderbook.Slot) =
         Orderbook.Item(
           priceFormat.format(slot.slot / priceScaling),
           amountFormat.format(slot.amount),
