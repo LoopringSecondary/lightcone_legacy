@@ -110,7 +110,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
         case _ => None
       }
 
-    case e: Orderbook.Update =>
+    case e: Orderbook.InternalUpdate =>
       subscription.paramsForOrderbook match {
         case Some(params)
             if params.market.map(_.hashString) == e.marketPair

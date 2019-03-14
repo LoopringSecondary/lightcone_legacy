@@ -17,7 +17,7 @@
 package io.lightcone.core
 
 trait OrderbookManager {
-  def processUpdate(update: Orderbook.Update): Unit
+  def processInternalUpdate(update: Orderbook.InternalUpdate): Unit
 
   def getOrderbook(
       level: Int,
