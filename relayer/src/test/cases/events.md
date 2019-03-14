@@ -42,5 +42,82 @@
         ==> 验证系统推荐的gasPrice更新为10Gwei。
 
    - 状态: Planned
+
    - 拥有者: 亚东
-   - 其他信息：暂时不考虑gas price降低引发rematch。 rematch采用定时尝试。
+
+   - 其他信息：暂时不考虑gas price降低引发rematch， rematch采用定时尝试。
+
+### Activity 
+
+1. Acitivity 状态更新
+
+   - 目标：测试pending的activity在后续相同的nonce 相同activity的影响更新
+
+   - 测试前置条件:
+
+     1. 设置一个pending 的transfer eth out 的activity，nonce 为10 — a1
+     2. 设置一个success 的transfer eth out 的activity，nonce 为10  — a2
+
+   - 测试步骤及结果验证：
+
+     1. 发出 a1
+
+     2. 发出a2
+
+        ==> 验证 activity a1 更新为 activity a2
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：failed activity 与success测试验证一样，不再重复测试。
+
+2. Acitivity 被删除
+
+   - 目标：测试pending的activity在后续相同nonce不同activity的影响
+
+   - 测试前置条件:
+
+     1. 设置一个pending 的transfer eth out 的activity，nonce 为10  —  a1
+     2. 设置一个success 的transfer LRC out 的activity，nonce 为10  —  a2
+
+   - 测试步骤及结果验证：
+
+     1. 发出 a1
+
+     2. 发出a2
+
+        ==> 验证 activity a1被删除， a2正确存储
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
+### K线数据
+
+1. 测试ohlc data 
+
+   - 目标：测试ohlc data能否正确存储，正确合并
+
+   - 测试前置条件：
+
+     1. 设置block = 96,  ohlcdata 100 LRC -> 0.1WETH  时间为t1
+     2. 设置block = 101,  ohlcdata 150 LRC -> 0.2WETH  时间为t1 +75s
+     3. 设置block = 102,  ohlcdata 150 LRC -> 0.2WETH  时间为t1 +90s
+
+   - 测试步骤及结果校验：
+
+     1. 发送上面三条 ohlcdata
+
+     2. 请求 lrc-weth 市场，interval为1分钟，时长1小时的K线数据
+
+        ==> 验证是不是两条数据，分别为100 LRC 和300 LRC
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+

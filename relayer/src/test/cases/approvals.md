@@ -1,6 +1,36 @@
 ## 授权事件测试用例
 
-授权事件测试包括[授权流程测试](#approval)和[授权对订单的影响](#approval-order)
+授权事件测试包括[普通的授权事件](#common-approval)，[授权流程测试](#approval)和[授权对订单的影响](#approval-order)
+
+
+
+### <a name="common-approval"></a>普通授权事件
+
+1. 测试普通的授权事件
+
+   - 目标：测试普通的授权事件中用户的对路印合约的授权不会变化
+
+   - 测试前置条件：
+
+     1. 设置一个A对B地址授权LRC 100 的Ethereum transaction
+
+   - 测试步骤和结果验证：
+
+     1. 发送approve transaction
+
+     2. 发出 A pending的授权activity
+
+        ==> 验证db正确存入该条activity; socket 正确推送该条activity
+
+     3. 发出A success的授权acitivity
+
+        ==> 验证 db更新pending activity为成功的activity；socket 推送成功的activity；A的授权值不变
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
 
 ### <a name="approval"></a> 授权路印合约
 
@@ -28,8 +58,7 @@
    - 状态: Planned
    - 拥有者: 亚东
    - 其他信息：
-     1. 对普通地址的授权包含在对路印合约的授权测试中，因为普通的授权仅仅是不关心最新的授权值。
-     2. 授权值从非零的值变为零的授权与该测试相似，不再重复测试。
+     1. 授权值从非零的值变为零的授权与该测试相似，不再重复测试。
 
 2. 测试失败的授权事件
 
@@ -60,7 +89,7 @@
 
 ###  <a name="approval-order"></a>授权流程对订单的影响
 
-1. 测试授权减少流程
+1. 测试授权减少对卖出订单影响
 
    - 目标：测试授权减少流程中，订单可以成交量和order book的影响。
 
@@ -86,16 +115,67 @@
 
    - 其他信息：
 
-     1. activity的解析，推送和授权变化已经在前面测试中覆盖，这里不再重复测试。	
+     1. activity的解析，推送和授权变化已经在前面测试中覆盖，这里不再重复测试。
 
-2. 测试授权值增加流程
+2. 测试作为fee授权减少对订单的影响
+
+   - 目标：测试作为fee的token授权减少流程中，订单可以成交量和order book的影响。
+
+   - 测试前置条件：
+
+      1. 设置A对路印合约的授权值为 1000LRC，GTO余额和授权充足
+      2. 设置A卖出 2000 GTO的order，fee 为100LRC
+      3. 设置A授权路印合约为0的ethereum transaction
+
+   - 测试步骤和结果验证：
+
+      1. 发送approve transaction
+
+      2. 发出 A pending的授权activity
+
+      3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
+
+         ==> 订单的可成交量变为0；orderbook中对应价格的sells amount 减少2000 GTO
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：
+
+3. 测试授权值增加流程
 
    - 目标：测试授权值增加流程中订单的可成交量和order book的影响
 
    - 测试前置条件：
+      1. 设置A对路印合约的授权值为0LRC
+      2. 设置A卖出 1000 LRC的order
+      3. 设置A授权路印合约为10000的ethereum transaction
 
-     1. 设置A对路印合约的授权值为0LRC
-     2. 设置A卖出 1000 LRC的order
+   - 测试步骤和结果验证：
+
+      1. 发送approve transaction
+
+      2. 发出 A pending的授权activity
+
+      3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
+
+         ==> 订单的可成交量变为1000LRC；orderbook中对应价格的sells amount 增加1000 LRC
+
+   -  状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
+4. 测试作为fee的token授权值增加流程
+
+   - 目标：测试作为token授权值增加流程中订单的可成交量和order book的影响
+
+   - 测试前置条件：
+
+     1. 设置A对路印合约的授权值为0LRC，GTO余额和授权充足
+     2. 设置A卖出 2000 GTO的order，fee 为100LRC
      3. 设置A授权路印合约为10000的ethereum transaction
 
    - 测试步骤和结果验证：
@@ -106,8 +186,10 @@
 
      3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
 
-        ==> 订单的可成交量变为1000LRC；orderbook中对应价格的sells amount 增加1000 LRC
+        ==> 订单的可成交量变为2000GTO；orderbook中对应价格的sells amount 增加2000 GTO
 
-   - 状态: Planned
+   -  状态: Planned
+
    - 拥有者: 亚东
+
    - 其他信息：NA
