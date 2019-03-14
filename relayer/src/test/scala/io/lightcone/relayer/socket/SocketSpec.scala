@@ -18,11 +18,11 @@ package io.lightcone.relayer.socketio
 
 import io.lightcone.relayer.support._
 
-class SocketSpec extends CommonSpec with SocketSupport {
+class SocketSpec extends CommonSpec with EventExtractorSupport {
 
   "socket server  test" must {
     "socket server starts normally and can subscriber and received correct data" in {
-
+//
 //      def socketNotifier = actors.get(SocketIONotificationActor.name)
 //      Thread.sleep(10 * 1000)
 //
@@ -36,7 +36,66 @@ class SocketSpec extends CommonSpec with SocketSupport {
 //        address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
 //        websiteUrl = "http"
 //      )
-//      Thread.sleep(10 * 1000)
+//      val submit_order = "submit_order"
+//      val order1 = createRawOrder()
+//      val account0 = accounts.head
+//      val account1 = getUniqueAccountWithoutEth
+//
+//      val method = "get_account"
+//      val getBalanceReq =
+//        GetAccount.Req(
+//          account0.getAddress,
+//          tokens = Seq(LRC_TOKEN.name, WETH_TOKEN.address)
+//        )
+//      Await.result(singleRequest(getBalanceReq, method), timeout.duration)
+//
+//      val submitOrder1F =
+//        singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
+//          .mapAs[SubmitOrder.Res]
+//      Await.result(submitOrder1F, timeout.duration)
+//
+//      Await.result(
+//        transferEth(account1.getAddress, "10")(account0),
+//        timeout.duration
+//      )
+//
+//      Await.result(
+//        transferWETH(account1.getAddress, "20")(account0),
+//        timeout.duration
+//      )
+//
+//      Await.result(
+//        approveWETHToDelegate("10000")(account1),
+//        timeout.duration
+//      )
+//      val order2 = createRawOrder(
+//        tokenS = WETH_TOKEN.address,
+//        tokenB = LRC_TOKEN.address,
+//        amountS = "5".zeros(17),
+//        amountB = "5".zeros(18)
+//      )(account1)
+//
+//      val submitOrder2F =
+//        singleRequest(SubmitOrder.Req(Some(order2)), submit_order)
+//          .mapAs[SubmitOrder.Res]
+//      Await.result(submitOrder2F, timeout.duration)
+//
+//      info("cancel order1")
+//      val cancelReq = CancelOrder.Req(
+//        id = order1.hash,
+//        owner = account0.getAddress,
+//        time = Some(
+//          NumericConversion.toAmount(BigInt(timeProvider.getTimeSeconds()))
+//        )
+//      )
+//
+//      Await.result(
+//        actors.get(EntryPointActor.name) ? cancelReq
+//          .withSig(generateCancelOrderSig(cancelReq)(account0)),
+//        timeout.duration
+//      )
+//
+//      Thread.sleep(15 * 1000)
     }
   }
 }

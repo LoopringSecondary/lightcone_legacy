@@ -17,12 +17,14 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
+import io.lightcone.lib.cache._
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 
 class SettlementTxServiceImpl @Inject()(
     implicit
+    basicCache: Cache[String, Array[Byte]],
     val ec: ExecutionContext,
     val submitTxDal: SettlementTxDal)
     extends SettlementTxService {

@@ -91,7 +91,7 @@ class MetadataRefresher(
       for {
         _ <- refreshMetadata()
         _ = getLocalActors(
-          OrderbookManagerActor.name,
+          MarketManagerActor.name,
           OrderbookManagerActor.name,
           MultiAccountManagerActor.name
         ).foreach(_ ! req)

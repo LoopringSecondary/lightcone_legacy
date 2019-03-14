@@ -17,6 +17,7 @@
 package io.lightcone.relayer
 
 import io.lightcone.core.RawOrder
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.jsonrpc.Linter
 
@@ -67,6 +68,26 @@ object RpcDataLinters {
 
     def lint(data: GetOrders.Res) =
       data.copy(orders = data.orders.map(rawOrderLinter.lint))
+  }
+
+  implicit val tokenBalanceLinter = new Linter[TokenBalance] {
+
+    def lint(data: TokenBalance): TokenBalance =
+      TokenBalance(
+        token = data.token,
+        balance = data.balance,
+        allowance = data.allowance,
+        block = data.block
+      )
+  }
+
+  implicit val accountUpdateLinter = new Linter[AccountUpdate] {
+
+    def lint(data: AccountUpdate): AccountUpdate =
+      AccountUpdate(
+        address = data.address,
+        tokenBalance = data.tokenBalance.map(tokenBalanceLinter.lint)
+      )
   }
 
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer
+package io.lightcone.relayer.ethereummock
 
 import io.lightcone.relayer.data._
 

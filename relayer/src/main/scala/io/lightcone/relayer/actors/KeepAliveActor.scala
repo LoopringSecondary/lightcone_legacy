@@ -129,7 +129,9 @@ class KeepAliveActor @Inject()(
     for {
       _ <- Future.sequence(HttpConnector.connectorNames(config).map {
         case (nodeName, node) =>
-          actors.get(nodeName) ? Notify(KeepAliveActor.NOTIFY_MSG)
+          if (actors.contains(nodeName)) {
+            actors.get(nodeName) ? Notify(KeepAliveActor.NOTIFY_MSG)
+          } else Future.unit
       })
     } yield Unit
 

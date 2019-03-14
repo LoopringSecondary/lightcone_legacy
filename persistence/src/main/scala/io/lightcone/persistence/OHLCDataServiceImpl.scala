@@ -17,6 +17,7 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
+import io.lightcone.lib.cache._
 import io.lightcone.persistence.dals._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -25,23 +26,29 @@ import io.lightcone.relayer.data._
 
 class OHLCDataServiceImpl @Inject()(
     implicit
+    basicCache: Cache[String, Array[Byte]],
     ohlcDataDal: OHLCDataDal,
     val ec: ExecutionContext)
     extends OHLCDataService {
 
+  private val cache = ProtoCache[GetMarketHistory.Res]("ohlc")
+
   def saveData(req: PersistOHLCData.Req): Future[PersistOHLCData.Res] =
     ohlcDataDal.saveData(req.data.get)
 
-  def getOHLCData(
-      request: GetMarketHistory.Req
-    ): Future[GetMarketHistory.Res] = {
-    ohlcDataDal
-      .getOHLCData(
-        request.marketHash,
-        request.interval.value,
-        request.beginTime,
-        request.endTime
-      )
-      .map(r => GetMarketHistory.Res(data = r.map(t => OHLCData(data = t))))
-  }
+  def getOHLCData(request: GetMarketHistory.Req): Future[GetMarketHistory.Res] =
+    cache
+      .read(request, 60 /*seconds*/ ) {
+        ohlcDataDal
+          .getOHLCData(
+            request.marketHash,
+            request.interval.value,
+            request.beginTime,
+            request.endTime
+          )
+          .map { r =>
+            Option(GetMarketHistory.Res(data = r.map(t => OHLCData(data = t))))
+          }
+      }
+      .map(_.getOrElse(GetMarketHistory.Res()))
 }
