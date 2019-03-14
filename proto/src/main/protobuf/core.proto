@@ -155,6 +155,14 @@ message Orderbook {
         MarketPair market_pair = 4;
     }
 
+    message Update {
+        int32 level             = 1;
+        repeated Item sells     = 2;
+        repeated Item buys      = 3;
+        double latest_price     = 4;
+        MarketPair market_pair  = 5;
+    }
+
     double latestPrice = 1;
     repeated Item sells = 2;
     repeated Item buys = 3;
