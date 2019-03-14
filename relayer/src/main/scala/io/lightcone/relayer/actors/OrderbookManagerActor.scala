@@ -124,7 +124,8 @@ class OrderbookManagerActor(
 
     case req: Orderbook.InternalUpdate =>
       log.info(s"receive Orderbook.InternalUpdate ${req}")
-      manager.processInternalUpdate(req)
+      val updates = manager.processInternalUpdate(req)
+    // TODO(yadong): send updates to socket io.
 
     case GetOrderbook.Req(level, size, Some(marketPair)) =>
       Future {
@@ -167,10 +168,15 @@ class OrderbookManagerActor(
         orderbookRecoverSize
       )).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
-    } yield {
-      if (res.update.nonEmpty) {
-        manager.processInternalUpdate(res.update.get)
+      updates = {
+        if (res.update.nonEmpty) Nil
+        else manager.processInternalUpdate(res.update.get)
       }
-    }
+      _ = log.debug(s"orderbook incremental updates: $updates")
+      _ <- {
+        Future.unit
+        // TODO(yadong): send updates to socket io.
+      }
+    } yield Unit
 
 }
