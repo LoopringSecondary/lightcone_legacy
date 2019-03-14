@@ -87,12 +87,15 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
     def processInternalUpdate(
         update: Orderbook.InternalUpdate
       ): Orderbook.Update = {
-      update.sells.foreach(sellSide.increase)
-      update.buys.foreach(buySide.increase)
+
       Orderbook.Update(
         aggregationLevel,
-        Nil, //updatedSellItems,
-        Nil, // updatedBuyItems,
+        update.sells.map { u =>
+          sellSide.slotToItem(sellSide.increase(u))
+        },
+        update.buys.map { u =>
+          buySide.slotToItem(buySide.increase(u))
+        },
         latestPrice,
         metadata.marketPair
       )
@@ -149,7 +152,8 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
     }
 
     trait ConverstionSupport { self: OrderbookSide =>
-      private def slotToItem(slot: Orderbook.Slot) =
+
+      def slotToItem(slot: Orderbook.Slot) =
         Orderbook.Item(
           priceFormat.format(slot.slot / priceScaling),
           amountFormat.format(slot.amount),
