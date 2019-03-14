@@ -36,14 +36,16 @@ object OrderbookManagerActor extends DeployedAsShardedByMarket with Logging {
     OrderbookManagerActor.name + "-" + getEntityId(marketPair)
 
   def start(
-    implicit system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    metadataManager: MetadataManager,
-    deployActorsIgnoringRoles: Boolean): ActorRef = {
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      metadataManager: MetadataManager,
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
     startSharding(Props(new OrderbookManagerActor()))
   }
 
@@ -59,16 +61,18 @@ object OrderbookManagerActor extends DeployedAsShardedByMarket with Logging {
   }
 }
 
-class OrderbookManagerActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val metadataManager: MetadataManager)
-  extends InitializationRetryActor
-  with ShardingEntityAware
-  with RepeatedJobActor {
+class OrderbookManagerActor(
+  )(
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val metadataManager: MetadataManager)
+    extends InitializationRetryActor
+    with ShardingEntityAware
+    with RepeatedJobActor {
 
   import MarketMetadata.Status._
 
@@ -82,7 +86,8 @@ class OrderbookManagerActor()(
     .find(
       m =>
         OrderbookManagerActor
-          .getEntityId(m.getMetadata.marketPair.get) == entityId)
+          .getEntityId(m.getMetadata.marketPair.get) == entityId
+    )
     .map(_.getMetadata.marketPair.get)
     .getOrElse {
       val error = s"unable to find market pair matching entity id ${entityId}"
@@ -97,7 +102,9 @@ class OrderbookManagerActor()(
       .getOrElse(
         throw ErrorException(
           ERR_INTERNAL_UNKNOWN,
-          s"not found metadata with marketPair:$marketPair"))
+          s"not found metadata with marketPair:$marketPair"
+        )
+      )
   val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -107,7 +114,9 @@ class OrderbookManagerActor()(
       name = "load_orderbook_from_market",
       dalayInSeconds = refreshIntervalInSeconds,
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () => syncOrderbookFromMarket()))
+      run = () => syncOrderbookFromMarket()
+    )
+  )
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
@@ -121,12 +130,13 @@ class OrderbookManagerActor()(
     case GetOrderbook.Req(level, size, Some(marketPair)) =>
       Future {
         if (OrderbookManagerActor
-          .getEntityId(marketPair) == marketPairHashedValue)
+              .getEntityId(marketPair) == marketPairHashedValue)
           GetOrderbook.Res(Option(manager.getOrderbook(level, size)))
         else
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"marketPair doesn't match, expect: ${marketPair} ,receive: ${marketPair}")
+            s"marketPair doesn't match, expect: ${marketPair} ,receive: ${marketPair}"
+          )
       } sendTo sender
 
     case req: MetadataChanged =>
@@ -141,11 +151,13 @@ class OrderbookManagerActor()(
           context.system.stop(self)
         case Some(metadata) if metadata.status.isTerminated =>
           log.warning(
-            s"I'm stopping myself as the market is terminiated: $metadata")
+            s"I'm stopping myself as the market is terminiated: $metadata"
+          )
           context.system.stop(self)
         case Some(metadata) =>
           log.info(
-            s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}")
+            s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
+          )
       }
   }
 
@@ -153,9 +165,14 @@ class OrderbookManagerActor()(
     for {
       res <- (marketManagerActor ? GetOrderbookSlots.Req(
         Some(marketPair),
-        orderbookRecoverSize)).mapTo[GetOrderbookSlots.Res]
+        orderbookRecoverSize
+      )).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
-      updates = if (res.update.nonEmpty) Nil else manager.processInternalUpdate(res.update.get)
+      updates = {
+        if (res.update.nonEmpty) Nil
+        else manager.processInternalUpdate(res.update.get)
+      }
+      _ = log.debug(s"orderbook incremental updates: $updates")
       _ <- {
         Future.unit
         // TODO(yadong): send updates to socket io.
