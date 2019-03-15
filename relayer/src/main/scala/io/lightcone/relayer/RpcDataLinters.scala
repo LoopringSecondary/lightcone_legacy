@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.core.RawOrder
+import io.lightcone.core.{Market, MarketMetadata, RawOrder, TokenInfo, TokenMetadata}
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.jsonrpc.Linter
@@ -88,6 +88,71 @@ object RpcDataLinters {
         address = data.address,
         tokenBalance = data.tokenBalance.map(tokenBalanceLinter.lint)
       )
+  }
+
+  implicit val marketMetadataLinter = new Linter[MarketMetadata] {
+
+    def lint(data: MarketMetadata): MarketMetadata =
+      MarketMetadata(
+        status = data.status,
+        priceDecimals = data.priceDecimals,
+        orderbookAggLevels = data.orderbookAggLevels,
+        precisionForAmount = data.precisionForAmount,
+        precisionForTotal = data.precisionForTotal,
+        browsableInWallet = data.browsableInWallet,
+        marketPair = data.marketPair,
+        marketHash = data.marketHash
+      )
+  }
+
+  implicit val getMarketsResLinter = new Linter[GetMarkets.Res] {
+
+    def lint(data: GetMarkets.Res): GetMarkets.Res = {
+      GetMarkets.Res(
+        markets = data.markets.map(
+          market =>
+            market.copy(
+              metadata = market.metadata.map(marketMetadataLinter.lint)
+            )
+        )
+      )
+    }
+  }
+
+  implicit val tokenMetadataLinter = new Linter[TokenMetadata] {
+
+    def lint(data: TokenMetadata): TokenMetadata =
+      TokenMetadata(
+        `type` = data.`type`,
+        status = data.status,
+        symbol = data.symbol,
+        name = data.name,
+        address = data.address,
+        unit = data.unit,
+        decimals = data.decimals,
+        precision = data.precision,
+        burnRate = data.burnRate
+      )
+
+  }
+
+  implicit val tokenInfoLinter = new Linter[TokenInfo] {
+     def lint(data: TokenInfo): TokenInfo = data.withUpdatedAt(0L)
+  }
+
+  implicit val getTokensResLinter = new Linter[GetTokens.Res] {
+
+    def lint(data: GetTokens.Res): GetTokens.Res = {
+
+      GetTokens.Res(
+        tokens = data.tokens.map(
+          token =>
+            token.copy(
+              metadata = token.metadata.map(tokenMetadataLinter.lint),
+              info = token.info.map(tokenInfoLinter.lint))
+        )
+      )
+    }
   }
 
 }
