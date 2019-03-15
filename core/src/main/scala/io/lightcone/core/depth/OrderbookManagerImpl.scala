@@ -29,13 +29,16 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
 
   private var latestPrice: Double = 0
 
-  def processUpdate(update: Orderbook.Update) = this.synchronized {
-    if (update.latestPrice > 0) {
-      latestPrice = update.latestPrice
+  def processInternalUpdate(
+      update: Orderbook.InternalUpdate
+    ): Seq[Orderbook.Update] =
+    this.synchronized {
+      if (update.latestPrice > 0) {
+        latestPrice = update.latestPrice
+      }
+      val diff = viewMap(0).getDiff(update)
+      viewMap.values.map(_.processInternalUpdate(diff)).toSeq
     }
-    val diff = viewMap(0).getDiff(update)
-    viewMap.values.foreach(_.processUpdate(diff))
-  }
 
   def getOrderbook(
       level: Int,
@@ -81,13 +84,25 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
         false
       ) with ConverstionSupport
 
-    def processUpdate(update: Orderbook.Update): Unit = {
-      update.sells.foreach(sellSide.increase)
-      update.buys.foreach(buySide.increase)
+    def processInternalUpdate(
+        update: Orderbook.InternalUpdate
+      ): Orderbook.Update = {
+
+      Orderbook.Update(
+        aggregationLevel,
+        update.sells.map { u =>
+          sellSide.slotToItem(sellSide.increase(u))
+        },
+        update.buys.map { u =>
+          buySide.slotToItem(buySide.increase(u))
+        },
+        latestPrice,
+        metadata.marketPair
+      )
     }
 
-    def getDiff(update: Orderbook.Update) = {
-      Orderbook.Update(
+    def getDiff(update: Orderbook.InternalUpdate) = {
+      Orderbook.InternalUpdate(
         update.sells.map(sellSide.getDiff),
         update.buys.map(buySide.getDiff)
       )
@@ -137,7 +152,8 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
     }
 
     trait ConverstionSupport { self: OrderbookSide =>
-      private def slotToItem(slot: Orderbook.Slot) =
+
+      def slotToItem(slot: Orderbook.Slot) =
         Orderbook.Item(
           priceFormat.format(slot.slot / priceScaling),
           amountFormat.format(slot.amount),

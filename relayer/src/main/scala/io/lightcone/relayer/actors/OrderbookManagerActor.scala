@@ -53,7 +53,7 @@ object OrderbookManagerActor extends DeployedAsShardedByMarket with Logging {
   val extractShardingObject: PartialFunction[Any, MarketPair] = {
     case GetOrderbook.Req(_, _, Some(marketPair)) => marketPair
 
-    case Orderbook.Update(_, _, _, Some(marketPair)) => marketPair
+    case Orderbook.InternalUpdate(_, _, _, Some(marketPair)) => marketPair
 
     case Notify(KeepAliveActor.NOTIFY_MSG, marketPairStr) =>
       val tokens = marketPairStr.split("-")
@@ -122,9 +122,10 @@ class OrderbookManagerActor(
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
-    case req: Orderbook.Update =>
-      log.info(s"receive Orderbook.Update ${req}")
-      manager.processUpdate(req)
+    case req: Orderbook.InternalUpdate =>
+      log.info(s"receive Orderbook.InternalUpdate ${req}")
+      val updates = manager.processInternalUpdate(req)
+    // TODO(yadong): send updates to socket io.
 
     case GetOrderbook.Req(level, size, Some(marketPair)) =>
       Future {
@@ -167,10 +168,15 @@ class OrderbookManagerActor(
         orderbookRecoverSize
       )).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
-    } yield {
-      if (res.update.nonEmpty) {
-        manager.processUpdate(res.update.get)
+      updates = {
+        if (res.update.nonEmpty) Nil
+        else manager.processInternalUpdate(res.update.get)
       }
-    }
+      _ = log.debug(s"orderbook incremental updates: $updates")
+      _ <- {
+        Future.unit
+        // TODO(yadong): send updates to socket io.
+      }
+    } yield Unit
 
 }
