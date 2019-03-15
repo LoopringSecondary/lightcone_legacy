@@ -3,7 +3,7 @@ resolvers += "ethereumlibrepository" at "https://dl.bintray.com/ethereum/maven/"
 resolvers += "JFrog" at "https://oss.jfrog.org/libs-release/"
 resolvers += "bintray" at "https://dl.bintray.com/ethereum/maven/"
 resolvers += Resolver.bintrayRepo("hseeberger", "maven")
-resolvers += Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins")
+resolvers += Resolver.bintrayRepo("kamon-io", "sbt-plugins")
 resolvers += Resolver.url(
   "scoverage-bintray",
   url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(Resolver.ivyStylePatterns)
@@ -29,3 +29,4 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.4")
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 addSbtPlugin("com.orrsella" % "sbt-stats" % "1.0.7")
 addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.9")
+addSbtPlugin("io.kamon" % "sbt-aspectj-runner" % "1.1.2")

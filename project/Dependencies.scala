@@ -70,9 +70,9 @@ object Dependencies {
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
 
   lazy val monitoringDependencies = Seq(
-    "io.kamon" %% "kamon-core" % "1.1.0",
+    "io.kamon" %% "kamon-core" % "1.1.3",
     "io.kamon" %% "kamon-jmx" % "0.6.7",
-    "io.kamon" %% "kamon-akka-2.5" % "1.0.1",
+    "io.kamon" %% "kamon-akka-2.5" % "1.1.2",
     "io.kamon" %% "kamon-akka-remote-2.5" % "1.0.1",
     "io.kamon" %% "kamon-akka-http-2.5" % "1.0.1",
     "io.kamon" %% "kamon-zipkin" % "1.0.0",
@@ -80,7 +80,9 @@ object Dependencies {
     "io.kamon" %% "kamon-prometheus" % "1.1.1",
     "io.kamon" %% "kamon-scala-future" % "1.0.0",
     // TODO(dongw): use https://github.com/openzipkin-contrib/brave-akka instead in the future
-    "io.kamon" %% "kamon-logback" % "1.0.5"
+    "io.kamon" %% "kamon-logback" % "1.0.5",
+    "io.kamon" %% "kamon-system-metrics" % "1.0.1",
+    "org.aspectj" % "aspectjweaver" % "1.9.2"
     )
 
   lazy val dependency4Lib = commonDependency ++
