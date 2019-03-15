@@ -62,11 +62,11 @@
 
      1. 发出block event 
 
-        ==> 验证 acitivity 的状态是不是改为 pending
+        ==> 验证 activity 的状态是不是改为 pending
 
      2. 发出第二条activity
 
-        ==> 验证 acitivity是不是被更新为success的activity
+        ==> 验证 activity是不是被更新为success的activity
 
    - 状态: Planned
 
@@ -88,11 +88,11 @@
 
      1. 发出block event 
 
-        ==> 验证 acitivity 的状态是不是改为 pending
+        ==> 验证 activity 的状态是不是改为 pending
 
      2. 发出第二条activity
 
-        ==> 验证transfer eth  acitivity是不是被删除，transfer lrc activity是不是被正确存储。
+        ==> 验证transfer eth  activity是不是被删除，transfer lrc activity是不是被正确存储。
 
    - 状态: Planned
 

@@ -51,7 +51,7 @@
 
         ==> 验证db正确存入该条activity; socket 正确推送该条activity
 
-     3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
+     3. 发出A success的授权activity，A 的AddressAllowanceUpdatedEvent
 
         ==> 验证 db更新pending activity为成功的activity；socket 推送成功的activity，socket 推送A 授权变化的Account事件；A的授权变为 10000LRC
 
@@ -77,7 +77,7 @@
 
         ==> 验证db正确存入该条activity; socket 正确推送该条activity
 
-     3. 发出失败的授权acitivity
+     3. 发出失败的授权activity
 
         ==> 验证 db更新pending activity为失败的activity；socket 推送失败的activity
 
@@ -105,7 +105,7 @@
 
      2. 发出 A pending的授权activity
 
-     3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
+     3. 发出A success的授权activity，A 的AddressAllowanceUpdatedEvent
 
         ==> 订单的可成交量变为0；orderbook中对应价格的sells amount 减少1000 LRC
 
@@ -133,7 +133,7 @@
 
       2. 发出 A pending的授权activity
 
-      3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
+      3. 发出A success的授权activity，A 的AddressAllowanceUpdatedEvent
 
          ==> 订单的可成交量变为0；orderbook中对应价格的sells amount 减少2000 GTO
 
@@ -158,7 +158,7 @@
 
       2. 发出 A pending的授权activity
 
-      3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
+      3. 发出A success的授权activity，A 的AddressAllowanceUpdatedEvent
 
          ==> 订单的可成交量变为1000LRC；orderbook中对应价格的sells amount 增加1000 LRC
 
@@ -184,7 +184,7 @@
 
      2. 发出 A pending的授权activity
 
-     3. 发出A success的授权acitivity，A 的AddressAllowanceUpdatedEvent
+     3. 发出A success的授权activity，A 的AddressAllowanceUpdatedEvent
 
         ==> 订单的可成交量变为2000GTO；orderbook中对应价格的sells amount 增加2000 GTO
 

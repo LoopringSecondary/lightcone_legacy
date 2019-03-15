@@ -21,7 +21,7 @@
 
         ==> 通过Entrypoint验证存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
 
-     3. 发出A转出10ETH的成功的Activity，B转入10ETH成功的Acitivity, A 地址AddressBalanceUpdatedEvent 和 B地址 AddressBalanceUpdatedEvent
+     3. 发出A转出10ETH的成功的Activity，B转入10ETH成功的Activity, A 地址AddressBalanceUpdatedEvent 和 B地址 AddressBalanceUpdatedEvent
 
         ==>  通过Entrypoint验证更新Activity的状态更新为Success ;socket 正确推送这两条成功的转账Activity；A的ETH余额为10 ETH - 油费，B的余额 + 10 ETH；
 
@@ -48,7 +48,7 @@
 
         ==> 通过Entrypoint验证存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
 
-     3. 发出A转出10ETH的失败的Activity，B转入10ETH失败的Acitivity, A地址的AddressBalanceUpdatedEvent
+     3. 发出A转出10ETH的失败的Activity，B转入10ETH失败的Activity, A地址的AddressBalanceUpdatedEvent
 
         ==> 通过Entrypoint验证Pending的Activity 状态改成Failed；socket推送这两条失败的Activity；A的ETH余额减少油费，B的余额不变；
 
@@ -62,7 +62,7 @@
 
 1. 测试WETH Wrap成功的事件流程
 
-   - 目标：测试在成功的WETH Wrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+   - 目标：测试在成功的WETH Wrap过程中Activity的解析和推送，WETH余额和ETH余额的更新变化。
 
    - 测试前置条件：
 
@@ -92,7 +92,7 @@
 
 2. 测试WETH Wrap失败的事件流程
 
-   - 目标：测试在失败的WETH Wrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新情况。
+   - 目标：测试在失败的WETH Wrap过程中Activity的解析和推送，WETH余额和ETH余额的更新情况。
 
    - 测试前置条件：
 
@@ -124,7 +124,7 @@
 
 1. 测试WETH Unwrap成功的事件流程
 
-   - 目标：测试在成功的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+   - 目标：测试在成功的WETH Unwrap过程中Activity的解析和推送，WETH余额和ETH余额的更新变化。
 
    - 测试前置条件：
 
@@ -153,7 +153,7 @@
 
 2. 测试weth unwrap 失败的事件流程
 
-   - 目标：测试在失败的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+   - 目标：测试在失败的WETH Unwrap过程中Activity的解析和推送，WETH余额和ETH余额的更新变化。
 
    - 测试前置条件：
 

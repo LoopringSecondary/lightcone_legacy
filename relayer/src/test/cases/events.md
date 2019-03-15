@@ -49,7 +49,7 @@
 
 ### Activity 
 
-1. Acitivity 状态更新
+1. Activity 状态更新
 
    - 目标：测试pending的activity在后续相同的nonce 相同activity的影响更新
 
@@ -72,7 +72,7 @@
 
    - 其他信息：failed activity 与success测试验证一样，不再重复测试。
 
-2. Acitivity 被删除
+2. Activity 被删除
 
    - 目标：测试pending的activity在后续相同nonce不同activity的影响
 
