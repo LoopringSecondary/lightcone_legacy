@@ -50,7 +50,7 @@ class BalanceUpdateAddressExtractor @Inject()(
       timestamp = NumericConversion.toBigInt(source.getTimestamp).toLong,
       uncles = source.uncleMiners
     )
-    val addresses = (source.transactions zip source.receipts).flatMap {
+    val transferAddresses = (source.transactions zip source.receipts).flatMap {
       case (tx, receipt) =>
         val eventHeader = EventHeader(
           blockHeader = Some(blockHeader),
@@ -75,6 +75,16 @@ class BalanceUpdateAddressExtractor @Inject()(
             )
           }
     }.distinct
+
+    val senderAddresses = source.transactions.map(
+      tx =>
+        AddressBalanceUpdatedEvent(
+          address = tx.from,
+          token = Address.ZERO.toString()
+        )
+    )
+    val addresses = transferAddresses ++ senderAddresses
+
     val (ethAddresses, tokenAddresses) =
       addresses.partition(_.token == Address.ZERO.toString())
     for {

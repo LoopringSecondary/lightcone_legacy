@@ -19,17 +19,17 @@
 
      2. 发出 A 转出10 ETH的Activity，B转入10ETH的Activity, A 的最新pending nonce 
 
-        ==> 验证 db 正确存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
+        ==> 通过Entrypoint验证存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
 
-     3. 发出A转出10ETH的成功的Activity，B转入10ETH成功的Acitivity, A 地址AddressBalanceUpdatedEvent 和 B地址 AddressBalanceUpdatedEvent
+     3. 发出A转出10ETH的成功的Activity，B转入10ETH成功的Activity, A 地址AddressBalanceUpdatedEvent 和 B地址 AddressBalanceUpdatedEvent
 
-        ==>  验证db正确更新Activity的状态更新为Success ;socket 正确推送这两条成功的转账Activity；A的ETH余额为10 ETH - 油费，B的余额 + 10 ETH；
+        ==>  通过Entrypoint验证更新Activity的状态更新为Success ;socket 正确推送这两条成功的转账Activity；A的ETH余额为10 ETH - 油费，B的余额 + 10 ETH；
 
    - 状态: Planned
 
    - 拥有者: 亚东
 
-   - 其他信息：NA
+   - 其他信息
 
 2. 测试失败的ETH转账事件流程
 
@@ -46,11 +46,11 @@
 
      2. 发出 A 转出10 ETH的Activity，B转入10ETH的Activity, A 的最新pending nonce 
 
-        ==> 验证 db 正确存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
+        ==> 通过Entrypoint验证存入这两条Activity， socket正确推送这两条Activity，A的pending nonce更新
 
-     3. 发出A转出10ETH的失败的Activity，B转入10ETH失败的Acitivity, A地址的AddressBalanceUpdatedEvent
+     3. 发出A转出10ETH的失败的Activity，B转入10ETH失败的Activity, A地址的AddressBalanceUpdatedEvent
 
-        ==> db把 Pending的Activity 状态改成Failed；socket推送这两条失败的Activity；A的ETH余额减少油费，B的余额不变；
+        ==> 通过Entrypoint验证Pending的Activity 状态改成Failed；socket推送这两条失败的Activity；A的ETH余额减少油费，B的余额不变；
 
    - 状态: Planned
 
@@ -62,7 +62,7 @@
 
 1. 测试WETH Wrap成功的事件流程
 
-   - 目标：测试在成功的WETH Wrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+   - 目标：测试在成功的WETH Wrap过程中Activity的解析和推送，WETH余额和ETH余额的更新变化。
 
    - 测试前置条件：
 
@@ -75,11 +75,11 @@
 
      2. 发出 A地址 token 为ETH的pending wrap activity 和token为WETH的pending wrap activity
 
-        ==> 验证 db存入了上面两条pending 的activity；socket  正确推送过去这两条activity；
+        ==> 通过Entrypoint验证存入了上面两条pending 的activity；socket  正确推送过去这两条activity；
 
      3. 发出A地址 token为ETH成功的wrap activity和token为WETH成功的wrap activity，A地址ETH变化和WETH的AddressBalanceUpdatedEvent
 
-        ==>  db把pending的activity更新为成功状态；socket 推送这两条成功的activity；A  的ETH 余额 - （10+油费），WETH 余额 + 10
+        ==>  通过Entrypoint验证pending的activity更新为成功状态；socket 推送这两条成功的activity；A  的ETH 余额 - （10+油费），WETH 余额为10，可用余额为10 WETH
 
    - 状态: Planned
 
@@ -88,11 +88,11 @@
    - 其他信息：
 
      1. 在ETH转账中已经测试了账户nonce，因此这里不再重复测试。
-     2. socket的推送是根据订阅条件来推送的，可能两条activity不会同时都推送
+     2. socket的推送是根据订阅条件来推送的，需要同时订阅ETH和WETH
 
 2. 测试WETH Wrap失败的事件流程
 
-   - 目标：测试在失败的WETH Wrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新情况。
+   - 目标：测试在失败的WETH Wrap过程中Activity的解析和推送，WETH余额和ETH余额的更新情况。
 
    - 测试前置条件：
 
@@ -105,11 +105,11 @@
 
      2. 发出 A地址 token 为ETH的pending wrap activity 和token为WETH的pending wrap activity
 
-        ==> 验证 db存入了上面两条pending 的activity；socket  正确推送过去这两条activity；
+        ==> 通过Entrypoint验证存入了上面两条pending 的activity；socket  正确推送过去这两条activity；
 
      3. 发出A地址 token为ETH失败的wrap activity和token为WETH失败的wrap activity，A地址ETH变化的AddressBalanceUpdatedEvent
 
-        ==>  db把pending的activity更新为失败状态；socket 推送这两条失败的activity；A 的ETH 余额 - 油费，WETH 余额 不变
+        ==>  通过Entrypoint验证pending的activity更新为失败状态；socket 推送这两条失败的activity；A 的ETH 余额 - 油费，WETH 余额不变，WETH可用余额也不变。
 
    - 状态: Planned
 
@@ -118,13 +118,13 @@
    - 其他信息：
 
      1. 在ETH转账中已经测试了账户nonce，因此这里不再重复测试。
-     2. socket的推送是根据订阅条件来推送的，可能两条activity不会同时都推送
+     2. socket的推送是根据订阅条件来推送的，需要同时订阅ETH和WETH
 
 ### <a name="weth-unwrap"></a> WETH Unwrap
 
 1. 测试WETH Unwrap成功的事件流程
 
-   - 目标：测试在成功的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+   - 目标：测试在成功的WETH Unwrap过程中Activity的解析和推送，WETH余额和ETH余额的更新变化。
 
    - 测试前置条件：
 
@@ -137,11 +137,11 @@
 
      2. 发出A地址token为ETH的pending unwarp activity 和token 为weth 的pending unwrap activity
 
-        ==> db 存入上面两条pending 的activity；socket 正确推送这两条activity
+        ==> 通过Entrypoint存入上面两条pending 的activity；socket 正确推送这两条activity
 
      3. 发出A地址token为ETH的成功的 unwarp activity 和token 为weth 的成功的 unwrap activity；A地址 Eth 和Weth变化的AddressBalanceUpdatedEvent
 
-        ==> db将两条pending的activity改为success状态；A的ETH增加 10-油费；Weth减少10
+        ==>通过Entrypoint验证两条pending的activity改为success状态；A的ETH增加 10-油费；Weth余额为10，可用余额为10
 
    - 状态: Planned
 
@@ -149,11 +149,11 @@
 
    - 其他信息：
 
-     1. socket的推送是根据订阅条件来推送的，需要收到两条activity需要启动两个客户端分别订阅。
+     1. socket的推送是根据订阅条件来推送的，需要同时订阅ETH和WETH
 
 2. 测试weth unwrap 失败的事件流程
 
-   - 目标：测试在失败的WETH Unwrap过程中Acitivity的解析和推送，WETH余额和ETH余额的更新变化。
+   - 目标：测试在失败的WETH Unwrap过程中Activity的解析和推送，WETH余额和ETH余额的更新变化。
 
    - 测试前置条件：
 
@@ -166,11 +166,11 @@
 
      2. 发出A地址token为ETH的pending unwarp activity 和token 为weth 的pending unwrap activity
 
-        ==> db 存入上面两条pending 的activity；socket 正确推送这两条activity
+        ==> 通过Entrypoint验证存入上面两条pending 的activity；socket 正确推送这两条activity
 
      3. 发出A地址token为ETH的失败的 unwarp activity 和token 为weth 的失败的 unwrap activity；A地址 Eth 变化的AddressBalanceUpdatedEvent
 
-        ==> db将两条pending的activity改为failed状态；A的ETH减少 油费；Weth不变
+        ==>通过Entrypoint验证两条pending的activity改为failed状态；A的ETH减少 油费；Weth余额不变，可用余额不变；
 
    - 状态: Planned
 
@@ -178,7 +178,7 @@
 
    - 其他信息：
 
-     1. socket的推送是根据订阅条件来推送的，需要收到两条activity需要启动两个客户端分别订阅。
+     1. socket的推送是根据订阅条件来推送的，需要同时订阅ETH和WETH
 
 ###  <a name="erc20-transfer"></a>ERC20 token 转账
 
@@ -199,11 +199,11 @@
 
      2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
 
-        ==> db 存入上面两条pending 的activity；socket 正确推送这两条activity
+        ==> 通过Entrypoint验证存入上面两条pending 的activity；socket 正确推送这两条activity
 
      3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
 
-        ==> db 把pending的activity更新为成功的activity；socket 正确推送activity到A和B；A的LRC 余额减少 100，B的LRC余额减少 100；
+        ==> 通过Entrypoint验证pending的activity更新为成功的activity；socket 正确推送activity到A和B；A的LRC 余额减少 100，可用余额减少100；B的LRC余额增加 100，可用余额增加100
 
    - 状态: Planned
 
@@ -226,21 +226,21 @@
 
      2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
 
-        ==> db 存入上面两条pending 的activity；socket 正确推送这两条activity
+        ==> 通过Entrypoint验证存入上面两条pending 的activity；socket 正确推送这两条activity
 
      3. 发出 A 转出LRC的失败的 activity，B转入LRC的失败的activity
 
-        ==> db 把pending的activity更新为失败的activity；socket 正确推送activity 到A和B；A 和B的LRC余额不变；
+        ==> 通过Entrypoint验证pending的activity更新为失败的activity；socket 正确推送activity 到A和B；A 和B的LRC余额不变，可用余额不变；
 
    - 状态: Planned
 
    - 拥有者: 亚东
 
-   - 其他信息：NA
+   - 其他信息：这里不再对发送者的ETH余额做校验
 
 ###  <a name="transfer-order"></a>测试成功的token转账引起订单和orderbook的变化
 
-1.    测试token转出引起order可成交量影响的流程
+1. 测试token转出引起order可成交量影响的流程
 
    - 目标：测试token转账流程中，引起余额的变化，进而引起订单可成交量的变化和orderbook的变化
 
@@ -317,5 +317,85 @@
         ==> A 的订单大小和状态不变；order book 的大小不变；
 
    - 状态: Planned
+
    - 拥有者: 亚东
+
+   - 其他信息：NA
+
+4.    测试作为fee的token转出
+
+   - 目标：测试token转账流程中，引起余额的变化，进而引起订单可成交量的变化和orderbook的变化
+
+   - 前置条件：
+
+     1. A的LRC 余额为100LRC，GTO和余额充足
+     2. A的有一个卖出2000GTO，fee 为100 LRC的订单
+     3. 设置A转出 100LRC到B的Ethereum transaction
+
+   - 测试步骤和结果验证：
+
+     1. 发送transfer Ethereum transaction
+
+     2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+     3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
+
+        ==> A 的订单可成交量变为0；order book 的sells中对应的价格中量减少2000GTO；socket推送A的订单变化和orderbook的变化
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
+5.    token转入对order影响
+
+   - 目标：测试token转入，余额增加之后对订单和orderbook的影响
+
+   - 测试前置条件：
+
+      1. A的LRC余额为100LRC，授权充足
+      2. 设置A卖出200LRC的订单
+      3. 设置A转入1000LRC的Ethereum transaction
+
+   - 测试步骤及结果校验：
+
+      1. 发送 transfer  transaction
+
+      2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+      3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
+
+         ==> A 订单可成交额增加为200LRC，order book 对应价格的记录增加100LRC
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
+6.    作为fee的token转入对order影响
+
+   - 目标：测试作为fee的token转入，余额增加之后对订单和orderbook的影响
+
+   - 测试前置条件：
+
+     1. A的LRC余额为10 LRC，授权充足，GTO 余额和授权充足
+     2. 设置A卖出2000GTO订单，fee 为 100LRC
+     3. 设置A转入1000LRC的Ethereum transaction
+
+   - 测试步骤及结果校验：
+
+     1. 发送 transfer  transaction
+
+     2. 发出 A 转出LRC的pending activity，B转入LRC的pending activity
+
+     3. 发出 A 转出LRC的成功的 activity，B转入LRC的成功的 activity；发出A、B的AddressBalanceUpdatedEvent
+
+        ==> A 订单可成交额增加为2000GTO，order book 对应价格的记录增加1800GTO；socket正确推送订单的变化和orderbook变化；
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
    - 其他信息：NA
