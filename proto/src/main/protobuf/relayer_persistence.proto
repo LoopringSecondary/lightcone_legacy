@@ -185,7 +185,6 @@ message GetMarketHistory {
         Interval                        interval       = 2;
         int64                           beginTime      = 3;
         int64                           endTime        = 4;
-        string                          market_hash    = 5;
     }
 
     message Res {
