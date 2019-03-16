@@ -87,16 +87,18 @@ message GetOrderByHash {
 
 message GetOrders {
     message Req {
-        message Market {
-            string token_s = 1;
-            string token_b = 2;
-            bool   is_query_both_side = 3; // 是否查询两个方向的订单
+        enum Side {
+            BOTH = 0;
+            BUY  = 1;
+            SELL = 2;
         }
-        string               owner      = 1;
-        repeated io.lightcone.core.OrderStatus statuses   = 2;
-        Market               market     = 3;
-        io.lightcone.persistence.SortingType          sort       = 4;
-        io.lightcone.persistence.Paging               skip       = 5;
+
+        string                                 owner       = 1;
+        repeated io.lightcone.core.OrderStatus statuses    = 2;
+        io.lightcone.core.MarketPair           market_pair = 3;
+        Side                                   side        = 4;
+        io.lightcone.persistence.SortingType   sort        = 5;
+        io.lightcone.persistence.Paging        skip        = 6;
     }
 
     message Res {

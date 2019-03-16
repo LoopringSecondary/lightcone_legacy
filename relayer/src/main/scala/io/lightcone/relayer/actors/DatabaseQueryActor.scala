@@ -26,7 +26,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.persistence.Fill
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.data.GetOrders._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
@@ -66,7 +65,7 @@ class DatabaseQueryActor(
   def ready: Receive = LoggingReceive {
     case req: GetOrders.Req =>
       val (tokensOpt, tokenbOpt, marketIdOpt) =
-        getMarketQueryParameters(req.market)
+        getMarketQueryParameters(req.marketPair, req.side)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
           req.statuses.toSet,
@@ -147,16 +146,21 @@ class DatabaseQueryActor(
       } yield GetRings.Res(result, total)) sendTo sender
   }
 
-  private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {
+  private def getMarketQueryParameters(
+      marketOpt: Option[MarketPair],
+      side: GetOrders.Req.Side
+    ) = {
     marketOpt match {
-      case Some(m)
-          if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
-        (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).longId))
-      case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
-        (Some(m.tokenS), Some(m.tokenB), None)
-      case Some(m) if m.tokenS.nonEmpty => (Some(m.tokenS), None, None)
-      case Some(m) if m.tokenB.nonEmpty => (None, Some(m.tokenB), None)
-      case None                         => (None, None, None)
+      case Some(m) =>
+        side match {
+          case GetOrders.Req.Side.BOTH =>
+            (None, None, Some(MarketHash(m).longId))
+          case GetOrders.Req.Side.BUY =>
+            (Some(m.quoteToken), Some(m.baseToken), None)
+          case GetOrders.Req.Side.SELL =>
+            (Some(m.baseToken), Some(m.quoteToken), None)
+        }
+      case None => (None, None, None)
     }
   }
 

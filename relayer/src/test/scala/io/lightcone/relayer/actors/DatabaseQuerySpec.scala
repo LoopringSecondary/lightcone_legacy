@@ -42,10 +42,10 @@ class DatabaseQuerySpec
       val request = GetOrders.Req(
         owner = accounts(0).getAddress,
         statuses = Seq(OrderStatus.STATUS_NEW),
-        market = Some(
-          GetOrders.Req
-            .Market(LRC_TOKEN.address, WETH_TOKEN.address, true)
-        )
+        marketPair = Some(
+          MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        side = GetOrders.Req.Side.BOTH
       )
       val r = for {
         _ <- Future.sequence(rawOrders.map { order =>

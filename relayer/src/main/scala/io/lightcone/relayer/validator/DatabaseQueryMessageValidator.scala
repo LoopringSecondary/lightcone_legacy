@@ -51,16 +51,16 @@ final class DatabaseQueryMessageValidator(
               "Parameter owner could not be empty"
             )
           else MessageValidator.normalizeAddress(req.owner)
-        val marketOpt = req.market match {
+        val marketOpt = req.marketPair match {
           case Some(m) =>
-            val tokenS = MessageValidator.normalizeAddress(m.tokenS)
-            val tokenB = MessageValidator.normalizeAddress(m.tokenB)
-            Some(GetOrders.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+            val base = MessageValidator.normalizeAddress(m.baseToken)
+            val quote = MessageValidator.normalizeAddress(m.quoteToken)
+            Some(MarketPair(base, quote))
           case _ => None
         }
         req.copy(
           owner = owner,
-          market = marketOpt,
+          marketPair = marketOpt,
           skip = MessageValidator.getValidPaging(req.skip)
         )
       }
