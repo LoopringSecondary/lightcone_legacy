@@ -86,9 +86,7 @@ class BalanceUpdateAddressExtractor @Inject()(
       )
       .distinct
     val addresses = transferAddresses ++ senderAddresses
-
-    println(addresses)
-
+    
     val (ethAddresses, tokenAddresses) =
       addresses.partition(_.token == Address.ZERO.toString())
     for {

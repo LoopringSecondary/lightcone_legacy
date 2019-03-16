@@ -16,13 +16,7 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.core.{
-  Market,
-  MarketMetadata,
-  RawOrder,
-  TokenInfo,
-  TokenMetadata
-}
+import io.lightcone.core._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.jsonrpc.Linter
