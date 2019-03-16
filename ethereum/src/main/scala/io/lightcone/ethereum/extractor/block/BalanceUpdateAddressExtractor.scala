@@ -76,14 +76,18 @@ class BalanceUpdateAddressExtractor @Inject()(
           }
     }.distinct
 
-    val senderAddresses = source.transactions.map(
-      tx =>
-        AddressBalanceUpdatedEvent(
-          address = tx.from,
-          token = Address.ZERO.toString()
-        )
-    )
+    val senderAddresses = source.transactions
+      .map(
+        tx =>
+          AddressBalanceUpdatedEvent(
+            address = tx.from,
+            token = Address.ZERO.toString()
+          )
+      )
+      .distinct
     val addresses = transferAddresses ++ senderAddresses
+
+    println(addresses)
 
     val (ethAddresses, tokenAddresses) =
       addresses.partition(_.token == Address.ZERO.toString())

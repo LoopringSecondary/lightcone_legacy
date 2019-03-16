@@ -16,7 +16,13 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.core.{Market, MarketMetadata, RawOrder, TokenInfo, TokenMetadata}
+import io.lightcone.core.{
+  Market,
+  MarketMetadata,
+  RawOrder,
+  TokenInfo,
+  TokenMetadata
+}
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.jsonrpc.Linter
@@ -137,7 +143,7 @@ object RpcDataLinters {
   }
 
   implicit val tokenInfoLinter = new Linter[TokenInfo] {
-     def lint(data: TokenInfo): TokenInfo = data.withUpdatedAt(0L)
+    def lint(data: TokenInfo): TokenInfo = data.withUpdatedAt(0L)
   }
 
   implicit val getTokensResLinter = new Linter[GetTokens.Res] {
@@ -149,7 +155,8 @@ object RpcDataLinters {
           token =>
             token.copy(
               metadata = token.metadata.map(tokenMetadataLinter.lint),
-              info = token.info.map(tokenInfoLinter.lint))
+              info = token.info.map(tokenInfoLinter.lint)
+            )
         )
       )
     }

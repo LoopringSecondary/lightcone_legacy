@@ -77,7 +77,11 @@ class MarketHistoryActor(
       }) sendTo sender
 
     case req: GetMarketHistory.Req =>
-      dbModule.ohlcDataService.getOHLCData(req).sendTo(sender)
+      dbModule.ohlcDataService
+        .getOHLCData(
+          req.clearMarketPair.withMarketHash(req.getMarketPair.hashString)
+        )
+        .sendTo(sender)
 
     case req: BlockEvent =>
       (for {

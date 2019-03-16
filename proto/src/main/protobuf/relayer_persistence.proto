@@ -181,10 +181,11 @@ message GetMarketHistory {
     }
 
     message Req {
-        string    market_hash     = 1;
-        Interval  interval       = 2;
-        int64     beginTime      = 3;
-        int64     endTime        = 4;
+        io.lightcone.core.MarketPair    market_pair    = 1;
+        Interval                        interval       = 2;
+        int64                           beginTime      = 3;
+        int64                           endTime        = 4;
+        string                          market_hash    = 5;
     }
 
     message Res {
