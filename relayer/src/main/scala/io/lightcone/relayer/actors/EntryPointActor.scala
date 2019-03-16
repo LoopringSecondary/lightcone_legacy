@@ -24,6 +24,7 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.validator._
 import io.lightcone.core._
+import io.lightcone.ethereum.persistence.GetMarketHistory
 import io.lightcone.relayer.data._
 import scala.concurrent.ExecutionContext
 

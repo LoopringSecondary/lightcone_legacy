@@ -23,7 +23,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.lib._
-import io.lightcone.relayer.data._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._

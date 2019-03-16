@@ -18,10 +18,8 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.core._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data.GetUserFills.Req
 import scala.concurrent.Await
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data.MarketFilter
 import scala.concurrent.duration._
 
 class FillDalSpec extends DalSpec[FillDal] {
@@ -39,19 +37,22 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query fills: by owner")
-    val q3 = Req(owner = owner1)
     val r3 = Await.result(
       dal
         .getFills(
-          q3.owner,
-          q3.txHash,
-          q3.orderHash,
-          q3.market,
-          q3.ring,
-          q3.wallet,
-          q3.miner,
-          q3.sort,
-          q3.paging
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -59,13 +60,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c3 = Await.result(
       dal
         .countFills(
-          q3.owner,
-          q3.txHash,
-          q3.orderHash,
-          q3.market,
-          q3.ring,
-          q3.wallet,
-          q3.miner
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          ""
         )
         .mapTo[Int],
       5.second
@@ -73,19 +78,22 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r3.length == 2 && c3 == 2)
 
     info("query fills: sort")
-    val q3_2 = Req(owner = owner1, sort = SortingType.DESC)
     val r3_2 = Await.result(
       dal
         .getFills(
-          q3_2.owner,
-          q3_2.txHash,
-          q3_2.orderHash,
-          q3_2.market,
-          q3_2.ring,
-          q3_2.wallet,
-          q3_2.miner,
-          q3_2.sort,
-          q3_2.paging
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.DESC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -94,19 +102,22 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r3.head == r3_2.last)
 
     info("query fills: skip")
-    val q3_3 = Req(paging = Some(Paging(skip = 1, size = 10)))
     val r3_3 = Await.result(
       dal
         .getFills(
-          q3_3.owner,
-          q3_3.txHash,
-          q3_3.orderHash,
-          q3_3.market,
-          q3_3.ring,
-          q3_3.wallet,
-          q3_3.miner,
-          q3_3.sort,
-          q3_3.paging
+          "",
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          Some(Paging(skip = 1, size = 10))
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -114,23 +125,22 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r3_3.length == 3)
 
     info("query fills: by owner and market")
-    val q4 =
-      Req(
-        owner = owner1,
-        market = Some(MarketFilter(Some(MarketPair(tokenS1, tokenB1))))
-      )
     val r4 = Await.result(
       dal
         .getFills(
-          q4.owner,
-          q4.txHash,
-          q4.orderHash,
-          q4.market,
-          q4.ring,
-          q4.wallet,
-          q4.miner,
-          q4.sort,
-          q4.paging
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          Some(MarketHash(MarketPair(tokenS1, tokenB1))),
+          "",
+          "",
+          SortingType.ASC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -138,13 +148,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c4 = Await.result(
       dal
         .countFills(
-          q4.owner,
-          q4.txHash,
-          q4.orderHash,
-          q4.market,
-          q4.ring,
-          q4.wallet,
-          q4.miner
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          Some(MarketHash(MarketPair(tokenS1, tokenB1))),
+          "",
+          ""
         )
         .mapTo[Int],
       5.second
@@ -152,19 +166,22 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r4.length == 2 && c4 == 2)
 
     info("query fills: by ring")
-    val q6 = Req(ring = Some(Req.RingFilter(hash2)))
     val r6 = Await.result(
       dal
         .getFills(
-          q6.owner,
-          q6.txHash,
-          q6.orderHash,
-          q6.market,
-          q6.ring,
-          q6.wallet,
-          q6.miner,
-          q6.sort,
-          q6.paging
+          "",
+          "",
+          "",
+          Some(hash2),
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -172,31 +189,39 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c6 = Await.result(
       dal
         .countFills(
-          q6.owner,
-          q6.txHash,
-          q6.orderHash,
-          q6.market,
-          q6.ring,
-          q6.wallet,
-          q6.miner
+          "",
+          "",
+          "",
+          Some(hash2),
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          ""
         )
         .mapTo[Int],
       5.second
     )
     assert(r6.length == 2 && c6 == 2)
-    val q7 = Req(ring = Some(Req.RingFilter(hash2, "2", "1")))
+
     val r7 = Await.result(
       dal
         .getFills(
-          q7.owner,
-          q7.txHash,
-          q7.orderHash,
-          q7.market,
-          q7.ring,
-          q7.wallet,
-          q7.miner,
-          q7.sort,
-          q7.paging
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(1),
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -204,31 +229,38 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c7 = Await.result(
       dal
         .countFills(
-          q7.owner,
-          q7.txHash,
-          q7.orderHash,
-          q7.market,
-          q7.ring,
-          q7.wallet,
-          q7.miner
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(1),
+          None,
+          None,
+          None,
+          "",
+          ""
         )
         .mapTo[Int],
       5.second
     )
     assert(r7.length == 1 && c7 == 1)
-    val q8 = Req(ring = Some(Req.RingFilter(hash2, "2", "2")))
     val r8 = Await.result(
       dal
         .getFills(
-          q8.owner,
-          q8.txHash,
-          q8.orderHash,
-          q8.market,
-          q8.ring,
-          q8.wallet,
-          q8.miner,
-          q8.sort,
-          q8.paging
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(2),
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -236,13 +268,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c8 = Await.result(
       dal
         .countFills(
-          q8.owner,
-          q8.txHash,
-          q8.orderHash,
-          q8.market,
-          q8.ring,
-          q8.wallet,
-          q8.miner
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(2),
+          None,
+          None,
+          None,
+          "",
+          ""
         )
         .mapTo[Int],
       5.second
@@ -250,27 +286,22 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r8.isEmpty && c8 == 0)
 
     info("query fills: full parameters")
-    val q9 = Req(
-      owner = owner1,
-      txHash = hash1,
-      orderHash = hash1,
-      market = Some(MarketFilter(Some(MarketPair(tokenS1, tokenB1)))),
-      ring = Some(Req.RingFilter(hash1, "1", "0")),
-      wallet = wallet,
-      miner = miner
-    )
     val r9 = Await.result(
       dal
         .getFills(
-          q9.owner,
-          q9.txHash,
-          q9.orderHash,
-          q9.market,
-          q9.ring,
-          q9.wallet,
-          q9.miner,
-          q9.sort,
-          q9.paging
+          owner1,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner,
+          SortingType.ASC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -278,39 +309,38 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c9 = Await.result(
       dal
         .countFills(
-          q9.owner,
-          q9.txHash,
-          q9.orderHash,
-          q9.market,
-          q9.ring,
-          q9.wallet,
-          q9.miner
+          owner1,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner
         )
         .mapTo[Int],
       5.second
     )
     assert(r9.length == 1 && c9 == 1)
-    val q10 = Req(
-      owner = owner2,
-      txHash = hash1,
-      orderHash = hash1,
-      market = Some(MarketFilter(Some(MarketPair(tokenS1, tokenB1)))),
-      ring = Some(Req.RingFilter(hash1, "1", "0")),
-      wallet = wallet,
-      miner = miner
-    )
     val r10 = Await.result(
       dal
         .getFills(
-          q10.owner,
-          q10.txHash,
-          q10.orderHash,
-          q10.market,
-          q10.ring,
-          q10.wallet,
-          q10.miner,
-          q10.sort,
-          q10.paging
+          owner2,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner,
+          SortingType.ASC,
+          None
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -318,13 +348,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c10 = Await.result(
       dal
         .countFills(
-          q10.owner,
-          q10.txHash,
-          q10.orderHash,
-          q10.market,
-          q10.ring,
-          q10.wallet,
-          q10.miner
+          owner2,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner
         )
         .mapTo[Int],
       5.second

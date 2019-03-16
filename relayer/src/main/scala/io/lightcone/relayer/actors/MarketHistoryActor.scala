@@ -24,10 +24,8 @@ import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
-
 import scala.concurrent.ExecutionContext
 
 object MarketHistoryActor extends DeployedAsSingleton {
@@ -65,19 +63,21 @@ class MarketHistoryActor(
       (for {
         saveRes <- dbModule.ohlcDataDal.saveData(data)
       } yield {
-        saveRes.error match {
+        saveRes._1 match {
           case ERR_NONE =>
-            saveRes.record
+            saveRes._2
           case _ =>
             throw ErrorException(
-              saveRes.error,
+              saveRes._1,
               s"failed to save ohlcRawData: $data"
             )
         }
       }) sendTo sender
 
     case req: GetMarketHistory.Req =>
-      dbModule.ohlcDataService.getOHLCData(req).sendTo(sender)
+      dbModule.ohlcDataService
+        .getOHLCData(req.marketHash, req.interval, req.beginTime, req.endTime)
+        .sendTo(sender)
 
     case req: BlockEvent =>
       (for {

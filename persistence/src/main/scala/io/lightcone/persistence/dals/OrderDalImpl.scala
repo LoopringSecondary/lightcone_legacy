@@ -21,14 +21,12 @@ import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4._
 import io.lightcone.lib._
 import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc._
 import slick.basic._
 import slick.lifted.Query
-
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -63,21 +61,23 @@ class OrderDalImpl @Inject()(
     OrderStatus.STATUS_PARTIALLY_FILLED
   )
 
-  def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
+  def saveOrder(
+      order: RawOrder
+    ): Future[(ErrorCode, Option[RawOrder], Boolean)] = {
     db.run((query += order).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) => {
-        PersistOrder.Res(
-          error = ERR_PERSISTENCE_DUPLICATE_INSERT,
-          order = None,
-          alreadyExist = true
+        (
+          ERR_PERSISTENCE_DUPLICATE_INSERT,
+          None,
+          true
         )
       }
       case Failure(ex) => {
         logger.error(s"error : ${ex.getMessage}")
-        PersistOrder.Res(error = ERR_PERSISTENCE_INTERNAL, order = None)
+        (ERR_PERSISTENCE_INTERNAL, None, false)
       }
       case Success(x) =>
-        PersistOrder.Res(error = ERR_NONE, order = Some(order))
+        (ERR_NONE, Some(order), false)
     }
   }
 
@@ -138,7 +138,7 @@ class OrderDalImpl @Inject()(
       tokenBSet: Set[String] = Set.empty,
       marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[SortingType] = None,
+      sort: SortingType = SortingType.ASC,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderFilters(
@@ -149,7 +149,7 @@ class OrderDalImpl @Inject()(
       marketIds,
       feeTokenSet,
       None,
-      sort,
+      Some(sort),
       skip
     )
     db.run(filters.result)
@@ -157,24 +157,24 @@ class OrderDalImpl @Inject()(
 
   private def queryOrderForUserFilters(
       statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
-      feeToken: Option[String] = None,
-      sort: Option[SortingType] = None,
+      ownerOpt: Option[String] = None,
+      tokensOpt: Option[String] = None,
+      tokenbOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
+      feeTokenOpt: Option[String] = None,
+      sort: SortingType = SortingType.ASC,
       pagingOpt: Option[Paging] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
-    if (owner.nonEmpty) filters = filters.filter(_.owner === owner)
-    if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS)
-    if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB)
-    if (marketId.nonEmpty)
-      filters = filters.filter(_.marketId === marketId)
-    if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
-    if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
+    if (ownerOpt.nonEmpty) filters = filters.filter(_.owner === ownerOpt.get)
+    if (tokensOpt.nonEmpty) filters = filters.filter(_.tokenS === tokensOpt.get)
+    if (tokenbOpt.nonEmpty) filters = filters.filter(_.tokenB === tokenbOpt.get)
+    if (marketHashOpt.nonEmpty)
+      filters = filters.filter(_.marketId === marketHashOpt.get.longId)
+    if (feeTokenOpt.nonEmpty)
+      filters = filters.filter(_.tokenFee === feeTokenOpt.get)
+    filters = sort match {
       case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
       case _                => filters.sortBy(_.sequenceId.asc)
     }
@@ -187,28 +187,27 @@ class OrderDalImpl @Inject()(
 
   def getOrdersForUser(
       statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
-      feeToken: Option[String] = None,
-      sort: Option[SortingType] = None,
-      skip: Option[Paging] = None
+      ownerOpt: Option[String] = None,
+      tokensOpt: Option[String] = None,
+      tokenbOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
+      feeTokenOpt: Option[String] = None,
+      sortOpt: SortingType = SortingType.ASC,
+      pagingOpt: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderForUserFilters(
       statuses,
-      owner,
-      tokenS,
-      tokenB,
-      marketId,
-      feeToken,
-      sort,
-      skip
+      ownerOpt,
+      tokensOpt,
+      tokenbOpt,
+      marketHashOpt,
+      feeTokenOpt,
+      sortOpt,
+      pagingOpt
     )
     db.run(filters.result)
   }
 
-  //
   def getOrdersToActivate(
       activateLaggingInSecond: Int,
       limit: Int
@@ -250,7 +249,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
+      marketHashOpt: Option[MarketHash] = None,
       feeToken: Option[String] = None
     ): Future[Int] = {
     val filters = queryOrderForUserFilters(
@@ -258,9 +257,9 @@ class OrderDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketId,
+      marketHashOpt,
       feeToken,
-      None,
+      SortingType.ASC,
       None
     )
     db.run(filters.size.result)
@@ -437,31 +436,6 @@ class OrderDalImpl @Inject()(
         db.run(filters.result)
       }
     }
-  }
-
-  def getCutoffAffectedOrders(
-      retrieveCondition: RetrieveOrdersToCancel,
-      take: Int
-    ): Future[Seq[RawOrder]] = {
-    //TODO du：暂时不考虑broker，owner必传
-    if (retrieveCondition.owner.isEmpty) {
-      throw ErrorException(
-        ERR_INTERNAL_UNKNOWN,
-        "owner in CutoffEvent is empty"
-      )
-    }
-    var filters = query
-      .filter(_.owner === retrieveCondition.owner)
-      .filter(_.status inSet activeStatus)
-      .filter(_.validSince <= retrieveCondition.cutoff.toInt)
-    if (retrieveCondition.marketHash.nonEmpty) {
-      val marketId = MarketHash.hashToId(retrieveCondition.marketHash)
-      filters = filters.filter(_.marketId === marketId)
-    }
-    filters = filters
-      .sortBy(_.sequenceId.asc)
-      .take(take)
-    db.run(filters.result)
   }
 
   def updateOrderStatus(

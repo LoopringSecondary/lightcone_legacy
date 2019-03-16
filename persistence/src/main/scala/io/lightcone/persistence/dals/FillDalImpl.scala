@@ -24,7 +24,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.persistence._
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -66,19 +65,17 @@ class FillDalImpl @Inject()(
       owner: String,
       txHash: String,
       orderHash: String,
-      marketFilter: Option[MarketFilter],
-      ringFilter: Option[GetUserFills.Req.RingFilter],
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
       wallet: String,
       miner: String,
       sort: SortingType,
       paging: Option[Paging]
     ): Future[Seq[Fill]] = {
-    val (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameter(
-      marketFilter
-    )
-    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      ringFilter
-    )
     val filters = queryFilters(
       getOptString(owner),
       getOptString(txHash),
@@ -101,17 +98,15 @@ class FillDalImpl @Inject()(
       owner: String,
       txHash: String,
       orderHash: String,
-      marketFilter: Option[MarketFilter],
-      ringFilter: Option[GetUserFills.Req.RingFilter],
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
       wallet: String,
       miner: String
     ): Future[Int] = {
-    val (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameter(
-      marketFilter
-    )
-    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      ringFilter
-    )
     val filters = queryFilters(
       getOptString(owner),
       getOptString(txHash),
@@ -164,7 +159,7 @@ class FillDalImpl @Inject()(
       fillIndex: Option[Int] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHashOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
       wallet: Option[String] = None,
       miner: Option[String] = None,
       sort: Option[SortingType] = None,
@@ -183,7 +178,7 @@ class FillDalImpl @Inject()(
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
     if (marketHashOpt.nonEmpty)
-      filters = filters.filter(_.marketHash === marketHashOpt.get)
+      filters = filters.filter(_.marketHash === marketHashOpt.get.hashString)
     if (wallet.nonEmpty) filters = filters.filter(_.wallet === wallet.get)
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
     filters = sort match {
@@ -196,48 +191,5 @@ class FillDalImpl @Inject()(
       case None         => filters
     }
     filters
-  }
-
-  private def getMarketQueryParameter(marketFilter: Option[MarketFilter]) = {
-    marketFilter match {
-      case None => (None, None, None)
-      case Some(m) =>
-        m.direction match {
-          case MarketFilter.Direction.BOTH =>
-            (None, None, Some(MarketHash(m.marketPair.get).hashString()))
-          case MarketFilter.Direction.BUY =>
-            (
-              Some(m.marketPair.get.quoteToken),
-              Some(m.marketPair.get.baseToken),
-              None
-            )
-          case MarketFilter.Direction.SELL =>
-            (
-              Some(m.marketPair.get.baseToken),
-              Some(m.marketPair.get.quoteToken),
-              None
-            )
-          case _ =>
-            throw ErrorException(
-              ErrorCode.ERR_INTERNAL_UNKNOWN,
-              "unrecognized direction"
-            )
-        }
-    }
-  }
-
-  private def getRingQueryParameters(
-      ringOpt: Option[GetUserFills.Req.RingFilter]
-    ) = {
-    ringOpt match {
-      case Some(r) =>
-        val ringHash = getOptString(r.ringHash)
-        val ringIndex =
-          if (r.ringIndex.nonEmpty) Some(r.ringIndex.toLong) else None
-        val fillIndex =
-          if (r.fillIndex.nonEmpty) Some(r.fillIndex.toInt) else None
-        (ringHash, ringIndex, fillIndex)
-      case None => (None, None, None)
-    }
   }
 }

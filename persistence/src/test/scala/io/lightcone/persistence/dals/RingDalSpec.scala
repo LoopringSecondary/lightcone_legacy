@@ -19,7 +19,6 @@ package io.lightcone.persistence.dals
 import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data.GetRings.Req
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -39,7 +38,6 @@ class RingDalSpec extends DalSpec[RingDal] {
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query rings: by ringHash and ringIndex")
-    val q3 = Req(filter = Req.Filter.RingHash(hash2))
     val r3 = Await.result(
       dal.getRings(Some(hash2), None, SortingType.ASC, None).mapTo[Seq[Ring]],
       5.second

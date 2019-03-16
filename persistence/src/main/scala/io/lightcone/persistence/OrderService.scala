@@ -19,9 +19,6 @@ package io.lightcone.persistence
 import io.lightcone.core._
 import scala.concurrent._
 
-// TODO(yongfeng): remove this dependency
-import io.lightcone.relayer.data._
-
 trait OrderService {
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: RawOrder): Future[Either[RawOrder, ErrorCode]]
@@ -36,19 +33,19 @@ trait OrderService {
       tokenBSet: Set[String] = Set.empty,
       marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[SortingType] = None,
+      sort: SortingType = SortingType.ASC,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
       statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketIds: Option[Long] = None,
-      feeTokenSet: Option[String] = None,
-      sort: Option[SortingType] = None,
-      skip: Option[Paging] = None
+      ownerOpt: Option[String] = None,
+      tokensOpt: Option[String] = None,
+      tokenbOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
+      feeTokenOpt: Option[String] = None,
+      sortOpt: SortingType = SortingType.ASC,
+      skipOpt: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
@@ -57,11 +54,6 @@ trait OrderService {
       marketEntityIds: Set[Long] = Set.empty,
       accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
-    ): Future[Seq[RawOrder]]
-
-  def getCutoffAffectedOrders(
-      retrieveCondition: RetrieveOrdersToCancel,
-      take: Int
     ): Future[Seq[RawOrder]]
 
   //
@@ -82,7 +74,7 @@ trait OrderService {
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
+      marketHashOpt: Option[MarketHash] = None,
       feeTokenSet: Option[String] = None
     ): Future[Int]
 
@@ -111,5 +103,5 @@ trait OrderService {
   def cancelOrders(
       orderHashes: Seq[String],
       status: OrderStatus
-    ): Future[Seq[UserCancelOrder.Res.Result]]
+    ): Future[Seq[(String, Option[RawOrder], ErrorCode)]]
 }

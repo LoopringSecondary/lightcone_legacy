@@ -17,11 +17,14 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
+import io.lightcone.core.ErrorCode
+import io.lightcone.ethereum.persistence.{
+  GetMarketHistory,
+  OHLCData,
+  OHLCRawData
+}
 import io.lightcone.persistence.dals._
 import scala.concurrent.{ExecutionContext, Future}
-
-// TODO(yongfeng): remove this dependency
-import io.lightcone.relayer.data._
 
 class OHLCDataServiceImpl @Inject()(
     implicit
@@ -29,19 +32,22 @@ class OHLCDataServiceImpl @Inject()(
     val ec: ExecutionContext)
     extends OHLCDataService {
 
-  def saveData(req: PersistOHLCData.Req): Future[PersistOHLCData.Res] =
-    ohlcDataDal.saveData(req.data.get)
+  def saveData(data: OHLCRawData): Future[(ErrorCode, Option[OHLCRawData])] =
+    ohlcDataDal.saveData(data)
 
   def getOHLCData(
-      request: GetMarketHistory.Req
-    ): Future[GetMarketHistory.Res] = {
+      marketHash: String,
+      interval: GetMarketHistory.Interval,
+      beginTime: Long,
+      endTime: Long
+    ): Future[Seq[OHLCData]] = {
     ohlcDataDal
       .getOHLCData(
-        request.marketHash,
-        request.interval.value,
-        request.beginTime,
-        request.endTime
+        marketHash,
+        interval.value,
+        beginTime,
+        endTime
       )
-      .map(r => GetMarketHistory.Res(data = r.map(t => OHLCData(data = t))))
+      .map(r => r.map(t => OHLCData(data = t)))
   }
 }

@@ -65,7 +65,7 @@ class DatabaseQueryActor(
 
   def ready: Receive = LoggingReceive {
     case req: GetOrders.Req =>
-      val (tokensOpt, tokenbOpt, marketIdOpt) =
+      val (tokensOpt, tokenbOpt, marketHashOpt) =
         getMarketQueryParameters(req.market)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
@@ -73,9 +73,9 @@ class DatabaseQueryActor(
           Some(req.owner),
           tokensOpt,
           tokenbOpt,
-          marketIdOpt,
+          marketHashOpt,
           None,
-          Some(req.sort),
+          req.sort,
           req.skip
         )
         total <- dbModule.orderService.countOrdersForUser(
@@ -83,7 +83,7 @@ class DatabaseQueryActor(
           Some(req.owner),
           tokensOpt,
           tokenbOpt,
-          marketIdOpt,
+          marketHashOpt,
           None
         )
       } yield {
@@ -104,12 +104,23 @@ class DatabaseQueryActor(
 
     case req: GetUserFills.Req =>
       (for {
+        _ <- Future.unit
+        (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameters(
+          req.market
+        )
+        (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
+          req.ring
+        )
         fills <- dbModule.fillDal.getFills(
           req.owner,
           req.txHash,
           req.orderHash,
-          req.market,
-          req.ring,
+          ringHashOpt,
+          ringIndexOpt,
+          fillIndexOpt,
+          tokensOpt,
+          tokenbOpt,
+          marketHashOpt,
           req.wallet,
           req.miner,
           req.sort,
@@ -119,8 +130,12 @@ class DatabaseQueryActor(
           req.owner,
           req.txHash,
           req.orderHash,
-          req.market,
-          req.ring,
+          ringHashOpt,
+          ringIndexOpt,
+          fillIndexOpt,
+          tokensOpt,
+          tokenbOpt,
+          marketHashOpt,
           req.wallet,
           req.miner
         )
@@ -177,7 +192,7 @@ class DatabaseQueryActor(
       case Some(m) =>
         m.direction match {
           case MarketFilter.Direction.BOTH =>
-            (None, None, Some(MarketHash(m.marketPair.get).longId))
+            (None, None, Some(MarketHash(m.marketPair.get)))
           case MarketFilter.Direction.BUY =>
             (
               Some(m.marketPair.get.quoteToken),
@@ -199,6 +214,25 @@ class DatabaseQueryActor(
         }
       case None => (None, None, None)
     }
+  }
+
+  private def getRingQueryParameters(
+      ringOpt: Option[GetUserFills.Req.RingFilter]
+    ) = {
+    ringOpt match {
+      case Some(r) =>
+        val ringHash = getOptString(r.ringHash)
+        val ringIndex =
+          if (r.ringIndex.nonEmpty) Some(r.ringIndex.toLong) else None
+        val fillIndex =
+          if (r.fillIndex.nonEmpty) Some(r.fillIndex.toInt) else None
+        (ringHash, ringIndex, fillIndex)
+      case None => (None, None, None)
+    }
+  }
+
+  private def getOptString(str: String) = {
+    if (str.nonEmpty) Some(str) else None
   }
 
 }

@@ -18,7 +18,6 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.persistence.{Paging, SortingType}
@@ -32,8 +31,12 @@ trait FillDal extends BaseDalImpl[FillTable, Fill] {
       owner: String,
       txHash: String,
       orderHash: String,
-      marketFilter: Option[MarketFilter],
-      ringFilter: Option[GetUserFills.Req.RingFilter],
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
       wallet: String,
       miner: String,
       sort: SortingType,
@@ -44,8 +47,12 @@ trait FillDal extends BaseDalImpl[FillTable, Fill] {
       owner: String,
       txHash: String,
       orderHash: String,
-      marketFilter: Option[MarketFilter],
-      ringFilter: Option[GetUserFills.Req.RingFilter],
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
       wallet: String,
       miner: String
     ): Future[Int]

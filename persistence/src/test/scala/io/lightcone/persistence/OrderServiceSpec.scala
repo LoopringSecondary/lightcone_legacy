@@ -19,7 +19,6 @@ package io.lightcone.persistence
 import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.persistence.dals._
-import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -117,6 +116,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         200,
         300
       )
+
       query <- service.getOrders(
         Set(OrderStatus.STATUS_NEW),
         owners,
@@ -124,7 +124,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set(tokenB),
         Set(MarketHash(MarketPair(tokenS, tokenB)).longId),
         Set.empty,
-        Some(SortingType.ASC),
+        SortingType.ASC,
         None
       )
       queryStatus <- service.getOrders(
@@ -134,7 +134,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set.empty,
         Set.empty,
         Set.empty,
-        Some(SortingType.ASC),
+        SortingType.ASC,
         None
       )
       queryToken <- service.getOrders(
@@ -144,7 +144,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set("0xccccccccc2"),
         Set.empty,
         Set.empty,
-        Some(SortingType.ASC),
+        SortingType.ASC,
         None
       )
       queryMarket <- service.getOrders(
@@ -154,7 +154,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set.empty,
         Set(MarketHash(MarketPair(tokenS, tokenB)).longId),
         Set.empty,
-        Some(SortingType.ASC),
+        SortingType.ASC,
         None
       )
       count <- service.countOrdersForUser(Set.empty)
@@ -197,7 +197,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(tokenB),
         None,
         None,
-        Some(SortingType.ASC),
+        SortingType.ASC,
         None
       )
       q2 <- service.getOrdersForUser(
@@ -205,9 +205,9 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some("0x-getordersfouser-03"),
         None,
         None,
-        Some(MarketHash(MarketPair(tokenS, tokenB)).longId),
+        Some(MarketHash(MarketPair(tokenS, tokenB))),
         None,
-        Some(SortingType.ASC),
+        SortingType.ASC,
         None
       )
     } yield (q1, q2)
@@ -232,7 +232,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some("0x-countorders-05"),
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
+        Some(MarketHash(MarketPair(tokenS, tokenB)))
       )
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
@@ -343,7 +343,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
+        Some(MarketHash(MarketPair(tokenS, tokenB)))
       )
       update <- service.cancelOrders(
         Seq(saved1.left.get.hash, saved3.left.get.hash),
@@ -354,26 +354,28 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
+        Some(MarketHash(MarketPair(tokenS, tokenB)))
       )
       query3 <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_SOFT_CANCELLED_BY_USER),
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
+        Some(MarketHash(MarketPair(tokenS, tokenB)))
       )
     } yield (update, query1, query2, query3)
     val res = Await.result(
-      result.mapTo[(Seq[UserCancelOrder.Res.Result], Int, Int, Int)],
+      result.mapTo[(Seq[(String, Option[RawOrder], ErrorCode)], Int, Int, Int)],
       5.second
     )
-    res._1.map { o =>
-      assert(o.order.isDefined)
+    res._1.length should be(2)
+    val res1: Seq[(String, Option[RawOrder], ErrorCode)] = res._1
+    res1.map { t =>
+      t._2.isDefined should be(true)
     }
-    val x = res._1.length === 2 && !res._1.exists(
-      _.error !== ErrorCode.ERR_NONE
-    ) && res._2 === 3 && res._3 === 1 && res._4 === 2
-    x should be(true)
+    !res1.exists(_._3 != ErrorCode.ERR_NONE) should be(true)
+    res._2 should be(3)
+    res._3 should be(1)
+    res._4 should be(2)
   }
 }

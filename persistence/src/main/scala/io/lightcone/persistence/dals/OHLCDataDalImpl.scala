@@ -17,19 +17,17 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core.ErrorCode._
-
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.google.protobuf.any.Any
+import io.lightcone.core.ErrorCode
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic.DatabaseConfig
 import slick.lifted.TableQuery
-
 import scala.concurrent.duration._
 
 class OHLCDataDalImpl @Inject()(
@@ -70,16 +68,17 @@ class OHLCDataDalImpl @Inject()(
     }
   }
 
-  def saveData(record: OHLCRawData): Future[PersistOHLCData.Res] = {
+  def saveData(
+      record: OHLCRawData
+    ): Future[(ErrorCode, Option[OHLCRawData])] = {
     for {
       result <- db.run(query.insertOrUpdate(record))
     } yield {
       if (result == 1) {
-        PersistOHLCData.Res(error = ERR_NONE, record = Some(record))
+        (ERR_NONE, Some(record))
       } else {
-        PersistOHLCData.Res(error = ERR_PERSISTENCE_INTERNAL)
+        (ERR_PERSISTENCE_INTERNAL, None)
       }
-
     }
   }
 
