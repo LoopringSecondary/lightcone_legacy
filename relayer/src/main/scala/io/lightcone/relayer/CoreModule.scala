@@ -27,7 +27,7 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.core._
 import io.lightcone.lib._
-import io.lightcone.lib.cache.{Cache, NoopCache, _}
+import io.lightcone.lib.cache._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
