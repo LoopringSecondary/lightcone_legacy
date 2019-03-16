@@ -38,8 +38,6 @@ class RingDalImpl @Inject()(
     timeProvider: TimeProvider)
     extends RingDal {
 
-  import GetRings.Req.Filter._
-
   val query = TableQuery[RingTable]
 
   def saveRing(ring: Ring): Future[ErrorCode] = {
@@ -58,15 +56,19 @@ class RingDalImpl @Inject()(
     Future.sequence(rings.map(saveRing))
 
   private def queryFilters(
-      ring: GetRings.Req.Filter = Empty,
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
     ): Query[RingTable, RingTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
-    filters = ring match {
-      case RingHash(r)  => filters.filter(_.ringHash === r)
-      case RingIndex(i) => filters.filter(_.ringIndex === i)
-      case Empty        => filters
+    filters = ringHashOpt match {
+      case None    => filters
+      case Some(h) => filters.filter(_.ringHash === h)
+    }
+    filters = ringIndexOpt match {
+      case None    => filters
+      case Some(h) => filters.filter(_.ringIndex === h)
     }
     filters = sort match {
       case Some(s) if s == SortingType.DESC =>
@@ -80,14 +82,22 @@ class RingDalImpl @Inject()(
     filters
   }
 
-  def getRings(request: GetRings.Req): Future[Seq[Ring]] = {
+  def getRings(
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      sort: SortingType,
+      paging: Option[Paging]
+    ): Future[Seq[Ring]] = {
     val filters =
-      queryFilters(request.filter, Some(request.sort), request.paging)
+      queryFilters(ringHashOpt, ringIndexOpt, Some(sort), paging)
     db.run(filters.result)
   }
 
-  def countRings(request: GetRings.Req): Future[Int] = {
-    val filters = queryFilters(request.filter, None, None)
+  def countRings(
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long]
+    ): Future[Int] = {
+    val filters = queryFilters(ringHashOpt, ringIndexOpt, None, None)
     db.run(filters.size.result)
   }
 }

@@ -17,8 +17,8 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
+import io.lightcone.core.ErrorCode
 import io.lightcone.persistence.dals._
-import io.lightcone.relayer.data._
 import scala.concurrent.{ExecutionContext, Future}
 
 class SettlementTxServiceImpl @Inject()(
@@ -27,12 +27,19 @@ class SettlementTxServiceImpl @Inject()(
     val submitTxDal: SettlementTxDal)
     extends SettlementTxService {
 
-  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res] =
-    submitTxDal.saveTx(req.tx.get)
+  def saveTx(tx: SettlementTx): Future[ErrorCode] =
+    submitTxDal.saveTx(tx)
 
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res] =
-    submitTxDal.getPendingTxs(request)
+  def getPendingTxs(
+      owner: String,
+      timeBefore: Long
+    ): Future[Seq[SettlementTx]] =
+    submitTxDal.getPendingTxs(owner, timeBefore)
 
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res] =
-    submitTxDal.updateInBlock(request)
+  def updateInBlock(
+      txHash: String,
+      from: String,
+      nonce: Long
+    ): Future[ErrorCode] =
+    submitTxDal.updateInBlock(txHash, from, nonce)
 }

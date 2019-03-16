@@ -38,18 +38,14 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
       owner: String,
       nonce: Long,
       status: SettlementTx.Status
-    ): Future[PersistSettlementTx.Res] = {
+    ): Future[ErrorCode] = {
     service.saveTx(
-      PersistSettlementTx.Req(
-        Some(
-          SettlementTx(
-            txHash = txHash,
-            from = owner,
-            nonce = nonce,
-            status = status,
-            createAt = timeProvider.getTimeSeconds()
-          )
-        )
+      SettlementTx(
+        txHash = txHash,
+        from = owner,
+        nonce = nonce,
+        status = status,
+        createAt = timeProvider.getTimeSeconds()
       )
     )
   }
@@ -69,11 +65,12 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       query <- service.getPendingTxs(
-        GetPendingTxs.Req(owner = owner, timeBefore = time)
+        owner,
+        time
       )
     } yield query
-    val res = Await.result(result.mapTo[GetPendingTxs.Res], 5.second)
-    res.txs.length == 1 should be(true)
+    val res = Await.result(result.mapTo[Seq[SettlementTx]], 5.second)
+    res.length == 1 should be(true)
   }
 
   "getPending" must "get some pending txs" in {
@@ -100,11 +97,12 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 2, SettlementTx.Status.PENDING)
       })
       query1 <- service.getPendingTxs(
-        GetPendingTxs.Req(owner = owner, timeBefore = time)
+        owner,
+        time
       )
     } yield query1
-    val res = Await.result(result.mapTo[GetPendingTxs.Res], 5.second)
-    res.txs.length === 2 should be(true)
+    val res = Await.result(result.mapTo[Seq[SettlementTx]], 5.second)
+    res.length === 2 should be(true)
   }
 
   "updatePendingInBlock" must "update pending txs with BLOCK status" in {
@@ -122,22 +120,28 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       query1 <- service.getPendingTxs(
-        GetPendingTxs.Req(owner = owner, timeBefore = time)
+        owner,
+        time
       )
       _ <- service.updateInBlock(
-        UpdateTxInBlock
-          .Req(txHash = "0x-updateblock-03", from = owner, nonce = 1)
+        "0x-updateblock-03",
+        owner,
+        1
       )
       query2 <- service.getPendingTxs(
-        GetPendingTxs.Req(owner = owner, timeBefore = time)
+        owner,
+        time
       )
     } yield (query1, query2)
     val res =
       Await.result(
-        result.mapTo[(GetPendingTxs.Res, GetPendingTxs.Res)],
+        result.mapTo[(Seq[SettlementTx], Seq[SettlementTx])],
         5.second
       )
-    res._1.txs.length === 1 && res._2.txs.length === 0 should be(true)
+    val r1 = res._1
+    r1.length == 1 should be(true)
+    val r2 = res._2
+    r2.isEmpty should be(true)
   }
 
   "update status with a not exist tx hash" must "update failed" in {
@@ -155,7 +159,9 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       updated <- service.updateInBlock(
-        UpdateTxInBlock.Req(txHash = "0x-tx-not-exist", from = owner, nonce = 1)
+        "0x-tx-not-exist",
+        owner,
+        1
       )
     } yield updated
     val res =

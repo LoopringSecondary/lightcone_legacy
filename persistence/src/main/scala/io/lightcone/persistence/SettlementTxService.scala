@@ -16,16 +16,23 @@
 
 package io.lightcone.persistence
 
-import io.lightcone.relayer.data._
+import io.lightcone.core.ErrorCode
 import scala.concurrent.Future
 
-// TODO(yongfeng): delete this?
 trait SettlementTxService {
 
-  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res]
+  def saveTx(tx: SettlementTx): Future[ErrorCode]
+
   // get all pending txs with given owner, from_nonce is a optional parameter(>=)
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
+  def getPendingTxs(
+      owner: String,
+      timeBefore: Long
+    ): Future[Seq[SettlementTx]]
 
   // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
+  def updateInBlock(
+      txHash: String,
+      from: String,
+      nonce: Long
+    ): Future[ErrorCode]
 }

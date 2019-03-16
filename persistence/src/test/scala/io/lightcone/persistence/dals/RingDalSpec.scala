@@ -40,12 +40,18 @@ class RingDalSpec extends DalSpec[RingDal] {
 
     info("query rings: by ringHash and ringIndex")
     val q3 = Req(filter = Req.Filter.RingHash(hash2))
-    val r3 = Await.result(dal.getRings(q3).mapTo[Seq[Ring]], 5.second)
-    val c3 = Await.result(dal.countRings(q3).mapTo[Int], 5.second)
+    val r3 = Await.result(
+      dal.getRings(Some(hash2), None, SortingType.ASC, None).mapTo[Seq[Ring]],
+      5.second
+    )
+    val c3 =
+      Await.result(dal.countRings(Some(hash2), None).mapTo[Int], 5.second)
     assert(r3.length == 1 && c3 == 1)
-    val q4 = Req(filter = Req.Filter.RingIndex(11))
-    val r4 = Await.result(dal.getRings(q4).mapTo[Seq[Ring]], 5.second)
-    val c4 = Await.result(dal.countRings(q4).mapTo[Int], 5.second)
+    val r4 = Await.result(
+      dal.getRings(None, Some(11), SortingType.ASC, None).mapTo[Seq[Ring]],
+      5.second
+    )
+    val c4 = Await.result(dal.countRings(None, Some(11)).mapTo[Int], 5.second)
     assert(r4.length == 1 && c4 == 1)
     assert(r3.head == r4.head)
     r3.head.fees match {
@@ -60,20 +66,33 @@ class RingDalSpec extends DalSpec[RingDal] {
     }
 
     info("query rings: sort")
-    val q5 = Req(sort = SortingType.DESC)
-    val r5 = Await.result(dal.getRings(q5).mapTo[Seq[Ring]], 5.second)
-    val c5 = Await.result(dal.countRings(q5).mapTo[Int], 5.second)
+    val r5 = Await.result(
+      dal.getRings(None, None, SortingType.DESC, None).mapTo[Seq[Ring]],
+      5.second
+    )
+    val c5 = Await.result(dal.countRings(None, None).mapTo[Int], 5.second)
     assert(r5.length == 3 && c5 == 3)
-    val q6 = Req(sort = SortingType.ASC)
-    val r6 = Await.result(dal.getRings(q6).mapTo[Seq[Ring]], 5.second)
-    val c6 = Await.result(dal.countRings(q6).mapTo[Int], 5.second)
+    val r6 = Await.result(
+      dal.getRings(None, None, SortingType.ASC, None).mapTo[Seq[Ring]],
+      5.second
+    )
+    val c6 = Await.result(dal.countRings(None, None).mapTo[Int], 5.second)
     assert(r6.length == 3 && c6 == 3)
     assert(r5.head == r6.last)
 
     info("query rings: skip")
-    val q7 = Req(paging = Some(Paging(skip = 1, size = 10)))
-    val r7 = Await.result(dal.getRings(q7).mapTo[Seq[Ring]], 5.second)
-    val c7 = Await.result(dal.countRings(q7).mapTo[Int], 5.second)
+    val r7 = Await.result(
+      dal
+        .getRings(
+          None,
+          None,
+          SortingType.ASC,
+          Some(Paging(skip = 1, size = 10))
+        )
+        .mapTo[Seq[Ring]],
+      5.second
+    )
+    val c7 = Await.result(dal.countRings(None, None).mapTo[Int], 5.second)
     assert(r7.length == 2 && c7 == 3)
   }
 

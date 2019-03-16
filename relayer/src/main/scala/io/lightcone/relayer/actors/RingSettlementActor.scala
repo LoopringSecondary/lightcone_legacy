@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import java.util.concurrent.atomic.AtomicInteger
-
 import akka.actor.{ActorRef, Stash}
 import akka.event.LoggingReceive
 import akka.pattern._
@@ -29,13 +28,11 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.lib._
-import io.lightcone.persistence.DatabaseModule
+import io.lightcone.persistence.{DatabaseModule, SettlementTx}
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-
 import io.lightcone.ethereum.event.{RingMinedEvent => PRingMinedEvent, _}
 import io.lightcone.relayer.data._
-
 import scala.collection.mutable.{ListBuffer, Queue}
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -208,12 +205,9 @@ class RingSettlementActor(
         .map(_.gasPrice)
       ringTxs <- dbModule.settlementTxService
         .getPendingTxs(
-          GetPendingTxs.Req(
-            owner = ringContext.transactionOrigin,
-            timeProvider.getTimeSeconds() - resendDelay
-          )
+          ringContext.transactionOrigin,
+          timeProvider.getTimeSeconds() - resendDelay
         )
-        .map(_.txs)
       txs = ringTxs.map(
         (tx: SettlementTx) =>
           Tx(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
@@ -233,22 +227,19 @@ class RingSettlementActor(
   def saveTx(
       tx: Tx,
       res: SendRawTransaction.Res
-    ): Future[PersistSettlementTx.Res] = {
-    dbModule.settlementTxService.saveTx(
-      PersistSettlementTx.Req(
-        tx = Some(
-          SettlementTx(
-            txHash = res.result,
-            from = ringContext.transactionOrigin,
-            to = tx.to,
-            nonce = tx.nonce,
-            gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
-            gasPrice = Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
-            data = tx.inputData,
-            value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
-          )
+    ): Future[PersistSettlementTx.Res] =
+    for {
+      result <- dbModule.settlementTxService.saveTx(
+        SettlementTx(
+          txHash = res.result,
+          from = ringContext.transactionOrigin,
+          to = tx.to,
+          nonce = tx.nonce,
+          gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
+          gasPrice = Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
+          data = tx.inputData,
+          value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
         )
       )
-    )
-  }
+    } yield PersistSettlementTx.Res(result)
 }

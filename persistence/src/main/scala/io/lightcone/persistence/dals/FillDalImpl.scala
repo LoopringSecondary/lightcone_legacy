@@ -62,52 +62,68 @@ class FillDalImpl @Inject()(
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]] =
     Future.sequence(fills.map(saveFill))
 
-  def getFills(request: GetUserFills.Req): Future[Seq[Fill]] = {
-    val marketHashOpt = request.marketPair match {
-      case None    => None
-      case Some(m) => Some(MarketHash(m).hashString())
-    }
+  def getFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      marketFilter: Option[MarketFilter],
+      ringFilter: Option[GetUserFills.Req.RingFilter],
+      wallet: String,
+      miner: String,
+      sort: SortingType,
+      paging: Option[Paging]
+    ): Future[Seq[Fill]] = {
+    val (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameter(
+      marketFilter
+    )
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      request.ring
+      ringFilter
     )
     val filters = queryFilters(
-      getOptString(request.owner),
-      getOptString(request.txHash),
-      getOptString(request.orderHash),
+      getOptString(owner),
+      getOptString(txHash),
+      getOptString(orderHash),
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
-      None,
-      None,
+      tokensOpt,
+      tokenbOpt,
       marketHashOpt,
-      getOptString(request.wallet),
-      getOptString(request.miner),
-      Some(request.sort),
-      request.paging
+      getOptString(wallet),
+      getOptString(miner),
+      Some(sort),
+      paging
     )
     db.run(filters.result)
   }
 
-  def countFills(request: GetUserFills.Req): Future[Int] = {
-    val marketHashOpt = request.marketPair match {
-      case None    => None
-      case Some(m) => Some(MarketHash(m).hashString())
-    }
+  def countFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      marketFilter: Option[MarketFilter],
+      ringFilter: Option[GetUserFills.Req.RingFilter],
+      wallet: String,
+      miner: String
+    ): Future[Int] = {
+    val (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameter(
+      marketFilter
+    )
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      request.ring
+      ringFilter
     )
     val filters = queryFilters(
-      getOptString(request.owner),
-      getOptString(request.txHash),
-      getOptString(request.orderHash),
+      getOptString(owner),
+      getOptString(txHash),
+      getOptString(orderHash),
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
-      None,
-      None,
+      tokensOpt,
+      tokenbOpt,
       marketHashOpt,
-      getOptString(request.wallet),
-      getOptString(request.miner),
+      getOptString(wallet),
+      getOptString(miner),
       None,
       None
     )
@@ -180,6 +196,34 @@ class FillDalImpl @Inject()(
       case None         => filters
     }
     filters
+  }
+
+  private def getMarketQueryParameter(marketFilter: Option[MarketFilter]) = {
+    marketFilter match {
+      case None => (None, None, None)
+      case Some(m) =>
+        m.direction match {
+          case MarketFilter.Direction.BOTH =>
+            (None, None, Some(MarketHash(m.marketPair.get).hashString()))
+          case MarketFilter.Direction.BUY =>
+            (
+              Some(m.marketPair.get.quoteToken),
+              Some(m.marketPair.get.baseToken),
+              None
+            )
+          case MarketFilter.Direction.SELL =>
+            (
+              Some(m.marketPair.get.baseToken),
+              Some(m.marketPair.get.quoteToken),
+              None
+            )
+          case _ =>
+            throw ErrorException(
+              ErrorCode.ERR_INTERNAL_UNKNOWN,
+              "unrecognized direction"
+            )
+        }
+    }
   }
 
   private def getRingQueryParameters(

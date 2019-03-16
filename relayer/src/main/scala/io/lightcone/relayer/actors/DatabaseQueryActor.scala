@@ -26,6 +26,7 @@ import io.lightcone.core._
 import io.lightcone.ethereum.persistence.Fill
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
+import io.lightcone.relayer.data.GetRings.Req.Filter._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
@@ -65,7 +66,7 @@ class DatabaseQueryActor(
   def ready: Receive = LoggingReceive {
     case req: GetOrders.Req =>
       val (tokensOpt, tokenbOpt, marketIdOpt) =
-        getMarketQueryParameters(req.marketPair, req.side)
+        getMarketQueryParameters(req.market)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
           req.statuses.toSet,
@@ -103,8 +104,26 @@ class DatabaseQueryActor(
 
     case req: GetUserFills.Req =>
       (for {
-        fills <- dbModule.fillDal.getFills(req)
-        total <- dbModule.fillDal.countFills(req)
+        fills <- dbModule.fillDal.getFills(
+          req.owner,
+          req.txHash,
+          req.orderHash,
+          req.market,
+          req.ring,
+          req.wallet,
+          req.miner,
+          req.sort,
+          req.paging
+        )
+        total <- dbModule.fillDal.countFills(
+          req.owner,
+          req.txHash,
+          req.orderHash,
+          req.market,
+          req.ring,
+          req.wallet,
+          req.miner
+        )
       } yield {
         val fills_ = fills.map { f =>
           new Fill(
@@ -141,24 +160,42 @@ class DatabaseQueryActor(
 
     case req: GetRings.Req =>
       (for {
-        result <- dbModule.ringDal.getRings(req)
-        total <- dbModule.ringDal.countRings(req)
+        _ <- Future.unit
+        (ringHashOpt, ringIndexOpt) = req.filter match {
+          case RingHash(h)  => (Some(h), None)
+          case RingIndex(i) => (None, Some(i))
+          case Empty        => (None, None)
+        }
+        result <- dbModule.ringDal
+          .getRings(ringHashOpt, ringIndexOpt, req.sort, req.paging)
+        total <- dbModule.ringDal.countRings(ringHashOpt, ringIndexOpt)
       } yield GetRings.Res(result, total)) sendTo sender
   }
 
-  private def getMarketQueryParameters(
-      marketOpt: Option[MarketPair],
-      side: GetOrders.Req.Side
-    ) = {
+  private def getMarketQueryParameters(marketOpt: Option[MarketFilter]) = {
     marketOpt match {
       case Some(m) =>
-        side match {
-          case GetOrders.Req.Side.BOTH =>
-            (None, None, Some(MarketHash(m).longId))
-          case GetOrders.Req.Side.BUY =>
-            (Some(m.quoteToken), Some(m.baseToken), None)
-          case GetOrders.Req.Side.SELL =>
-            (Some(m.baseToken), Some(m.quoteToken), None)
+        m.direction match {
+          case MarketFilter.Direction.BOTH =>
+            (None, None, Some(MarketHash(m.marketPair.get).longId))
+          case MarketFilter.Direction.BUY =>
+            (
+              Some(m.marketPair.get.quoteToken),
+              Some(m.marketPair.get.baseToken),
+              None
+            )
+          case MarketFilter.Direction.SELL =>
+            (
+              Some(m.marketPair.get.baseToken),
+              Some(m.marketPair.get.quoteToken),
+              None
+            )
+
+          case _ =>
+            throw ErrorException(
+              ErrorCode.ERR_INTERNAL_UNKNOWN,
+              "unrecognized direction"
+            )
         }
       case None => (None, None, None)
     }

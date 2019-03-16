@@ -21,13 +21,34 @@ import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
+import io.lightcone.persistence.{Paging, SortingType}
 import scala.concurrent._
 
 trait FillDal extends BaseDalImpl[FillTable, Fill] {
   def saveFill(fill: Fill): Future[ErrorCode]
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
-  def getFills(request: GetUserFills.Req): Future[Seq[Fill]]
-  def countFills(request: GetUserFills.Req): Future[Int]
+
+  def getFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      marketFilter: Option[MarketFilter],
+      ringFilter: Option[GetUserFills.Req.RingFilter],
+      wallet: String,
+      miner: String,
+      sort: SortingType,
+      paging: Option[Paging]
+    ): Future[Seq[Fill]]
+
+  def countFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      marketFilter: Option[MarketFilter],
+      ringFilter: Option[GetUserFills.Req.RingFilter],
+      wallet: String,
+      miner: String
+    ): Future[Int]
 
   def getMarketFills(
       marketPair: MarketPair,

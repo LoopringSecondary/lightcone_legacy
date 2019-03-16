@@ -42,10 +42,12 @@ class DatabaseQuerySpec
       val request = GetOrders.Req(
         owner = accounts(0).getAddress,
         statuses = Seq(OrderStatus.STATUS_NEW),
-        marketPair = Some(
-          MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)
-        ),
-        side = GetOrders.Req.Side.BOTH
+        market = Some(
+          MarketFilter(
+            Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)),
+            direction = MarketFilter.Direction.BOTH
+          )
+        )
       )
       val r = for {
         _ <- Future.sequence(rawOrders.map { order =>
@@ -71,7 +73,12 @@ class DatabaseQuerySpec
       val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
       val tradesReq = GetUserFills.Req(
         owner = owner,
-        marketPair = Some(MarketPair(tokenS, tokenB)),
+        market = Some(
+          MarketFilter(
+            Some(MarketPair(tokenS, tokenB)),
+            direction = MarketFilter.Direction.BOTH
+          )
+        ),
         paging = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )
