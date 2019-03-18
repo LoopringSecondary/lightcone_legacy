@@ -114,12 +114,11 @@ class CancelOrderSpec_byOwnerMarketPair
         )
       )
 
-      Then("cancel another order.")
-      val order3 = createRawOrder(validSince = order1.validSince + 100)
+      Then("cancel this market again.")
       val cancelAnotherReq =
         CancelOrder.Req(
-          owner = order3.owner,
-          id = order3.hash,
+          owner = account.getAddress,
+          marketPair = Some(LRC_WETH_MARKET.getMarketPair),
           status = STATUS_SOFT_CANCELLED_BY_USER,
           time = BigInt(timeProvider.getTimeSeconds())
         )
