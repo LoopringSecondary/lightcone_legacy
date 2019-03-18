@@ -105,9 +105,9 @@ class CancelOrderSpec_byOwnerMarketPair
         ),
         resEqual(expectedAccountRes),
         Map(
-//          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
-//          userFillsIsEmpty(),
-//          marketFillsIsEmpty()),
+          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          userFillsIsEmpty(),
+          marketFillsIsEmpty()),
           GTO_WETH_MARKET.getMarketPair -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
