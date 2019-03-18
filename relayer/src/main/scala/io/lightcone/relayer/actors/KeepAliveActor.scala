@@ -51,6 +51,7 @@ object KeepAliveActor extends DeployedAsSingleton {
   }
 }
 
+//TODO(HONGYU):有了分片广播，激活时应该优先使用分片广播
 class KeepAliveActor @Inject()(
     implicit
     val config: Config,

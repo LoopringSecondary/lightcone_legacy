@@ -18,6 +18,7 @@ package io.lightcone.persistence
 
 import io.lightcone.persistence.dals._
 import io.lightcone.core._
+import io.lightcone.lib.cache._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -25,6 +26,8 @@ import scala.concurrent.duration._
 class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
 
   implicit var dal: SettlementTxDal = _
+
+  implicit val cache = new NoopCache[String, Array[Byte]]
 
   def getService = {
     dal = new SettlementTxDalImpl()

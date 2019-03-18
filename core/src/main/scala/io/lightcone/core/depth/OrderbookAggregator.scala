@@ -17,9 +17,9 @@
 package io.lightcone.core
 
 trait OrderbookAggregator {
-  def getOrderbookUpdate(): Orderbook.Update
+  def getOrderbookInternalUpdate(): Orderbook.InternalUpdate
 
-  def getOrderbookSlots(num: Int): Orderbook.Update
+  def getOrderbookSlots(num: Int): Orderbook.InternalUpdate
 
   def addOrder(order: Matchable): Unit
   def deleteOrder(order: Matchable): Unit

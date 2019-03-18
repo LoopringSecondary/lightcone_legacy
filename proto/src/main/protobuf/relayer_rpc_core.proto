@@ -342,7 +342,7 @@ message GetOrderbookSlots {
     }
 
     message Res {
-        io.lightcone.core.Orderbook.Update update = 1;
+        io.lightcone.core.Orderbook.InternalUpdate update = 1;
     }
 }
 

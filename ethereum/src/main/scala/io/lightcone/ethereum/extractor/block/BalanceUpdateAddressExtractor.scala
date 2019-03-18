@@ -28,7 +28,6 @@ import io.lightcone.ethereum.extractor._
 import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class BalanceUpdateAddressExtractor @Inject()(
@@ -50,7 +49,7 @@ class BalanceUpdateAddressExtractor @Inject()(
       timestamp = NumericConversion.toBigInt(source.getTimestamp).toLong,
       uncles = source.uncleMiners
     )
-    val addresses = (source.transactions zip source.receipts).flatMap {
+    val transferAddresses = (source.transactions zip source.receipts).flatMap {
       case (tx, receipt) =>
         val eventHeader = EventHeader(
           blockHeader = Some(blockHeader),
@@ -64,10 +63,10 @@ class BalanceUpdateAddressExtractor @Inject()(
           .extractTransferEvents(
             TransactionData(tx, Some(receipt -> eventHeader))
           )
-          .filter(
-            event =>
-              event.getHeader.txStatus.isTxStatusSuccess || event.owner == event.from
-          )
+          .filter { event =>
+            event.getHeader.txStatus.isTxStatusSuccess ||
+            event.owner == event.from
+          }
           .map { transfer =>
             AddressBalanceUpdatedEvent(
               address = transfer.owner,
@@ -75,6 +74,16 @@ class BalanceUpdateAddressExtractor @Inject()(
             )
           }
     }.distinct
+
+    val senderAddresses = source.transactions.map(
+      tx =>
+        AddressBalanceUpdatedEvent(
+          address = tx.from,
+          token = Address.ZERO.toString()
+        )
+    )
+    val addresses = transferAddresses ++ senderAddresses
+
     val (ethAddresses, tokenAddresses) =
       addresses.partition(_.token == Address.ZERO.toString())
     for {

@@ -23,11 +23,13 @@ import io.lightcone.ethereum.persistence.{
   OHLCData,
   OHLCRawData
 }
+import io.lightcone.lib.cache._
 import io.lightcone.persistence.dals._
 import scala.concurrent.{ExecutionContext, Future}
 
 class OHLCDataServiceImpl @Inject()(
     implicit
+    basicCache: Cache[String, Array[Byte]],
     ohlcDataDal: OHLCDataDal,
     val ec: ExecutionContext)
     extends OHLCDataService {

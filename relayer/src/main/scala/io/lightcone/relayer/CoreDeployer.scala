@@ -33,6 +33,7 @@ import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.ethereum.extractor._
 import io.lightcone.lib._
+import io.lightcone.lib.cache.Cache
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.external._
@@ -48,6 +49,7 @@ class CoreDeployer @Inject()(
     actors: Lookup[ActorRef],
     actorMaterializer: ActorMaterializer,
     brb: EthereumBatchCallRequestBuilder,
+    cache: Cache[String, Array[Byte]],
     cluster: Cluster,
     config: Config,
     dcm: DatabaseConfigManager,
@@ -209,14 +211,8 @@ class CoreDeployer @Inject()(
           RingAndFillPersistenceActor.name,
           RingAndFillPersistenceActor.start
         )
-        .add(
-          ExternalCrawlerActor.name,
-          ExternalCrawlerActor.start
-        )
-        .add(
-          ApplicationInfoActor.name,
-          ApplicationInfoActor.start
-        )
+        .add(ExternalCrawlerActor.name, ExternalCrawlerActor.start)
+        .add(ApplicationInfoActor.name, ApplicationInfoActor.start)
 
       //-----------deploy sharded actors-----------
       actors
@@ -252,10 +248,7 @@ class CoreDeployer @Inject()(
           MarketHistoryActor.name, //
           MarketHistoryActor.start
         )
-        .add(
-          ActivityActor.name,
-          ActivityActor.start
-        )
+        .add(ActivityActor.name, ActivityActor.start)
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors

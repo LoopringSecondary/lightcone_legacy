@@ -17,6 +17,7 @@
 package io.lightcone.persistence
 
 import io.lightcone.lib._
+import io.lightcone.lib.cache._
 import io.lightcone.core._
 import io.lightcone.persistence.dals._
 import scala.concurrent._
@@ -25,6 +26,8 @@ import scala.concurrent.duration._
 class OrderServiceSpec extends ServiceSpec[OrderService] {
 
   implicit var dal: OrderDal = _
+
+  implicit val cache = new NoopCache[String, Array[Byte]]
 
   def getService = {
     dal = new OrderDalImpl()

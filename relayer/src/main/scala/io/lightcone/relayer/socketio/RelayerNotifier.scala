@@ -114,7 +114,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
       subscription.paramsForOrderbook match {
         case Some(params)
             if params.market.map(_.hashString) == e.marketPair
-              .map(_.hashString) =>
+              .map(_.hashString) && params.level == e.level =>
           Some(Notification(orderbook = Some(e)))
         case _ => None
       }

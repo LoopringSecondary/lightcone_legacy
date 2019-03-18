@@ -61,28 +61,30 @@ private[core] trait OrderbookSide {
       price: Double,
       amount: Double,
       total: Double
-    ): Unit =
+    ): Orderbook.Slot =
     increase(Orderbook.Slot(getSlotForPriceId(price), amount, total))
 
   def decrease(
       price: Double,
       amount: Double,
       total: Double
-    ): Unit =
+    ): Orderbook.Slot =
     decrease(Orderbook.Slot(getSlotForPriceId(price), amount, total))
 
   def replace(
       price: Double,
       amount: Double,
       total: Double
-    ): Unit =
+    ): Orderbook.Slot =
     replace(Orderbook.Slot(getSlotForPriceId(price), amount, total))
 
-  def increase(slot: Orderbook.Slot): Unit = adjustInternal(slot, _ + _)
+  def increase(slot: Orderbook.Slot): Orderbook.Slot =
+    adjustInternal(slot, _ + _)
 
-  def decrease(slot: Orderbook.Slot): Unit = adjustInternal(slot, _ - _)
+  def decrease(slot: Orderbook.Slot): Orderbook.Slot =
+    adjustInternal(slot, _ - _)
 
-  def replace(slot: Orderbook.Slot): Unit =
+  def replace(slot: Orderbook.Slot): Orderbook.Slot =
     adjustInternal(slot, (old: Orderbook.Slot, new_ : Orderbook.Slot) => new_)
 
   def getDiff(slot: Orderbook.Slot) = {
@@ -92,7 +94,7 @@ private[core] trait OrderbookSide {
   private def adjustInternal(
       slot: Orderbook.Slot,
       op: (Orderbook.Slot, Orderbook.Slot) => Orderbook.Slot
-    ) = {
+    ): Orderbook.Slot = {
     val id = getAggregationSlotFor(slot.slot)
 
     val old = slotMap.getOrElse(id, Orderbook.Slot(id, 0, 0))
@@ -111,6 +113,8 @@ private[core] trait OrderbookSide {
     if (maintainUpdatedSlots && old != updated) {
       updatedSlots += id -> updated
     }
+
+    updated
   }
 
   def reset() = {

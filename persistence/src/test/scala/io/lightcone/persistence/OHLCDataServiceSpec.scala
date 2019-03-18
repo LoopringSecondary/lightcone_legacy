@@ -20,12 +20,15 @@ import io.lightcone.persistence.dals._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.core._
 import io.lightcone.ethereum.persistence.GetMarketHistory.Interval
+import io.lightcone.lib.cache._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
 
   implicit var dal: OHLCDataDal = _
+
+  implicit val cache = new NoopCache[String, Array[Byte]]
 
   def getService = {
     dal = new OHLCDataDalImpl()
@@ -82,6 +85,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
         quoteAmount = 500,
         price = 100
       )
+    )
     val result2 = service.saveData(record2)
 
     val request = GetMarketHistory.Req(

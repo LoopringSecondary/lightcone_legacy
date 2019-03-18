@@ -90,9 +90,9 @@ class MarketManagerImpl(
 
   // If an order is in one or more pending rings, that
   // part of the order will not be cancelled.
-  def cancelOrder(orderId: String): Option[Orderbook.Update] =
+  def cancelOrder(orderId: String): Option[Orderbook.InternalUpdate] =
     removeOrder(orderId) map { _ =>
-      aggregator.getOrderbookUpdate()
+      aggregator.getOrderbookInternalUpdate()
     }
 
   def deleteRing(
@@ -211,7 +211,7 @@ class MarketManagerImpl(
       ordersToAddBack.foreach(addOrder)
 
       val orderbookUpdate = aggregator
-        .getOrderbookUpdate()
+        .getOrderbookInternalUpdate()
         .copy(latestPrice = latestPrice)
 
       // println("MMI: orderbookUpdate: " + orderbookUpdate)
@@ -282,6 +282,6 @@ class MarketManagerImpl(
   }
 
   @inline
-  def getOrderbookSlots(num: Int): Orderbook.Update =
+  def getOrderbookSlots(num: Int): Orderbook.InternalUpdate =
     aggregator.getOrderbookSlots(num)
 }

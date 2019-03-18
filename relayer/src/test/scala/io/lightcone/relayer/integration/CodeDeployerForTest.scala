@@ -27,6 +27,7 @@ import io.lightcone.core._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.extractor._
 import io.lightcone.lib.TimeProvider
+import io.lightcone.lib.cache._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors._
@@ -46,6 +47,7 @@ class CoreDeployerForTest @Inject()(
     actors: Lookup[ActorRef],
     actorMaterializer: ActorMaterializer,
     brb: EthereumBatchCallRequestBuilder,
+    cache: Cache[String, Array[Byte]],
     cluster: Cluster,
     config: Config,
     dcm: DatabaseConfigManager,
