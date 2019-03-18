@@ -76,15 +76,7 @@ class DatabaseQueryActor(
           marketIdOpt,
           None,
           Some(req.sort),
-          req.skip
-        )
-        total <- dbModule.orderService.countOrdersForUser(
-          req.statuses.toSet,
-          Some(req.owner),
-          tokensOpt,
-          tokenbOpt,
-          marketIdOpt,
-          None
+          req.paging
         )
       } yield {
         val respOrder = result.map { r =>
@@ -99,13 +91,12 @@ class DatabaseQueryActor(
             marketEntityId = 0
           )
         }
-        GetOrders.Res(respOrder, total)
+        GetOrders.Res(respOrder)
       }) sendTo sender
 
     case req: GetUserFills.Req =>
       (for {
         fills <- dbModule.fillDal.getFills(req)
-        total <- dbModule.fillDal.countFills(req)
       } yield {
         val fills_ = fills.map { f =>
           new Fill(
@@ -118,7 +109,7 @@ class DatabaseQueryActor(
             txHash = f.txHash
           )
         }
-        GetUserFills.Res(fills_, total)
+        GetUserFills.Res(fills_)
       }).sendTo(sender)
 
     case req: GetMarketFills.Req =>
@@ -143,8 +134,7 @@ class DatabaseQueryActor(
     case req: GetRings.Req =>
       (for {
         result <- dbModule.ringDal.getRings(req)
-        total <- dbModule.ringDal.countRings(req)
-      } yield GetRings.Res(result, total)) sendTo sender
+      } yield GetRings.Res(result)) sendTo sender
   }
 
   private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {

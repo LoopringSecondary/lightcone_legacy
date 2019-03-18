@@ -60,7 +60,7 @@ class RingDalImpl @Inject()(
   private def queryFilters(
       ring: GetRings.Req.Filter = Empty,
       sort: Option[SortingType] = None,
-      pagingOpt: Option[Paging] = None
+      pagingOpt: Option[CursorPaging] = None
     ): Query[RingTable, RingTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
     filters = ring match {
@@ -74,8 +74,9 @@ class RingDalImpl @Inject()(
       case _ => filters.sortBy(_.ringIndex.asc)
     }
     filters = pagingOpt match {
-      case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None         => filters
+      case Some(paging) =>
+        filters.filter(_.ringIndex > paging.cursor).take(paging.size)
+      case None => filters
     }
     filters
   }

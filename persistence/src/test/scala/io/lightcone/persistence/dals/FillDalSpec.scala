@@ -50,7 +50,7 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r3.head == r3_2.last)
 
     info("query fills: skip")
-    val q3_3 = Req(paging = Some(Paging(skip = 1, size = 10)))
+    val q3_3 = Req(paging = Some(CursorPaging(cursor = 1, size = 10)))
     val r3_3 = Await.result(dal.getFills(q3_3).mapTo[Seq[Fill]], 5.second)
     assert(r3_3.length == 3)
 

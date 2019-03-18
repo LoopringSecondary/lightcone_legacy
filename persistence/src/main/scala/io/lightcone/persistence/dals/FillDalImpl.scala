@@ -45,7 +45,8 @@ class FillDalImpl @Inject()(
     db.run(
         (query += fill.copy(
           marketHash =
-            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).hashString()
+            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).hashString(),
+          sequenceId = 0L
         )).asTry
       )
       .map {
@@ -152,7 +153,7 @@ class FillDalImpl @Inject()(
       wallet: Option[String] = None,
       miner: Option[String] = None,
       sort: Option[SortingType] = None,
-      pagingOpt: Option[Paging] = None
+      pagingOpt: Option[CursorPaging] = None
     ): Query[FillTable, FillTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
@@ -172,12 +173,13 @@ class FillDalImpl @Inject()(
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
     filters = sort match {
       case Some(s) if s == SortingType.DESC =>
-        filters.sortBy(c => (c.ringIndex.desc, c.fillIndex.desc))
-      case _ => filters.sortBy(c => (c.ringIndex.asc, c.fillIndex.asc))
+        filters.sortBy(_.sequenceId.desc)
+      case _ => filters.sortBy(_.sequenceId.asc)
     }
     filters = pagingOpt match {
-      case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None         => filters
+      case Some(paging) =>
+        filters.filter(_.sequenceId > paging.cursor).take(paging.size)
+      case None => filters
     }
     filters
   }

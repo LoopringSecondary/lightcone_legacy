@@ -360,13 +360,12 @@ message GetUserFills {
         RingFilter    ring       = 5;
         string        wallet     = 6;
         string        miner      = 7;
-        io.lightcone.persistence.SortingType sort       = 8;
-        io.lightcone.persistence.Paging      paging     = 9;
+        io.lightcone.persistence.SortingType  sort   = 8;
+        io.lightcone.persistence.CursorPaging paging = 9;
     }
 
     message Res {
         repeated io.lightcone.ethereum.persistence.Fill fills   = 1;
-        int32   total  = 2;
     }
 }
 
@@ -386,13 +385,12 @@ message GetRings {
             string ring_hash  = 1;
             int64  ring_index = 2;
         }
-        io.lightcone.persistence.SortingType sort       = 3;
-        io.lightcone.persistence.Paging      paging     = 4;
+        io.lightcone.persistence.SortingType  sort       = 3;
+        io.lightcone.persistence.CursorPaging paging     = 4;
     }
 
     message Res {
         repeated io.lightcone.ethereum.persistence.Ring rings = 1;
-        int32 total = 2;
     }
 }
 

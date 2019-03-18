@@ -71,7 +71,7 @@ class RingDalSpec extends DalSpec[RingDal] {
     assert(r5.head == r6.last)
 
     info("query rings: skip")
-    val q7 = Req(paging = Some(Paging(skip = 1, size = 10)))
+    val q7 = Req(paging = Some(CursorPaging(cursor = 10, size = 10)))
     val r7 = Await.result(dal.getRings(q7).mapTo[Seq[Ring]], 5.second)
     val c7 = Await.result(dal.countRings(q7).mapTo[Int], 5.second)
     assert(r7.length == 2 && c7 == 3)
