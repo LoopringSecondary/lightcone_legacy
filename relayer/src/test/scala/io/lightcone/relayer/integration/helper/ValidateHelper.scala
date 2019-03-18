@@ -25,24 +25,28 @@ trait ValidateHelper {
 
   def defaultValidate(
       getOrdersMatcher: Matcher[GetOrders.Res],
-      orderbookMatcher: Matcher[GetOrderbook.Res],
-      ownerFillsMatcher: Matcher[GetUserFills.Res],
-      marketFillsMatcher: Matcher[GetMarketFills.Res],
-      accountMatcher: Matcher[GetAccount.Res]
+      accountMatcher: Matcher[GetAccount.Res],
+      marketMatchers: Map[MarketPair, (Matcher[GetOrderbook.Res], Matcher[
+            GetUserFills.Res
+          ], Matcher[GetMarketFills.Res])]
     )(
       implicit
-      account: Credentials,
-      marketPair: MarketPair
+      account: Credentials
     ) = {
     GetOrders.Req(owner = account.getAddress).expect(getOrdersMatcher)
-    GetOrderbook
-      .Req(marketPair = Some(marketPair))
-      .expectUntil(orderbookMatcher)
-    GetUserFills.Req(owner = account.getAddress, marketPair = Some(marketPair))
-    GetMarketFills.Req(Some(marketPair)).expectUntil(marketFillsMatcher)
     GetAccount
       .Req(address = account.getAddress, allTokens = true)
       .expect(accountMatcher)
+    marketMatchers.map {
+      case (pair, (orderbookMatcher, userFillsMatcher, marketFillsMatcher)) =>
+        GetOrderbook
+          .Req(size = 100, marketPair = Some(pair))
+          .expectUntil(orderbookMatcher)
+        GetUserFills
+          .Req(owner = account.getAddress, marketPair = Some(pair))
+          .expectUntil(userFillsMatcher)
+        GetMarketFills.Req(Some(pair)).expectUntil(marketFillsMatcher)
+    }
   }
 
 }

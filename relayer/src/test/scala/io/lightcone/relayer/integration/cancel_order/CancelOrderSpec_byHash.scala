@@ -25,7 +25,7 @@ import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
-class CancelOrderSpec
+class CancelOrderSpec_byHash
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -34,11 +34,10 @@ class CancelOrderSpec
     with Matchers {
 
   feature("cancel orders of status=STATUS_PENDING") {
-    scenario("scenario 1: cancel by order_hash") {
+    scenario("1: cancel by order_hash") {
 
       Given("an account with enough Balance")
       implicit val account = getUniqueAccount()
-      implicit val marketPair = LRC_WETH_MARKET.getMarketPair
       val getAccountReq = GetAccount.Req(
         address = account.getAddress,
         allTokens = true
@@ -74,11 +73,13 @@ class CancelOrderSpec
 
       Then("check the cancel result.")
       defaultValidate(
-        containsInGetOrders(order.hash),
-        orderBookNonEmpty(),
-        userFillsIsEmpty(),
-        marketFillsIsEmpty(),
-        be(accountInitRes)
+        containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash),
+        be(accountInitRes),
+        Map(
+          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          userFillsIsEmpty(),
+          marketFillsIsEmpty())
+        )
       )
 
       Then("cancel another order.")
@@ -97,6 +98,7 @@ class CancelOrderSpec
           res.error.code == ERR_ORDER_NOT_EXIST
         })
       cancelAnotherRes.error.code should be(ERR_ORDER_NOT_EXIST)
+
     }
   }
 }

@@ -41,7 +41,7 @@ object Metadatas {
   )
 
   val GTO_TOKEN = TokenMetadata(
-    address = Address("0x2D7233F72AF7a600a8EbdfA85558C047c1C8F795").toString,
+    address = Address("0x2d7233f72af7a600a8ebdfa85558c047c1c8f795").toString,
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "GTO",

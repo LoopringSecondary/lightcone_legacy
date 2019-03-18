@@ -19,10 +19,11 @@ import io.lightcone.core.{Amount, BurnRate}
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.OneInstancePerTest
 
 import scala.math.BigInt
 
-trait MockHelper extends MockFactory {
+trait MockHelper extends MockFactory with OneInstancePerTest {
 
   //eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
   //重设时，不能直接设置新的expects来覆盖旧有的expects，但是可以通过使用新变量或者针对每个expect进行操作，但是后者比较繁琐
