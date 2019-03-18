@@ -183,8 +183,8 @@ message GetMarketHistory {
     message Req {
         io.lightcone.core.MarketPair    market_pair    = 1;
         Interval                        interval       = 2;
-        int64                           beginTime      = 3;
-        int64                           endTime        = 4;
+        int64                           begin_time      = 3;
+        int64                           end_time        = 4;
     }
 
     message Res {

@@ -142,8 +142,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case ticker: OHLCRawData =>
       subscription.paramsForInternalTickers match {
         case Some(params) =>
-          if (ticker.marketHash == MarketHash(params.getMarketPair)
-                .hashString()) {
+          if (ticker.marketHash == params.getMarketPair.hashString) {
             try {
               val market = metadataManager.getMarket(ticker.marketHash)
               Some(
