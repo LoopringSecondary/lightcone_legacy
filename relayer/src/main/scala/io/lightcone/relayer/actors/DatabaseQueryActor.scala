@@ -99,6 +99,7 @@ class DatabaseQueryActor(
             marketEntityId = 0
           )
         }
+
         GetOrders.Res(respOrder, total)
       }) sendTo sender
 
