@@ -120,7 +120,7 @@ abstract class SocketIONotifier
       case error: ErrorException =>
         SocketIOSubscription.Ack(
           message = error.getMessage(),
-          error = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION
+          error = error.error.code
         )
     }
 
