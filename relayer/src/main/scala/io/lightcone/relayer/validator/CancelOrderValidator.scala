@@ -52,10 +52,10 @@ final class CancelOrderValidator(
     val current = timeProvider.getTimeSeconds()
 
     if (req.owner.isEmpty ||
-      !Address.isValid(req.owner) ||
+        !Address.isValid(req.owner) ||
         req.time.isEmpty ||
-      NumericConversion.toBigInt(req.getTime) < current - validityInSeconds
-      || NumericConversion.toBigInt(req.getTime) > current) {
+        NumericConversion.toBigInt(req.getTime) < current - validityInSeconds
+        || NumericConversion.toBigInt(req.getTime) > current) {
       Future.successful(Left(ERR_INVALID_ARGUMENT))
 
     } else if (!checkSign(req)) {

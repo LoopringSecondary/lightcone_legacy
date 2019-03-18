@@ -15,6 +15,8 @@
  */
 
 package io.lightcone.relayer.integration
+import io.lightcone.core.OrderStatus._
+import io.lightcone.relayer.data._
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 object AddedMatchers {
@@ -25,6 +27,55 @@ object AddedMatchers {
         checkFun(res),
         res + " doesn't match",
         res + " matchs"
+      )
+    }
+  }
+
+  def containsInGetOrders(containedOrderHash: String) = {
+    def findOrder(res: GetOrders.Res) =
+      res.orders.find(_.hash.toLowerCase() == containedOrderHash.toLowerCase())
+    Matcher { res: GetOrders.Res =>
+      MatchResult(
+        findOrder(res).nonEmpty,
+        s" ${res} doesn't contains order: ${containedOrderHash}",
+        res + " contains it."
+      )
+    } and
+      Matcher { res: GetOrders.Res =>
+        MatchResult(
+          findOrder(res).get.getState.status == STATUS_SOFT_CANCELLED_BY_USER,
+          s"The status of order:${findOrder(res)} in result isn't  STATUS_SOFT_CANCELLED_BY_USER. ",
+          "the status matched."
+        )
+      }
+  }
+
+  def orderBookNonEmpty() = {
+    Matcher { res: GetOrderbook.Res =>
+      MatchResult(
+        res.orderbook.nonEmpty,
+        s" ${res} of orderBook isEmpty.",
+        s"${res} of orderBook nonEmpty."
+      )
+    }
+  }
+
+  def userFillsIsEmpty() = {
+    Matcher { res: GetUserFills.Res =>
+      MatchResult(
+        res.fills.isEmpty,
+        s" ${res} of getUserFills nonEmpty.",
+        s"${res} of getUserFills isEmpty."
+      )
+    }
+  }
+
+  def marketFillsIsEmpty() = {
+    Matcher { res: GetMarketFills.Res =>
+      MatchResult(
+        res.fills.isEmpty,
+        s" ${res} of GetMarketFills nonEmpty.",
+        s"${res} of GetMarketFills isEmpty."
       )
     }
   }

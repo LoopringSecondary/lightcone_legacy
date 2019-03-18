@@ -73,23 +73,14 @@ class CancelOrderSpec
 
       Then("check the result.")
       defaultValidate(
-        check { res: GetOrders.Res =>
-          res.orders(0).hash.equalsIgnoreCase(order.hash) && res
-            .orders(0)
-            .getState
-            .status == STATUS_SOFT_CANCELLED_BY_USER
-        },
-        check { res: GetOrderbook.Res =>
-          res.orderbook.nonEmpty
-        },
-        check { res: GetUserFills.Res =>
-          res.fills.isEmpty
-        },
-        check { res: GetMarketFills.Res =>
-          res.fills.isEmpty
-        },
+        containsInGetOrders(order.hash),
+        orderBookNonEmpty(),
+        userFillsIsEmpty(),
+        marketFillsIsEmpty(),
         be(accountInitRes)
       )
+
+//      Res(Some(AccountBalance(0xf28116de890d78262f376dee35c7e9f00454c2d3,Map(0x0000000000000000000000000000000000000000 -> TokenBalance(0x0000000000000000000000000000000000000000,Some(Amount(<ByteString@6e584b05 size=9>,0)),Some(Amount(<ByteString@950c212 size=9>,0)),Some(Amount(<ByteString@1aedfbd size=9>,0)),Some(Amount(<ByteString@368a28d0 size=9>,0)),0), 0x2d7233f72af7a600a8ebdfa85558c047c1c8f795 -> TokenBalance(0x2d7233f72af7a600a8ebdfa85558c047c1c8f795,Some(Amount(<ByteString@1a265d67 size=9>,0)),Some(Amount(<ByteString@15e94c63 size=9>,0)),Some(Amount(<ByteString@62cd3a54 size=9>,0)),Some(Amount(<ByteString@5e64275 size=9>,0)),0), 0x97241525fe425c90ebe5a41127816dcfa5954b06 -> TokenBalance(0x97241525fe425c90ebe5a41127816dcfa5954b06,Some(Amount(<ByteString@2d03eacb size=9>,0)),Some(Amount(<ByteString@7256315c size=9>,0)),Some(Amount(<ByteString@79c2aad8 size=9>,0)),Some(Amount(<ByteString@4e00ba7f size=9>,0)),0), 0x7cb592d18d0c49751ba5fce76c1aec5bdd8941fc -> TokenBalance(0x7cb592d18d0c49751ba5fce76c1aec5bdd8941fc,Some(Amount(<ByteString@7c6754c6 size=9>,0)),Some(Amount(<ByteString@3ff856c7 size=9>,0)),Some(Amount(<ByteString@5300af8a size=9>,0)),Some(Amount(<ByteString@189834d7 size=9>,0)),0))))) was not equal to Res(Some(AccountBalance(0xf28116de890d78262f376dee35c7e9f00454c2d3,Map(0x7cb592d18d0c49751ba5fce76c1aec5bdd8941fc -> TokenBalance(0x7cb592d18d0c49751ba5fce76c1aec5bdd8941fc,Some(Amount(<ByteString@46f42f9f size=9>,0)),Some(Amount(<ByteString@1567310d size=9>,0)),Some(Amount(<ByteString@6448deb5 size=9>,0)),Some(Amount(<ByteString@4781b924 size=9>,0)),0), 0x97241525fe425c90ebe5a41127816dcfa5954b06 -> TokenBalance(0x97241525fe425c90ebe5a41127816dcfa5954b06,Some(Amount(<ByteString@206efe9c size=9>,0)),Some(Amount(<ByteString@cad5cc5 size=9>,0)),Some(Amount(<ByteString@2eb28693 size=9>,0)),Some(Amount(<ByteString@643052f8 size=9>,0)),0), 0x2d7233f72af7a600a8ebdfa85558c047c1c8f795 -> TokenBalance(0x2d7233f72af7a600a8ebdfa85558c047c1c8f795,Some(Amount(<ByteString@337dcafc size=9>,0)),Some(Amount(<ByteString@55d0f322 size=9>,0)),Some(Amount(<ByteString@6fec7115 size=9>,0)),Some(Amount(<ByteString@92d4982 size=9>,0)),0)))))
     }
   }
 }

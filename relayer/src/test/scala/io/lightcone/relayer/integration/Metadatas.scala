@@ -81,7 +81,18 @@ object Metadatas {
       MarketHash(MarketPair(GTO_TOKEN.address, WETH_TOKEN.address)).toString
   )
 
-  val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
+  val TOKENS = Seq(
+    WETH_TOKEN,
+    LRC_TOKEN,
+    GTO_TOKEN,
+    TokenMetadata(
+      address = Address("0x0000000000000000000000000000000000000000").toString,
+      decimals = 18,
+      symbol = "ETH",
+      name = "ETH",
+      status = TokenMetadata.Status.VALID
+    )
+  )
 
   val TOKEN_SLUGS_SYMBOLS = Seq(
     ("ETH", "ethereum"),
