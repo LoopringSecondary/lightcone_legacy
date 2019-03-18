@@ -159,23 +159,6 @@ class CoreModule(
       .toInstance(deployActorsIgnoringRoles)
   }
 
-  // --- bind tx event extractors ---------------------
-  @Provides
-  def bindTxEventExtractor(
-      implicit
-      ec: ExecutionContext,
-      metadataManager: MetadataManager,
-      config: Config
-    ): EventExtractor[TransactionData, AnyRef] = {
-    EventExtractor.compose[TransactionData, AnyRef]( //
-      new TxCutoffEventExtractor(),
-      new TxRingMinedEventExtractor(),
-      new TxTokenBurnRateEventExtractor(),
-      new TxTransferEventExtractor(),
-      new TxApprovalEventExtractor() // more tx event extractors
-    )
-  }
-
   // --- bind cache ---------------------
   @Provides
   def bindCache(
@@ -196,6 +179,23 @@ class CoreModule(
         .toInstance(redisClusterProvider)
       new cache.RedisClusterCache(redisClusterProvider)
     }
+  }
+
+  // --- bind tx event extractors ---------------------
+  @Provides
+  def bindTxEventExtractor(
+      implicit
+      ec: ExecutionContext,
+      metadataManager: MetadataManager,
+      config: Config
+    ): EventExtractor[TransactionData, AnyRef] = {
+    EventExtractor.compose[TransactionData, AnyRef]( //
+      new TxCutoffEventExtractor(),
+      new TxRingMinedEventExtractor(),
+      new TxTokenBurnRateEventExtractor(),
+      new TxTransferEventExtractor(),
+      new TxApprovalEventExtractor() // more tx event extractors
+    )
   }
 
   @Provides
