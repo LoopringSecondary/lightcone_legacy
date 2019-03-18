@@ -13,17 +13,18 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
     - **测试设置**：
 
         1. 设置账号有1000个LRC，授权充足
-        1. 在LRC-WETH市场下一个卖10个LRC的单，价格是0.01WETH，返回orderHash：O1
-        1. 发送CancelOrder请求，请求参数orderHash：O1，status：STATUS_SOFT_CANCELLED_BY_USER
+        1. 初始获取账号余额等
+        1. 在LRC-WETH市场下一个LRC的卖单，价格是0.01WETH，返回orderHash：order_hash1
+        1. 发送CancelOrder请求，请求参数orderHash：order_hash1，status：STATUS_SOFT_CANCELLED_BY_USER
         	- 结果验证：
           	    1. **返回结果**：ERR_NONE
           	    1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_SOFT_CANCELLED_BY_USER
-          	    1. **读取市场深度**：卖单深度应该减掉10
+          	    1. **读取市场深度**：卖单深度应该为空
           	    1. **读取我的成交**: 应该为空
           	    1. **读取市场成交**： 应该为空
-          	    1. **读取我的账号**: LRC 可用余额应为1000
+          	    1. **读取我的账号**: 账户余额应该等于初始值
 
-        1. 发送CancelOrder请求，请求参数O2，STATUS_SOFT_CANCELLED_BY_USER
+        1. 再次发送CancelOrder请求，请求参数order_hash2，STATUS_SOFT_CANCELLED_BY_USER
         	- 结果验证：
         		1. **返回结果**：ERR_ORDER_NOT_EXIST
 
