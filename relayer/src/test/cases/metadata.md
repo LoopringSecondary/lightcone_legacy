@@ -39,7 +39,7 @@
  
      - **拥有者**: 杜永丰
  
-     - **其他信息**：NA
+     - **其他信息**：可参考原测试 MetadataManagerSpec
      
  1. **测试market metadata变动，新增市场流程**
      - **Objective**：测试更新db里的market metadata，通过keepAliveActor的激活是否能新增一个市场
@@ -107,7 +107,7 @@
     
     - **拥有者**: 杜永丰
     
-    - **其他信息**：NA
+    - **其他信息**：可参考原测试  DynamicAdjustMarketsSpec
     
  1. **测试market metadata变动，市场由active->terminated->active的流程**
      - **Objective**：测试市场从有效状态变为无效，再恢复成有效的情况

@@ -35,7 +35,7 @@ class RedisClusterProvider @Inject()(
       val c = item.toConfig
       val host = c.getString("host")
       val port = c.getInt("port")
-      val password = Some(c.getString("redis.password"))
+      val password = Some(c.getString("password"))
       RedisServer(host, port, password)
     }
 

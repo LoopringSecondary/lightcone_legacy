@@ -121,3 +121,12 @@
 
    - 其他信息：NA
 
+
+### RingMinedEvent
+
+1. 测试成功以及失败的，对AccountManager、OrderbookManager以及MarketManager的影响
+
+1. 失败多次之后，需要将对应的订单删除，状态为STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES
+可参考原先的 EntryPointSpec_CancelOrderAfterManyRingFailures
+
+1. 

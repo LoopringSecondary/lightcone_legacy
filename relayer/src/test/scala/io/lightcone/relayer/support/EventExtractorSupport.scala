@@ -117,13 +117,18 @@ trait EventExtractorSupport
       )
     )
 
-  actors.add(
-    EthereumEventExtractorActor.name,
-    EthereumEventExtractorActor.start
-  )
-  actors.add(
-    MissingBlocksEventExtractorActor.name,
-    MissingBlocksEventExtractorActor.start
-  )
+  actors
+    .add(
+      EthereumEventExtractorActor.name,
+      EthereumEventExtractorActor.start
+    )
+    .add(
+      MarketHistoryActor.name, //
+      MarketHistoryActor.start
+    )
+//  actors.add(
+//    MissingBlocksEventExtractorActor.name,
+//    MissingBlocksEventExtractorActor.start
+//  )
 
 }

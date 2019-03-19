@@ -18,9 +18,15 @@ package io.lightcone.relayer.support
 
 import io.lightcone.relayer.actors.SocketIONotificationActor
 import io.lightcone.relayer.socketio._
+import org.scalatest.BeforeAndAfterAll
 
-trait SocketSupport {
+trait SocketSupport extends BeforeAndAfterAll {
   com: CommonSpec =>
+
+  override def afterAll: Unit = {
+    socketServer.server.stop()
+    super.afterAll()
+  }
 
   implicit val relayerNotifier = new RelayerNotifier()
 

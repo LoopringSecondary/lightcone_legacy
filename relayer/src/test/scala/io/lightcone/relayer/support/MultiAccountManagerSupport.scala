@@ -32,6 +32,7 @@ import org.web3j.utils.Numeric
 trait MultiAccountManagerSupport
     extends DatabaseModuleSupport
     with ActivitySupport
+    with SocketSupport
     with EthereumSupport {
   me: CommonSpec =>
   implicit val eip712Support = new DefaultEIP712Support()

@@ -28,6 +28,7 @@
         
     - **状态**: Planned
     - **拥有者**: 红雨
+    - **其他信息**：可参考原先的 EntryPointSpec_OrderStatusMonitorExpire
  
 ### <a name="pending-active"></a> 延迟生效的订单
 
@@ -55,5 +56,5 @@
 		        1. **读取我的账号**：可用金额减小100LRC
     - **状态**: Planned
     - **拥有者**: 红雨
-    - **其他信息**：NA
+    - **其他信息**：可参考原先的 EntryPointSpec_OrderStatusMonitorEffective
 
