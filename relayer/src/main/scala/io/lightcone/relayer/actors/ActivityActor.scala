@@ -116,6 +116,7 @@ class ActivityActor(
         activities <- activityDal.getActivities(
           req.owner,
           req.token,
+          req.sort,
           req.paging.get
         )
         res = GetActivities.Res(activities)

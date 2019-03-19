@@ -54,6 +54,7 @@ final class ActivityValidator(
         GetActivities.Req(
           owner,
           req.token,
+          req.sort,
           MessageValidator.getValidCursorPaging(req.paging)
         )
       }
