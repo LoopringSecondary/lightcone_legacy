@@ -63,6 +63,7 @@ class ActivityDalImpl @Inject()(
       paging: CursorPaging
     ): Future[Seq[Activity]] = {
     var filters = createActivityFilters(owner, token)
+    // TODO(yongfeng): 很多dal里都有paging的逻辑，是否可统一？
     filters = sort match {
       case SortingType.DESC =>
         if (paging.cursor > 0) {
