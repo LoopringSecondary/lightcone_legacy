@@ -28,13 +28,15 @@ import io.lightcone.persistence.cache.OHLCDatas
 import io.lightcone.persistence.dals._
 import scala.concurrent.{ExecutionContext, Future}
 import io.lightcone.persistence.base._
+import org.slf4s.Logging
 
 class OHLCDataServiceImpl @Inject()(
     implicit
     basicCache: Cache[String, Array[Byte]],
     ohlcDataDal: OHLCDataDal,
     val ec: ExecutionContext)
-    extends OHLCDataService {
+    extends OHLCDataService
+    with Logging {
 
   private val cache = ProtoCache[OHLCDatas]("ohlc")
 
