@@ -58,9 +58,7 @@ class RingDalImpl @Inject()(
     Future.sequence(rings.map(saveRing))
 
   private def queryFilters(
-      ring: GetRings.Req.Filter = Empty,
-      sort: Option[SortingType] = None,
-      pagingOpt: Option[Paging] = None
+      ring: GetRings.Req.Filter = Empty
     ): Query[RingTable, RingTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
     filters = ring match {
@@ -68,26 +66,40 @@ class RingDalImpl @Inject()(
       case RingIndex(i) => filters.filter(_.ringIndex === i)
       case Empty        => filters
     }
-    filters = sort match {
-      case Some(s) if s == SortingType.DESC =>
-        filters.sortBy(_.ringIndex.desc)
-      case _ => filters.sortBy(_.ringIndex.asc)
-    }
-    filters = pagingOpt match {
-      case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None         => filters
-    }
     filters
   }
 
   def getRings(request: GetRings.Req): Future[Seq[Ring]] = {
-    val filters =
-      queryFilters(request.filter, Some(request.sort), request.paging)
+    var filters =
+      queryFilters(request.filter)
+    if (request.paging.nonEmpty) {
+      val paging = request.paging.get
+      filters = request.sort match {
+        case SortingType.DESC =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.ringIndex < paging.cursor)
+              .sortBy(_.ringIndex.desc)
+          } else { // query latest
+            filters.sortBy(_.ringIndex.desc)
+          }
+        case _ =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.ringIndex > paging.cursor)
+              .sortBy(_.ringIndex.asc)
+          } else {
+            filters
+              .sortBy(_.ringIndex.asc)
+          }
+      }
+      filters = filters.take(paging.size)
+    }
     db.run(filters.result)
   }
 
   def countRings(request: GetRings.Req): Future[Int] = {
-    val filters = queryFilters(request.filter, None, None)
+    val filters = queryFilters(request.filter)
     db.run(filters.size.result)
   }
 }

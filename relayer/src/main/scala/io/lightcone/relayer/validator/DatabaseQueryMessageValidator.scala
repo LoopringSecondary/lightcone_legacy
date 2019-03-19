@@ -61,7 +61,7 @@ final class DatabaseQueryMessageValidator(
         req.copy(
           owner = owner,
           market = marketOpt,
-          skip = MessageValidator.getValidPaging(req.skip)
+          paging = MessageValidator.getValidCursorPaging(req.paging)
         )
       }
 
@@ -113,7 +113,7 @@ final class DatabaseQueryMessageValidator(
           MessageValidator.normalizeAddress(req.wallet),
           MessageValidator.normalizeAddress(req.miner),
           req.sort,
-          MessageValidator.getValidPaging(req.paging)
+          MessageValidator.getValidCursorPaging(req.paging)
         )
       }
 
@@ -152,7 +152,7 @@ final class DatabaseQueryMessageValidator(
           case Empty        => req.filter
         }
         req.copy(
-          paging = MessageValidator.getValidPaging(req.paging),
+          paging = MessageValidator.getValidCursorPaging(req.paging),
           filter = filter
         )
       }

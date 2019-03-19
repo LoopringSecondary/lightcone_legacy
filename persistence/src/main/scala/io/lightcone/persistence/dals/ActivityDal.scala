@@ -29,6 +29,7 @@ trait ActivityDal extends BaseDalImpl[ActivityTable, Activity] {
   def getActivities(
       owner: String,
       token: Option[String],
+      sort: SortingType,
       paging: CursorPaging
     ): Future[Seq[Activity]]
 
