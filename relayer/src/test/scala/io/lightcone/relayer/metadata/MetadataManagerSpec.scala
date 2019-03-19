@@ -162,7 +162,7 @@ class MetadataManagerSpec
       Thread.sleep(3000)
 
       info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged())
+      probe.expectMsg(MetadataChanged(marketMetadataChanged = true))
 
       info("query the markets from db")
       val r1 =

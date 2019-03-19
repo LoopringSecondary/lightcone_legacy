@@ -23,6 +23,7 @@ import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class RpcHelperSpec
     extends FeatureSpec
@@ -55,7 +56,12 @@ class RpcHelperSpec
         .expect(check((res: GetOrderbook.Res) => res.orderbook.nonEmpty))
       info(s"the orderbook is ${orderbook}")
 
-      Await.result(system.terminate(), timeout.duration)
+      try {
+        Await.result(system.terminate(), 60 second)
+      } catch {
+        case e: Exception =>
+          info(s"occurs error: ${e.getMessage}, ${e.printStackTrace()}")
+      }
     }
   }
 }

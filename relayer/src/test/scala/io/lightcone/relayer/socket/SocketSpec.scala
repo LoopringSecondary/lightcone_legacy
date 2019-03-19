@@ -16,12 +16,10 @@
 
 package io.lightcone.relayer.socketio
 
-import io.lightcone.relayer.support._
+//class SocketSpec extends CommonSpec with EventExtractorSupport {
 
-class SocketSpec extends CommonSpec with EventExtractorSupport {
-
-  "socket server  test" must {
-    "socket server starts normally and can subscriber and received correct data" in {
+//  "socket server  test" must {
+//    "socket server starts normally and can subscriber and received correct data" in {
 //
 //      def socketNotifier = actors.get(SocketIONotificationActor.name)
 //      Thread.sleep(10 * 1000)
@@ -96,6 +94,6 @@ class SocketSpec extends CommonSpec with EventExtractorSupport {
 //      )
 //
 //      Thread.sleep(15 * 1000)
-    }
-  }
-}
+//    }
+//  }
+//}
