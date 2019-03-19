@@ -81,7 +81,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       tokenbOpt: Option[String] = None,
       marketHashOpt: Option[MarketHash] = None,
       feeTokenOpt: Option[String] = None,
-      sortOpt: SortingType = SortingType.ASC,
+      sort: SortingType = SortingType.ASC,
       pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]]
 
