@@ -119,7 +119,7 @@ class CancelOrderSpec_byCutoffEventOwner
         accountBalanceMatcher(LRC_TOKEN.address, lrcExpectedBalance)
           and accountBalanceMatcher(GTO_TOKEN.address, gtoTokenBalance),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          LRC_WETH_MARKET.getMarketPair -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),
           marketFillsIsEmpty()),
           GTO_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
@@ -136,7 +136,7 @@ class CancelOrderSpec_byCutoffEventOwner
       val cancelAnotherReq =
         CancelOrder.Req(
           owner = account.getAddress,
-          marketPair = Some(LRC_WETH_MARKET.getMarketPair),
+          marketPair = Some(GTO_WETH_MARKET.getMarketPair),
           status = STATUS_SOFT_CANCELLED_BY_USER,
           time = BigInt(timeProvider.getTimeSeconds())
         )
