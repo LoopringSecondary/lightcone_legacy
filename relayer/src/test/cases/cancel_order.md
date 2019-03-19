@@ -30,7 +30,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰, 于红雨
 
     - **其他信息**：NA
 
@@ -58,7 +58,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰, 于红雨
 
     - **其他信息**：NA
     
@@ -86,7 +86,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰, 于红雨
 
     - **其他信息**：NA
     
@@ -97,49 +97,34 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
     - **测试设置**：
 
         1. 设置A1账号有1000个LRC，授权充足
-        1. 在LRC-WETH市场下一个卖10个LRC的单，价格是0.01WETH，validsince为当前时间，返回orderHash：O1
-        1. 在GTO-WETH市场下一个卖10个GTO的单，价格是0.001WETH，validsince为当前时间，返回orderHash：O2
-        1. 发送CutoffEvent，参数broker=A2, owner=A2，cutoff=当前时间+1天
+        1. 在LRC-WETH市场提交两个卖单order_hash1和order_hash2，validsince分别为当前时间-100s和当前时间-10s
+        1. 在GTO-WETH市场提交一个卖单，validsince为当前时间-100s
+        1. 发送CutoffEvent，参数broker=A2, owner=A2，cutoff=当前时间-50s
             - 结果验证：
-                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
+                1. **读取我的订单**：通过getOrders应该看到三个订单，status应该为STATUS_PENDING
                 1. **读取市场深度**：两个市场分别有10个卖单深度
                 1. **读取我的成交**: 无
                 1. **读取市场成交**：无
-                1. **读取我的账号**: LRC 可用余额应为990,GTO 可用余额应为990
-        1. 发送CutoffEvent，参数broker=A1, owner=A1
+                1. **读取我的账号**: LRC 可用余额应为1000-order_hash2,LRC 可用授权应为1000-order_hash2
+        1. 发送CutoffEvent，参数broker=A1, owner=A1，cutoff=当前时间
             - 结果验证：
-                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
-                1. **读取市场深度**：2个市场卖单深度应该变为0
+                1. **读取我的订单**：通过getOrders应该看到三个订单，order_hash2状态为STATUS_PENDING，其余订单状态为STATUS_ONCHAIN_CANCELLED_BY_USER，
+                1. **读取市场深度**：LRC-WETH市场深度为order_hash2的卖单
                 1. **读取我的成交**: 无
                 1. **读取市场成交**：无
-                1. **读取我的账号**: LRC 可用余额应为1000,GTO 可用余额应为1000
-
-    - **状态**: Planned
-
-    - **拥有者**: 杜永丰
-
-    - **其他信息**：NA
-    
-1. **测试CutoffEvent取消owner订单，cutoff设置无影响**
-
-    - **Objective**：收到CutoffEvent可以正确取消订单
-
-    - **测试设置**：
-
-        1. 设置A1账号有1000个LRC，授权充足
-        1. 在LRC-WETH市场下一个卖10个LRC的单，价格是0.01WETH，validsince为当前时间，返回orderHash：O1
-        1. 在GTO-WETH市场下一个卖10个GTO的单，价格是0.001WETH，validsince为当前时间，返回orderHash：O2
-        1. 发送CutoffEvent，参数broker=A1, owner=A1，cutoff=当前时间-1天
+                1. **读取我的账号**: LRC 可用余额应为1000-order_hash2,GTO 可用授权应为1000-order_hash2
+        1. 继续提交两个GTO-WETH卖单order_hash5,order_hash6，生效时间分别为：当前时间-100s和当前时间，
             - 结果验证：
-                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
-                1. **读取市场深度**：两个市场分别有10个卖单深度
+                1. **读取我的订单**：通过getOrders应该看到四个订单，order_hash6状态为STATUS_PENDING，其余订单状态为STATUS_ONCHAIN_CANCELLED_BY_USER，
+                1. **读取市场深度**：LRC-WETH市场深度为order_hash2的卖单, GTO-WETH市场的深度为order_hash6的卖单
                 1. **读取我的成交**: 无
                 1. **读取市场成交**：无
-                1. **读取我的账号**: LRC 可用余额应为990,GTO 可用余额应为990
-
+                1. **读取我的账号**: LRC 可用余额应为1000-order_hash2,LRC 可用授权应为1000-order_hash2
+                                   GTO 可用余额应为1000-order_hash6,GTO 可用授权应为1000-order_hash6
+        
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰, 于红雨
 
     - **其他信息**：NA
     
@@ -170,7 +155,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰, 于红雨
 
     - **其他信息**：NA
     
