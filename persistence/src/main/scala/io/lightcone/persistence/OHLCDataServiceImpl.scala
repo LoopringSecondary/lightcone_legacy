@@ -24,8 +24,10 @@ import io.lightcone.ethereum.persistence.{
   OHLCRawData
 }
 import io.lightcone.lib.cache._
+import io.lightcone.persistence.cache.OHLCDatas
 import io.lightcone.persistence.dals._
 import scala.concurrent.{ExecutionContext, Future}
+import io.lightcone.persistence.base._
 
 class OHLCDataServiceImpl @Inject()(
     implicit
@@ -33,6 +35,8 @@ class OHLCDataServiceImpl @Inject()(
     ohlcDataDal: OHLCDataDal,
     val ec: ExecutionContext)
     extends OHLCDataService {
+
+  private val cache = ProtoCache[OHLCDatas]("ohlc")
 
   def saveData(data: OHLCRawData): Future[(ErrorCode, Option[OHLCRawData])] =
     ohlcDataDal.saveData(data)
@@ -43,13 +47,24 @@ class OHLCDataServiceImpl @Inject()(
       beginTime: Long,
       endTime: Long
     ): Future[Seq[OHLCData]] = {
-    ohlcDataDal
-      .getOHLCData(
-        marketHash,
-        interval.value,
-        beginTime,
-        endTime
-      )
-      .map(r => r.map(t => OHLCData(data = t)))
+    cache
+      .read(
+        stringCacheKey(marketHash, interval, beginTime, endTime),
+        60 /*seconds*/
+      ) {
+        ohlcDataDal
+          .getOHLCData(
+            marketHash,
+            interval.value,
+            beginTime,
+            endTime
+          )
+          .map { r =>
+            Option(OHLCDatas(datas = r.map(t => OHLCData(data = t))))
+          }
+      }
+      .map(_.getOrElse(OHLCDatas()))
+      .map(_.datas)
   }
+
 }
