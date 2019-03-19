@@ -17,12 +17,12 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
+import io.lightcone.core.MarketHash
 import io.lightcone.lib.cache._
 import io.lightcone.persistence.dals._
-import scala.concurrent.{ExecutionContext, Future}
-
-// TODO(yongfeng): remove this dependency
 import io.lightcone.relayer.data._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class OHLCDataServiceImpl @Inject()(
     implicit
@@ -41,7 +41,7 @@ class OHLCDataServiceImpl @Inject()(
       .read(request, 60 /*seconds*/ ) {
         ohlcDataDal
           .getOHLCData(
-            request.marketHash,
+            MarketHash(request.getMarketPair).hashString(),
             request.interval.value,
             request.beginTime,
             request.endTime

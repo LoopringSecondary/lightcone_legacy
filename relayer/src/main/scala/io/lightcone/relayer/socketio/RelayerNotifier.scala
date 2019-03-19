@@ -26,15 +26,14 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     extends SocketIONotifier {
   import SocketIOSubscription._
 
-  def checkSubscriptionValidation(
-      subscription: SocketIOSubscription
-    ): Option[String] = {
+  def checkSubscriptionValidation(subscription: SocketIOSubscription): Unit = {
 
     if (subscription.paramsForActivities.isDefined &&
         (subscription.getParamsForActivities.addresses.isEmpty ||
         !subscription.getParamsForActivities.addresses.forall(Address.isValid)))
-      Some(
-        s"invalid ParamsForActivities:${subscription.getParamsForActivities}, " +
+      throw ErrorException(
+        code = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
+        message = s"invalid ParamsForActivities:${subscription.getParamsForActivities}, " +
           s"addresses shouldn't be empty and must be valid ethereum addresses"
       )
     else if (subscription.paramsForOrders.isDefined &&
@@ -42,28 +41,32 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
              !subscription.getParamsForOrders.addresses.forall(
                Address.isValid
              )))
-      Some(
+      throw ErrorException(
+        code = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
         s"invalid ParamsForOrders:${subscription.getParamsForOrders}, " +
           s"addresses shouldn't be empty and must be valid ethereum addresses"
       )
     else if (subscription.paramsForFills.isDefined &&
-             (subscription.getParamsForFills.market.isEmpty ||
-             !subscription.getParamsForFills.getMarket.isValid()))
-      Some(
+             (subscription.getParamsForFills.marketPair.isEmpty ||
+             !subscription.getParamsForFills.getMarketPair.isValid()))
+      throw ErrorException(
+        code = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
         s"invalid ParamsForFills:${subscription.getParamsForFills}," +
           s" market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
     else if (subscription.paramsForOrderbook.isDefined &&
-             (subscription.getParamsForOrderbook.market.isEmpty ||
-             !subscription.getParamsForOrderbook.getMarket.isValid()))
-      Some(
+             (subscription.getParamsForOrderbook.marketPair.isEmpty ||
+             !subscription.getParamsForOrderbook.getMarketPair.isValid()))
+      throw ErrorException(
+        code = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
         s"invalid ParamsForOrderbook:${subscription.getParamsForOrderbook}, " +
           s"market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
     else if (subscription.paramsForInternalTickers.isDefined &&
-             (subscription.getParamsForInternalTickers.market.isEmpty ||
-             !subscription.getParamsForInternalTickers.getMarket.isValid()))
-      Some(
+             (subscription.getParamsForInternalTickers.marketPair.isEmpty ||
+             !subscription.getParamsForInternalTickers.getMarketPair.isValid()))
+      throw ErrorException(
+        code = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
         s"invalid paramsForInternalTickers:${subscription.getParamsForInternalTickers}," +
           s" market shouldn't be null and market token addresses must be valid ethereum addresses"
       )
@@ -72,11 +75,11 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
              !subscription.getParamsForAccounts.addresses.forall(
                Address.isValid
              )))
-      Some(
+      throw ErrorException(
+        code = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION,
         s"invalid ParamsForAccounts:${subscription.getParamsForAccounts}, " +
           s"addresses shouldn't be empty and must be valid ethereum addresses"
       )
-    else None
   }
 
   def generateNotification(
@@ -103,7 +106,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case e: Fill =>
       subscription.paramsForFills match {
         case Some(params)
-            if (params.getMarket.hashString ==
+            if (params.getMarketPair.hashString ==
               MarketPair(e.tokenB, e.tokenS).hashString) &&
               ((params.address.isEmpty && e.isTaker) || params.address == e.owner) =>
           Some(Notification(fill = Some(e)))
@@ -113,7 +116,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case e: Orderbook.Update =>
       subscription.paramsForOrderbook match {
         case Some(params)
-            if params.market.map(_.hashString) == e.marketPair
+            if params.marketPair.map(_.hashString) == e.marketPair
               .map(_.hashString) && params.level == e.level =>
           Some(Notification(orderbook = Some(e)))
         case _ => None
@@ -122,8 +125,9 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case order: RawOrder =>
       subscription.paramsForOrders match {
         case Some(params)
-            if params.addresses.contains(order.owner) && (params.market.isEmpty
-              || params.getMarket.hashString ==
+            if params.addresses
+              .contains(order.owner) && (params.marketPair.isEmpty
+              || params.getMarketPair.hashString ==
                 MarketPair(order.tokenB, order.tokenS).hashString) =>
           Some(Notification(order = Some(order)))
         case _ => None
@@ -138,7 +142,7 @@ class RelayerNotifier @Inject()(implicit val metadataManager: MetadataManager)
     case ticker: OHLCRawData =>
       subscription.paramsForInternalTickers match {
         case Some(params) =>
-          if (ticker.marketHash == MarketHash(params.getMarket).hashString()) {
+          if (ticker.marketHash == params.getMarketPair.hashString) {
             try {
               val market = metadataManager.getMarket(ticker.marketHash)
               Some(

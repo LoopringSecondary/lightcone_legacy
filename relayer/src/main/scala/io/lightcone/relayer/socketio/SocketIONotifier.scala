@@ -18,7 +18,7 @@ package io.lightcone.relayer.socketio
 
 import com.corundumstudio.socketio._
 import com.corundumstudio.socketio.listener.DataListener
-import io.lightcone.core.ErrorCode
+import io.lightcone.core.{ErrorCode, ErrorException}
 import io.lightcone.lib.Address
 import io.lightcone.relayer.data._
 import org.slf4s.Logging
@@ -36,9 +36,7 @@ abstract class SocketIONotifier
       subscription: SocketIOSubscription
     ): Option[Notification]
 
-  def checkSubscriptionValidation(
-      subscription: SocketIOSubscription
-    ): Option[String]
+  def checkSubscriptionValidation(subscription: SocketIOSubscription): Unit
 
   private var clients = Seq.empty[SocketIOSubscriber]
 
@@ -80,26 +78,26 @@ abstract class SocketIONotifier
           address =
             if (params.address == null || params.address.isEmpty) ""
             else Address.normalize(params.address),
-          market = params.market.map(_.normalize())
+          marketPair = params.marketPair.map(_.normalize())
         )
       },
       paramsForOrderbook = subscription.paramsForOrderbook.map(
         params =>
           params.copy(
-            market = params.market.map(_.normalize())
+            marketPair = params.marketPair.map(_.normalize())
           )
       ),
       paramsForOrders = subscription.paramsForOrders.map(
         params =>
           params.copy(
             addresses = params.addresses.map(Address.normalize),
-            market = params.market.map(_.normalize())
+            marketPair = params.marketPair.map(_.normalize())
           )
       ),
       paramsForInternalTickers = subscription.paramsForInternalTickers.map(
         params =>
           params.copy(
-            market = params.market.map(_.normalize())
+            marketPair = params.marketPair.map(_.normalize())
           )
       )
     )
@@ -109,28 +107,24 @@ abstract class SocketIONotifier
       subscription: SocketIOSubscription,
       ackSender: AckRequest
     ) = {
-
-    val error = checkSubscriptionValidation(subscription)
-
-    if (ackSender.isAckRequested) {
-      val ack =
-        if (error.isEmpty) {
-          SocketIOSubscription.Ack(
-            message = s"$subscription successfully subscribed $eventName"
-          )
-        } else {
-          SocketIOSubscription.Ack(
-            message = error.get,
-            error = ErrorCode.ERR_INVALID_SOCKETIO_SUBSCRIPTION
-          )
-        }
-      ackSender.sendAckData(ack)
-    }
-
-    if (error.isEmpty) {
+    val ackData = try {
+      checkSubscriptionValidation(subscription)
       val wrapped =
         new SocketIOSubscriber(client, normalizeSubscription(subscription))
       clients = wrapped +: clients.filterNot(_ == wrapped)
+      SocketIOSubscription.Ack(
+        message = s"$subscription successfully subscribed $eventName"
+      )
+
+    } catch {
+      case error: ErrorException =>
+        SocketIOSubscription.Ack(
+          message = error.getMessage(),
+          error = error.error.code
+        )
     }
+
+    if (ackSender.isAckRequested)
+      ackSender.sendAckData(ackData)
   }
 }
