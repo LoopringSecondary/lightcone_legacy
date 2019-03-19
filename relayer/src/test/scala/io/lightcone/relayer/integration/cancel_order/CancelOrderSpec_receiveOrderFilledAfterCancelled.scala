@@ -17,9 +17,9 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.core.Amount
-import io.lightcone.core.OrderStatus._
-import io.lightcone.ethereum.{BlockHeader, TxStatus}
+import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
 import io.lightcone.ethereum.event.{EventHeader, OrderFilledEvent}
+import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock.{
@@ -32,7 +32,7 @@ import org.scalatest._
 
 import scala.math.BigInt
 
-class CancelOrderSpec_cancelPartiallyFilledOrder
+class CancelOrderSpec_receiveOrderFilledAfterCancelled
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -40,8 +40,8 @@ class CancelOrderSpec_cancelPartiallyFilledOrder
     with ValidateHelper
     with Matchers {
 
-  feature("cancel orders of status=STATUS_PARTIALLY_FILLED") {
-    scenario("1: cancel order after PARTIALLY_FILLED ") {
+  feature("cancel orders of status=STATUS_PENDING") {
+    scenario("1: receive an OrderFilledEvent after cancelled") {
 
       Given("an account with enough Balance")
       implicit val account = getUniqueAccount()
@@ -55,6 +55,8 @@ class CancelOrderSpec_cancelPartiallyFilledOrder
       info(
         s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
       )
+      val lrcTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
 
       Then("submit an order.")
       val order = createRawOrder()
@@ -63,22 +65,6 @@ class CancelOrderSpec_cancelPartiallyFilledOrder
         .expect(check((res: SubmitOrder.Res) => true))
       info(s"the result of submit order is ${submitRes.success}")
 
-      Then("changed to PARTIALLY_FILLED ")
-      val evt = OrderFilledEvent(
-        header = Some(
-          EventHeader(
-            blockHeader = Some(BlockHeader(height = 110)),
-            txHash = "0x1111111111111",
-            txStatus = TxStatus.TX_STATUS_SUCCESS
-          )
-        ),
-        owner = account.getAddress(),
-        orderHash = order.hash
-      )
-
-      setMockExpects()
-
-      eventDispatcher.dispatch(evt)
       Then("cancel this order by hash.")
       val cancelReq =
         CancelOrder.Req(
@@ -98,6 +84,33 @@ class CancelOrderSpec_cancelPartiallyFilledOrder
       defaultValidate(
         containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash),
         be(accountInitRes),
+        Map(
+          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          userFillsIsEmpty(),
+          marketFillsIsEmpty())
+        )
+      )
+
+      Then("dispatch OrderFilledEvent ")
+      val evt = OrderFilledEvent(
+        header = Some(
+          EventHeader(
+            blockHeader = Some(BlockHeader(height = 110)),
+            txHash = "0x1111111111111",
+            txStatus = TxStatus.TX_STATUS_SUCCESS
+          )
+        ),
+        owner = account.getAddress(),
+        orderHash = order.hash
+      )
+
+      setMockExpects()
+
+      eventDispatcher.dispatch(evt)
+
+      defaultValidate(
+        containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash),
+        accountBalanceMatcher(LRC_TOKEN.address, lrcTokenBalance),
         Map(
           LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),

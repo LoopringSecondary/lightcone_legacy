@@ -181,7 +181,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰，于红雨
 
     - **其他信息**：NA
     
@@ -221,7 +221,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰，于红雨
 
     - **其他信息**：NA
     
@@ -251,7 +251,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰，于红雨
 
     - **其他信息**：NA
 
@@ -265,17 +265,17 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
     - **测试设置**：
 
         1. 设置账号有1000个LRC，授权充足
-        1. 在LRC-WETH市场下一个卖100个LRC的单，价格是0.01WETH，返回orderHash：O1
-        1. 发送OrdersCancelledOnChainEvent事件，参数O1
+        1. 在LRC-WETH市场下一个卖单
+        1. 发送CancelOrder.Req取消该订单
             - 结果验证：
-                1. **读取我的订单**：通过getOrders查询status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
+                1. **读取我的订单**：通过getOrders查询status应该为STATUS_SOFT_CANCELLED_BY_USER
                 1. **读取市场深度**：卖单深度应该变为0
                 1. **读取我的成交**: 无
                 1. **读取市场成交**： 无
                 1. **读取我的账号**: LRC 余额应为1000, 可用余额1000
         1. 发送OrderFilledEvent事件，模拟成交1个LRC
             - 结果验证：
-                1. **读取我的订单**：通过getOrders查询status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
+                1. **读取我的订单**：通过getOrders查询status应该为STATUS_SOFT_CANCELLED_BY_USER，但是outstanding等金额需要更改
                 1. **读取市场深度**：卖单深度应该变为0
                 1. **读取我的成交**: 有1LRC卖单成交
                 1. **读取市场成交**： 有1LRC卖单成交
@@ -283,7 +283,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰，于红雨
 
     - **其他信息**：NA
     
@@ -308,9 +308,9 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
                 1. **读取我的成交**: 无
                 1. **读取市场成交**： 无
                 1. **读取我的账号**: LRC 余额应为100, 可用余额0
-        1. 发送OrdersCancelledOnChainEvent事件，参数O1
+        1. 发送CancelOrder.Req取消订单：O1
             - 结果验证：
-                1. **读取我的订单**：通过getOrders查询O1订单status应该为STATUS_ONCHAIN_CANCELLED_BY_USER
+                1. **读取我的订单**：通过getOrders查询O1订单status应该为STATUS_SOFT_CANCELLED_BY_USER
                 1. **读取市场深度**：卖单深度应该变为80
                 1. **读取我的成交**: 无
                 1. **读取市场成交**： 无
@@ -318,6 +318,6 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
     - **状态**: Planned
 
-    - **拥有者**: 杜永丰
+    - **拥有者**: 杜永丰，于红雨
 
     - **其他信息**：NA
