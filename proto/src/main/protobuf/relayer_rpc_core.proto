@@ -165,7 +165,8 @@ message GetActivities {
     message Req {
         string owner = 1;
         google.protobuf.StringValue token = 2;
-        io.lightcone.persistence.CursorPaging paging = 3;
+        io.lightcone.persistence.SortingType  sort   = 3;
+        io.lightcone.persistence.CursorPaging paging = 4;
     }
 
     message Res {

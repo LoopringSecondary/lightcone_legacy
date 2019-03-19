@@ -68,15 +68,28 @@ class RingDalImpl @Inject()(
       case RingIndex(i) => filters.filter(_.ringIndex === i)
       case Empty        => filters
     }
-    filters = sort match {
-      case Some(s) if s == SortingType.DESC =>
-        filters.sortBy(_.ringIndex.desc)
-      case _ => filters.sortBy(_.ringIndex.asc)
-    }
-    filters = pagingOpt match {
-      case Some(paging) =>
-        filters.filter(_.ringIndex > paging.cursor).take(paging.size)
-      case None => filters
+    if (sort.nonEmpty && pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      filters = sort.get match {
+        case SortingType.DESC =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.ringIndex < paging.cursor)
+              .sortBy(_.ringIndex.desc)
+          } else { // query latest
+            filters.sortBy(_.ringIndex.desc)
+          }
+        case _ =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.ringIndex > paging.cursor)
+              .sortBy(_.ringIndex.asc)
+          } else {
+            filters
+              .sortBy(_.ringIndex.asc)
+          }
+      }
+      filters = filters.take(paging.size)
     }
     filters
   }

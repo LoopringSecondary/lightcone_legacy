@@ -59,13 +59,31 @@ class ActivityDalImpl @Inject()(
   def getActivities(
       owner: String,
       token: Option[String],
+      sort: SortingType,
       paging: CursorPaging
     ): Future[Seq[Activity]] = {
-    val filters = createActivityFilters(owner, token)
+    var filters = createActivityFilters(owner, token)
+    filters = sort match {
+      case SortingType.DESC =>
+        if (paging.cursor > 0) {
+          filters
+            .filter(_.sequenceId < paging.cursor)
+            .sortBy(c => (c.block.desc, c.sequenceId.desc))
+        } else { // query latest
+          filters.sortBy(c => (c.block.desc, c.sequenceId.desc))
+        }
+      case _ => // ASC
+        if (paging.cursor > 0) {
+          filters
+            .filter(_.sequenceId > paging.cursor)
+            .sortBy(c => (c.block.asc, c.sequenceId.asc))
+        } else {
+          filters
+            .sortBy(c => (c.block.asc, c.sequenceId.asc))
+        }
+    }
     db.run(
       filters
-        .filter(_.sequenceId > paging.cursor)
-        .sortBy(c => (c.block.desc, c.sequenceId.desc))
         .take(paging.size)
         .result
     )

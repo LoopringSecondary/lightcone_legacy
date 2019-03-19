@@ -171,15 +171,28 @@ class FillDalImpl @Inject()(
       filters = filters.filter(_.marketHash === marketHashOpt.get)
     if (wallet.nonEmpty) filters = filters.filter(_.wallet === wallet.get)
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
-    filters = sort match {
-      case Some(s) if s == SortingType.DESC =>
-        filters.sortBy(_.sequenceId.desc)
-      case _ => filters.sortBy(_.sequenceId.asc)
-    }
-    filters = pagingOpt match {
-      case Some(paging) =>
-        filters.filter(_.sequenceId > paging.cursor).take(paging.size)
-      case None => filters
+    if (sort.nonEmpty && pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      filters = sort.get match {
+        case SortingType.DESC =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId < paging.cursor)
+              .sortBy(_.sequenceId.desc)
+          } else { // query latest
+            filters.sortBy(_.sequenceId.desc)
+          }
+        case _ =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId > paging.cursor)
+              .sortBy(_.sequenceId.asc)
+          } else {
+            filters
+              .sortBy(_.sequenceId.asc)
+          }
+      }
+      filters = filters.take(paging.size)
     }
     filters
   }

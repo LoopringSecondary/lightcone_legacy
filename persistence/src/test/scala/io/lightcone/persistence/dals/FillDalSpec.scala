@@ -38,13 +38,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query fills: by owner")
-    val q3 = Req(owner = owner1)
+    val q3 = Req(owner = owner1, paging = Some(CursorPaging(size = 10)))
     val r3 = Await.result(dal.getFills(q3).mapTo[Seq[Fill]], 5.second)
     val c3 = Await.result(dal.countFills(q3).mapTo[Int], 5.second)
     assert(r3.length == 2 && c3 == 2)
 
     info("query fills: sort")
-    val q3_2 = Req(owner = owner1, sort = SortingType.DESC)
+    val q3_2 = Req(
+      owner = owner1,
+      sort = SortingType.DESC,
+      paging = Some(CursorPaging(size = 10))
+    )
     val r3_2 = Await.result(dal.getFills(q3_2).mapTo[Seq[Fill]], 5.second)
     assert(r3_2.length == 2)
     assert(r3.head == r3_2.last)

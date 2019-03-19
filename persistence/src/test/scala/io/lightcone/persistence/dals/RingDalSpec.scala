@@ -60,11 +60,12 @@ class RingDalSpec extends DalSpec[RingDal] {
     }
 
     info("query rings: sort")
-    val q5 = Req(sort = SortingType.DESC)
+    val q5 =
+      Req(sort = SortingType.DESC, paging = Some(CursorPaging(size = 10)))
     val r5 = Await.result(dal.getRings(q5).mapTo[Seq[Ring]], 5.second)
     val c5 = Await.result(dal.countRings(q5).mapTo[Int], 5.second)
     assert(r5.length == 3 && c5 == 3)
-    val q6 = Req(sort = SortingType.ASC)
+    val q6 = Req(sort = SortingType.ASC, paging = Some(CursorPaging(size = 10)))
     val r6 = Await.result(dal.getRings(q6).mapTo[Seq[Ring]], 5.second)
     val c6 = Await.result(dal.countRings(q6).mapTo[Int], 5.second)
     assert(r6.length == 3 && c6 == 3)
