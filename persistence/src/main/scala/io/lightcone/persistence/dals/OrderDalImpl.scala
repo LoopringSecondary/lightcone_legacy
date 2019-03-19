@@ -118,30 +118,7 @@ class OrderDalImpl @Inject()(
       filters = filters
         .filter(_.validSince >= validTime.get)
         .filter(_.validUntil <= validTime.get)
-    if (sort.nonEmpty && pagingOpt.nonEmpty) {
-      val paging = pagingOpt.get
-      filters = sort.get match {
-        case SortingType.DESC =>
-          if (paging.cursor > 0) {
-            filters
-              .filter(_.sequenceId < paging.cursor)
-              .sortBy(_.sequenceId.desc)
-          } else { // query latest
-            filters.sortBy(_.sequenceId.desc)
-          }
-        case _ =>
-          if (paging.cursor > 0) {
-            filters
-              .filter(_.sequenceId > paging.cursor)
-              .sortBy(_.sequenceId.asc)
-          } else {
-            filters
-              .sortBy(_.sequenceId.asc)
-          }
-      }
-      filters = filters.take(paging.size)
-    }
-    filters
+    getPagingFilter(filters, sort, pagingOpt)
   }
 
   def getOrders(
@@ -186,30 +163,7 @@ class OrderDalImpl @Inject()(
     if (marketId.nonEmpty)
       filters = filters.filter(_.marketId === marketId)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
-    if (sort.nonEmpty && pagingOpt.nonEmpty) {
-      val paging = pagingOpt.get
-      filters = sort.get match {
-        case SortingType.DESC =>
-          if (paging.cursor > 0) {
-            filters
-              .filter(_.sequenceId < paging.cursor)
-              .sortBy(_.sequenceId.desc)
-          } else { // query latest
-            filters.sortBy(_.sequenceId.desc)
-          }
-        case _ =>
-          if (paging.cursor > 0) {
-            filters
-              .filter(_.sequenceId > paging.cursor)
-              .sortBy(_.sequenceId.asc)
-          } else {
-            filters
-              .sortBy(_.sequenceId.asc)
-          }
-      }
-      filters = filters.take(paging.size)
-    }
-    filters
+    getPagingFilter(filters, sort, pagingOpt)
   }
 
   def getOrdersForUser(
@@ -615,4 +569,36 @@ class OrderDalImpl @Inject()(
       if (result >= 1) ERR_NONE
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
+
+  private def getPagingFilter(
+      filters: Query[OrderTable, OrderTable#TableElementType, Seq],
+      sort: Option[SortingType] = None,
+      pagingOpt: Option[CursorPaging] = None
+    ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
+    if (sort.nonEmpty && pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      val f = sort.get match {
+        case SortingType.DESC =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId < paging.cursor)
+              .sortBy(_.sequenceId.desc)
+          } else { // query latest
+            filters.sortBy(_.sequenceId.desc)
+          }
+        case _ =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId > paging.cursor)
+              .sortBy(_.sequenceId.asc)
+          } else {
+            filters
+              .sortBy(_.sequenceId.asc)
+          }
+      }
+      f.take(paging.size)
+    } else {
+      filters
+    }
+  }
 }
