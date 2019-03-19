@@ -135,23 +135,26 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
     - **测试设置**：
 
         1. 设置A1账号有1000个LRC，授权充足
-        1. 在LRC-WETH市场下一个卖10个LRC的单，价格是0.01WETH，返回orderHash：O1
-        1. 在GTO-WETH市场下一个卖10个GTO的单，价格是0.001WETH，返回orderHash：O2
-        1. 发送CutoffEvent，参数broker=A1, owner=A1, marketHash=ZRX-WETH
-            - 结果验证：
-                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
-                1. **读取市场深度**：两个市场分别有10个卖单深度
-                1. **读取我的成交**: 无
-                1. **读取市场成交**：无
-                1. **读取我的账号**: LRC 可用余额应为990,GTO 可用余额应为990
+        1. 在LRC-WETH市场提交两个卖单order_hash1和order_hash2，validSince分比为now-1000和now
+        1. 在GTO-WETH市场一个卖单order_hash3,validSince为now-1000
         1. 发送CutoffEvent，参数broker=A1, owner=A1, marketHash=LRC-WETH
             - 结果验证：
-                1. **读取我的订单**：通过getOrders应该看到该订单，其中LRC-WETH的status应该为STATUS_ONCHAIN_CANCELLED_BY_USER,
-                GTO-WETH的status应该为STATUS_PENDING
-                1. **读取市场深度**：LRC-WETH深度变为0，GTO-WETH 10个卖单
+                1. **读取我的订单**：getOrders包含三个订单，order_hash1状态为STATUS_ONCHAIN_CANCELLED_BY_USER，其余的status应该为STATUS_PENDING
+                1. **读取市场深度**：两个市场分别为对应的两个订单的市场深度
                 1. **读取我的成交**: 无
                 1. **读取市场成交**：无
-                1. **读取我的账号**: LRC 可用余额应为1000,GTO 可用余额应为990
+                1. **读取我的账号**: LRC 可用余额应为1000 - order_hash2,LRC可用授权应为1000 - order_hash2
+                                   GTO 可用余额应为1000 - order_hash3,GTO可用授权应为1000 - order_hash3
+                                   
+        1. 在GTO-WETH市场提交一个卖单order_hash4,validSince为now-1000
+        1. 在LRC-WETH市场再提交两个卖单order_hash5和order_hash6， validSince分比为now-1000和now
+            - 结果验证：
+                1. **读取我的订单**：getOrders包含五个订单，order_hash1状态为STATUS_ONCHAIN_CANCELLED_BY_USER，其余的status应该为STATUS_PENDING
+                1. **读取市场深度**：两个市场分别为对应四个订单的市场深度
+                1. **读取我的成交**: 无
+                1. **读取市场成交**：无
+                1. **读取我的账号**: LRC 可用余额应为1000 - order_hash2 - order_hash6,LRC可用授权应为1000 - order_hash2 - order_hash6
+                                   GTO 可用余额应为1000 - order_hash3 - order_hash4,GTO可用授权应为1000 - order_hash3 - order_hash4      
 
     - **状态**: Planned
 
