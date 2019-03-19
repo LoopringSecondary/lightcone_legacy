@@ -44,7 +44,8 @@ class FillDalImpl @Inject()(
     db.run(
         (query += fill.copy(
           marketHash =
-            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).hashString()
+            MarketHash(MarketPair(fill.tokenS, fill.tokenB)).hashString(),
+          sequenceId = 0L
         )).asTry
       )
       .map {
@@ -74,9 +75,9 @@ class FillDalImpl @Inject()(
       wallet: String,
       miner: String,
       sort: SortingType,
-      paging: Option[Paging]
+      pagingOpt: Option[CursorPaging]
     ): Future[Seq[Fill]] = {
-    val filters = queryFilters(
+    var filters = queryFilters(
       getOptString(owner),
       getOptString(txHash),
       getOptString(orderHash),
@@ -87,10 +88,31 @@ class FillDalImpl @Inject()(
       tokenbOpt,
       marketHashOpt,
       getOptString(wallet),
-      getOptString(miner),
-      Some(sort),
-      paging
+      getOptString(miner)
     )
+    if (pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      filters = sort match {
+        case SortingType.DESC =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId < paging.cursor)
+              .sortBy(_.sequenceId.desc)
+          } else { // query latest
+            filters.sortBy(_.sequenceId.desc)
+          }
+        case _ =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId > paging.cursor)
+              .sortBy(_.sequenceId.asc)
+          } else {
+            filters
+              .sortBy(_.sequenceId.asc)
+          }
+      }
+      filters = filters.take(paging.size)
+    }
     db.run(filters.result)
   }
 
@@ -118,9 +140,7 @@ class FillDalImpl @Inject()(
       tokenbOpt,
       marketHashOpt,
       getOptString(wallet),
-      getOptString(miner),
-      None,
-      None
+      getOptString(miner)
     )
     db.run(filters.size.result)
   }
@@ -161,9 +181,7 @@ class FillDalImpl @Inject()(
       tokenB: Option[String] = None,
       marketHashOpt: Option[MarketHash] = None,
       wallet: Option[String] = None,
-      miner: Option[String] = None,
-      sort: Option[SortingType] = None,
-      pagingOpt: Option[Paging] = None
+      miner: Option[String] = None
     ): Query[FillTable, FillTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
@@ -181,15 +199,6 @@ class FillDalImpl @Inject()(
       filters = filters.filter(_.marketHash === marketHashOpt.get.hashString)
     if (wallet.nonEmpty) filters = filters.filter(_.wallet === wallet.get)
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
-    filters = sort match {
-      case Some(s) if s == SortingType.DESC =>
-        filters.sortBy(c => (c.ringIndex.desc, c.fillIndex.desc))
-      case _ => filters.sortBy(c => (c.ringIndex.asc, c.fillIndex.asc))
-    }
-    filters = pagingOpt match {
-      case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None         => filters
-    }
     filters
   }
 }

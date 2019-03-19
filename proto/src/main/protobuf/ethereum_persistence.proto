@@ -162,6 +162,7 @@ message Fill {
     int64  block_height                         = 16;
     int64  block_timestamp                      = 17;
     bool   is_taker                             = 18;
+    int64  sequence_id                          = 19;
 }
 
 message TxEvents {
@@ -202,33 +203,20 @@ message OHLCData {
     double     lowest_price     = 8;*/
 }
 
-message GetMarketHistory {
-    enum Interval {
-        OHCL_INTERVAL_INVALID            = 0; // don't use it
-        OHLC_INTERVAL_ONE_MINUTES        = 60;
-        OHLC_INTERVAL_FIVE_MINUTES       = 300;
-        OHLC_INTERVAL_FIFTEEN_MINUTES    = 900;
-        OHLC_INTERVAL_THIRTY_MINUTES     = 1800;
-        OHLC_INTERVAL_ONE_HOUR           = 3600;
-        OHLC_INTERVAL_TWO_HOURS          = 7200;
-        OHLC_INTERVAL_FOUR_HOURS         = 14400;
-        OHLC_INTERVAL_TWELVE_HOURS       = 43200;
-        OHLC_INTERVAL_ONE_DAY            = 86400;
-        OHLC_INTERVAL_THREE_DAYS         = 259200;
-        OHLC_INTERVAL_FIVE_DAYS          = 432000;
-        OHLC_INTERVAL_ONE_WEEK           = 604800;
-    }
-
-    message Req {
-        string    market_hash     = 1;
-        Interval  interval       = 2;
-        int64     beginTime      = 3;
-        int64     endTime        = 4;
-    }
-
-    message Res {
-        repeated io.lightcone.ethereum.persistence.OHLCData data  = 1;
-    }
+enum Interval {
+    OHCL_INTERVAL_INVALID            = 0; // don't use it
+    OHLC_INTERVAL_ONE_MINUTES        = 60;
+    OHLC_INTERVAL_FIVE_MINUTES       = 300;
+    OHLC_INTERVAL_FIFTEEN_MINUTES    = 900;
+    OHLC_INTERVAL_THIRTY_MINUTES     = 1800;
+    OHLC_INTERVAL_ONE_HOUR           = 3600;
+    OHLC_INTERVAL_TWO_HOURS          = 7200;
+    OHLC_INTERVAL_FOUR_HOURS         = 14400;
+    OHLC_INTERVAL_TWELVE_HOURS       = 43200;
+    OHLC_INTERVAL_ONE_DAY            = 86400;
+    OHLC_INTERVAL_THREE_DAYS         = 259200;
+    OHLC_INTERVAL_FIVE_DAYS          = 432000;
+    OHLC_INTERVAL_ONE_WEEK           = 604800;
 }
 
 message Ring {

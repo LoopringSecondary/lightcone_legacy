@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.ethereum.persistence.GetMarketHistory
 import io.lightcone.relayer.jsonrpc.JsonRpcModule
 import io.lightcone.relayer.data._
 

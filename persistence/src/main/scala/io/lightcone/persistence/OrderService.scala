@@ -34,7 +34,7 @@ trait OrderService {
       marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: SortingType = SortingType.ASC,
-      skip: Option[Paging] = None
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
@@ -44,8 +44,8 @@ trait OrderService {
       tokenbOpt: Option[String] = None,
       marketHashOpt: Option[MarketHash] = None,
       feeTokenOpt: Option[String] = None,
-      sortOpt: SortingType = SortingType.ASC,
-      skipOpt: Option[Paging] = None
+      sort: SortingType = SortingType.ASC,
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]]
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId

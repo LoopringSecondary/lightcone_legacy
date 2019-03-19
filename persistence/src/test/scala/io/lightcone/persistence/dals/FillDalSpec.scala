@@ -52,7 +52,7 @@ class FillDalSpec extends DalSpec[FillDal] {
           "",
           "",
           SortingType.ASC,
-          None
+          Some(CursorPaging(size = 10))
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -93,7 +93,7 @@ class FillDalSpec extends DalSpec[FillDal] {
           "",
           "",
           SortingType.DESC,
-          None
+          Some(CursorPaging(size = 10))
         )
         .mapTo[Seq[Fill]],
       5.second
@@ -117,7 +117,7 @@ class FillDalSpec extends DalSpec[FillDal] {
           "",
           "",
           SortingType.ASC,
-          Some(Paging(skip = 1, size = 10))
+          Some(CursorPaging(cursor = 1, size = 10))
         )
         .mapTo[Seq[Fill]],
       5.second

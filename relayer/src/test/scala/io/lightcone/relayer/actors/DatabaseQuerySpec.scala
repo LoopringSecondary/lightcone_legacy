@@ -57,9 +57,8 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetOrders.Res(orders, total) =>
+        case GetOrders.Res(orders) =>
           assert(orders.nonEmpty && orders.length == 6)
-          assert(total == 6)
         case _ => assert(false)
       }
     }
@@ -79,7 +78,7 @@ class DatabaseQuerySpec
             direction = MarketFilter.Direction.BOTH
           )
         ),
-        paging = Some(Paging(0, 10)),
+        paging = Some(CursorPaging(0, 10)),
         sort = SortingType.ASC
       )
       val hashes = Set(
@@ -97,8 +96,8 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetUserFills.Res(trades, total) =>
-          assert(trades.nonEmpty && trades.length === 5 && total == 5)
+        case GetUserFills.Res(trades) =>
+          assert(trades.nonEmpty && trades.length === 5)
         case _ => assert(false)
       }
     }

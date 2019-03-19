@@ -71,7 +71,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: SortingType = SortingType.ASC,
-      skip: Option[Paging] = None
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
@@ -82,7 +82,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       marketHashOpt: Option[MarketHash] = None,
       feeTokenOpt: Option[String] = None,
       sortOpt: SortingType = SortingType.ASC,
-      skipOpt: Option[Paging] = None
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]]
 
   // Count the number of orders

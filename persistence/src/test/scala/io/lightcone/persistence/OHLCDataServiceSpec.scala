@@ -19,10 +19,8 @@ package io.lightcone.persistence
 import io.lightcone.persistence.dals._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.core._
-import io.lightcone.ethereum.persistence.GetMarketHistory.Interval
 import io.lightcone.lib.cache._
 import org.slf4s.Logging
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -43,19 +41,24 @@ class OHLCDataServiceSpec
     new OHLCDataDalImpl().createTable()
   }
 
+  val marketPair = MarketPair(
+    "0x2f5705b87149e017ec779707982dc4e4b58aa619",
+    "0x0b44611b8ae632be05f24ffe64651f050402ae01"
+  )
+  val marketHash = MarketHash(marketPair).hashString
+
   "saveFill" must "save a trade with hash" in {
     val record0 =
       OHLCRawData(
         ringIndex = 1000,
         txHash =
           "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
-        marketHash = "111222",
+        marketHash = marketHash,
         time = 1547682650,
         baseAmount = 10,
         quoteAmount = 100,
         price = 10
       )
-
     val result0 = service.saveData(record0)
     val res0 =
       Await.result(result0.mapTo[(ErrorCode, Option[OHLCRawData])], 5.second)
@@ -66,7 +69,7 @@ class OHLCDataServiceSpec
       ringIndex = 1001,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
-      marketHash = "111222",
+      marketHash = marketHash,
       time = 1547682655,
       baseAmount = 50,
       quoteAmount = 200,
@@ -83,7 +86,7 @@ class OHLCDataServiceSpec
         ringIndex = 1002,
         txHash =
           "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf50",
-        marketHash = "111222",
+        marketHash = marketHash,
         time = 1547682750,
         baseAmount = 100,
         quoteAmount = 500,
@@ -91,17 +94,11 @@ class OHLCDataServiceSpec
       )
     val result2 = service.saveData(record2)
 
-    val request = GetMarketHistory.Req(
-      marketHash = "111222",
-      interval = Interval.OHLC_INTERVAL_ONE_MINUTES,
-      beginTime = 1547682050,
-      endTime = 1547682850
-    )
     val resResult = service.getOHLCData(
-      request.marketHash,
-      request.interval,
-      request.beginTime,
-      request.endTime
+      marketHash,
+      Interval.OHLC_INTERVAL_ONE_MINUTES,
+      1547682050,
+      1547682850
     )
     val res = Await.result(resResult.mapTo[Seq[OHLCData]], 5.second)
     val singleData = res(1).data
@@ -115,23 +112,5 @@ class OHLCDataServiceSpec
         singleData(6) == 10.0
     )
     println(res)
-
-    val res2 = service.getOHLCData(
-      "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
-      request.interval,
-      request.beginTime,
-      request.endTime
-    )
-    val r2 = Await.result(res2.mapTo[Seq[OHLCData]], 5.second)
-    log.info(s"---3 $r2")
-
-    val res3 = service.getOHLCData(
-      "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
-      request.interval,
-      request.beginTime,
-      request.endTime
-    )
-    val r3 = Await.result(res3.mapTo[Seq[OHLCData]], 5.second)
-    log.info(s"---3 $r3")
   }
 }

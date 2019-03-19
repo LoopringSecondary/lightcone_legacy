@@ -19,7 +19,7 @@ package io.lightcone.persistence.dals
 import io.lightcone.persistence.base._
 import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
-import io.lightcone.persistence.{Paging, SortingType}
+import io.lightcone.persistence.{CursorPaging, SortingType}
 import scala.concurrent._
 
 trait RingDal extends BaseDalImpl[RingTable, Ring] {
@@ -30,7 +30,7 @@ trait RingDal extends BaseDalImpl[RingTable, Ring] {
       ringHashOpt: Option[String],
       ringIndexOpt: Option[Long],
       sort: SortingType,
-      paging: Option[Paging]
+      paging: Option[CursorPaging]
     ): Future[Seq[Ring]]
 
   def countRings(

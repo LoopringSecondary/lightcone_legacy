@@ -18,11 +18,7 @@ package io.lightcone.persistence
 
 import com.google.inject.Inject
 import io.lightcone.core.ErrorCode
-import io.lightcone.ethereum.persistence.{
-  GetMarketHistory,
-  OHLCData,
-  OHLCRawData
-}
+import io.lightcone.ethereum.persistence.{Interval, OHLCData, OHLCRawData}
 import io.lightcone.lib.cache._
 import io.lightcone.persistence.cache.OHLCDatas
 import io.lightcone.persistence.dals._
@@ -45,7 +41,7 @@ class OHLCDataServiceImpl @Inject()(
 
   def getOHLCData(
       marketHash: String,
-      interval: GetMarketHistory.Interval,
+      interval: Interval,
       beginTime: Long,
       endTime: Long
     ): Future[Seq[OHLCData]] = {

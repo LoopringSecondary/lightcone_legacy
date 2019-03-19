@@ -26,6 +26,7 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
+import io.lightcone.relayer.data.GetMarketHistory
 import scala.concurrent.ExecutionContext
 
 object MarketHistoryActor extends DeployedAsSingleton {
@@ -74,10 +75,22 @@ class MarketHistoryActor(
         }
       }) sendTo sender
 
-    case req: GetMarketHistory.Req =>
+    case req: GetMarketHistory.Req => {
+      val marketPair = req.marketPair.getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"invalid marketPair:${req.marketPair}"
+        )
+      )
       dbModule.ohlcDataService
-        .getOHLCData(req.marketHash, req.interval, req.beginTime, req.endTime)
+        .getOHLCData(
+          MarketHash(marketPair).hashString,
+          req.interval,
+          req.beginTime,
+          req.endTime
+        )
         .sendTo(sender)
+    }
 
     case req: BlockEvent =>
       (for {

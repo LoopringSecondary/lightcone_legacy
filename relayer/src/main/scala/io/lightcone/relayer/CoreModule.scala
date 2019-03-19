@@ -48,11 +48,13 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.external._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import org.slf4s.Logging
+import redis.RedisCluster
 
 // Owner: Daniel
 class CoreModule(
@@ -97,26 +99,6 @@ class CoreModule(
       "dbconfig-dal-token-ticker-record",
       "dbconfig-dal-cmc-ticker-config"
     )
-
-    // --- bind cache ---------------------
-
-    if (config.getBoolean("cache.disable-redis-cache")) {
-      log.warn("redis cluster caching is disabled")
-
-      bind[Cache[String, Array[Byte]]]
-        .to[NoopCache[String, Array[Byte]]]
-        .in[Singleton]
-    } else {
-      log.info("redis cluster caching is enabled")
-
-      bind[redis.RedisCluster]
-        .toProvider[cache.RedisClusterProvider]
-        .in[Singleton]
-
-      bind[Cache[String, Array[Byte]]] //
-        .to[cache.RedisClusterCache]
-        .in[Singleton]
-    }
 
     // --- bind dals ---------------------
     bind[OrderDal].to[OrderDalImpl].in[Singleton]
@@ -175,6 +157,28 @@ class CoreModule(
     bind[Boolean]
       .annotatedWithName("deploy-actors-ignoring-roles")
       .toInstance(deployActorsIgnoringRoles)
+  }
+
+  // --- bind cache ---------------------
+  @Provides
+  def bindCache(
+      implicit
+      config: Config,
+      system: ActorSystem,
+      ec: ExecutionContext
+    ): Cache[String, Array[Byte]] = {
+    if (config.getBoolean("cache.disable-redis-cache")) {
+      log.warn("redis cluster caching is disabled")
+
+      new NoopCache[java.lang.String, Array[Byte]]
+    } else {
+      log.info("redis cluster caching is enabled")
+
+      val redisClusterProvider = new cache.RedisClusterProvider(config).get()
+      bind[redis.RedisCluster]
+        .toInstance(redisClusterProvider)
+      new cache.RedisClusterCache(redisClusterProvider)
+    }
   }
 
   // --- bind tx event extractors ---------------------

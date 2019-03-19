@@ -16,7 +16,6 @@
 
 package io.lightcone.persistence
 
-import java.util.Objects
 import slick.jdbc.MySQLProfile.api._
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString

@@ -17,11 +17,7 @@
 package io.lightcone.persistence
 
 import io.lightcone.core.ErrorCode
-import io.lightcone.ethereum.persistence.{
-  GetMarketHistory,
-  OHLCData,
-  OHLCRawData
-}
+import io.lightcone.ethereum.persistence.{Interval, OHLCData, OHLCRawData}
 import scala.concurrent.Future
 
 trait OHLCDataService {
@@ -30,7 +26,7 @@ trait OHLCDataService {
 
   def getOHLCData(
       marketHash: String,
-      interval: GetMarketHistory.Interval,
+      interval: Interval,
       beginTime: Long,
       endTime: Long
     ): Future[Seq[OHLCData]]

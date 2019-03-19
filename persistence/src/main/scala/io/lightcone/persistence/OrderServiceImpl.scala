@@ -82,7 +82,7 @@ class OrderServiceImpl @Inject()(
       marketIds: Set[Long],
       feeTokenSet: Set[String],
       sort: SortingType,
-      skip: Option[Paging]
+      pagingOpt: Option[CursorPaging]
     ): Future[Seq[RawOrder]] =
     orderDal
       .getOrders(
@@ -93,7 +93,7 @@ class OrderServiceImpl @Inject()(
         marketIds,
         feeTokenSet,
         sort,
-        skip
+        pagingOpt
       )
       .map(_.map(r => giveUserOrder(Some(r)).get))
 
@@ -104,8 +104,8 @@ class OrderServiceImpl @Inject()(
       tokenBOpt: Option[String] = None,
       marketHashOpt: Option[MarketHash] = None,
       feeTokenOpt: Option[String] = None,
-      sortOpt: SortingType = SortingType.ASC,
-      skipOpt: Option[Paging] = None
+      sort: SortingType = SortingType.ASC,
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]] =
     orderDal
       .getOrdersForUser(
@@ -115,8 +115,8 @@ class OrderServiceImpl @Inject()(
         tokenBOpt,
         marketHashOpt,
         feeTokenOpt,
-        sortOpt,
-        skipOpt
+        sort,
+        pagingOpt
       )
       .map(_.map(r => giveUserOrder(Some(r)).get))
 

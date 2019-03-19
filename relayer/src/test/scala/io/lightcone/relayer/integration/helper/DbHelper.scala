@@ -20,7 +20,6 @@ import io.lightcone.core._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence._
 import io.lightcone.relayer.integration.Metadatas._
-import io.lightcone.relayer.support.TOKENS
 import org.slf4s.Logging
 
 import scala.concurrent._

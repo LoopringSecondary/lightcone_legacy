@@ -91,12 +91,11 @@ message GetOrders {
         repeated io.lightcone.core.OrderStatus statuses    = 2;
         MarketFilter                           market      = 3;
         io.lightcone.persistence.SortingType   sort        = 4;
-        io.lightcone.persistence.Paging        skip        = 5;
+        io.lightcone.persistence.CursorPaging  paging      = 5;
     }
 
     message Res {
         repeated io.lightcone.core.RawOrder  orders = 1;
-        int32             total  = 2;
     }
 }
 
@@ -155,6 +154,19 @@ message PersistOHLCData {
     message Res {
         io.lightcone.ethereum.persistence.OHLCRawData record  = 1;
         io.lightcone.core.ErrorCode error     = 2;
+    }
+}
+
+message GetMarketHistory {
+    message Req {
+        io.lightcone.core.MarketPair                 market_pair    = 1;
+        io.lightcone.ethereum.persistence.Interval   interval       = 2;
+        int64                                        begin_time     = 3;
+        int64                                        end_time       = 4;
+    }
+
+    message Res {
+        repeated io.lightcone.ethereum.persistence.OHLCData data  = 1;
     }
 }
 

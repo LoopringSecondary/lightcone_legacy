@@ -20,7 +20,7 @@ import io.lightcone.persistence.base._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
-import io.lightcone.persistence.{Paging, SortingType}
+import io.lightcone.persistence.{CursorPaging, SortingType}
 import scala.concurrent._
 
 trait FillDal extends BaseDalImpl[FillTable, Fill] {
@@ -40,7 +40,7 @@ trait FillDal extends BaseDalImpl[FillTable, Fill] {
       wallet: String,
       miner: String,
       sort: SortingType,
-      paging: Option[Paging]
+      paging: Option[CursorPaging]
     ): Future[Seq[Fill]]
 
   def countFills(

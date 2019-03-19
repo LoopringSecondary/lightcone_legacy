@@ -76,15 +76,7 @@ class DatabaseQueryActor(
           marketHashOpt,
           None,
           req.sort,
-          req.skip
-        )
-        total <- dbModule.orderService.countOrdersForUser(
-          req.statuses.toSet,
-          Some(req.owner),
-          tokensOpt,
-          tokenbOpt,
-          marketHashOpt,
-          None
+          req.paging
         )
       } yield {
         val respOrder = result.map { r =>
@@ -99,7 +91,7 @@ class DatabaseQueryActor(
             marketEntityId = 0
           )
         }
-        GetOrders.Res(respOrder, total)
+        GetOrders.Res(respOrder)
       }) sendTo sender
 
     case req: GetUserFills.Req =>
@@ -126,19 +118,6 @@ class DatabaseQueryActor(
           req.sort,
           req.paging
         )
-        total <- dbModule.fillDal.countFills(
-          req.owner,
-          req.txHash,
-          req.orderHash,
-          ringHashOpt,
-          ringIndexOpt,
-          fillIndexOpt,
-          tokensOpt,
-          tokenbOpt,
-          marketHashOpt,
-          req.wallet,
-          req.miner
-        )
       } yield {
         val fills_ = fills.map { f =>
           new Fill(
@@ -151,7 +130,7 @@ class DatabaseQueryActor(
             txHash = f.txHash
           )
         }
-        GetUserFills.Res(fills_, total)
+        GetUserFills.Res(fills_)
       }).sendTo(sender)
 
     case req: GetMarketFills.Req =>
@@ -183,8 +162,7 @@ class DatabaseQueryActor(
         }
         result <- dbModule.ringDal
           .getRings(ringHashOpt, ringIndexOpt, req.sort, req.paging)
-        total <- dbModule.ringDal.countRings(ringHashOpt, ringIndexOpt)
-      } yield GetRings.Res(result, total)) sendTo sender
+      } yield GetRings.Res(result)) sendTo sender
   }
 
   private def getMarketQueryParameters(marketOpt: Option[MarketFilter]) = {

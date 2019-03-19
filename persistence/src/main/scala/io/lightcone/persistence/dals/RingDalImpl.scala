@@ -56,9 +56,7 @@ class RingDalImpl @Inject()(
 
   private def queryFilters(
       ringHashOpt: Option[String],
-      ringIndexOpt: Option[Long],
-      sort: Option[SortingType] = None,
-      pagingOpt: Option[Paging] = None
+      ringIndexOpt: Option[Long]
     ): Query[RingTable, RingTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
     filters = ringHashOpt match {
@@ -69,15 +67,6 @@ class RingDalImpl @Inject()(
       case None    => filters
       case Some(h) => filters.filter(_.ringIndex === h)
     }
-    filters = sort match {
-      case Some(s) if s == SortingType.DESC =>
-        filters.sortBy(_.ringIndex.desc)
-      case _ => filters.sortBy(_.ringIndex.asc)
-    }
-    filters = pagingOpt match {
-      case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None         => filters
-    }
     filters
   }
 
@@ -85,10 +74,33 @@ class RingDalImpl @Inject()(
       ringHashOpt: Option[String],
       ringIndexOpt: Option[Long],
       sort: SortingType,
-      paging: Option[Paging]
+      pagingOpt: Option[CursorPaging]
     ): Future[Seq[Ring]] = {
-    val filters =
-      queryFilters(ringHashOpt, ringIndexOpt, Some(sort), paging)
+    var filters =
+      queryFilters(ringHashOpt, ringIndexOpt)
+    if (pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      filters = sort match {
+        case SortingType.DESC =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.ringIndex < paging.cursor)
+              .sortBy(_.ringIndex.desc)
+          } else { // query latest
+            filters.sortBy(_.ringIndex.desc)
+          }
+        case _ =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.ringIndex > paging.cursor)
+              .sortBy(_.ringIndex.asc)
+          } else {
+            filters
+              .sortBy(_.ringIndex.asc)
+          }
+      }
+      filters = filters.take(paging.size)
+    }
     db.run(filters.result)
   }
 
@@ -96,7 +108,7 @@ class RingDalImpl @Inject()(
       ringHashOpt: Option[String],
       ringIndexOpt: Option[Long]
     ): Future[Int] = {
-    val filters = queryFilters(ringHashOpt, ringIndexOpt, None, None)
+    val filters = queryFilters(ringHashOpt, ringIndexOpt)
     db.run(filters.size.result)
   }
 }
