@@ -17,6 +17,7 @@
 package io.lightcone.relayer.integration
 import io.lightcone.core.OrderStatus
 import io.lightcone.lib.ProtoSerializer
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.jsonrpc.JsonSupport
 import org.scalatest.matchers.{MatchResult, Matcher}
@@ -56,7 +57,7 @@ object AddedMatchers extends JsonSupport {
           findOrder(res).count(
             _.get.getState.status == orderStatus
           ) == hashes.size,
-          s"The status of order:${findOrder(res)} in result isn't  STATUS_SOFT_CANCELLED_BY_USER. ",
+          s"The status of order:${findOrder(res)} in result isn't  ${orderStatus}. ",
           "the status matched."
         )
       }
@@ -92,13 +93,25 @@ object AddedMatchers extends JsonSupport {
     }
   }
 
+  def accountBalanceMatcher(
+      token: String,
+      tokenBalance: TokenBalance
+    ) = Matcher { res: GetAccount.Res =>
+    MatchResult(
+      res.getAccountBalance.tokenBalanceMap(token) == tokenBalance,
+      s" ${serialization.write(ps.serialize(res.getAccountBalance.tokenBalanceMap(token)))} was not equal to  ${serialization
+        .write(ps.serialize(tokenBalance))}.",
+      s"accountBalance matches."
+    )
+  }
+
   def resEqual(expectedRes: GeneratedMessage) = Matcher {
     res: GeneratedMessage =>
       MatchResult(
         res == expectedRes,
         s" ${serialization.write(ps.serialize(res))} was not equal to  ${serialization
           .write(ps.serialize(expectedRes))}.",
-        s"${serialization.write(ps.serialize(res))} of GetMarketFills isEmpty."
+        s"equals."
       )
   }
 

@@ -18,7 +18,11 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core.ErrorException
-import io.lightcone.core.OrderStatus.{STATUS_ONCHAIN_CANCELLED_BY_USER, STATUS_PENDING, STATUS_SOFT_CANCELLED_BY_USER}
+import io.lightcone.core.OrderStatus.{
+  STATUS_ONCHAIN_CANCELLED_BY_USER,
+  STATUS_PENDING,
+  STATUS_SOFT_CANCELLED_BY_USER
+}
 import io.lightcone.ethereum.event.{CutoffEvent, EventHeader}
 import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.relayer._

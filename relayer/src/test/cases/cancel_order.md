@@ -36,7 +36,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
 
 1. **测试按owner取消订单流程**
 
-    - **Objective**：测试按owner可以正确取消订单，owner不存在订单的会返回错误码
+    - **Objective**：测试可以按owner正确取消订单，owner不存在订单的会返回错误码
 
     - **测试设置**：
 
@@ -92,7 +92,7 @@ ordersCancelledOnChainEvent取消，其他状态只验证按orderHash取消。�
     
 1. **测试CutoffEvent取消owner订单流程**
 
-    - **Objective**：收到CutoffEvent可以正确取消订单
+    - **Objective**：测试OwnerCutoff事件，会取消cutoff时间之前的订单，但是对cutoff时间之后的订单无影响，并且，如果再次提交订单时，仍会只允许提交cutoff时间之后的订单
 
     - **测试设置**：
 

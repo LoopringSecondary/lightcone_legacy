@@ -49,6 +49,10 @@ class CancelOrderSpec_byOwnerMarketPair
       info(
         s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
       )
+      val lrcTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val gtoTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(GTO_TOKEN.address)
 
       Then("submit an order of market:LRC-WETH.")
       val order1 = createRawOrder()
@@ -82,19 +86,10 @@ class CancelOrderSpec_byOwnerMarketPair
         })
 
       Then("check the cancel result.")
-      val initGTOBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(GTO_TOKEN.address)
-      val expectedAccountBalance = accountInitRes.getAccountBalance.copy(
-        tokenBalanceMap = accountInitRes.getAccountBalance.tokenBalanceMap + (GTO_TOKEN.address -> initGTOBalance
-          .copy(
-            availableBalance = initGTOBalance.balance - order2.amountS - order2.getFeeParams.amountFee,
-            availableAlloawnce = initGTOBalance.allowance - order2.amountS - order2.getFeeParams.amountFee
-          ))
+      val gtoExpectedBalance = gtoTokenBalance.copy(
+        availableBalance = gtoTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
+        availableAlloawnce = gtoTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
       )
-      val balance: BigInt = initGTOBalance.balance - order2.amountS
-      val allowance: BigInt = initGTOBalance.allowance - order2.amountS
-      val expectedAccountRes =
-        accountInitRes.copy(accountBalance = Some(expectedAccountBalance))
       defaultValidate(
         containsInGetOrders(
           STATUS_SOFT_CANCELLED_BY_USER,
@@ -103,7 +98,8 @@ class CancelOrderSpec_byOwnerMarketPair
           STATUS_PENDING,
           order2.hash
         ),
-        resEqual(expectedAccountRes),
+        accountBalanceMatcher(LRC_TOKEN.address, lrcTokenBalance)
+          and accountBalanceMatcher(GTO_TOKEN.address, gtoExpectedBalance),
         Map(
           LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
