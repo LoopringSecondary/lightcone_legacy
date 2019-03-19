@@ -31,6 +31,7 @@
         
     - **状态**: Planned
     - **拥有者**: 红雨
+    - **其他信息**：可参考原测试 EntryPointSpec_SubmitTwoMatchedOrder
  
    ---   
 1. 其中一个订单完全匹配情况

@@ -68,6 +68,7 @@
         
     - **状态**: Planned
     - **拥有者**: 红雨
+    - **其他信息**：可参考 RecoverOrderSpec
 
 ### <a name="market-manager"></a> MarketManager恢复
 ---
@@ -134,6 +135,6 @@
 		        1. **读取我的账号**：恢复到重启之前的情况
     - **状态**: Planned
     - **拥有者**: 红雨
-    - **其他信息**：NA
+    - **其他信息**：可参考 OrderbookRecoverSpec
 
     

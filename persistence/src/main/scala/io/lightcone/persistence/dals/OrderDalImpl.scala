@@ -28,7 +28,6 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc._
 import slick.basic._
 import slick.lifted.Query
-
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -102,9 +101,7 @@ class OrderDalImpl @Inject()(
       tokenBSet: Set[String] = Set.empty,
       marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      validTime: Option[Int] = None,
-      sort: Option[SortingType] = None,
-      pagingOpt: Option[Paging] = None
+      validTime: Option[Int] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
@@ -119,15 +116,6 @@ class OrderDalImpl @Inject()(
       filters = filters
         .filter(_.validSince >= validTime.get)
         .filter(_.validUntil <= validTime.get)
-    if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
-      case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
-      case _                => filters.sortBy(_.sequenceId.asc)
-    }
-    filters = pagingOpt match {
-      case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None         => filters
-    }
     filters
   }
 
@@ -139,7 +127,7 @@ class OrderDalImpl @Inject()(
       marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
-      skip: Option[Paging] = None
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderFilters(
       statuses,
@@ -148,11 +136,9 @@ class OrderDalImpl @Inject()(
       tokenBSet,
       marketIds,
       feeTokenSet,
-      None,
-      sort,
-      skip
+      None
     )
-    db.run(filters.result)
+    db.run(getPagingFilter(filters, sort, pagingOpt).result)
   }
 
   private def queryOrderForUserFilters(
@@ -161,9 +147,7 @@ class OrderDalImpl @Inject()(
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
       marketId: Option[Long] = None,
-      feeToken: Option[String] = None,
-      sort: Option[SortingType] = None,
-      pagingOpt: Option[Paging] = None
+      feeToken: Option[String] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
@@ -173,15 +157,6 @@ class OrderDalImpl @Inject()(
     if (marketId.nonEmpty)
       filters = filters.filter(_.marketId === marketId)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
-    if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
-      case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
-      case _                => filters.sortBy(_.sequenceId.asc)
-    }
-    filters = pagingOpt match {
-      case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None         => filters
-    }
     filters
   }
 
@@ -193,7 +168,7 @@ class OrderDalImpl @Inject()(
       marketId: Option[Long] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
-      skip: Option[Paging] = None
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderForUserFilters(
       statuses,
@@ -201,11 +176,9 @@ class OrderDalImpl @Inject()(
       tokenS,
       tokenB,
       marketId,
-      feeToken,
-      sort,
-      skip
+      feeToken
     )
-    db.run(filters.result)
+    db.run(getPagingFilter(filters, sort, pagingOpt).result)
   }
 
   //
@@ -259,9 +232,7 @@ class OrderDalImpl @Inject()(
       tokenS,
       tokenB,
       marketId,
-      feeToken,
-      None,
-      None
+      feeToken
     )
     db.run(filters.size.result)
   }
@@ -588,4 +559,36 @@ class OrderDalImpl @Inject()(
       if (result >= 1) ERR_NONE
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
+
+  private def getPagingFilter(
+      filters: Query[OrderTable, OrderTable#TableElementType, Seq],
+      sort: Option[SortingType] = None,
+      pagingOpt: Option[CursorPaging] = None
+    ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
+    if (sort.nonEmpty && pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      val f = sort.get match {
+        case SortingType.DESC =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId < paging.cursor)
+              .sortBy(_.sequenceId.desc)
+          } else { // query latest
+            filters.sortBy(_.sequenceId.desc)
+          }
+        case _ =>
+          if (paging.cursor > 0) {
+            filters
+              .filter(_.sequenceId > paging.cursor)
+              .sortBy(_.sequenceId.asc)
+          } else {
+            filters
+              .sortBy(_.sequenceId.asc)
+          }
+      }
+      f.take(paging.size)
+    } else {
+      filters
+    }
+  }
 }

@@ -162,6 +162,7 @@ message Fill {
     int64  block_height                         = 16;
     int64  block_timestamp                      = 17;
     bool   is_taker                             = 18;
+    int64  sequence_id                          = 19;
 }
 
 message TxEvents {

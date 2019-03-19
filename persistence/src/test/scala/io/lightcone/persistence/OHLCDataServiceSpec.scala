@@ -40,6 +40,12 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     new OHLCDataDalImpl().createTable()
   }
 
+  val marketPair = MarketPair(
+    "0x2f5705b87149e017ec779707982dc4e4b58aa619",
+    "0x0b44611b8ae632be05f24ffe64651f050402ae01"
+  )
+  val marketHash = MarketHash(marketPair).hashString
+
   "saveFill" must "save a trade with hash" in {
     val record0 = PersistOHLCData.Req(
       data = Option(
@@ -47,7 +53,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
           ringIndex = 1000,
           txHash =
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
-          marketHash = "0xeb9187f4734e15e5f04058f64b9b8194781c0afa",
+          marketHash = marketHash,
           time = 1547682650,
           baseAmount = 10,
           quoteAmount = 100,
@@ -64,7 +70,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
       ringIndex = 1001,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
-      marketHash = "0xeb9187f4734e15e5f04058f64b9b8194781c0afa",
+      marketHash = marketHash,
       time = 1547682655,
       baseAmount = 50,
       quoteAmount = 200,
@@ -81,7 +87,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
           ringIndex = 1002,
           txHash =
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf50",
-          marketHash = "0xeb9187f4734e15e5f04058f64b9b8194781c0afa",
+          marketHash = marketHash,
           time = 1547682750,
           baseAmount = 100,
           quoteAmount = 500,
@@ -92,12 +98,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     val result2 = service.saveData(record2)
 
     val request = GetMarketHistory.Req(
-      marketPair = Some(
-        MarketPair(
-          "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-          "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc"
-        )
-      ),
+      marketPair = Some(marketPair),
       interval = Interval.OHLC_INTERVAL_ONE_MINUTES,
       beginTime = 1547682050,
       endTime = 1547682850

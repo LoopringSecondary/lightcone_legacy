@@ -51,12 +51,11 @@ class MockSpec
 
   "set expect in EthereumQueryDataProvider" must {
     "can be response in MockEthereumQueryActor" in {
-      implicit val dataProvider = mock[EthereumQueryDataProvider]
 
       val ethereumQueryActor =
         system.actorOf(Props(new MockEthereumQueryActor()))
       val req1 = GetAccount.Req("0xaaa")
-      (dataProvider.getAccount _)
+      (queryProvider.getAccount _)
         .expects(where { req2: GetAccount.Req =>
           req2.address == req1.address
         })
