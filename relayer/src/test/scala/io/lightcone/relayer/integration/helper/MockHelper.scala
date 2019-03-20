@@ -23,42 +23,59 @@ import org.scalamock.scalatest.MockFactory
 import scala.math.BigInt
 
 //TODO:可以考虑设置请求次数
-case class MockExpects[E, T](defaultExpects:PartialFunction[E, T]) {
+case class MockExpects[E, T](defaultExpects: PartialFunction[E, T]) {
   var expects = defaultExpects
 
   def addExpect(expect: PartialFunction[E, T]) = {
     expects = expect orElse expects
   }
 
-  def apply(e:E): T = expects(e)
+  def apply(e: E): T = expects(e)
 }
 
 trait MockHelper extends MockFactory {
 
-  private var getAccountExpects:MockExpects[GetAccount.Req, GetAccount.Res] = _
-  private var filledAmountExpects:MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
+  private var getAccountExpects: MockExpects[GetAccount.Req, GetAccount.Res] = _
+  private var filledAmountExpects
+    : MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
   private var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
-  private var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
-  private var orderCancelExpects: MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
+  private var cutoffsExpects
+    : MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
+  private var orderCancelExpects
+    : MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
 
   initExpects()
-  def addAccountExpects(expect: PartialFunction[GetAccount.Req, GetAccount.Res] ) = {
+
+  def addAccountExpects(
+      expect: PartialFunction[GetAccount.Req, GetAccount.Res]
+    ) = {
     getAccountExpects.addExpect(expect)
   }
 
-  def addFilledAmountExpects(expect: PartialFunction[GetFilledAmount.Req, GetFilledAmount.Res]) = {
+  def addFilledAmountExpects(
+      expect: PartialFunction[GetFilledAmount.Req, GetFilledAmount.Res]
+    ) = {
     filledAmountExpects.addExpect(expect)
   }
 
-  def addBurnRateExpects(expect: PartialFunction[GetBurnRate.Req, GetBurnRate.Res]) = {
+  def addBurnRateExpects(
+      expect: PartialFunction[GetBurnRate.Req, GetBurnRate.Res]
+    ) = {
     burnRateExpects.addExpect(expect)
   }
 
-  def addCutoffsExpects(expect: PartialFunction[BatchGetCutoffs.Req, BatchGetCutoffs.Res]) = {
+  def addCutoffsExpects(
+      expect: PartialFunction[BatchGetCutoffs.Req, BatchGetCutoffs.Res]
+    ) = {
     cutoffsExpects.addExpect(expect)
   }
 
-  def addOrderCancelExpects(expect: PartialFunction[GetOrderCancellation.Req, GetOrderCancellation.Res]) = {
+  def addOrderCancelExpects(
+      expect: PartialFunction[
+        GetOrderCancellation.Req,
+        GetOrderCancellation.Res
+      ]
+    ) = {
     orderCancelExpects.addExpect(expect)
   }
 
@@ -97,8 +114,8 @@ trait MockHelper extends MockFactory {
     (queryProvider.getOrderCancellation _)
       .expects(*)
       .onCall({ req: GetOrderCancellation.Req =>
-          orderCancelExpects(req)
-        })
+        orderCancelExpects(req)
+      })
       .anyNumberOfTimes()
 
     //getFilledAmount
@@ -111,34 +128,36 @@ trait MockHelper extends MockFactory {
   }
 
   private def initExpects() = {
-    getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res]{
-      case req => GetAccount.Res(
-        Some(
-          AccountBalance(
-            address = req.address,
-            tokenBalanceMap = req.tokens.map { t =>
-              t -> AccountBalance.TokenBalance(
-                token = t,
-                balance = BigInt("1000000000000000000000"),
-                allowance = BigInt("1000000000000000000000"),
-                availableAlloawnce = BigInt("1000000000000000000000"),
-                availableBalance = BigInt("1000000000000000000000")
-              )
-            }.toMap
+    getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res] {
+      case req =>
+        GetAccount.Res(
+          Some(
+            AccountBalance(
+              address = req.address,
+              tokenBalanceMap = req.tokens.map { t =>
+                t -> AccountBalance.TokenBalance(
+                  token = t,
+                  balance = BigInt("1000000000000000000000"),
+                  allowance = BigInt("1000000000000000000000"),
+                  availableAlloawnce = BigInt("1000000000000000000000"),
+                  availableBalance = BigInt("1000000000000000000000")
+                )
+              }.toMap
+            )
           )
         )
-      )
     }
-    filledAmountExpects = MockExpects[GetFilledAmount.Req, GetFilledAmount.Res]{
-      case req =>
-        val zeroAmount: Amount = BigInt(0)
-        GetFilledAmount.Res(
-          filledAmountSMap = (req.orderIds map { id =>
-            id -> zeroAmount
-          }).toMap
-        )
-    }
-    burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res]{
+    filledAmountExpects =
+      MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] {
+        case req =>
+          val zeroAmount: Amount = BigInt(0)
+          GetFilledAmount.Res(
+            filledAmountSMap = (req.orderIds map { id =>
+              id -> zeroAmount
+            }).toMap
+          )
+      }
+    burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res] {
       case req =>
         GetBurnRate.Res(burnRate = Some(BurnRate()))
     }
@@ -155,12 +174,13 @@ trait MockHelper extends MockFactory {
           }
         )
     }
-    orderCancelExpects = MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] {
-      case req =>
-        GetOrderCancellation.Res(
-          cancelled = false,
-          block = 100
-        )
-    }
+    orderCancelExpects =
+      MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] {
+        case req =>
+          GetOrderCancellation.Res(
+            cancelled = false,
+            block = 100
+          )
+      }
   }
 }
