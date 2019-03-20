@@ -22,6 +22,9 @@ import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 class RpcHelperSpec
     extends FeatureSpec
     with GivenWhenThen
@@ -52,6 +55,13 @@ class RpcHelperSpec
         .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)))
         .expect(check((res: GetOrderbook.Res) => res.orderbook.nonEmpty))
       info(s"the orderbook is ${orderbook}")
+
+      try {
+        Await.result(system.terminate(), 60 second)
+      } catch {
+        case e: Exception =>
+          info(s"occurs error: ${e.getMessage}, ${e.printStackTrace()}")
+      }
     }
   }
 }

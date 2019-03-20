@@ -51,8 +51,11 @@ class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_FILLS") {
   def blockTimestamp = column[Long]("block_timestamp")
   def isTaker = column[Boolean]("is_taker")
 
+  def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
+
   // indexes
-  def pk = primaryKey("pk_txhash_fillindex", (txHash, fillIndex))
+  def idx_txhash_fillindex =
+    index("pk_txhash_fillindex", (txHash, fillIndex), unique = true)
   def idx_ring_hash = index("idx_ring_hash", (ringHash), unique = false)
   def idx_ring_index = index("idx_ring_index", (ringIndex), unique = false)
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
@@ -105,6 +108,7 @@ class FillTable(tag: Tag) extends BaseTable[Fill](tag, "T_FILLS") {
       miner,
       blockHeight,
       blockTimestamp,
-      isTaker
+      isTaker,
+      sequenceId
     ) <> ((Fill.apply _).tupled, Fill.unapply)
 }
