@@ -222,6 +222,14 @@ class AccountManagerActor(
                   resp = SubmitOrder.Res(Some(resRawOrder.toOrder), true)
                 } yield resp
 
+              case ERR_ORDER_DUST_VALUE =>
+                Future.successful(
+                  SubmitOrder
+                    .Res(
+                      Some(rawOrder.withStatus(STATUS_DUST_ORDER).toOrder()),
+                      false
+                    )
+                )
               case _ => throw e
             }
         }

@@ -87,6 +87,17 @@ trait AccountManagerProcessors {
                     matchRes.taker.status,
                     Some(MarketPair(order.tokenS, order.tokenB))
                   )
+                case STATUS_DUST_ORDER =>
+                  self ! CancelOrder.Req(
+                    matchRes.taker.id,
+                    owner,
+                    matchRes.taker.status,
+                    Some(MarketPair(order.tokenS, order.tokenB))
+                  )
+                  throw ErrorException(
+                    ERR_ORDER_DUST_VALUE,
+                    s"dust order ${order}"
+                  )
                 case _ =>
               }
             } yield Unit

@@ -155,7 +155,7 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
         .Req(owner = account.getAddress)
         .expect(
           check((res: GetOrders.Res) => {
-            res.total > 0
+            res.orders.nonEmpty
           })
         )
 

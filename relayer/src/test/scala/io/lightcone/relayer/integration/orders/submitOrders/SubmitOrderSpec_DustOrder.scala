@@ -126,7 +126,7 @@ class SubmitOrderSpec_DustOrder
               )
             )
           )
-          .expect(check((res: SubmitOrder.Res) => res.success))
+          .expect(check((res: SubmitOrder.Res) => !res.success))
       } catch {
         case e: ErrorException =>
       }
@@ -135,8 +135,7 @@ class SubmitOrderSpec_DustOrder
         .Req(owner = account.getAddress)
         .expectUntil(
           check((res: GetOrders.Res) => {
-            println(res.orders.head.getState.status)
-            true
+            res.orders.head.getState.status.isStatusDustOrder
           })
         )
 

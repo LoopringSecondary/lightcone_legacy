@@ -40,7 +40,6 @@ class DustOrderEvaluator @Inject()(
       tokenS: String,
       amountS: BigInt
     ): Boolean = {
-    println(s"threshold:$threshold")
     tve.getValue(tokenS, amountS) < threshold
   }
 }
