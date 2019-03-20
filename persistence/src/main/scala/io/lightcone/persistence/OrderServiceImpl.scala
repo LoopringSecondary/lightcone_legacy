@@ -37,7 +37,13 @@ class OrderServiceImpl @Inject()(
       case Some(o) =>
         val state = o.state.get
         val returnState =
-          RawOrder.State(status = state.status, createdAt = state.createdAt)
+          RawOrder.State(
+            status = state.status,
+            createdAt = state.createdAt,
+            outstandingAmountS = state.outstandingAmountS,
+            outstandingAmountB = state.outstandingAmountB,
+            outstandingAmountFee = state.outstandingAmountFee
+          )
         Some(
           o.copy(
             state = Some(returnState),

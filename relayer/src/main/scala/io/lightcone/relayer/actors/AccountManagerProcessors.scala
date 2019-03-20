@@ -58,6 +58,8 @@ trait AccountManagerProcessors {
         status = order.status
       )
 
+      println(s"##### processUpdatedOrder ${order}")
+
       for {
         //需要更新到数据库
         //TODO(yongfeng): 暂时添加接口，需要永丰根据目前的使用优化dal的接口
@@ -100,7 +102,10 @@ trait AccountManagerProcessors {
               STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
               STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
               STATUS_SOFT_CANCELLED_LOW_BALANCE | //
-              STATUS_SOFT_CANCELLED_DUPLICIATE =>
+              STATUS_SOFT_CANCELLED_DUPLICIATE | //
+              STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET | //
+              STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
+              STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS =>
             log.debug(s"cancelling order id=${order.id} status=${order.status}")
             val marketPair = MarketPair(order.tokenS, order.tokenB)
             marketManagerActor ? CancelOrder.Req(

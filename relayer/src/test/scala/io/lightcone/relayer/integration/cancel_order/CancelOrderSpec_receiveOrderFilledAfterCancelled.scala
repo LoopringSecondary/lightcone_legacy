@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.Amount
+import io.lightcone.core.{Amount, RawOrder}
 import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
 import io.lightcone.ethereum.event.{EventHeader, OrderFilledEvent}
 import io.lightcone.ethereum.{BlockHeader, TxStatus}
@@ -100,19 +100,34 @@ class CancelOrderSpec_receiveOrderFilledAfterCancelled
         orderHash = order.hash
       )
 
+      val amountS: BigInt = order.amountS
+      val amountB: BigInt = order.amountB
+      val amountFee: BigInt = order.getFeeParams.amountFee
+
       addFilledAmountExpects({
         case req: GetFilledAmount.Req =>
-        val amount: Amount = "5".zeros(LRC_TOKEN.decimals)
-        GetFilledAmount.Res(
-          filledAmountSMap = (req.orderIds map { id =>
-            id -> amount
-          }).toMap
-        )
+          val amount: Amount = amountS / 2
+          GetFilledAmount.Res(
+            filledAmountSMap = (req.orderIds map { id =>
+              id -> amount
+            }).toMap
+          )
       })
       eventDispatcher.dispatch(evt)
 
+      Then(
+        "check the result, the order should be STATUS_SOFT_CANCELLED_BY_USER, but the OutStandingAmount isn't zero."
+      )
       defaultValidate(
-        containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash),
+        containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash)
+          and outStandingMatcherInGetOrders(
+            RawOrder.State(
+              outstandingAmountS = amountS / 2,
+              outstandingAmountB = amountB / 2,
+              outstandingAmountFee = amountFee / 2
+            ),
+            order.hash
+          ),
         accountBalanceMatcher(LRC_TOKEN.address, lrcTokenBalance),
         Map(
           LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),

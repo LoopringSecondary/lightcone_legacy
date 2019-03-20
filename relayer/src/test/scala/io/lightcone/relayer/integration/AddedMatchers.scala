@@ -15,7 +15,7 @@
  */
 
 package io.lightcone.relayer.integration
-import io.lightcone.core.OrderStatus
+import io.lightcone.core.{OrderStatus, RawOrder}
 import io.lightcone.lib.ProtoSerializer
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
@@ -48,8 +48,8 @@ object AddedMatchers extends JsonSupport {
     Matcher { res: GetOrders.Res =>
       MatchResult(
         findOrder(res).count(_.nonEmpty) == hashes.size,
-        s" ${res} doesn't contains order: ${hashes}",
-        res + " contains it."
+        s" ${JsonPrinter.printJsonString(res)} doesn't contains order: $hashes",
+        s"${JsonPrinter.printJsonString(res)} contains it."
       )
     } and
       Matcher { res: GetOrders.Res =>
@@ -57,8 +57,43 @@ object AddedMatchers extends JsonSupport {
           findOrder(res).count(
             _.get.getState.status == orderStatus
           ) == hashes.size,
-          s"The status of order:${findOrder(res)} in result isn't  ${orderStatus}. ",
+          s"The status of order:${findOrder(res)
+            .map(JsonPrinter.printJsonString)} in result isn't  ${orderStatus}. ",
           "the status matched."
+        )
+      }
+  }
+
+  def outStandingMatcherInGetOrders(
+      state: RawOrder.State,
+      hash: String
+    ) = {
+    def findOrder(res: GetOrders.Res) =
+      res.orders.find(_.hash.toLowerCase() == hash.toLowerCase())
+
+    Matcher { res: GetOrders.Res =>
+      MatchResult(
+        findOrder(res).nonEmpty,
+        s" ${JsonPrinter.printJsonString(res)} doesn't contains order: $hash",
+        s"${JsonPrinter.printJsonString(res)} contains it."
+      )
+    } and
+      Matcher { res: GetOrders.Res =>
+        val resState = findOrder(res).get.getState
+        val amountS: BigInt = resState.outstandingAmountS
+        val amountB: BigInt = resState.outstandingAmountB
+        val amountFee: BigInt = resState.outstandingAmountFee
+        val expectedAdmountS: BigInt = state.outstandingAmountS
+        val expectedAmountB: BigInt = state.outstandingAmountB
+        val expectedAmountFee: BigInt = state.outstandingAmountFee
+        MatchResult(
+          resState.outstandingAmountS == state.outstandingAmountS &&
+            resState.outstandingAmountB == state.outstandingAmountB &&
+            resState.outstandingAmountFee == state.outstandingAmountFee,
+          s"The state of order:${JsonPrinter
+            .printJsonString(findOrder(res).get.getState)}, $amountS, $amountB, $amountS in result isn't  ${JsonPrinter
+            .printJsonString(state)}, $expectedAdmountS, $expectedAmountB, $expectedAmountFee. ",
+          "the state matched."
         )
       }
   }
@@ -67,8 +102,8 @@ object AddedMatchers extends JsonSupport {
     Matcher { res: GetOrderbook.Res =>
       MatchResult(
         res.orderbook.isEmpty || (res.getOrderbook.sells.isEmpty && res.getOrderbook.buys.isEmpty),
-        s" ${res} of orderBook nonEmpty.",
-        s"${res} of orderBook isEmpty."
+        s" ${JsonPrinter.printJsonString(res)} of orderBook nonEmpty.",
+        s"${JsonPrinter.printJsonString(res)} of orderBook isEmpty."
       )
     }
   }
@@ -77,8 +112,8 @@ object AddedMatchers extends JsonSupport {
     Matcher { res: GetUserFills.Res =>
       MatchResult(
         res.fills.isEmpty,
-        s" ${res} of getUserFills nonEmpty.",
-        s"${res} of getUserFills isEmpty."
+        s" ${JsonPrinter.printJsonString(res)} of getUserFills nonEmpty.",
+        s"${JsonPrinter.printJsonString(res)} of getUserFills isEmpty."
       )
     }
   }
@@ -87,8 +122,8 @@ object AddedMatchers extends JsonSupport {
     Matcher { res: GetMarketFills.Res =>
       MatchResult(
         res.fills.isEmpty,
-        s" ${res} of GetMarketFills nonEmpty.",
-        s"${res} of GetMarketFills isEmpty."
+        s" ${JsonPrinter.printJsonString(res)} of GetMarketFills nonEmpty.",
+        s"${JsonPrinter.printJsonString(res)} of GetMarketFills isEmpty."
       )
     }
   }
@@ -99,8 +134,8 @@ object AddedMatchers extends JsonSupport {
     ) = Matcher { res: GetAccount.Res =>
     MatchResult(
       res.getAccountBalance.tokenBalanceMap(token) == tokenBalance,
-      s" ${serialization.write(ps.serialize(res.getAccountBalance.tokenBalanceMap(token)))} was not equal to  ${serialization
-        .write(ps.serialize(tokenBalance))}.",
+      s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(token))} was not equal to  ${JsonPrinter
+        .printJsonString(tokenBalance)}.",
       s"accountBalance matches."
     )
   }
@@ -109,8 +144,7 @@ object AddedMatchers extends JsonSupport {
     res: GeneratedMessage =>
       MatchResult(
         res == expectedRes,
-        s" ${serialization.write(ps.serialize(res))} was not equal to  ${serialization
-          .write(ps.serialize(expectedRes))}.",
+        s" ${JsonPrinter.printJsonString(res)} was not equal to  ${JsonPrinter.printJsonString(expectedRes)}.",
         s"equals."
       )
   }
