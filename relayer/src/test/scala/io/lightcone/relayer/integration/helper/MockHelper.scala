@@ -34,7 +34,7 @@ case class MockExpects[E, T](defaultExpects: PartialFunction[E, T]) {
   def apply(e: E): T = expects(e)
 }
 
-trait MockHelper extends MockFactory  with OneInstancePerTest  {
+trait MockHelper extends MockFactory with OneInstancePerTest {
 
   private var getAccountExpects: MockExpects[GetAccount.Req, GetAccount.Res] = _
   private var filledAmountExpects

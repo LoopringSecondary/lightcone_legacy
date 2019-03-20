@@ -22,10 +22,6 @@ import io.lightcone.ethereum.event.{EventHeader, OrderFilledEvent}
 import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.ethereummock.{
-  queryProvider,
-  EthereumQueryDataProvider
-}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
@@ -104,8 +100,15 @@ class CancelOrderSpec_receiveOrderFilledAfterCancelled
         orderHash = order.hash
       )
 
-      setMockExpects()
-
+      addFilledAmountExpects({
+        case req: GetFilledAmount.Req =>
+        val amount: Amount = "5".zeros(LRC_TOKEN.decimals)
+        GetFilledAmount.Res(
+          filledAmountSMap = (req.orderIds map { id =>
+            id -> amount
+          }).toMap
+        )
+      })
       eventDispatcher.dispatch(evt)
 
       defaultValidate(
@@ -118,42 +121,5 @@ class CancelOrderSpec_receiveOrderFilledAfterCancelled
         )
       )
     }
-  }
-
-  def setMockExpects() = {
-    queryProvider = mock[EthereumQueryDataProvider]
-    (queryProvider.getFilledAmount _)
-      .expects(*)
-      .onCall({ req: GetFilledAmount.Req =>
-        val amount: Amount = "5".zeros(LRC_TOKEN.decimals)
-        GetFilledAmount.Res(
-          filledAmountSMap = (req.orderIds map { id =>
-            id -> amount
-          }).toMap
-        )
-      })
-      .anyNumberOfTimes()
-
-    (queryProvider.getAccount _)
-      .expects(*)
-      .onCall { req: GetAccount.Req =>
-        GetAccount.Res(
-          Some(
-            AccountBalance(
-              address = req.address,
-              tokenBalanceMap = req.tokens.map { t =>
-                t -> AccountBalance.TokenBalance(
-                  token = t,
-                  balance = BigInt("1000000000000000000000"),
-                  allowance = BigInt("1000000000000000000000"),
-                  availableAlloawnce = BigInt("1000000000000000000000"),
-                  availableBalance = BigInt("1000000000000000000000")
-                )
-              }.toMap
-            )
-          )
-        )
-      }
-      .anyNumberOfTimes()
   }
 }

@@ -16,16 +16,9 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.Amount
 import io.lightcone.core.OrderStatus._
-import io.lightcone.ethereum.event.{EventHeader, OrderFilledEvent}
-import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.ethereummock.{
-  queryProvider,
-  EthereumQueryDataProvider
-}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
