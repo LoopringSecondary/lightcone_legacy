@@ -115,6 +115,7 @@ class CancelOrderSpec_receiveOrderFilledAfterCancelled
       })
       eventDispatcher.dispatch(evt)
 
+      Thread.sleep(1000) //等待执行事件完毕
       Then(
         "check the result, the order should be STATUS_SOFT_CANCELLED_BY_USER, but the OutStandingAmount isn't zero."
       )
