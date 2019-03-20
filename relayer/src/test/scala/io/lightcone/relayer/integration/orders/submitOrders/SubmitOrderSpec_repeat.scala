@@ -19,14 +19,11 @@ package io.lightcone.relayer.integration.orders.submitOrders
 import io.lightcone.core._
 import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.ethereummock._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration._
 import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration._
 import org.scalatest._
-
-import scala.math.BigInt
 
 class SubmitOrderSpec_repeat
     extends FeatureSpec
@@ -34,87 +31,30 @@ class SubmitOrderSpec_repeat
     with CommonHelper
     with Matchers {
 
-  override protected def beforeEach(): Unit = {
-    super.beforeEach()
-    queryProvider = mock[EthereumQueryDataProvider]
-    accessProvider = mock[EthereumAccessDataProvider]
-    //账户余额
-    (queryProvider.getAccount _)
-      .expects(*)
-      .onCall { req: GetAccount.Req =>
-        GetAccount.Res(
-          Some(
-            AccountBalance(
-              address = req.address,
-              tokenBalanceMap = req.tokens.map { t =>
-                t -> AccountBalance.TokenBalance(
-                  token = t,
-                  balance = "100".zeros(18),
-                  allowance = "100".zeros(18)
-                )
-              }.toMap
-            )
-          )
-        )
-      }
-      .anyNumberOfTimes()
-
-    //burnRate
-    (queryProvider.getBurnRate _)
-      .expects(*)
-      .onCall({ req: GetBurnRate.Req =>
-        GetBurnRate.Res(burnRate = Some(BurnRate()))
-      })
-      .anyNumberOfTimes()
-
-    //batchGetCutoffs
-    (queryProvider.batchGetCutoffs _)
-      .expects(*)
-      .onCall({ req: BatchGetCutoffs.Req =>
-        BatchGetCutoffs.Res(
-          req.reqs.map { r =>
-            GetCutoff.Res(
-              r.broker,
-              r.owner,
-              r.marketHash,
-              BigInt(0)
-            )
-          }
-        )
-      })
-      .anyNumberOfTimes()
-
-    //orderCancellation
-    (queryProvider.getOrderCancellation _)
-      .expects(*)
-      .onCall({ req: GetOrderCancellation.Req =>
-        GetOrderCancellation.Res(
-          cancelled = false,
-          block = 100
-        )
-      })
-      .anyNumberOfTimes()
-
-    //getFilledAmount
-    (queryProvider.getFilledAmount _)
-      .expects(*)
-      .onCall({ req: GetFilledAmount.Req =>
-        val zeroAmount: Amount = BigInt(0)
-        GetFilledAmount.Res(
-          filledAmountSMap = (req.orderIds map { id =>
-            id -> zeroAmount
-          }).toMap
-        )
-      })
-      .anyNumberOfTimes()
-  }
-
   feature("submit  order ") {
     scenario("repeat to submit the same order") {
       implicit val account = getUniqueAccount()
       Given(
         s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
+
+      addAccountExpects({
+        case req =>
+          GetAccount.Res(
+            Some(
+              AccountBalance(
+                address = req.address,
+                tokenBalanceMap = req.tokens.map { t =>
+                  t -> AccountBalance.TokenBalance(
+                    token = t,
+                    balance = "100".zeros(18),
+                    allowance = "100".zeros(18)
+                  )
+                }.toMap
+              )
+            )
+          )
+      })
 
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
