@@ -18,7 +18,6 @@ package io.lightcone.relayer.integration.helper
 import io.lightcone.core.{Amount, BurnRate}
 import io.lightcone.relayer.data.{GetAccount, _}
 import io.lightcone.relayer.ethereummock._
-import io.lightcone.relayer.integration.helper
 import org.scalamock.scalatest.MockFactory
 
 import scala.math.BigInt
@@ -36,57 +35,11 @@ case class MockExpects[E, T](defaultExpects:PartialFunction[E, T]) {
 
 trait MockHelper extends MockFactory {
 
-  private var getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res]{
-    case req => GetAccount.Res(
-      Some(
-        AccountBalance(
-          address = req.address,
-          tokenBalanceMap = req.tokens.map { t =>
-            t -> AccountBalance.TokenBalance(
-              token = t,
-              balance = BigInt("1000000000000000000000"),
-              allowance = BigInt("1000000000000000000000"),
-              availableAlloawnce = BigInt("1000000000000000000000"),
-              availableBalance = BigInt("1000000000000000000000")
-            )
-          }.toMap
-        )
-      )
-    )
-  }
-  private var filledAmountExpects = MockExpects[GetFilledAmount.Req, GetFilledAmount.Res]{
-    case req =>
-      val zeroAmount: Amount = BigInt(0)
-      GetFilledAmount.Res(
-        filledAmountSMap = (req.orderIds map { id =>
-          id -> zeroAmount
-        }).toMap
-      )
-  }
-  private var burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res]{
-    case req =>
-      GetBurnRate.Res(burnRate = Some(BurnRate()))
-  }
-  private var cutoffsExpects = MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
-    case req =>
-      BatchGetCutoffs.Res(
-        req.reqs.map { r =>
-          GetCutoff.Res(
-            r.broker,
-            r.owner,
-            r.marketHash,
-            BigInt(0)
-          )
-        }
-      )
-  }
-  private var orderCancelExpects = MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] {
-    case req =>
-      GetOrderCancellation.Res(
-        cancelled = false,
-        block = 100
-      )
-  }
+  private var getAccountExpects:MockExpects[GetAccount.Req, GetAccount.Res] = _
+  private var filledAmountExpects:MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
+  private var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
+  private var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
+  private var orderCancelExpects: MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
 
   def addAccountExpects(expect: PartialFunction[GetAccount.Req, GetAccount.Res] ) = {
     getAccountExpects.addExpect(expect)
@@ -113,6 +66,8 @@ trait MockHelper extends MockFactory {
   def setDefaultEthExpects() = {
     queryProvider = mock[EthereumQueryDataProvider]
     accessProvider = mock[EthereumAccessDataProvider]
+    initExpects()
+
     //账户余额
     (queryProvider.getAccount _)
       .expects(*)
@@ -154,4 +109,57 @@ trait MockHelper extends MockFactory {
       .anyNumberOfTimes()
   }
 
+  private def initExpects() = {
+    getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res]{
+      case req => GetAccount.Res(
+        Some(
+          AccountBalance(
+            address = req.address,
+            tokenBalanceMap = req.tokens.map { t =>
+              t -> AccountBalance.TokenBalance(
+                token = t,
+                balance = BigInt("1000000000000000000000"),
+                allowance = BigInt("1000000000000000000000"),
+                availableAlloawnce = BigInt("1000000000000000000000"),
+                availableBalance = BigInt("1000000000000000000000")
+              )
+            }.toMap
+          )
+        )
+      )
+    }
+    filledAmountExpects = MockExpects[GetFilledAmount.Req, GetFilledAmount.Res]{
+      case req =>
+        val zeroAmount: Amount = BigInt(0)
+        GetFilledAmount.Res(
+          filledAmountSMap = (req.orderIds map { id =>
+            id -> zeroAmount
+          }).toMap
+        )
+    }
+    burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res]{
+      case req =>
+        GetBurnRate.Res(burnRate = Some(BurnRate()))
+    }
+    cutoffsExpects = MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
+      case req =>
+        BatchGetCutoffs.Res(
+          req.reqs.map { r =>
+            GetCutoff.Res(
+              r.broker,
+              r.owner,
+              r.marketHash,
+              BigInt(0)
+            )
+          }
+        )
+    }
+    orderCancelExpects = MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] {
+      case req =>
+        GetOrderCancellation.Res(
+          cancelled = false,
+          block = 100
+        )
+    }
+  }
 }
