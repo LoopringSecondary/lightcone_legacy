@@ -15,26 +15,19 @@
  */
 
 package io.lightcone.relayer.integration
-import io.lightcone.relayer.integration.helper.{DbHelper, MockHelper}
-import org.scalatest.{BeforeAndAfterEach, Matchers}
+import io.lightcone.lib.ProtoSerializer
+import io.lightcone.relayer.jsonrpc.JsonSupport
+import scalapb.GeneratedMessage
 
-trait CommonHelper
-    extends MockHelper
-    with DbHelper
-    with Matchers
-    with RpcHelper
-    with OrderHelper
-    with BeforeAndAfterEach {
+object JsonPrinter extends JsonSupport {
 
-  //保证每次都重置ethmock和数据库，
-  //当需要不同的重置条件时，需要覆盖该方法
-  override protected def beforeEach(): Unit = {
-    setDefaultEthExpects()
-    prepareDbModule(dbModule)
-    prepareMetadata(dbModule, metadataManager)(timeout, timeProvider)
-    super.beforeEach()
+  val ps = new ProtoSerializer
+
+  def printJsonString(msg: GeneratedMessage) = {
+    serialization.write(ps.serialize(msg))
   }
 
-  def prepareMarkets() = {}
-
+  def printJsonString(msg: Option[GeneratedMessage]) = {
+    serialization.write(ps.serialize(msg.get))
+  }
 }

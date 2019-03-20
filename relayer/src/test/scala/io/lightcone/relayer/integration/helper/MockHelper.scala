@@ -19,6 +19,7 @@ import io.lightcone.core.{Amount, BurnRate}
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.OneInstancePerTest
 
 import scala.math.BigInt
 
@@ -33,7 +34,7 @@ case class MockExpects[E, T](defaultExpects: PartialFunction[E, T]) {
   def apply(e: E): T = expects(e)
 }
 
-trait MockHelper extends MockFactory {
+trait MockHelper extends MockFactory with OneInstancePerTest {
 
   private var getAccountExpects: MockExpects[GetAccount.Req, GetAccount.Res] = _
   private var filledAmountExpects

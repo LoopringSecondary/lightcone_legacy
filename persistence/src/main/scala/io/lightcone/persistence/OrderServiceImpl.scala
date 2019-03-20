@@ -35,8 +35,18 @@ class OrderServiceImpl @Inject()(
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {
     order match {
       case Some(o) =>
+        val state = o.state.get
+        val returnState =
+          RawOrder.State(
+            status = state.status,
+            createdAt = state.createdAt,
+            outstandingAmountS = state.outstandingAmountS,
+            outstandingAmountB = state.outstandingAmountB,
+            outstandingAmountFee = state.outstandingAmountFee
+          )
         Some(
           o.copy(
+            state = Some(returnState),
             sequenceId = 0,
             marketId = 0,
             marketEntityId = 0,

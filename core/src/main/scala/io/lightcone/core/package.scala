@@ -92,4 +92,8 @@ package object core {
 
   @inline
   implicit class Rich_Token(token: Token) extends RichToken(token)
+
+  @inline
+  implicit class Rich_OrderStatus(status: OrderStatus)
+      extends RichOrderStatus(status)
 }

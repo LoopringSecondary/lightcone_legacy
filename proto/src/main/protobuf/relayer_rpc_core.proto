@@ -89,8 +89,7 @@ message CancelOrder {
     }
 
     message Res {
-        io.lightcone.core.ErrorCode error = 1;
-        io.lightcone.core.OrderStatus status = 2; //取消的类型
+        io.lightcone.core.OrderStatus status = 1; //取消的类型
     }
 }
 
