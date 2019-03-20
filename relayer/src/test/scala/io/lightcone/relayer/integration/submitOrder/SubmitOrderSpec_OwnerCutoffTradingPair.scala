@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.integration.orders.submitOrders
+package io.lightcone.relayer.integration.submitOrder
 
 import io.lightcone.core._
 import io.lightcone.relayer.data._
@@ -26,14 +26,14 @@ import org.scalatest._
 
 import scala.math.BigInt
 
-class SubmitOrderSpec_OwnerCutoff
+class SubmitOrderSpec_OwnerCutoffTradingPair
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
     with Matchers {
 
   feature("submit  order ") {
-    scenario("owner cutoff is not zero") {
+    scenario("lrc-weth market cutoff is not zero and others' are zero") {
       implicit val account = getUniqueAccount()
       Given(
         s"an new account with enough balance and enough allowance: ${account.getAddress}"
@@ -43,12 +43,18 @@ class SubmitOrderSpec_OwnerCutoff
         case req =>
           BatchGetCutoffs.Res(
             req.reqs.map { r =>
-              GetCutoff.Res(
-                r.broker,
-                r.owner,
-                r.marketHash,
-                BigInt(timeProvider.getTimeSeconds())
-              )
+              if (r.marketHash == MarketPair(
+                    LRC_TOKEN.address,
+                    WETH_TOKEN.address
+                  ).hashString)
+                GetCutoff.Res(
+                  r.broker,
+                  r.owner,
+                  r.marketHash,
+                  BigInt(timeProvider.getTimeSeconds())
+                )
+              else
+                GetCutoff.Res(r.broker, r.owner, r.marketHash, BigInt(0))
             }
           )
       })
@@ -93,6 +99,21 @@ class SubmitOrderSpec_OwnerCutoff
         "the result of submit order that valid since is bigger than cutoff is true"
       )
 
+      When("submit an order of another market")
+
+      try {
+        SubmitOrder
+          .Req(
+            Some(
+              createRawOrder(
+                tokenS = GTO_TOKEN.address
+              )
+            )
+          )
+          .expect(check((res: SubmitOrder.Res) => res.success))
+      } catch {
+        case e: ErrorException =>
+      }
     }
   }
 

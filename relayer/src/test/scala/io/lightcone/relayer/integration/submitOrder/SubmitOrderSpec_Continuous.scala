@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.integration.orders.submitOrders
+package io.lightcone.relayer.integration.submitOrder
 
 import io.lightcone.core._
 import io.lightcone.lib.NumericConversion
@@ -37,7 +37,6 @@ class SubmitOrderSpec_Continuous
       Given(
         s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
-
       addAccountExpects({
         case req =>
           GetAccount.Res(

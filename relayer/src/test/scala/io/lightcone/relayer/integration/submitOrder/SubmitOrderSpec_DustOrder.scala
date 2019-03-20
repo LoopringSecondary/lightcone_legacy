@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.integration.orders.submitOrders
+package io.lightcone.relayer.integration.submitOrder
 
 import io.lightcone.core._
 import io.lightcone.relayer.data._
@@ -30,7 +30,7 @@ class SubmitOrderSpec_DustOrder
     with CommonHelper
     with Matchers {
 
-  feature("submit ") {
+  feature("submit order") {
     scenario("check dust order") {
       implicit val account = getUniqueAccount()
       Given("a new account with enough balance and allowance")

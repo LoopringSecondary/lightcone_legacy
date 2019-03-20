@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.integration.orders.submitOrders
+package io.lightcone.relayer.integration.submitOrder
 
 import akka.pattern._
 import io.lightcone.core._
