@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration
 import io.lightcone.core._
 import io.lightcone.lib.Address
-import io.lightcone.persistence.TokenTickerRecord
+import io.lightcone.persistence.{CMCCrawlerConfigForToken, TokenTickerRecord}
 import io.lightcone.relayer.implicits._
 
 object Metadatas {
@@ -84,15 +84,15 @@ object Metadatas {
   val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
 
   val TOKEN_SLUGS_SYMBOLS = Seq(
-    ("ETH", "ethereum"),
-    ("BTC", "bitcoin"),
-    ("WETH", "weth"),
-    ("LRC", "loopring"),
-    ("GTO", "gifto"),
-    (Currency.RMB.name, Currency.RMB.getSlug()),
-    (Currency.JPY.name, Currency.JPY.getSlug()),
-    (Currency.EUR.name, Currency.EUR.getSlug()),
-    (Currency.GBP.name, Currency.GBP.getSlug())
+    CMCCrawlerConfigForToken("ETH", "ethereum"),
+    CMCCrawlerConfigForToken("BTC", "bitcoin"),
+    CMCCrawlerConfigForToken("WETH", "weth"),
+    CMCCrawlerConfigForToken("LRC", "loopring"),
+    CMCCrawlerConfigForToken("GTO", "gifto"),
+    CMCCrawlerConfigForToken(Currency.RMB.name, Currency.RMB.getSlug()),
+    CMCCrawlerConfigForToken(Currency.JPY.name, Currency.JPY.getSlug()),
+    CMCCrawlerConfigForToken(Currency.EUR.name, Currency.EUR.getSlug()),
+    CMCCrawlerConfigForToken(Currency.GBP.name, Currency.GBP.getSlug())
   )
 
   val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET)
@@ -169,32 +169,33 @@ object Metadatas {
       "CMC"
     ),
     TokenTickerRecord(
-      symbol = "RMB",
-      slug = "loopring-rmb",
+      symbol = Currency.RMB.name,
+      slug = Currency.RMB.getSlug(),
       price = 0.1487497,
       isValid = false,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = "JPY",
-      slug = "loopring-jpy",
+      symbol = Currency.JPY.name,
+      slug = Currency.JPY.getSlug(),
       price = 0.00900017,
       isValid = false,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = "EUR",
-      slug = "loopring-eur",
+      symbol = Currency.EUR.name,
+      slug = Currency.EUR.getSlug(),
       price = 1.12334307,
       isValid = false,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = "GBP",
-      slug = "loopring-gbp",
+      symbol = Currency.GBP.name,
+      slug = Currency.GBP.getSlug(),
       price = 1.2973534,
       isValid = false,
       dataSource = "Sina"
     )
   ).map(_.copy(timestamp = timeProvider.getTimeSeconds()))
+
 }

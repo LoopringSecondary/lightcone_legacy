@@ -31,7 +31,8 @@ import io.lightcone.relayer.CoreModule
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.integration.CoreDeployerForTest
+import io.lightcone.relayer.integration.{CoreDeployerForTest, Metadatas}
+import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.rnorth.ducttape.TimeoutException
@@ -40,7 +41,7 @@ import org.testcontainers.containers.ContainerLaunchException
 
 import scala.concurrent._
 
-class IntegrationStarter extends MockHelper with DbHelper {
+class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
 
   var injector: Injector = _
 
@@ -53,12 +54,12 @@ class IntegrationStarter extends MockHelper with DbHelper {
     setDefaultEthExpects()
     val config = ConfigFactory.load()
     injector = Guice.createInjector(new CoreModule(config, true))
-    val dbModule = injector.instance[DatabaseModule]
-    val metadataManager = injector.instance[MetadataManager]
+    implicit val dbModule = injector.instance[DatabaseModule]
+    implicit val metadataManager = injector.instance[MetadataManager]
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
     prepareDbModule(dbModule)
-    prepareMetadata(dbModule, metadataManager)
+    prepareMetadata(TOKENS, MARKETS, externalTickers)
 
     injector
       .instance[CoreDeployerForTest]
