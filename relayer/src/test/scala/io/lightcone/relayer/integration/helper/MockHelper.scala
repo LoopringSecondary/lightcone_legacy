@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.integration.helper
 import io.lightcone.core.{Amount, BurnRate}
-import io.lightcone.relayer.data.{GetAccount, _}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
 import org.scalamock.scalatest.MockFactory
 
