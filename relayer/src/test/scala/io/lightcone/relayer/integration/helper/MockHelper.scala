@@ -36,70 +36,18 @@ case class MockExpects[E, T](defaultExpects: PartialFunction[E, T]) {
 
 object MockHelper {
 
-  var getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res]({
-    case req =>
-      println(s"##### initExpects ${req}, ${this}")
-      GetAccount.Res(
-        Some(
-          AccountBalance(
-            address = req.address,
-            tokenBalanceMap = req.tokens.map { t =>
-              t -> AccountBalance.TokenBalance(
-                token = t,
-                balance = BigInt("1000000000000000000000"),
-                allowance = BigInt("1000000000000000000000"),
-                availableAlloawnce = BigInt("1000000000000000000000"),
-                availableBalance = BigInt("1000000000000000000000")
-              )
-            }.toMap
-          )
-        )
-      )
-  })
+  var getAccountExpects:MockExpects[GetAccount.Req, GetAccount.Res] = _
 
-  var filledAmountExpects =
-    MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] {
-      case req =>
-        val zeroAmount: Amount = BigInt(0)
-        GetFilledAmount.Res(
-          filledAmountSMap = (req.orderIds map { id =>
-            id -> zeroAmount
-          }).toMap
-        )
-    }
+  var filledAmountExpects: MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
 
-  var burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res] {
-    case req =>
-      GetBurnRate.Res(burnRate = Some(BurnRate()))
-  }
+  var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
 
-  var cutoffsExpects = MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
-    case req =>
-      BatchGetCutoffs.Res(
-        req.reqs.map { r =>
-          GetCutoff.Res(
-            r.broker,
-            r.owner,
-            r.marketHash,
-            BigInt(0)
-          )
-        }
-      )
-  }
+  var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
 
-  var orderCancelExpects =
-    MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] {
-      case req =>
-        GetOrderCancellation.Res(
-          cancelled = false,
-          block = 100
-        )
-    }
+  var orderCancelExpects: MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
 }
 
 trait MockHelper extends MockFactory with OneInstancePerTest {
-
-  //  initExpects()
 
   def addAccountExpects(
       expect: PartialFunction[GetAccount.Req, GetAccount.Res]
