@@ -23,17 +23,114 @@ import org.scalatest.OneInstancePerTest
 
 import scala.math.BigInt
 
-trait MockHelper extends MockFactory with OneInstancePerTest {
+//TODO:可以考虑设置请求次数
+case class MockExpects[E, T](defaultExpects: PartialFunction[E, T]) {
+  var expects = defaultExpects
+
+  def addExpect(expect: PartialFunction[E, T]) = {
+    expects = expect orElse expects
+  }
+
+  def apply(e: E): T = expects(e)
+}
+
+trait MockHelper extends MockFactory  with OneInstancePerTest  {
+
+  private var getAccountExpects: MockExpects[GetAccount.Req, GetAccount.Res] = _
+  private var filledAmountExpects
+    : MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
+  private var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
+  private var cutoffsExpects
+    : MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
+  private var orderCancelExpects
+    : MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
+
+  initExpects()
+
+  def addAccountExpects(
+      expect: PartialFunction[GetAccount.Req, GetAccount.Res]
+    ) = {
+    getAccountExpects.addExpect(expect)
+  }
+
+  def addFilledAmountExpects(
+      expect: PartialFunction[GetFilledAmount.Req, GetFilledAmount.Res]
+    ) = {
+    filledAmountExpects.addExpect(expect)
+  }
+
+  def addBurnRateExpects(
+      expect: PartialFunction[GetBurnRate.Req, GetBurnRate.Res]
+    ) = {
+    burnRateExpects.addExpect(expect)
+  }
+
+  def addCutoffsExpects(
+      expect: PartialFunction[BatchGetCutoffs.Req, BatchGetCutoffs.Res]
+    ) = {
+    cutoffsExpects.addExpect(expect)
+  }
+
+  def addOrderCancelExpects(
+      expect: PartialFunction[
+        GetOrderCancellation.Req,
+        GetOrderCancellation.Res
+      ]
+    ) = {
+    orderCancelExpects.addExpect(expect)
+  }
 
   //eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
   //重设时，不能直接设置新的expects来覆盖旧有的expects，但是可以通过使用新变量或者针对每个expect进行操作，但是后者比较繁琐
   def setDefaultEthExpects() = {
     queryProvider = mock[EthereumQueryDataProvider]
     accessProvider = mock[EthereumAccessDataProvider]
+    initExpects()
+
     //账户余额
     (queryProvider.getAccount _)
       .expects(*)
       .onCall { req: GetAccount.Req =>
+        getAccountExpects(req)
+      }
+      .anyNumberOfTimes()
+
+    //burnRate
+    (queryProvider.getBurnRate _)
+      .expects(*)
+      .onCall({ req: GetBurnRate.Req =>
+        burnRateExpects(req)
+      })
+      .anyNumberOfTimes()
+
+    //batchGetCutoffs
+    (queryProvider.batchGetCutoffs _)
+      .expects(*)
+      .onCall({ req: BatchGetCutoffs.Req =>
+        cutoffsExpects(req)
+      })
+      .anyNumberOfTimes()
+
+    //orderCancellation
+    (queryProvider.getOrderCancellation _)
+      .expects(*)
+      .onCall({ req: GetOrderCancellation.Req =>
+        orderCancelExpects(req)
+      })
+      .anyNumberOfTimes()
+
+    //getFilledAmount
+    (queryProvider.getFilledAmount _)
+      .expects(*)
+      .onCall({ req: GetFilledAmount.Req =>
+        filledAmountExpects(req)
+      })
+      .anyNumberOfTimes()
+  }
+
+  private def initExpects() = {
+    getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res] {
+      case req =>
         GetAccount.Res(
           Some(
             AccountBalance(
@@ -50,21 +147,23 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
             )
           )
         )
+    }
+    filledAmountExpects =
+      MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] {
+        case req =>
+          val zeroAmount: Amount = BigInt(0)
+          GetFilledAmount.Res(
+            filledAmountSMap = (req.orderIds map { id =>
+              id -> zeroAmount
+            }).toMap
+          )
       }
-      .anyNumberOfTimes()
-
-    //burnRate
-    (queryProvider.getBurnRate _)
-      .expects(*)
-      .onCall({ req: GetBurnRate.Req =>
+    burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res] {
+      case req =>
         GetBurnRate.Res(burnRate = Some(BurnRate()))
-      })
-      .anyNumberOfTimes()
-
-    //batchGetCutoffs
-    (queryProvider.batchGetCutoffs _)
-      .expects(*)
-      .onCall({ req: BatchGetCutoffs.Req =>
+    }
+    cutoffsExpects = MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
+      case req =>
         BatchGetCutoffs.Res(
           req.reqs.map { r =>
             GetCutoff.Res(
@@ -75,32 +174,14 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
             )
           }
         )
-      })
-      .anyNumberOfTimes()
-
-    //orderCancellation
-    (queryProvider.getOrderCancellation _)
-      .expects(*)
-      .onCall({ req: GetOrderCancellation.Req =>
-        GetOrderCancellation.Res(
-          cancelled = false,
-          block = 100
-        )
-      })
-      .anyNumberOfTimes()
-
-    //getFilledAmount
-    (queryProvider.getFilledAmount _)
-      .expects(*)
-      .onCall({ req: GetFilledAmount.Req =>
-        val zeroAmount: Amount = BigInt(0)
-        GetFilledAmount.Res(
-          filledAmountSMap = (req.orderIds map { id =>
-            id -> zeroAmount
-          }).toMap
-        )
-      })
-      .anyNumberOfTimes()
+    }
+    orderCancelExpects =
+      MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] {
+        case req =>
+          GetOrderCancellation.Res(
+            cancelled = false,
+            block = 100
+          )
+      }
   }
-
 }
