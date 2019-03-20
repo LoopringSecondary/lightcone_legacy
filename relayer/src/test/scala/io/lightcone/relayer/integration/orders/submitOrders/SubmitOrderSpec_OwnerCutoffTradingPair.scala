@@ -17,18 +17,17 @@
 package io.lightcone.relayer.integration.orders.submitOrders
 
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
-import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
+import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
+import io.lightcone.relayer.getUniqueAccount
 import org.scalatest._
 
 import scala.math.BigInt
 
-class SubmitOrderSpec_EnoughBalanceNoAllowance
+class SubmitOrderSpec_OwnerCutoffTradingPair
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -49,10 +48,8 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
               tokenBalanceMap = req.tokens.map { t =>
                 t -> AccountBalance.TokenBalance(
                   token = t,
-                  balance = "100000".zeros(LRC_TOKEN.decimals),
-                  allowance = BigInt(0),
-                  availableBalance = "100000".zeros(LRC_TOKEN.decimals),
-                  availableAlloawnce = BigInt(0)
+                  balance = "1000".zeros(18),
+                  allowance = "1000".zeros(18)
                 )
               }.toMap
             )
@@ -75,12 +72,18 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
       .onCall({ req: BatchGetCutoffs.Req =>
         BatchGetCutoffs.Res(
           req.reqs.map { r =>
-            GetCutoff.Res(
-              r.broker,
-              r.owner,
-              r.marketHash,
-              BigInt(0)
-            )
+            if (r.marketHash == MarketPair(
+                  LRC_TOKEN.address,
+                  WETH_TOKEN.address
+                ).hashString)
+              GetCutoff.Res(
+                r.broker,
+                r.owner,
+                r.marketHash,
+                BigInt(timeProvider.getTimeSeconds())
+              )
+            else
+              GetCutoff.Res(r.broker, r.owner, r.marketHash, BigInt(0))
           }
         )
       })
@@ -109,52 +112,70 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
         )
       })
       .anyNumberOfTimes()
+
   }
 
   feature("submit  order ") {
-    scenario("enough balance and no allowance") {
+    scenario("lrc-weth market cutoff is not zero and others' are zero") {
       implicit val account = getUniqueAccount()
       Given(
-        s"an new account with enough balance and no allowance: ${account.getAddress}"
+        s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
-
-      val getBalanceReq = GetAccount.Req(
-        account.getAddress,
-        tokens = Seq(LRC_TOKEN.address)
-      )
-      val res = getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) > "100".zeros(
-            LRC_TOKEN.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) > "100"
-            .zeros(LRC_TOKEN.decimals)
-        })
-      )
-
-      When("submit an order.")
-
+      And("submit the an order that valid since is smaller than cutoff")
       try {
-        val submitRes = SubmitOrder
-          .Req(Some(createRawOrder()))
+        SubmitOrder
+          .Req(
+            Some(
+              createRawOrder(
+                amountS = "40".zeros(LRC_TOKEN.decimals),
+                amountFee = "10".zeros(LRC_TOKEN.decimals),
+                validSince = (timeProvider.getTimeSeconds() - 1).toInt
+              )
+            )
+          )
           .expect(check((res: SubmitOrder.Res) => !res.success))
       } catch {
         case e: ErrorException =>
       }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
-        .expectUntil(
-          check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusSoftCancelledLowBalance
-          })
-        )
 
       Then(
-        s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
+        "the result of submit order that valid since is smaller than cutoff is false"
       )
+
+      And("submit the an order that valid since is bigger than cutoff")
+      try {
+        SubmitOrder
+          .Req(
+            Some(
+              createRawOrder(
+                validSince = (timeProvider.getTimeSeconds() + 1).toInt
+              )
+            )
+          )
+          .expect(check((res: SubmitOrder.Res) => res.success))
+      } catch {
+        case e: ErrorException =>
+      }
+
+      Then(
+        "the result of submit order that valid since is bigger than cutoff is true"
+      )
+
+      When("submit an order of another market")
+
+      try {
+        SubmitOrder
+          .Req(
+            Some(
+              createRawOrder(
+                tokenS = GTO_TOKEN.address
+              )
+            )
+          )
+          .expect(check((res: SubmitOrder.Res) => res.success))
+      } catch {
+        case e: ErrorException =>
+      }
     }
   }
 

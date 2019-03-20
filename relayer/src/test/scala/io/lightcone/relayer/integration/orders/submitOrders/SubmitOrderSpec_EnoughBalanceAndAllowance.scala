@@ -16,19 +16,20 @@
 
 package io.lightcone.relayer.integration.orders.submitOrders
 
-import io.lightcone.core.{Amount, BurnRate, ErrorException}
+import io.lightcone.core._
 import io.lightcone.lib.NumericConversion
-import io.lightcone.relayer.integration._
-import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
+import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
+import io.lightcone.relayer.integration._
+import io.lightcone.relayer.integration.Metadatas._
+
 import org.scalatest._
 
 import scala.math.BigInt
 
-class SubmitOrderSpec_NotBalanceEnoughAllowance
+class SubmitOrderSpec_EnoughBalanceAndAllowance
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -49,10 +50,8 @@ class SubmitOrderSpec_NotBalanceEnoughAllowance
               tokenBalanceMap = req.tokens.map { t =>
                 t -> AccountBalance.TokenBalance(
                   token = t,
-                  balance = BigInt("0"),
-                  allowance = "100000".zeros(LRC_TOKEN.decimals),
-                  availableAlloawnce = BigInt("0"),
-                  availableBalance = "100000".zeros(LRC_TOKEN.decimals)
+                  balance = "100".zeros(18),
+                  allowance = "100".zeros(18)
                 )
               }.toMap
             )
@@ -111,24 +110,31 @@ class SubmitOrderSpec_NotBalanceEnoughAllowance
       .anyNumberOfTimes()
   }
 
-  feature("submit order") {
-    scenario("no balance and enough allowance") {
+  feature("submit  order ") {
+    scenario("enough balance and enough allowance") {
       implicit val account = getUniqueAccount()
-      Given("an new account with no balance and enough allowance")
+      Given(
+        s"an new account with enough balance and enough allowance: ${account.getAddress}"
+      )
 
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
-        tokens = Seq(LRC_TOKEN.name)
+        tokens = Seq(LRC_TOKEN.address)
       )
       val res = getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
           val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getBalance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAllowance) > "100".zeros(
+          NumericConversion.toBigInt(lrc_ba.getAllowance) == "100".zeros(
             LRC_TOKEN.decimals
           ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) > "100"
+          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "100"
+            .zeros(
+              LRC_TOKEN.decimals
+            ) &&
+          NumericConversion.toBigInt(lrc_ba.getBalance) == "100".zeros(
+            LRC_TOKEN.decimals
+          ) &&
+          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "100"
             .zeros(LRC_TOKEN.decimals)
         })
       )
@@ -137,8 +143,15 @@ class SubmitOrderSpec_NotBalanceEnoughAllowance
 
       try {
         val submitRes = SubmitOrder
-          .Req(Some(createRawOrder()))
-          .expect(check((res: SubmitOrder.Res) => !res.success))
+          .Req(
+            Some(
+              createRawOrder(
+                amountS = "40".zeros(LRC_TOKEN.decimals),
+                amountFee = "10".zeros(LRC_TOKEN.decimals)
+              )
+            )
+          )
+          .expect(check((res: SubmitOrder.Res) => res.success))
       } catch {
         case e: ErrorException =>
       }
@@ -146,14 +159,57 @@ class SubmitOrderSpec_NotBalanceEnoughAllowance
         .Req(owner = account.getAddress)
         .expectUntil(
           check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusSoftCancelledLowBalance
+            res.orders.head.getState.status.isStatusPending
           })
         )
 
       Then(
-        s"the error of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
+        s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
       )
 
+      val baRes = getBalanceReq.expectUntil(
+        check(
+          (res: GetAccount.Res) => {
+            val lrc_ba =
+              res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+            NumericConversion.toBigInt(lrc_ba.getBalance) == "100".zeros(
+              LRC_TOKEN.decimals
+            ) &&
+            NumericConversion.toBigInt(lrc_ba.getAllowance) == "100".zeros(
+              LRC_TOKEN.decimals
+            ) &&
+            NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "50"
+              .zeros(LRC_TOKEN.decimals) &&
+            NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "50"
+              .zeros(LRC_TOKEN.decimals)
+
+          }
+        )
+      )
+
+      And(
+        s"balance and allowance is 100 , available balance and available allowance is 50 "
+      )
+
+      GetOrderbook
+        .Req(
+          size = 10,
+          marketPair = Some(
+            MarketPair(
+              LRC_TOKEN.address,
+              WETH_TOKEN.address
+            )
+          )
+        )
+        .expect(
+          check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.head.amount.toDouble == 40
+          )
+        )
+
+      And(s" sell amount of order book is 40")
     }
   }
+
 }

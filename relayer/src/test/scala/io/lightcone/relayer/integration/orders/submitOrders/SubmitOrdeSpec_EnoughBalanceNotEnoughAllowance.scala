@@ -120,7 +120,7 @@ class SubmitOrdeSpec_EnoughBalanceNotEnoughAllowance
 
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
-        tokens = Seq(LRC_TOKEN.name)
+        tokens = Seq(LRC_TOKEN.address)
       )
       val res = getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
@@ -159,31 +159,7 @@ class SubmitOrdeSpec_EnoughBalanceNotEnoughAllowance
       val reOrder = getOrdersRes.orders.head
 
       Then(
-        s"the error of the order just submitted is ${reOrder.getState.status}"
-      )
-
-      And(
-        s"the actual amountS is ${NumericConversion.toBigInt(reOrder.getState.getActualAmountS)} "
-      )
-
-      And(
-        s"the actual amountB is ${NumericConversion.toBigInt(reOrder.getState.getActualAmountB)} "
-      )
-
-      And(
-        s"the actual amountFee is ${NumericConversion.toBigInt(reOrder.getState.getActualAmountFee)} "
-      )
-
-      And(
-        s"the outstanding amountS is ${NumericConversion.toBigInt(reOrder.getState.getOutstandingAmountS)} "
-      )
-
-      And(
-        s"the outstanding amountB is ${NumericConversion.toBigInt(reOrder.getState.getOutstandingAmountB)} "
-      )
-
-      And(
-        s"the outstanding amountB is ${NumericConversion.toBigInt(reOrder.getState.getOutstandingAmountFee)} "
+        s"the status of the order just submitted is ${reOrder.getState.status}"
       )
 
       getBalanceReq.expect(

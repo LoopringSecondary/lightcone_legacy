@@ -17,18 +17,17 @@
 package io.lightcone.relayer.integration.orders.submitOrders
 
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
+import io.lightcone.relayer.integration._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
-import io.lightcone.relayer.integration._
+import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 import scala.math.BigInt
 
-class SubmitOrderSpec_EnoughBalanceNoAllowance
+class SubmitOrderSpec_DustOrder
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -49,10 +48,8 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
               tokenBalanceMap = req.tokens.map { t =>
                 t -> AccountBalance.TokenBalance(
                   token = t,
-                  balance = "100000".zeros(LRC_TOKEN.decimals),
-                  allowance = BigInt(0),
-                  availableBalance = "100000".zeros(LRC_TOKEN.decimals),
-                  availableAlloawnce = BigInt(0)
+                  balance = "100".zeros(18),
+                  allowance = "100".zeros(18)
                 )
               }.toMap
             )
@@ -111,50 +108,38 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
       .anyNumberOfTimes()
   }
 
-  feature("submit  order ") {
-    scenario("enough balance and no allowance") {
+  feature("submit ") {
+    scenario("check dust order") {
       implicit val account = getUniqueAccount()
-      Given(
-        s"an new account with enough balance and no allowance: ${account.getAddress}"
-      )
+      Given("a new account with enough balance and allowance")
 
-      val getBalanceReq = GetAccount.Req(
-        account.getAddress,
-        tokens = Seq(LRC_TOKEN.address)
-      )
-      val res = getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) > "100".zeros(
-            LRC_TOKEN.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) > "100"
-            .zeros(LRC_TOKEN.decimals)
-        })
-      )
-
-      When("submit an order.")
+      When("submit an order that fiat value is smaller than dust threshold")
 
       try {
         val submitRes = SubmitOrder
-          .Req(Some(createRawOrder()))
-          .expect(check((res: SubmitOrder.Res) => !res.success))
+          .Req(
+            Some(
+              createRawOrder(
+                amountS = "1".zeros(LRC_TOKEN.decimals - 1),
+                amountFee = "1".zeros(LRC_TOKEN.decimals - 1),
+                amountB = "1".zeros(WETH_TOKEN.decimals - 5)
+              )
+            )
+          )
+          .expect(check((res: SubmitOrder.Res) => res.success))
       } catch {
         case e: ErrorException =>
       }
-      val getOrdersRes = GetOrders
+
+      GetOrders
         .Req(owner = account.getAddress)
         .expectUntil(
           check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusSoftCancelledLowBalance
+            println(res.orders.head.getState.status)
+            true
           })
         )
 
-      Then(
-        s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
-      )
     }
   }
 

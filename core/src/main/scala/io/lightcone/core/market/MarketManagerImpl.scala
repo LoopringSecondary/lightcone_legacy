@@ -137,6 +137,7 @@ class MarketManagerImpl(
         order.copy(status = STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES)
       )
     } else if (dustOrderEvaluator.isOriginalDust(order)) {
+      println("orginal dust")
       MatchResult(order.copy(status = STATUS_DUST_ORDER))
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))

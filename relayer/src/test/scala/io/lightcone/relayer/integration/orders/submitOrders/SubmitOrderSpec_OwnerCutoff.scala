@@ -16,19 +16,18 @@
 
 package io.lightcone.relayer.integration.orders.submitOrders
 
-import io.lightcone.core.{Amount, BurnRate, ErrorException}
-import io.lightcone.lib.NumericConversion
-import io.lightcone.relayer.integration._
+import io.lightcone.core._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
-import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
+import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration._
+import io.lightcone.relayer.getUniqueAccount
 import org.scalatest._
 
 import scala.math.BigInt
 
-class SubmitOrderSpec_NotBalanceNoAllowance
+class SubmitOrderSpec_OwnerCutoff
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -49,10 +48,8 @@ class SubmitOrderSpec_NotBalanceNoAllowance
               tokenBalanceMap = req.tokens.map { t =>
                 t -> AccountBalance.TokenBalance(
                   token = t,
-                  balance = BigInt("0"),
-                  allowance = BigInt("0"),
-                  availableAlloawnce = BigInt("0"),
-                  availableBalance = BigInt("0")
+                  balance = "1000".zeros(18),
+                  allowance = "1000".zeros(18)
                 )
               }.toMap
             )
@@ -79,7 +76,7 @@ class SubmitOrderSpec_NotBalanceNoAllowance
               r.broker,
               r.owner,
               r.marketHash,
-              BigInt(0)
+              BigInt(timeProvider.getTimeSeconds())
             )
           }
         )
@@ -111,42 +108,50 @@ class SubmitOrderSpec_NotBalanceNoAllowance
       .anyNumberOfTimes()
   }
 
-  feature("submit order") {
-    scenario("no balance and no allowance ") {
+  feature("submit  order ") {
+    scenario("owner cutoff is not zero") {
       implicit val account = getUniqueAccount()
-      Given("an new account with no balance and no allowance")
-
-      val getBalanceReq = GetAccount.Req(
-        account.getAddress,
-        tokens = Seq(LRC_TOKEN.name)
+      Given(
+        s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
-      val res = getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getBalance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == 0
-        })
-      )
-
-      When("submit an order.")
-
+      And("submit the an order that valid since is smaller than cutoff")
       try {
-        val submitRes = SubmitOrder
-          .Req(Some(createRawOrder()))
+        SubmitOrder
+          .Req(
+            Some(
+              createRawOrder(
+                amountS = "40".zeros(LRC_TOKEN.decimals),
+                amountFee = "10".zeros(LRC_TOKEN.decimals),
+                validSince = (timeProvider.getTimeSeconds() - 1).toInt
+              )
+            )
+          )
           .expect(check((res: SubmitOrder.Res) => !res.success))
       } catch {
         case e: ErrorException =>
       }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
-        .expectUntil(
-          check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusSoftCancelledLowBalance
-          })
-        )
 
       Then(
-        s"the error of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
+        "the result of submit order that valid since is smaller than cutoff is false"
+      )
+
+      And("submit the an order that valid since is bigger than cutoff")
+      try {
+        SubmitOrder
+          .Req(
+            Some(
+              createRawOrder(
+                validSince = (timeProvider.getTimeSeconds() + 1).toInt
+              )
+            )
+          )
+          .expect(check((res: SubmitOrder.Res) => res.success))
+      } catch {
+        case e: ErrorException =>
+      }
+
+      Then(
+        "the result of submit order that valid since is bigger than cutoff is true"
       )
 
     }

@@ -17,18 +17,19 @@
 package io.lightcone.relayer.integration.orders.submitOrders
 
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
+import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
+import io.lightcone.ethereum.event._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
+import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
 import scala.math.BigInt
 
-class SubmitOrderSpec_EnoughBalanceNoAllowance
+class SubmitOrderSpec_reSubmitCancelled
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -49,10 +50,8 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
               tokenBalanceMap = req.tokens.map { t =>
                 t -> AccountBalance.TokenBalance(
                   token = t,
-                  balance = "100000".zeros(LRC_TOKEN.decimals),
-                  allowance = BigInt(0),
-                  availableBalance = "100000".zeros(LRC_TOKEN.decimals),
-                  availableAlloawnce = BigInt(0)
+                  balance = "1000".zeros(18),
+                  allowance = "1000".zeros(18)
                 )
               }.toMap
             )
@@ -112,35 +111,22 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
   }
 
   feature("submit  order ") {
-    scenario("enough balance and no allowance") {
+    scenario("enough balance and enough allowance") {
       implicit val account = getUniqueAccount()
       Given(
-        s"an new account with enough balance and no allowance: ${account.getAddress}"
-      )
-
-      val getBalanceReq = GetAccount.Req(
-        account.getAddress,
-        tokens = Seq(LRC_TOKEN.address)
-      )
-      val res = getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) > "100".zeros(
-            LRC_TOKEN.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) > "100"
-            .zeros(LRC_TOKEN.decimals)
-        })
+        s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
 
       When("submit an order.")
 
+      val order = createRawOrder(
+        amountS = "40".zeros(LRC_TOKEN.decimals),
+        amountFee = "10".zeros(LRC_TOKEN.decimals)
+      )
       try {
-        val submitRes = SubmitOrder
-          .Req(Some(createRawOrder()))
-          .expect(check((res: SubmitOrder.Res) => !res.success))
+        SubmitOrder
+          .Req(Some(order))
+          .expect(check((res: SubmitOrder.Res) => res.success))
       } catch {
         case e: ErrorException =>
       }
@@ -148,13 +134,40 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
         .Req(owner = account.getAddress)
         .expectUntil(
           check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusSoftCancelledLowBalance
+            res.orders.head.getState.status.isStatusPending
           })
         )
 
       Then(
         s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
       )
+
+      val cancelEvent = OrdersCancelledOnChainEvent(
+        owner = account.getAddress,
+        header = Some(EventHeader(txStatus = TX_STATUS_SUCCESS)),
+        orderHashes = Seq(order.hash)
+      )
+      eventDispatcher.dispatch(cancelEvent)
+      GetOrders
+        .Req(owner = account.getAddress)
+        .expectUntil(
+          check((res: GetOrders.Res) => {
+            res.orders.head.getState.status.isStatusOnchainCancelledByUser
+          })
+        )
+      When("cancel the order by on chain event")
+
+      And("resubmit the order")
+
+      try {
+        SubmitOrder
+          .Req(Some(order))
+          .expect(check((res: SubmitOrder.Res) => !res.success))
+      } catch {
+        case e: ErrorException =>
+      }
+
+      Then("the result of resubmit is failed")
     }
   }
 
