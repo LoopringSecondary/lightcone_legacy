@@ -34,41 +34,43 @@ case class MockExpects[E, T](defaultExpects: PartialFunction[E, T]) {
   def apply(e: E): T = expects(e)
 }
 
+object MockHelper {
+
+  var getAccountExpects:MockExpects[GetAccount.Req, GetAccount.Res] = _
+
+  var filledAmountExpects: MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
+
+  var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
+
+  var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
+
+  var orderCancelExpects: MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
+}
+
 trait MockHelper extends MockFactory with OneInstancePerTest {
-
-  private var getAccountExpects: MockExpects[GetAccount.Req, GetAccount.Res] = _
-  private var filledAmountExpects
-    : MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
-  private var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
-  private var cutoffsExpects
-    : MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
-  private var orderCancelExpects
-    : MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
-
-  initExpects()
 
   def addAccountExpects(
       expect: PartialFunction[GetAccount.Req, GetAccount.Res]
     ) = {
-    getAccountExpects.addExpect(expect)
+    MockHelper.getAccountExpects.addExpect(expect)
   }
 
   def addFilledAmountExpects(
       expect: PartialFunction[GetFilledAmount.Req, GetFilledAmount.Res]
     ) = {
-    filledAmountExpects.addExpect(expect)
+    MockHelper.filledAmountExpects.addExpect(expect)
   }
 
   def addBurnRateExpects(
       expect: PartialFunction[GetBurnRate.Req, GetBurnRate.Res]
     ) = {
-    burnRateExpects.addExpect(expect)
+    MockHelper.burnRateExpects.addExpect(expect)
   }
 
   def addCutoffsExpects(
       expect: PartialFunction[BatchGetCutoffs.Req, BatchGetCutoffs.Res]
     ) = {
-    cutoffsExpects.addExpect(expect)
+    MockHelper.cutoffsExpects.addExpect(expect)
   }
 
   def addOrderCancelExpects(
@@ -77,7 +79,7 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
         GetOrderCancellation.Res
       ]
     ) = {
-    orderCancelExpects.addExpect(expect)
+    MockHelper.orderCancelExpects.addExpect(expect)
   }
 
   //eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
@@ -91,7 +93,7 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
     (queryProvider.getAccount _)
       .expects(*)
       .onCall { req: GetAccount.Req =>
-        getAccountExpects(req)
+        MockHelper.getAccountExpects(req)
       }
       .anyNumberOfTimes()
 
@@ -99,7 +101,7 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
     (queryProvider.getBurnRate _)
       .expects(*)
       .onCall({ req: GetBurnRate.Req =>
-        burnRateExpects(req)
+        MockHelper.burnRateExpects(req)
       })
       .anyNumberOfTimes()
 
@@ -107,7 +109,7 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
     (queryProvider.batchGetCutoffs _)
       .expects(*)
       .onCall({ req: BatchGetCutoffs.Req =>
-        cutoffsExpects(req)
+        MockHelper.cutoffsExpects(req)
       })
       .anyNumberOfTimes()
 
@@ -115,7 +117,7 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
     (queryProvider.getOrderCancellation _)
       .expects(*)
       .onCall({ req: GetOrderCancellation.Req =>
-        orderCancelExpects(req)
+        MockHelper.orderCancelExpects(req)
       })
       .anyNumberOfTimes()
 
@@ -123,13 +125,13 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
     (queryProvider.getFilledAmount _)
       .expects(*)
       .onCall({ req: GetFilledAmount.Req =>
-        filledAmountExpects(req)
+        MockHelper.filledAmountExpects(req)
       })
       .anyNumberOfTimes()
   }
 
   private def initExpects() = {
-    getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res] {
+    MockHelper.getAccountExpects = MockExpects[GetAccount.Req, GetAccount.Res]({
       case req =>
         GetAccount.Res(
           Some(
@@ -147,8 +149,8 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
             )
           )
         )
-    }
-    filledAmountExpects =
+    })
+    MockHelper.filledAmountExpects =
       MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] {
         case req =>
           val zeroAmount: Amount = BigInt(0)
@@ -158,24 +160,25 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
             }).toMap
           )
       }
-    burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res] {
+    MockHelper.burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res] {
       case req =>
         GetBurnRate.Res(burnRate = Some(BurnRate()))
     }
-    cutoffsExpects = MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
-      case req =>
-        BatchGetCutoffs.Res(
-          req.reqs.map { r =>
-            GetCutoff.Res(
-              r.broker,
-              r.owner,
-              r.marketHash,
-              BigInt(0)
-            )
-          }
-        )
-    }
-    orderCancelExpects =
+    MockHelper.cutoffsExpects =
+      MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
+        case req =>
+          BatchGetCutoffs.Res(
+            req.reqs.map { r =>
+              GetCutoff.Res(
+                r.broker,
+                r.owner,
+                r.marketHash,
+                BigInt(0)
+              )
+            }
+          )
+      }
+    MockHelper.orderCancelExpects =
       MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] {
         case req =>
           GetOrderCancellation.Res(
