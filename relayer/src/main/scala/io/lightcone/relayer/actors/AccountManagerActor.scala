@@ -479,8 +479,6 @@ class AccountManagerActor(
         .getOrElse(orderId, Amount(ByteString.copyFrom("0".getBytes)))
 
       adjusted = matchable.withFilledAmountS(filledAmountS)
-      filledAmount: BigInt = filledAmountS
-      _ = println(s"##### adjusted ${adjusted}, ${filledAmount}")
       (successful, updatedOrders) <- manager.resubmitOrder(adjusted)
       updatedOrder = updatedOrders.getOrElse(orderId, adjusted)
       status = updatedOrder.status
