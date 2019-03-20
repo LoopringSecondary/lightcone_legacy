@@ -41,6 +41,7 @@ trait MockHelper extends MockFactory {
   private var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
   private var orderCancelExpects: MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
 
+  initExpects()
   def addAccountExpects(expect: PartialFunction[GetAccount.Req, GetAccount.Res] ) = {
     getAccountExpects.addExpect(expect)
   }
