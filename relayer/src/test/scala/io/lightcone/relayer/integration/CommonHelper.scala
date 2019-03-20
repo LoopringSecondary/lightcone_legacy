@@ -15,12 +15,13 @@
  */
 
 package io.lightcone.relayer.integration
-import io.lightcone.relayer.integration.helper.{DbHelper, MockHelper}
+import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.helper._
 import org.scalatest.{BeforeAndAfterEach, Matchers}
 
 trait CommonHelper
     extends MockHelper
-    with DbHelper
+    with MetadataHelper
     with Matchers
     with RpcHelper
     with OrderHelper
@@ -31,7 +32,12 @@ trait CommonHelper
   override protected def beforeEach(): Unit = {
     setDefaultEthExpects()
     prepareDbModule(dbModule)
-    prepareMetadata(dbModule, metadataManager)(timeout, timeProvider)
+    prepareMetadata(TOKENS, MARKETS, externalTickers)(
+      dbModule,
+      metadataManager,
+      timeout,
+      timeProvider
+    )
     super.beforeEach()
   }
 

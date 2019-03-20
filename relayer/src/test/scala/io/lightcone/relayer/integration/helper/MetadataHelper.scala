@@ -81,15 +81,18 @@ trait MetadataHelper extends DbHelper {
     )
   }
 
-  def createAndSaveNewMarket(price:Double = 1.0)(
-    implicit
-    dbModule: DatabaseModule,
-    metadataManager: MetadataManager,
-    timeout: Timeout,
-    timeProvider: TimeProvider
-  ): Unit = {
+  def createAndSaveNewMarket(
+      price: Double = 1.0
+    )(
+      implicit
+      dbModule: DatabaseModule,
+      metadataManager: MetadataManager,
+      timeout: Timeout,
+      timeProvider: TimeProvider
+    ): Unit = {
     val tokenMetadatas = Seq(createNewToken(), createNewToken())
-    val marketPair = MarketPair(tokenMetadatas(0).address, tokenMetadatas(1).address)
+    val marketPair =
+      MarketPair(tokenMetadatas(0).address, tokenMetadatas(1).address)
     val marketMetadata = MarketMetadata(
       status = MarketMetadata.Status.ACTIVE,
       baseTokenSymbol = tokenMetadatas(0).symbol,
@@ -103,8 +106,8 @@ trait MetadataHelper extends DbHelper {
       marketPair = Some(marketPair),
       marketHash = marketPair.hashString
     )
-    val tickerRecords = tokenMetadatas.map {
-      token => TokenTickerRecord(
+    val tickerRecords = tokenMetadatas.map { token =>
+      TokenTickerRecord(
         symbol = token.symbol,
         slug = token.name,
         price = price,
@@ -112,7 +115,7 @@ trait MetadataHelper extends DbHelper {
         dataSource = "Dynamic"
       )
     }
-    prepareMetadata(tokenMetadatas, Seq(marketMetadata), tickerRecords )
+    prepareMetadata(tokenMetadatas, Seq(marketMetadata), tickerRecords)
   }
 
   def createNewToken(
