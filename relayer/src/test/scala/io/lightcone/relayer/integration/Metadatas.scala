@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration
 import io.lightcone.core._
 import io.lightcone.lib.Address
-import io.lightcone.persistence.TokenTickerRecord
+import io.lightcone.persistence._
 import io.lightcone.relayer.implicits._
 
 object Metadatas {
@@ -27,7 +27,7 @@ object Metadatas {
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "WETH",
-    name = "WETH",
+    name = "weth",
     status = TokenMetadata.Status.VALID
   )
 
@@ -36,16 +36,25 @@ object Metadatas {
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "LRC",
-    name = "LRC",
+    name = "loopring",
     status = TokenMetadata.Status.VALID
   )
 
   val GTO_TOKEN = TokenMetadata(
-    address = Address("0x2d7233f72af7a600a8ebdfa85558c047c1c8f795").toString,
+    address = Address("0x2D7233F72AF7a600a8EbdfA85558C047c1C8F795").toString,
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "GTO",
-    name = "GTO",
+    name = "gifto",
+    status = TokenMetadata.Status.VALID
+  )
+
+  val ETH_TOKEN = TokenMetadata(
+    `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
+    address = Address("0x0000000000000000000000000000000000000000").toString,
+    decimals = 18,
+    symbol = "ETH",
+    name = "ethereum",
     status = TokenMetadata.Status.VALID
   )
 
@@ -82,31 +91,62 @@ object Metadatas {
   )
 
   val TOKENS = Seq(
-    WETH_TOKEN,
-    LRC_TOKEN,
-    GTO_TOKEN,
-    TokenMetadata(
-      address = Address("0x0000000000000000000000000000000000000000").toString,
-      decimals = 18,
-      symbol = "ETH",
-      name = "ETH",
-      status = TokenMetadata.Status.VALID
+    Token(
+      Some(WETH_TOKEN),
+      Some(TokenInfo(symbol = WETH_TOKEN.symbol)),
+      Some(TokenTicker(token = WETH_TOKEN.address, price = 122.020909611))
+    ),
+    Token(
+      Some(LRC_TOKEN),
+      Some(TokenInfo(symbol = LRC_TOKEN.symbol)),
+      Some(TokenTicker(token = LRC_TOKEN.address, price = 0.0566613345897))
+    ),
+    Token(
+      Some(GTO_TOKEN),
+      Some(TokenInfo(symbol = GTO_TOKEN.symbol)),
+      Some(TokenTicker(token = GTO_TOKEN.address, price = 0.026678235137))
+    ),
+    Token(
+      Some(ETH_TOKEN),
+      Some(TokenInfo(symbol = ETH_TOKEN.symbol)),
+      Some(TokenTicker(token = ETH_TOKEN.address, price = 122.020909611))
     )
   )
 
   val TOKEN_SLUGS_SYMBOLS = Seq(
-    ("ETH", "ethereum"),
-    ("BTC", "bitcoin"),
-    ("WETH", "weth"),
-    ("LRC", "loopring"),
-    ("GTO", "gifto"),
-    (Currency.RMB.name, Currency.RMB.getSlug()),
-    (Currency.JPY.name, Currency.JPY.getSlug()),
-    (Currency.EUR.name, Currency.EUR.getSlug()),
-    (Currency.GBP.name, Currency.GBP.getSlug())
+    CMCCrawlerConfigForToken("ETH", "ethereum"),
+    CMCCrawlerConfigForToken("BTC", "bitcoin"),
+    CMCCrawlerConfigForToken("WETH", "weth"),
+    CMCCrawlerConfigForToken("LRC", "loopring"),
+    CMCCrawlerConfigForToken("GTO", "gifto"),
+    CMCCrawlerConfigForToken(Currency.RMB.name, Currency.RMB.getSlug()),
+    CMCCrawlerConfigForToken(Currency.JPY.name, Currency.JPY.getSlug()),
+    CMCCrawlerConfigForToken(Currency.EUR.name, Currency.EUR.getSlug()),
+    CMCCrawlerConfigForToken(Currency.GBP.name, Currency.GBP.getSlug())
   )
 
-  val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET)
+  val MARKETS = Seq(
+    Market(
+      Some(LRC_WETH_MARKET),
+      Some(
+        MarketTicker(
+          baseToken = LRC_WETH_MARKET.marketPair.get.baseToken,
+          quoteToken = LRC_WETH_MARKET.marketPair.get.quoteToken,
+          price = 0.0566613345897 / 122.020909611
+        )
+      )
+    ),
+    Market(
+      Some(GTO_WETH_MARKET),
+      Some(
+        MarketTicker(
+          baseToken = GTO_WETH_MARKET.marketPair.get.baseToken,
+          quoteToken = GTO_WETH_MARKET.marketPair.get.quoteToken,
+          price = 0.026678235137 / 122.020909611
+        )
+      )
+    )
+  )
 
   val externalTickers = Seq(
     TokenTickerRecord(
@@ -180,32 +220,33 @@ object Metadatas {
       "CMC"
     ),
     TokenTickerRecord(
-      symbol = "RMB",
-      slug = "loopring-rmb",
+      symbol = Currency.RMB.name,
+      slug = Currency.RMB.getSlug(),
       price = 0.1487497,
       isValid = false,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = "JPY",
-      slug = "loopring-jpy",
+      symbol = Currency.JPY.name,
+      slug = Currency.JPY.getSlug(),
       price = 0.00900017,
       isValid = false,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = "EUR",
-      slug = "loopring-eur",
+      symbol = Currency.EUR.name,
+      slug = Currency.EUR.getSlug(),
       price = 1.12334307,
       isValid = false,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = "GBP",
-      slug = "loopring-gbp",
+      symbol = Currency.GBP.name,
+      slug = Currency.GBP.getSlug(),
       price = 1.2973534,
       isValid = false,
       dataSource = "Sina"
     )
   ).map(_.copy(timestamp = timeProvider.getTimeSeconds()))
+
 }

@@ -15,11 +15,9 @@
  */
 
 package io.lightcone.relayer.integration
-import io.lightcone.core.MarketPair
 import io.lightcone.relayer._
 import io.lightcone.relayer.data.{GetAccount, GetOrderbook, SubmitOrder}
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 import scala.concurrent.Await
@@ -38,30 +36,37 @@ class RpcHelperSpec
       Given("an account with Balance")
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
-        tokens = Seq(LRC_TOKEN.name, WETH_TOKEN.address)
+        tokens = Seq(
+          dynamicBaseToken.getMetadata.address,
+          dynamicQuoteToken.getMetadata.address
+        )
       )
 
       val res = getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
       When("submit an order.")
+      val order = createRawOrder(
+        tokenS = dynamicBaseToken.getMetadata.address,
+        tokenB = dynamicQuoteToken.getMetadata.address,
+        tokenFee = dynamicBaseToken.getMetadata.address
+      )
       val submitRes = SubmitOrder
-        .Req(Some(createRawOrder()))
+        .Req(Some(order))
         .expect(check((res: SubmitOrder.Res) => true))
       info(s"the result of submit order is ${submitRes.success}")
 
       Then("the orderbook should not be empty.")
       val orderbook = GetOrderbook
-        .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)))
-        .expect(check((res: GetOrderbook.Res) => res.orderbook.nonEmpty))
+        .Req(
+          0,
+          100,
+          Some(dynamicMarketPair)
+        )
+        .expect(
+          check((res: GetOrderbook.Res) => res.orderbook.get.sells.nonEmpty)
+        )
       info(s"the orderbook is ${orderbook}")
-
-      try {
-        Await.result(system.terminate(), 60 second)
-      } catch {
-        case e: Exception =>
-          info(s"occurs error: ${e.getMessage}, ${e.printStackTrace()}")
-      }
     }
   }
 }
