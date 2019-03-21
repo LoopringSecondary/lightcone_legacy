@@ -31,7 +31,8 @@ import io.lightcone.relayer.CoreModule
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.integration.CoreDeployerForTest
+import io.lightcone.relayer.integration._
+import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.rnorth.ducttape.TimeoutException
@@ -40,9 +41,10 @@ import org.testcontainers.containers.ContainerLaunchException
 
 import scala.concurrent._
 
-class IntegrationStarter extends MockHelper with DbHelper {
+class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
 
   var injector: Injector = _
+  var actors: Lookup[ActorRef] = _
 
   def starting(
     )(
@@ -51,29 +53,54 @@ class IntegrationStarter extends MockHelper with DbHelper {
       timeProvider: TimeProvider
     ) = {
     setDefaultEthExpects()
-    val config = ConfigFactory.load()
+    val anotherPortConfigStr =
+      """
+        |akka {
+        | remote {
+        |    netty.tcp {
+        |      hostname = "127.0.0.1"
+        |      port = 9095
+        |    }
+        |  }
+        |  cluster {
+        |    seed-nodes = ["akka.tcp://Lightcone@127.0.0.1:9095"]
+        |  }
+        |}
+        |jsonrpc {
+        |  http {
+        |     host = "0.0.0.0"
+        |     port = 8085
+        |  }
+        |}
+        |socketio {
+        |  host:"0.0.0.0",
+        |  port:9099
+        |}
+      """.stripMargin
+    val config = ConfigFactory
+      .parseString(anotherPortConfigStr)
+      .withFallback(ConfigFactory.load())
     injector = Guice.createInjector(new CoreModule(config, true))
-    val dbModule = injector.instance[DatabaseModule]
-    val metadataManager = injector.instance[MetadataManager]
+    implicit val dbModule = injector.instance[DatabaseModule]
+    implicit val metadataManager = injector.instance[MetadataManager]
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
     prepareDbModule(dbModule)
-    prepareMetadata(dbModule, metadataManager)
+    prepareMetadata(TOKENS, MARKETS, TOKEN_SLUGS_SYMBOLS)
 
     injector
       .instance[CoreDeployerForTest]
       .deploy()
 
-    val actors = injector.instance[Lookup[ActorRef]]
+    actors = injector.instance[Lookup[ActorRef]]
 
-    waiting(actors, metadataManager)
+    waiting()
   }
 
-  private def waiting(
-      actors: Lookup[ActorRef],
-      metadataManager: MetadataManager
+  def waiting(
     )(
       implicit
+      metadataManager: MetadataManager,
       timeout: Timeout,
       ec: ExecutionContext
     ) = {
@@ -99,10 +126,9 @@ class IntegrationStarter extends MockHelper with DbHelper {
     catch {
       case e: TimeoutException =>
         throw new ContainerLaunchException(
-          "Timed out waiting for connectionPools init.)"
+          "Timed out waiting for marketMangerActor init.)"
         )
     }
-
     //waiting for orderbookmanager
     try Unreliables.retryUntilTrue(
       10,
@@ -123,7 +149,7 @@ class IntegrationStarter extends MockHelper with DbHelper {
     catch {
       case e: TimeoutException =>
         throw new ContainerLaunchException(
-          "Timed out waiting for connectionPools init.)"
+          "Timed out waiting for orderbookManger init.)"
         )
     }
 

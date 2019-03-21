@@ -55,6 +55,10 @@ package object relayer {
       )
     )
   }
+
+  def getUniqueInt() = {
+    addressGenerator.getAndIncrement()
+  }
   println(s"##### ${postgreContainer.jdbcUrl}")
 
 }
