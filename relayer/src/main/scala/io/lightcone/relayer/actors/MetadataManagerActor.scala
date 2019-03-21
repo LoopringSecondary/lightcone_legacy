@@ -213,7 +213,7 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case _ @MetadataChanged(false, false, false, true) => { // subscribe message from ExternalCrawlerActor
+    case MetadataChanged(false, false, false, true) => { // subscribe message from ExternalCrawlerActor
       for {
         tickers_ <- getLastTickers()
       } yield {
