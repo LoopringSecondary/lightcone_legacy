@@ -31,7 +31,7 @@ import io.lightcone.relayer.CoreModule
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.integration.{CoreDeployerForTest, Metadatas}
+import io.lightcone.relayer.integration._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import net.codingwell.scalaguice.InjectorExtensions._
@@ -44,6 +44,7 @@ import scala.concurrent._
 class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
 
   var injector: Injector = _
+  var actors: Lookup[ActorRef] = _
 
   def starting(
     )(
@@ -59,22 +60,21 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
     prepareDbModule(dbModule)
-    prepareMetadata(TOKENS, MARKETS, externalTickers)
+    prepareMetadata(TOKENS, MARKETS, TOKEN_SLUGS_SYMBOLS)
 
     injector
       .instance[CoreDeployerForTest]
       .deploy()
 
-    val actors = injector.instance[Lookup[ActorRef]]
+    actors = injector.instance[Lookup[ActorRef]]
 
-    waiting(actors, metadataManager)
+    waiting()
   }
 
-  private def waiting(
-      actors: Lookup[ActorRef],
-      metadataManager: MetadataManager
+  def waiting(
     )(
       implicit
+      metadataManager: MetadataManager,
       timeout: Timeout,
       ec: ExecutionContext
     ) = {
@@ -100,10 +100,9 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
     catch {
       case e: TimeoutException =>
         throw new ContainerLaunchException(
-          "Timed out waiting for connectionPools init.)"
+          "Timed out waiting for marketMangerActor init.)"
         )
     }
-
     //waiting for orderbookmanager
     try Unreliables.retryUntilTrue(
       10,
@@ -124,7 +123,7 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
     catch {
       case e: TimeoutException =>
         throw new ContainerLaunchException(
-          "Timed out waiting for connectionPools init.)"
+          "Timed out waiting for orderbookManger init.)"
         )
     }
 

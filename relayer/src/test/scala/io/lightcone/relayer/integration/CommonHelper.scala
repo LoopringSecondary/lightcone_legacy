@@ -15,9 +15,10 @@
  */
 
 package io.lightcone.relayer.integration
+import io.lightcone.core._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
-import org.scalatest.{BeforeAndAfterEach, Matchers}
+import org.scalatest._
 
 trait CommonHelper
     extends MockHelper
@@ -27,17 +28,23 @@ trait CommonHelper
     with OrderHelper
     with BeforeAndAfterEach {
 
+  var dynamicBaseToken: Token = _
+  var dynamicQuoteToken: Token = _
+  var dynamicMarketPair: MarketPair = _
   //保证每次都重置ethmock和数据库，
   //当需要不同的重置条件时，需要覆盖该方法
   override protected def beforeEach(): Unit = {
     setDefaultEthExpects()
     prepareDbModule(dbModule)
-    prepareMetadata(TOKENS, MARKETS, externalTickers)(
-      dbModule,
-      metadataManager,
-      timeout,
-      timeProvider
+    prepareMetadata(TOKENS, MARKETS, TOKEN_SLUGS_SYMBOLS)
+    val tokens = createAndSaveNewMarket()
+    dynamicBaseToken = tokens(0)
+    dynamicQuoteToken = tokens(1)
+    dynamicMarketPair = MarketPair(
+      dynamicBaseToken.getMetadata.address,
+      dynamicQuoteToken.getMetadata.address
     )
+    integrationStarter.waiting()
     super.beforeEach()
   }
 

@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration
 import io.lightcone.core._
 import io.lightcone.lib.Address
-import io.lightcone.persistence.{CMCCrawlerConfigForToken, TokenTickerRecord}
+import io.lightcone.persistence._
 import io.lightcone.relayer.implicits._
 
 object Metadatas {
@@ -27,7 +27,7 @@ object Metadatas {
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "WETH",
-    name = "WETH",
+    name = "weth",
     status = TokenMetadata.Status.VALID
   )
 
@@ -36,7 +36,7 @@ object Metadatas {
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "LRC",
-    name = "LRC",
+    name = "loopring",
     status = TokenMetadata.Status.VALID
   )
 
@@ -45,7 +45,16 @@ object Metadatas {
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "GTO",
-    name = "GTO",
+    name = "gifto",
+    status = TokenMetadata.Status.VALID
+  )
+
+  val ETH_TOKEN = TokenMetadata(
+    `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
+    address = Address("0x0000000000000000000000000000000000000000").toString,
+    decimals = 18,
+    symbol = "ETH",
+    name = "ethereum",
     status = TokenMetadata.Status.VALID
   )
 
@@ -81,7 +90,28 @@ object Metadatas {
       MarketHash(MarketPair(GTO_TOKEN.address, WETH_TOKEN.address)).toString
   )
 
-  val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
+  val TOKENS = Seq(
+    Token(
+      Some(WETH_TOKEN),
+      Some(TokenInfo(symbol = WETH_TOKEN.symbol)),
+      Some(TokenTicker(token = WETH_TOKEN.address, price = 122.020909611))
+    ),
+    Token(
+      Some(LRC_TOKEN),
+      Some(TokenInfo(symbol = LRC_TOKEN.symbol)),
+      Some(TokenTicker(token = LRC_TOKEN.address, price = 0.0566613345897))
+    ),
+    Token(
+      Some(GTO_TOKEN),
+      Some(TokenInfo(symbol = GTO_TOKEN.symbol)),
+      Some(TokenTicker(token = GTO_TOKEN.address, price = 0.026678235137))
+    ),
+    Token(
+      Some(ETH_TOKEN),
+      Some(TokenInfo(symbol = ETH_TOKEN.symbol)),
+      Some(TokenTicker(token = ETH_TOKEN.address, price = 122.020909611))
+    )
+  )
 
   val TOKEN_SLUGS_SYMBOLS = Seq(
     CMCCrawlerConfigForToken("ETH", "ethereum"),
@@ -95,7 +125,28 @@ object Metadatas {
     CMCCrawlerConfigForToken(Currency.GBP.name, Currency.GBP.getSlug())
   )
 
-  val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET)
+  val MARKETS = Seq(
+    Market(
+      Some(LRC_WETH_MARKET),
+      Some(
+        MarketTicker(
+          baseToken = LRC_WETH_MARKET.marketPair.get.baseToken,
+          quoteToken = LRC_WETH_MARKET.marketPair.get.quoteToken,
+          price = 0.0566613345897 / 122.020909611
+        )
+      )
+    ),
+    Market(
+      Some(GTO_WETH_MARKET),
+      Some(
+        MarketTicker(
+          baseToken = GTO_WETH_MARKET.marketPair.get.baseToken,
+          quoteToken = GTO_WETH_MARKET.marketPair.get.quoteToken,
+          price = 0.026678235137 / 122.020909611
+        )
+      )
+    )
+  )
 
   val externalTickers = Seq(
     TokenTickerRecord(

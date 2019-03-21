@@ -22,14 +22,14 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer._
 
-import scala.concurrent.Await
+import scala.concurrent._
 
 trait MetadataHelper extends DbHelper {
 
   def prepareMetadata(
-      tokenMetadatas: Seq[TokenMetadata],
-      marketMetadatas: Seq[MarketMetadata],
-      externalTickerRecords: Seq[TokenTickerRecord]
+      tokens: Seq[Token],
+      markets: Seq[Market],
+      symbolSlugs: Seq[CMCCrawlerConfigForToken]
     )(
       implicit
       dbModule: DatabaseModule,
@@ -38,65 +38,59 @@ trait MetadataHelper extends DbHelper {
       timeProvider: TimeProvider
     ) = {
 
-    dbModule.tokenMetadataDal.saveTokenMetadatas(tokenMetadatas)
-    dbModule.tokenInfoDal.saveTokenInfos(tokenMetadatas.map { t =>
-      TokenInfo(t.symbol)
-    })
-    dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(
-      externalTickerRecords.map(r => CMCCrawlerConfigForToken(r.symbol, r.slug))
+    val externalTickerRecords = tokens.map { token =>
+      TokenTickerRecord(
+        symbol = token.getMetadata.symbol,
+        slug = token.getMetadata.name,
+        price = token.getTicker.price,
+        isValid = true,
+        timestamp = 10,
+        dataSource = "Dynamic"
+      )
+    }
+
+    dbModule.tokenMetadataDal.saveTokenMetadatas(tokens.map(_.getMetadata))
+    dbModule.tokenInfoDal.saveTokenInfos(tokens.map(_.getInfo))
+    dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(symbolSlugs)
+    dbModule.marketMetadataDal.saveMarkets(markets.map(_.getMetadata))
+
+    println(s"##### prepareMetadata ${tokens}")
+    println(
+      s"#####1111 prepareMetadata ${(metadataManager.getTokens() ++ tokens).mkString}"
     )
-    dbModule.marketMetadataDal.saveMarkets(marketMetadatas)
 
-    val tokens = tokenMetadatas.map { t =>
-      Token(
-        Some(t),
-        Some(TokenInfo(symbol = t.symbol)),
-        Some(TokenTicker(token = t.address, price = 0.1))
-      )
-    }
-
-    val markets = marketMetadatas.map { m =>
-      Market(
-        Some(m),
-        Some(
-          MarketTicker(
-            baseToken = m.marketPair.get.baseToken,
-            quoteToken = m.marketPair.get.quoteToken,
-            price = 0.0001
-          )
-        )
-      )
-    }
     metadataManager.reset(
-      tokens,
-      markets
+      metadataManager.getTokens() ++ tokens,
+      metadataManager.getMarkets() ++ markets
     )
     Await.result(
       dbModule.tokenTickerRecordDal.saveTickers(externalTickerRecords),
       timeout.duration
     )
     Await.result(
-      dbModule.tokenTickerRecordDal.setValid(timeProvider.getTimeSeconds()),
+      dbModule.tokenTickerRecordDal.setValid(10),
       timeout.duration
     )
   }
 
   def createAndSaveNewMarket(
-      price: Double = 1.0
+      price1: Double = 1.0,
+      price2: Double = 1.0
     )(
       implicit
       dbModule: DatabaseModule,
       metadataManager: MetadataManager,
       timeout: Timeout,
       timeProvider: TimeProvider
-    ): Unit = {
-    val tokenMetadatas = Seq(createNewToken(), createNewToken())
+    ): Seq[Token] = {
+    val tokens =
+      Seq(createNewToken(price = price1), createNewToken(price = price2))
     val marketPair =
-      MarketPair(tokenMetadatas(0).address, tokenMetadatas(1).address)
+      MarketPair(tokens(0).getMetadata.address, tokens(1).getMetadata.address)
     val marketMetadata = MarketMetadata(
       status = MarketMetadata.Status.ACTIVE,
-      baseTokenSymbol = tokenMetadatas(0).symbol,
-      quoteTokenSymbol = tokenMetadatas(1).symbol,
+      baseTokenSymbol = tokens(0).getMetadata.symbol,
+      quoteTokenSymbol = tokens(1).getMetadata.symbol,
       maxNumbersOfOrders = 1000,
       priceDecimals = 6,
       orderbookAggLevels = 6,
@@ -106,31 +100,49 @@ trait MetadataHelper extends DbHelper {
       marketPair = Some(marketPair),
       marketHash = marketPair.hashString
     )
-    val tickerRecords = tokenMetadatas.map { token =>
-      TokenTickerRecord(
-        symbol = token.symbol,
-        slug = token.name,
-        price = price,
-        isValid = true,
-        dataSource = "Dynamic"
+    val market = Market(
+      Some(marketMetadata),
+      Some(
+        MarketTicker(
+          baseToken = marketMetadata.marketPair.get.baseToken,
+          quoteToken = marketMetadata.marketPair.get.quoteToken,
+          price = tokens(0).getTicker.price / tokens(1).getTicker.price
+        )
       )
-    }
-    prepareMetadata(tokenMetadatas, Seq(marketMetadata), tickerRecords)
+    )
+    val symbolSlugs = Seq(
+      CMCCrawlerConfigForToken(
+        tokens(0).getMetadata.symbol,
+        tokens(0).getMetadata.name
+      ),
+      CMCCrawlerConfigForToken(
+        tokens(1).getMetadata.symbol,
+        tokens(1).getMetadata.name
+      )
+    )
+    prepareMetadata(tokens, Seq(market), symbolSlugs)
+    tokens
   }
 
   def createNewToken(
       address: String = getUniqueAccount().getAddress,
       decimals: Int = 18,
       burnRate: BurnRate = BurnRate(0.4, 0.5),
-      status: TokenMetadata.Status = TokenMetadata.Status.VALID
-    ): TokenMetadata = {
-    TokenMetadata(
+      status: TokenMetadata.Status = TokenMetadata.Status.VALID,
+      price: Double = 1.0
+    ): Token = {
+    val meta = TokenMetadata(
       address = address,
       decimals = decimals,
       burnRate = Some(burnRate),
-      symbol = s"dynamic-${address.hashCode}",
-      name = s"dynamic-${address}",
+      symbol = s"d-${getUniqueInt()}",
+      name = s"dynamic-${getUniqueInt()}",
       status = status
+    )
+    Token(
+      Some(meta),
+      Some(TokenInfo(symbol = meta.symbol)),
+      Some(TokenTicker(token = meta.address, price = price))
     )
   }
 
