@@ -23,7 +23,6 @@ import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 class CancelOrderSpec_byCutoffEventMarketPair

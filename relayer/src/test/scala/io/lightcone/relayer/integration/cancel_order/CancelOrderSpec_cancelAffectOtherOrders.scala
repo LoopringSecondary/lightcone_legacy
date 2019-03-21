@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.MarketPair
 import io.lightcone.core.OrderStatus._
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._

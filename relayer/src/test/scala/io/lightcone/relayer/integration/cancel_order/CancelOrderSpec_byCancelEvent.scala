@@ -16,18 +16,12 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.ErrorCode._
-import io.lightcone.core.ErrorException
-import io.lightcone.core.OrderStatus.{
-  STATUS_ONCHAIN_CANCELLED_BY_USER,
-  STATUS_SOFT_CANCELLED_BY_USER
-}
+import io.lightcone.core.OrderStatus._
 import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.ethereum.event.{EventHeader, OrdersCancelledOnChainEvent}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 class CancelOrderSpec_byCancelEvent

@@ -16,9 +16,6 @@
 
 package io.lightcone.relayer.integration
 import io.lightcone.core._
-import io.lightcone.relayer.data.GetAccount
-import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
