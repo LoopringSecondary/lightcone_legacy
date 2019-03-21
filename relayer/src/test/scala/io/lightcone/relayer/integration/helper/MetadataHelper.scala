@@ -54,11 +54,6 @@ trait MetadataHelper extends DbHelper {
     dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(symbolSlugs)
     dbModule.marketMetadataDal.saveMarkets(markets.map(_.getMetadata))
 
-    println(s"##### prepareMetadata ${tokens}")
-    println(
-      s"#####1111 prepareMetadata ${(metadataManager.getTokens() ++ tokens).mkString}"
-    )
-
     metadataManager.reset(
       metadataManager.getTokens() ++ tokens,
       metadataManager.getMarkets() ++ markets
