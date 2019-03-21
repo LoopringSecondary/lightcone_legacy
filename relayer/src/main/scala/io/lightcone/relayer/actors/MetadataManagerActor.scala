@@ -85,7 +85,6 @@ class MetadataManagerActor(
 
   override def initialize() = {
     val f = for {
-      _ <- mediator ? Subscribe(ExternalCrawlerActor.pubsubTopic, self)
       tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
       tokenInfos_ <- dbModule.tokenInfoDal.getTokenInfos()
       marketMetadatas_ <- dbModule.marketMetadataDal.getMarkets()
@@ -122,7 +121,7 @@ class MetadataManagerActor(
       marketMetadatas = marketMetadatas_.map(MetadataManager.normalize)
       tokenTickers = tickers_
       marketTickers = fillSupportMarketTickers(tokenTickers)
-      refreshTokenAndMarket()
+      setTokenAndMarket()
     }
     f onComplete {
       case Success(_) =>
@@ -214,14 +213,14 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case _: MetadataChanged => { // subscribe message from ExternalCrawlerActor
+    case MetadataChanged(false, false, false, true) => { // subscribe message from ExternalCrawlerActor
       for {
         tickers_ <- getLastTickers()
       } yield {
         if (tickers_.nonEmpty) {
           tokenTickers = tickers_
           marketTickers = fillSupportMarketTickers(tickers_)
-          refreshTokenAndMarket()
+          setTokenAndMarket()
           publish(false, false, false, true)
         }
       }
@@ -294,7 +293,7 @@ class MetadataManagerActor(
     }
 
     if (tokenMetadataChanged || tokenInfoChanged || marketMetadataChanged) {
-      refreshTokenAndMarket()
+      setTokenAndMarket()
       publish(
         tokenMetadataChanged,
         tokenInfoChanged,
@@ -319,31 +318,38 @@ class MetadataManagerActor(
     }
   }
 
-  private def refreshTokenAndMarket(): Unit = this.synchronized {
+  private def setTokenAndMarket(): Unit = this.synchronized {
     if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickers.nonEmpty) {
-      val tokenMetadataMap = tokenMetadatas.map(m => m.symbol -> m).toMap
       val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
-      //TODO:当只能按照tokenTicker的更新，如果新加了token或者cmc不存在的会被刷掉
-      tokens = tokenTickers.map { ticker =>
-        val symbol = ticker.symbol
-        // 以ticker为基准，组装成tokens，提供给metadataRefresher同步。因为ticker额外包含了(eth,btc,rmb）
-        // 不会在tokenMetadata里配置，只有eth需要返回前端，其他都作为内部使用，没有metadata的都赋值eth类型
-        val meta =
-          tokenMetadataMap.getOrElse(
-            symbol,
-            TokenMetadata(
-              `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
-              symbol = symbol
-            )
-          )
+      val tickerMap = tokenTickers.map(t => t.symbol -> t).toMap
+      val metadataTokens = tokenMetadatas.map { m =>
+        val symbol = m.symbol
         val info = tokenInfoMap.getOrElse(symbol, TokenInfo(symbol = symbol))
-        val tokenTicker: TokenTicker = ticker
+        val tickerRecord =
+          tickerMap.getOrElse(symbol, TokenTickerRecord(symbol = symbol))
+        val tokenTicker: TokenTicker = tickerRecord
         Token(
-          Some(meta),
+          Some(m),
           Some(info),
           Some(tokenTicker)
         )
       }
+      val extraInTickers =
+        tokenTickers.map(_.symbol).diff(tokenMetadatas.map(_.symbol)).map {
+          symbol =>
+            val tokenTicker: TokenTicker = tickerMap(symbol)
+            Token(
+              Some(
+                TokenMetadata(
+                  `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
+                  symbol = symbol
+                )
+              ),
+              Some(TokenInfo(symbol = symbol)),
+              Some(tokenTicker)
+            )
+        }
+      tokens = metadataTokens ++ extraInTickers
     }
     if (marketMetadatas.nonEmpty && marketTickers.nonEmpty) {
       val marketTickerMap = marketTickers.map { m =>
