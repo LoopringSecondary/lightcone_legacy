@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.Amount
 import io.lightcone.ethereum.persistence.{Activity, TxEvents}
 import io.lightcone.lib.{Address, NumericConversion}
 import io.lightcone.core._
@@ -31,7 +30,6 @@ import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.lib.NumericConversion._
 import org.scalatest._
-import com.google.protobuf.ByteString
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.ethereum.event.{AddressBalanceUpdatedEvent, BlockEvent}
 import io.lightcone.relayer.actors.ActivityActor
@@ -71,21 +69,37 @@ class TransferETHSpec_success
             )
           )
       })
-      val getBalanceReq = GetAccount.Req(
+
+      val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
       )
-      getBalanceReq.expectUntil(
+      val getToAddressBalanceReq = GetAccount.Req(
+        to,
+        allTokens = true
+      )
+      getFromAddressBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
           val balanceOpt = res.accountBalance
-          val resBalance: BigInt =
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance
-          log.info(
-            s"--1 ${resBalance}"
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          // resBalance == BigInt("20000000000000000000")
-
-          true
+          val wethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
+          )
+          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
+        })
+      )
+      getToAddressBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => {
+          val balanceOpt = res.accountBalance
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+          )
+          val wethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
+          )
+          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
         })
       )
 
@@ -106,10 +120,7 @@ class TransferETHSpec_success
                     Activity.EtherTransfer(
                       account.getAddress,
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
@@ -126,10 +137,7 @@ class TransferETHSpec_success
                     Activity.EtherTransfer(
                       to,
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
@@ -141,7 +149,7 @@ class TransferETHSpec_success
         )
       ).foreach(eventDispatcher.dispatch)
 
-      Thread.sleep(3000)
+      Thread.sleep(1000)
 
       Then("the each account should query one pending activity")
       GetActivities
@@ -191,7 +199,7 @@ class TransferETHSpec_success
         )
       )
       ActivityActor.broadcast(blockEvent)
-      Thread.sleep(1000)
+      Thread.sleep(2000)
 
       Seq(
         TxEvents(
@@ -209,10 +217,7 @@ class TransferETHSpec_success
                     Activity.EtherTransfer(
                       account.getAddress,
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
@@ -230,10 +235,7 @@ class TransferETHSpec_success
                     Activity.EtherTransfer(
                       to,
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
@@ -248,10 +250,7 @@ class TransferETHSpec_success
           address = account.getAddress,
           token = Address.ZERO.toString(),
           balance = Some(
-            Amount(
-              ByteString.copyFrom("10000000000000000000", "UTF-8"),
-              blockNumber
-            )
+            toAmount("10000000000000000000")
           ),
           block = blockNumber
         ),
@@ -259,15 +258,12 @@ class TransferETHSpec_success
           address = to,
           token = Address.ZERO.toString(),
           balance = Some(
-            Amount(
-              ByteString.copyFrom("1010000000000000000000", "UTF-8"),
-              blockNumber
-            )
+            toAmount("1010000000000000000000")
           ),
           block = blockNumber
         )
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(3000)
+      Thread.sleep(1000)
 
       GetActivities
         .Req(account.getAddress)
@@ -302,18 +298,28 @@ class TransferETHSpec_success
           })
         )
 
-      getBalanceReq.expectUntil(
+      getFromAddressBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
           val balanceOpt = res.accountBalance
-          val resBalance = toBigInt(
+          val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          log.info(
-            s"--6 ${resBalance}"
+          val wethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          // resBalance == BigInt("10000000000000000000")
-
-          true
+          ethBalance == BigInt("10000000000000000000") && wethBalance == BigInt("20000000000000000000")
+        })
+      )
+      getToAddressBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => {
+          val balanceOpt = res.accountBalance
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+          )
+          val wethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
+          )
+          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
         })
       )
 

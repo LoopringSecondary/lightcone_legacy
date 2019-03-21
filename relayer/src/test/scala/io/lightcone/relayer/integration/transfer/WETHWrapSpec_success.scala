@@ -42,7 +42,6 @@ class WETHWrapSpec_success
       implicit val account = getUniqueAccount()
       val txHash =
         "0xbc6331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
-      val to = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
       val blockNumber = 987L
 
       Given("initialize eth balance")
@@ -72,18 +71,20 @@ class WETHWrapSpec_success
       getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
           val balanceOpt = res.accountBalance
-          val resBalance: BigInt =
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance
-          log.info(
-            s"--1 ${resBalance}"
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          // resBalance == BigInt("20000000000000000000")
-
-          true
+          val wethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
+          )
+          log.info(
+            s"--1 $ethBalance $wethBalance"
+          )
+          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
         })
       )
 
-      When("send some transfer events")
+      When("send some convert events")
       Seq(
         TxEvents(
           TxEvents.Events.Activities(
@@ -93,37 +94,29 @@ class WETHWrapSpec_success
                   owner = account.getAddress,
                   block = blockNumber,
                   txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_OUT,
+                  activityType = Activity.ActivityType.ETHER_WRAP,
                   timestamp = timeProvider.getTimeSeconds,
                   token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      account.getAddress,
+                  detail = Activity.Detail.EtherConversion(
+                    Activity.EtherConversion(
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
                   nonce = 11
                 ),
                 Activity(
-                  owner = to,
+                  owner = account.getAddress,
                   block = blockNumber,
                   txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_IN,
+                  activityType = Activity.ActivityType.ETHER_WRAP,
                   timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      to,
+                  token = WETH_TOKEN.address,
+                  detail = Activity.Detail.EtherConversion(
+                    Activity.EtherConversion(
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
@@ -135,9 +128,8 @@ class WETHWrapSpec_success
         )
       ).foreach(eventDispatcher.dispatch)
 
-      Thread.sleep(3000)
-
-      Then("the each account should query one pending activity")
+      Thread.sleep(1000)
+      Then("the account should query 2 pending activity")
       GetActivities
         .Req(account.getAddress)
         .expectUntil(
@@ -145,31 +137,7 @@ class WETHWrapSpec_success
             log.info(
               s"--2 ${res}"
             )
-            // res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
-            true
-          })
-        )
-      GetActivities
-        .Req(to)
-        .expectUntil(
-          check((res: GetActivities.Res) => {
-            log.info(
-              s"--3 ${res}"
-            )
-            // res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
-            true
-          })
-        )
-
-      GetPendingActivityNonce
-        .Req(account.getAddress, 2)
-        .expectUntil(
-          check((res: GetPendingActivityNonce.Res) => {
-            res.nonces.head == 11
-            log.info(
-              s"--4 ${res.nonces.head}"
-            )
-            true
+            res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
           })
         )
 
@@ -185,7 +153,7 @@ class WETHWrapSpec_success
         )
       )
       ActivityActor.broadcast(blockEvent)
-      Thread.sleep(1000)
+      Thread.sleep(2000)
 
       Seq(
         TxEvents(
@@ -196,17 +164,13 @@ class WETHWrapSpec_success
                   owner = account.getAddress,
                   block = blockNumber,
                   txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_OUT,
+                  activityType = Activity.ActivityType.ETHER_WRAP,
                   timestamp = timeProvider.getTimeSeconds,
                   token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      account.getAddress,
+                  detail = Activity.Detail.EtherConversion(
+                    Activity.EtherConversion(
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
@@ -214,20 +178,16 @@ class WETHWrapSpec_success
                   txStatus = TxStatus.TX_STATUS_SUCCESS
                 ),
                 Activity(
-                  owner = to,
+                  owner = account.getAddress,
                   block = blockNumber,
                   txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_IN,
+                  activityType = Activity.ActivityType.ETHER_WRAP,
                   timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      to,
+                  token = WETH_TOKEN.address,
+                  detail = Activity.Detail.EtherConversion(
+                    Activity.EtherConversion(
                       Some(
-                        Amount(
-                          ByteString.copyFrom("10000000000000000000", "UTF-8"),
-                          blockNumber
-                        )
+                        toAmount("10000000000000000000")
                       )
                     )
                   ),
@@ -242,26 +202,20 @@ class WETHWrapSpec_success
           address = account.getAddress,
           token = Address.ZERO.toString(),
           balance = Some(
-            Amount(
-              ByteString.copyFrom("10000000000000000000", "UTF-8"),
-              blockNumber
-            )
+            toAmount("10000000000000000000")
           ),
           block = blockNumber
         ),
         AddressBalanceUpdatedEvent(
-          address = to,
-          token = Address.ZERO.toString(),
+          address = account.getAddress,
+          token = WETH_TOKEN.address,
           balance = Some(
-            Amount(
-              ByteString.copyFrom("1010000000000000000000", "UTF-8"),
-              blockNumber
-            )
+            toAmount("30000000000000000000")
           ),
           block = blockNumber
         )
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(3000)
+      Thread.sleep(1000)
 
       GetActivities
         .Req(account.getAddress)
@@ -270,17 +224,7 @@ class WETHWrapSpec_success
             log.info(
               s"--2 ${res}"
             )
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
-          })
-        )
-      GetActivities
-        .Req(to)
-        .expectUntil(
-          check((res: GetActivities.Res) => {
-            log.info(
-              s"--3 ${res}"
-            )
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
+            res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
           })
         )
 
@@ -299,37 +243,20 @@ class WETHWrapSpec_success
       getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
           val balanceOpt = res.accountBalance
-          val resBalance = toBigInt(
+          val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          log.info(
-            s"--6 ${resBalance}"
+          val wethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          // resBalance == BigInt("10000000000000000000")
+          log.info(
+            s"--6 $ethBalance $wethBalance"
+          )
+          // ethBalance == BigInt("10000000000000000000") && wethBalance == BigInt("30000000000000000000")
 
           true
         })
       )
-
-      GetAccount
-        .Req(
-          to,
-          allTokens = true
-        )
-        .expectUntil(
-          check((res: GetAccount.Res) => {
-            val balanceOpt = res.accountBalance
-            val resBalance = toBigInt(
-              balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-            )
-            log.info(
-              s"--7 ${resBalance}"
-            )
-            // resBalance == BigInt("1010000000000000000000")
-
-            true
-          })
-        )
     }
   }
 }
