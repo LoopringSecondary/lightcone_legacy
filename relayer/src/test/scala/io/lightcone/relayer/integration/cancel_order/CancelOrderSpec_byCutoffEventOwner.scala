@@ -16,15 +16,13 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.ErrorCode._
-import io.lightcone.core.ErrorException
+import io.lightcone.core.MarketPair
 import io.lightcone.core.OrderStatus._
 import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.ethereum.event.{CutoffEvent, EventHeader}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 class CancelOrderSpec_byCutoffEventOwner
@@ -39,33 +37,47 @@ class CancelOrderSpec_byCutoffEventOwner
     scenario("4: cancel orders of owner by CutoffEvent") {
 
       Given("an account with enough Balance")
+      val anotherTokens = createAndSaveNewMarket(1.0, 1.0)
+      val secondBaseToken = anotherTokens(0).getMetadata
+      val secondQuoteToken = anotherTokens(1).getMetadata
+      val secondMarket =
+        MarketPair(secondBaseToken.address, secondQuoteToken.address)
+
       implicit val account = getUniqueAccount()
       val getAccountReq =
         GetAccount.Req(address = account.getAddress, allTokens = true)
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
 
-      val lrcTokenBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-      val gtoTokenBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(GTO_TOKEN.address)
+      val baseTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.baseToken
+        )
+      val secondTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(secondMarket.baseToken)
 
       Then(
         "submit two orders  that validSince=now-1000 and validSince=now of market:LRC-WETH."
       )
       val order1 =
-        createRawOrder(validSince = timeProvider.getTimeSeconds().toInt - 1000)
+        createRawOrder(
+          tokenS = dynamicMarketPair.baseToken,
+          tokenB = dynamicMarketPair.quoteToken,
+          tokenFee = dynamicMarketPair.baseToken,
+          validSince = timeProvider.getTimeSeconds().toInt - 1000
+        )
       val submitRes1 = SubmitOrder
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
       info(
         s"the result of submit first order of LRC-WETH is ${submitRes1.success}"
       )
-      val order3 = createRawOrder()
+      val order3 = createRawOrder(
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken,
+        tokenFee = dynamicMarketPair.baseToken
+      )
       val submitRes3 = SubmitOrder
         .Req(Some(order3))
         .expect(check((res: SubmitOrder.Res) => res.success))
@@ -75,8 +87,9 @@ class CancelOrderSpec_byCutoffEventOwner
       Then("submit an order that validSince=now-1000 of market:GTO-WETH.")
       val order2 =
         createRawOrder(
-          tokenS = GTO_TOKEN.address,
-          tokenFee = GTO_TOKEN.address,
+          tokenS = secondMarket.baseToken,
+          tokenB = secondMarket.quoteToken,
+          tokenFee = secondMarket.baseToken,
           validSince = timeProvider.getTimeSeconds().toInt - 1000
         )
       val submitRes2 = SubmitOrder
@@ -84,7 +97,7 @@ class CancelOrderSpec_byCutoffEventOwner
         .expect(check((res: SubmitOrder.Res) => res.success))
 
       Then(
-        s"dispatch CutoffEvent that owner:${account.getAddress} and market:${LRC_WETH_MARKET.getMarketPair}."
+        s"dispatch CutoffEvent that owner:${account.getAddress} and market:${dynamicMarketPair}."
       )
       val cutoff = CutoffEvent(
         header = Some(
@@ -103,9 +116,9 @@ class CancelOrderSpec_byCutoffEventOwner
 
       Thread.sleep(1000)
       Then("check the cancel result.")
-      val lrcExpectedBalance = lrcTokenBalance.copy(
-        availableBalance = lrcTokenBalance.availableBalance - order3.amountS - order3.getFeeParams.amountFee,
-        availableAlloawnce = lrcTokenBalance.availableAlloawnce - order3.amountS - order3.getFeeParams.amountFee
+      val baseExpectedBalance = baseTokenBalance.copy(
+        availableBalance = baseTokenBalance.availableBalance - order3.amountS - order3.getFeeParams.amountFee,
+        availableAlloawnce = baseTokenBalance.availableAlloawnce - order3.amountS - order3.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(
@@ -116,13 +129,13 @@ class CancelOrderSpec_byCutoffEventOwner
           STATUS_PENDING,
           order3.hash
         ),
-        accountBalanceMatcher(LRC_TOKEN.address, lrcExpectedBalance)
-          and accountBalanceMatcher(GTO_TOKEN.address, gtoTokenBalance),
+        accountBalanceMatcher(dynamicMarketPair.baseToken, baseExpectedBalance)
+          and accountBalanceMatcher(secondMarket.baseToken, secondTokenBalance),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (not(orderBookIsEmpty()),
+          dynamicMarketPair -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),
           marketFillsIsEmpty()),
-          GTO_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          secondMarket -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )
@@ -133,8 +146,9 @@ class CancelOrderSpec_byCutoffEventOwner
       )
       val order4 =
         createRawOrder(
-          tokenS = GTO_TOKEN.address,
-          tokenFee = GTO_TOKEN.address,
+          tokenS = secondMarket.baseToken,
+          tokenB = secondMarket.quoteToken,
+          tokenFee = secondMarket.baseToken,
           validSince = timeProvider.getTimeSeconds().toInt - 999
         )
       val submitRes4 = SubmitOrder
@@ -145,8 +159,9 @@ class CancelOrderSpec_byCutoffEventOwner
       )
       val order5 =
         createRawOrder(
-          tokenS = GTO_TOKEN.address,
-          tokenFee = GTO_TOKEN.address
+          tokenS = secondMarket.baseToken,
+          tokenB = secondMarket.quoteToken,
+          tokenFee = secondMarket.baseToken
         )
       val submitRes5 = SubmitOrder
         .Req(Some(order5))
@@ -156,9 +171,9 @@ class CancelOrderSpec_byCutoffEventOwner
       )
 
       Then("check the result after submit the two new orders.")
-      val gtoExpectedBalance = gtoTokenBalance.copy(
-        availableBalance = gtoTokenBalance.availableBalance - order5.amountS - order5.getFeeParams.amountFee,
-        availableAlloawnce = gtoTokenBalance.availableAlloawnce - order5.amountS - order5.getFeeParams.amountFee
+      val secondExpectedBalance = secondTokenBalance.copy(
+        availableBalance = secondTokenBalance.availableBalance - order5.amountS - order5.getFeeParams.amountFee,
+        availableAlloawnce = secondTokenBalance.availableAlloawnce - order5.amountS - order5.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(
@@ -170,13 +185,16 @@ class CancelOrderSpec_byCutoffEventOwner
           order3.hash,
           order5.hash
         ),
-        accountBalanceMatcher(LRC_TOKEN.address, lrcExpectedBalance)
-          and accountBalanceMatcher(GTO_TOKEN.address, gtoExpectedBalance),
+        accountBalanceMatcher(dynamicMarketPair.baseToken, baseExpectedBalance)
+          and accountBalanceMatcher(
+            secondMarket.baseToken,
+            secondExpectedBalance
+          ),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (not(orderBookIsEmpty()),
+          dynamicMarketPair -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),
           marketFillsIsEmpty()),
-          GTO_WETH_MARKET.getMarketPair -> (not(orderBookIsEmpty()),
+          secondMarket -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )

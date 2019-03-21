@@ -23,7 +23,6 @@ import io.lightcone.ethereum.event.{EventHeader, OrderFilledEvent}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 import scala.math.BigInt
@@ -48,12 +47,13 @@ class CancelOrderSpec_cancelPartiallyFilledOrder
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
 
       Then("submit an order.")
-      val order = createRawOrder()
+      val order = createRawOrder(
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken,
+        tokenFee = dynamicMarketPair.baseToken
+      )
       val submitRes = SubmitOrder
         .Req(Some(order))
         .expect(check((res: SubmitOrder.Res) => true))
@@ -74,7 +74,7 @@ class CancelOrderSpec_cancelPartiallyFilledOrder
 
       addFilledAmountExpects({
         case req: GetFilledAmount.Req =>
-          val amount: Amount = "5".zeros(LRC_TOKEN.decimals)
+          val amount: Amount = "5".zeros(dynamicBaseToken.getMetadata.decimals)
           GetFilledAmount.Res(
             filledAmountSMap = (req.orderIds map { id =>
               id -> amount
@@ -102,7 +102,7 @@ class CancelOrderSpec_cancelPartiallyFilledOrder
         containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash),
         be(accountInitRes),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )

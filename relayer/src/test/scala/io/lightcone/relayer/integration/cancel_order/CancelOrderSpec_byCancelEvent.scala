@@ -16,18 +16,12 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.ErrorCode._
-import io.lightcone.core.ErrorException
-import io.lightcone.core.OrderStatus.{
-  STATUS_ONCHAIN_CANCELLED_BY_USER,
-  STATUS_SOFT_CANCELLED_BY_USER
-}
+import io.lightcone.core.OrderStatus._
 import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.ethereum.event.{EventHeader, OrdersCancelledOnChainEvent}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 class CancelOrderSpec_byCancelEvent
@@ -50,22 +44,23 @@ class CancelOrderSpec_byCancelEvent
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
 
-      Then("submit an order or LRC-WETH.")
-      val order1 = createRawOrder()
+      Then("submit an order of market: base-quote.")
+      val order1 = createRawOrder(
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken
+      )
       val submitRes1 = SubmitOrder
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
       info(s"the result of submit order is ${submitRes1.success}")
 
-      Then("submit an order of market:GTO-WETH.")
+      Then("submit an order of market:quote-base.")
       val order2 =
         createRawOrder(
-          tokenS = GTO_TOKEN.address,
-          tokenFee = GTO_TOKEN.address,
+          tokenS = dynamicMarketPair.quoteToken,
+          tokenB = dynamicMarketPair.baseToken,
+          tokenFee = dynamicMarketPair.baseToken,
           validSince = timeProvider.getTimeSeconds().toInt - 1000
         )
       val submitRes2 = SubmitOrder
@@ -97,7 +92,7 @@ class CancelOrderSpec_byCancelEvent
         ),
         be(accountInitRes),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )

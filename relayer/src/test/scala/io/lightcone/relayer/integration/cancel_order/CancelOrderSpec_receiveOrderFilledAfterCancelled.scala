@@ -23,7 +23,6 @@ import io.lightcone.ethereum.{BlockHeader, TxStatus}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 import scala.math.BigInt
@@ -48,14 +47,17 @@ class CancelOrderSpec_receiveOrderFilledAfterCancelled
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
-      val lrcTokenBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+      val dynamicBaseTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.baseToken
+        )
 
       Then("submit an order.")
-      val order = createRawOrder()
+      val order = createRawOrder(
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken,
+        tokenFee = dynamicMarketPair.baseToken
+      )
       val submitRes = SubmitOrder
         .Req(Some(order))
         .expect(check((res: SubmitOrder.Res) => true))
@@ -81,7 +83,7 @@ class CancelOrderSpec_receiveOrderFilledAfterCancelled
         containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash),
         be(accountInitRes),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )
@@ -129,9 +131,12 @@ class CancelOrderSpec_receiveOrderFilledAfterCancelled
             ),
             order.hash
           ),
-        accountBalanceMatcher(LRC_TOKEN.address, lrcTokenBalance),
+        accountBalanceMatcher(
+          dynamicMarketPair.baseToken,
+          dynamicBaseTokenBalance
+        ),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )

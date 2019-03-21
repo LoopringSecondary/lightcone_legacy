@@ -36,15 +36,17 @@ case class MockExpects[E, T](defaultExpects: PartialFunction[E, T]) {
 
 object MockHelper {
 
-  var getAccountExpects:MockExpects[GetAccount.Req, GetAccount.Res] = _
+  var getAccountExpects: MockExpects[GetAccount.Req, GetAccount.Res] = _
 
-  var filledAmountExpects: MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
+  var filledAmountExpects
+    : MockExpects[GetFilledAmount.Req, GetFilledAmount.Res] = _
 
   var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
 
   var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
 
-  var orderCancelExpects: MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
+  var orderCancelExpects
+    : MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
 }
 
 trait MockHelper extends MockFactory with OneInstancePerTest {

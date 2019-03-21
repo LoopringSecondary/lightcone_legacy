@@ -27,10 +27,12 @@ trait CommonHelper
     with RpcHelper
     with OrderHelper
     with BeforeAndAfterEach {
+  me: FeatureSpec =>
 
   var dynamicBaseToken: Token = _
   var dynamicQuoteToken: Token = _
   var dynamicMarketPair: MarketPair = _
+
   //保证每次都重置ethmock和数据库，
   //当需要不同的重置条件时，需要覆盖该方法
   override protected def beforeEach(): Unit = {

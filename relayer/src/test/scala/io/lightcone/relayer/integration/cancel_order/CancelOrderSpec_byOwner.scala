@@ -39,26 +39,6 @@ class CancelOrderSpec_byOwner
     scenario("2: cancel by owner") {
 
       Given("an account with enough Balance")
-      addAccountExpects({
-        case req: GetAccount.Req =>
-          GetAccount.Res(
-            Some(
-              AccountBalance(
-                address = req.address,
-                tokenBalanceMap = req.tokens.map { t =>
-                  t -> AccountBalance.TokenBalance(
-                    token = t,
-                    balance = BigInt("3000000000000000000000"),
-                    allowance = BigInt("3000000000000000000000"),
-                    availableAlloawnce = BigInt("1000000000000000000000"),
-                    availableBalance = BigInt("1000000000000000000000")
-                  )
-                }.toMap
-              )
-            )
-          )
-      })
-
       implicit val account = getUniqueAccount()
       val getAccountReq =
         GetAccount.Req(address = account.getAddress, allTokens = true)
@@ -68,11 +48,6 @@ class CancelOrderSpec_byOwner
       val balance: BigInt = accountInitRes.accountBalance.get
         .tokenBalanceMap(LRC_TOKEN.address)
         .balance
-
-      info(
-        s"balance of this account:${account.getAddress} is :${JsonPrinter
-          .printJsonString(accountInitRes.accountBalance)}, ${balance}"
-      )
 
       Then("submit an order of market:LRC-WETH.")
       val order1 = createRawOrder()
