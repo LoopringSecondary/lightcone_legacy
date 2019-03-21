@@ -24,19 +24,19 @@ import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities, GetPendingActivityNonce}
+import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 import scala.math.BigInt
 
-class TransferERC20Spec_success
+class TransferERC20Spec_failed
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
     with Matchers {
 
-  feature("transfer ERC20 success") {
+  feature("transfer ERC20 failed") {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -205,7 +205,7 @@ class TransferERC20Spec_success
                       )
                     ),
                     nonce = 11,
-                    txStatus = TxStatus.TX_STATUS_SUCCESS
+                    txStatus = TxStatus.TX_STATUS_FAILED
                   ),
                   Activity(
                     owner = to,
@@ -224,27 +224,11 @@ class TransferERC20Spec_success
                       )
                     ),
                     nonce = 11,
-                    txStatus = TxStatus.TX_STATUS_SUCCESS
+                    txStatus = TxStatus.TX_STATUS_FAILED
                   )
               )
             )
           )
-        ),
-        AddressBalanceUpdatedEvent(
-          address = account.getAddress,
-          token = LRC_TOKEN.address,
-          balance = Some(
-            toAmount("900000000000000000000")
-          ),
-          block = blockNumber
-        ),
-        AddressBalanceUpdatedEvent(
-          address = to,
-          token = LRC_TOKEN.address,
-          balance = Some(
-            toAmount("1100000000000000000000")
-          ),
-          block = blockNumber
         )
       ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
@@ -253,14 +237,14 @@ class TransferERC20Spec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
+            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_FAILED
           })
         )
       GetActivities
         .Req(to)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
+            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_FAILED
           })
         )
 
@@ -279,7 +263,7 @@ class TransferERC20Spec_success
           val lrcAvailableBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).availableBalance.get
           )
-          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt("900000000000000000000") && lrcBalance == lrcAvailableBalance
+          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt("1000000000000000000000") && lrcBalance == lrcAvailableBalance
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -297,7 +281,7 @@ class TransferERC20Spec_success
           val lrcAvailableBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).availableBalance.get
           )
-          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt("1100000000000000000000") && lrcBalance == lrcAvailableBalance
+          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt("1000000000000000000000") && lrcBalance == lrcAvailableBalance
         })
       )
     }

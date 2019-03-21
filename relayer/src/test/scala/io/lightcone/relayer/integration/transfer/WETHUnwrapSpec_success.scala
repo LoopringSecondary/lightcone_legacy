@@ -130,9 +130,6 @@ class WETHUnwrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--2 ${res}"
-            )
             res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
           })
         )
@@ -217,9 +214,6 @@ class WETHUnwrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--2 ${res}"
-            )
             res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
           })
         )
@@ -233,12 +227,7 @@ class WETHUnwrapSpec_success
           val wethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          log.info(
-            s"--6 $ethBalance $wethBalance"
-          )
-          // ethBalance == BigInt("30000000000000000000") && wethBalance == BigInt("10000000000000000000")
-
-          true
+          ethBalance == BigInt("30000000000000000000") && wethBalance == BigInt("10000000000000000000")
         })
       )
     }

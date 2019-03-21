@@ -27,7 +27,6 @@ import io.lightcone.relayer.data.{
   GetPendingActivityNonce
 }
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.lib.NumericConversion._
 import org.scalatest._
 import io.lightcone.ethereum.TxStatus
@@ -84,10 +83,7 @@ class TransferETHSpec_success
           val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          val wethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
-          )
-          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
+          ethBalance == BigInt("20000000000000000000")
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -96,10 +92,7 @@ class TransferETHSpec_success
           val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          val wethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
-          )
-          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
+          ethBalance == BigInt("20000000000000000000")
         })
       )
 
@@ -258,7 +251,7 @@ class TransferETHSpec_success
           address = to,
           token = Address.ZERO.toString(),
           balance = Some(
-            toAmount("1010000000000000000000")
+            toAmount("30000000000000000000")
           ),
           block = blockNumber
         )
@@ -269,9 +262,6 @@ class TransferETHSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--2 ${res}"
-            )
             res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
           })
         )
@@ -279,9 +269,6 @@ class TransferETHSpec_success
         .Req(to)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--3 ${res}"
-            )
             res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
           })
         )
@@ -291,10 +278,6 @@ class TransferETHSpec_success
         .expectUntil(
           check((res: GetPendingActivityNonce.Res) => {
             res.nonces.head == 11
-            log.info(
-              s"--4 ${res.nonces.head}"
-            )
-            true
           })
         )
 
@@ -304,10 +287,10 @@ class TransferETHSpec_success
           val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          val wethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
+          val ethAvailableBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).availableBalance.get
           )
-          ethBalance == BigInt("10000000000000000000") && wethBalance == BigInt("20000000000000000000")
+          ethBalance == BigInt("10000000000000000000") && ethBalance == ethAvailableBalance
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -316,32 +299,12 @@ class TransferETHSpec_success
           val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          val wethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
+          val ethAvailableBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).availableBalance.get
           )
-          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
+          ethBalance == BigInt("30000000000000000000") && ethBalance == ethAvailableBalance
         })
       )
-
-      GetAccount
-        .Req(
-          to,
-          allTokens = true
-        )
-        .expectUntil(
-          check((res: GetAccount.Res) => {
-            val balanceOpt = res.accountBalance
-            val resBalance = toBigInt(
-              balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-            )
-            log.info(
-              s"--7 ${resBalance}"
-            )
-            // resBalance == BigInt("1010000000000000000000")
-
-            true
-          })
-        )
     }
   }
 }

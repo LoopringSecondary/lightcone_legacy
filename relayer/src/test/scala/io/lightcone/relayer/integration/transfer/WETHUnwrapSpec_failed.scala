@@ -51,12 +51,18 @@ class WETHUnwrapSpec_failed
               AccountBalance(
                 address = req.address,
                 tokenBalanceMap = req.tokens.map { t =>
+                  val balance = t match {
+                    case ETH_TOKEN.address => "20000000000000000000" // 20 eth
+                    case WETH_TOKEN.address => "20000000000000000000" // 20 weth
+                    case LRC_TOKEN.address => "1000000000000000000000" // 1000 lrc
+                    case _ => "10000000000000000000" // 10 others
+                  }
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = BigInt("20000000000000000000"),
+                    balance = BigInt(balance),
                     allowance = BigInt("1000000000000000000000"),
                     availableAlloawnce = BigInt("1000000000000000000000"),
-                    availableBalance = BigInt("20000000000000000000")
+                    availableBalance = BigInt(balance)
                   )
                 }.toMap
               )
@@ -130,9 +136,6 @@ class WETHUnwrapSpec_failed
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--2 ${res}"
-            )
             res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
           })
         )
@@ -201,9 +204,6 @@ class WETHUnwrapSpec_failed
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--2 ${res}"
-            )
             res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_FAILED)
           })
         )
@@ -217,12 +217,7 @@ class WETHUnwrapSpec_failed
           val wethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          log.info(
-            s"--6 $ethBalance $wethBalance"
-          )
-          // ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
-
-          true
+          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
         })
       )
     }
