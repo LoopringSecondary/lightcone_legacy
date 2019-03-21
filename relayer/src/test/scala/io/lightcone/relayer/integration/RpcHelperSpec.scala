@@ -67,13 +67,6 @@ class RpcHelperSpec
           check((res: GetOrderbook.Res) => res.orderbook.get.sells.nonEmpty)
         )
       info(s"the orderbook is ${orderbook}")
-
-      try {
-        Await.result(system.terminate(), 60 second)
-      } catch {
-        case e: Exception =>
-          info(s"occurs error: ${e.getMessage}, ${e.printStackTrace()}")
-      }
     }
   }
 }

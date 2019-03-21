@@ -53,7 +53,33 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
       timeProvider: TimeProvider
     ) = {
     setDefaultEthExpects()
-    val config = ConfigFactory.load()
+    val anotherPortConfigStr =
+      """
+        |akka {
+        | remote {
+        |    netty.tcp {
+        |      hostname = "127.0.0.1"
+        |      port = 9095
+        |    }
+        |  }
+        |  cluster {
+        |    seed-nodes = ["akka.tcp://Lightcone@127.0.0.1:9095"]
+        |  }
+        |}
+        |jsonrpc {
+        |  http {
+        |     host = "0.0.0.0"
+        |     port = 8085
+        |  }
+        |}
+        |socketio {
+        |  host:"0.0.0.0",
+        |  port:9099
+        |}
+      """.stripMargin
+    val config = ConfigFactory
+      .parseString(anotherPortConfigStr)
+      .withFallback(ConfigFactory.load())
     injector = Guice.createInjector(new CoreModule(config, true))
     implicit val dbModule = injector.instance[DatabaseModule]
     implicit val metadataManager = injector.instance[MetadataManager]
