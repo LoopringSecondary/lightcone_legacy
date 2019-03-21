@@ -95,24 +95,36 @@ final class AccountManagerImpl(
   }
 
   def resubmitOrder(order: Matchable) = {
+
     for {
       _ <- Future.unit
-      order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
-      _ = { orderPool += order_.as(STATUS_PENDING) } // potentially replace the old one.
-      (block, orderIdsToDelete) <- reserveForOrder(order_)
-      ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ = ordersToDelete.map { order =>
-        orderPool +=
-          orderPool(order.id).copy(
-            block = order.block.max(block),
-            status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+      (successful, updatedOrders) <- if (order.status.isCancelledStatus()) {
+        Future.successful(false, Map(order.id -> order))
+      } else {
+        for {
+          _ <- Future.unit
+          order_ = order.copy(
+            _reserved = None,
+            _actual = None,
+            _matchable = None
           )
+          _ = { orderPool += order_.as(STATUS_PENDING) } // potentially replace the old one.
+          (block, orderIdsToDelete) <- reserveForOrder(order_)
+          ordersToDelete = orderIdsToDelete.map(orderPool.apply)
+          _ = ordersToDelete.map { order =>
+            orderPool +=
+              orderPool(order.id).copy(
+                block = order.block.max(block),
+                status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+              )
+          }
+          successful = !orderIdsToDelete.contains(order.id)
+          _ = if (successful) {
+            orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
+          }
+          updatedOrders = orderPool.takeUpdatedOrders
+        } yield (successful, updatedOrders)
       }
-      successful = !orderIdsToDelete.contains(order.id)
-      _ = if (successful) {
-        orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
-      }
-      updatedOrders = orderPool.takeUpdatedOrders
       _ <- updatedOrdersProcessor.processUpdatedOrders(true, updatedOrders)
     } yield (successful, updatedOrders)
   }

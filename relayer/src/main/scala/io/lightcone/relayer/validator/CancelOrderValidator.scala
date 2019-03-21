@@ -18,6 +18,7 @@ package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
 import io.lightcone.core.MarketMetadata.Status._
+import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
 import io.lightcone.ethereum._
 import io.lightcone.lib._
@@ -51,8 +52,10 @@ final class CancelOrderValidator(
     ): Future[Either[ErrorCode, CancelOrder.Req]] = {
     val current = timeProvider.getTimeSeconds()
 
-    if (req.owner.isEmpty || !Address.isValid(req.owner) || req.time.isEmpty
-        || NumericConversion.toBigInt(req.getTime) < current - validityInSeconds
+    if (req.owner.isEmpty ||
+        !Address.isValid(req.owner) ||
+        req.time.isEmpty ||
+        NumericConversion.toBigInt(req.getTime) < current - validityInSeconds
         || NumericConversion.toBigInt(req.getTime) > current) {
       Future.successful(Left(ERR_INVALID_ARGUMENT))
 
@@ -82,7 +85,15 @@ final class CancelOrderValidator(
         case CancelOrder.Req(id, owner, _, _, _, _) =>
           dbModule.orderService.getOrder(req.id).map {
             case Some(order) if order.owner == owner =>
-              Right(req.copy(owner = Address.normalize(req.owner)))
+              //TODO(HONGYU,YONGFENG): 订单状态的变迁需要确定规则，另外是否需要在此处过滤
+              if (order.getState.status == STATUS_NEW ||
+                  order.getState.status == STATUS_PENDING ||
+                  order.getState.status == STATUS_PENDING_ACTIVE ||
+                  order.getState.status == STATUS_PARTIALLY_FILLED) {
+                Right(req.copy(owner = Address.normalize(req.owner)))
+              } else {
+                Left(ERR_ORDER_VALIDATION_INVALID_CANCELED)
+              }
             case Some(_) =>
               Left(ERR_ORDER_VALIDATION_INVALID_OWNER)
 

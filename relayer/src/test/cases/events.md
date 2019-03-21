@@ -130,3 +130,9 @@
 可参考原先的 EntryPointSpec_CancelOrderAfterManyRingFailures
 
 1. 
+
+### OrderFilledEvent
+
+1. 正确保存以及查询
+
+1. 订单状态变更是否正确，如更改成STATUS_COMPLETELY_FILLED

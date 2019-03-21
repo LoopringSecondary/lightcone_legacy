@@ -301,7 +301,7 @@ class MarketManagerActor(
           marketPair = Some(marketPair)
         )
       }
-      sender ! CancelOrder.Res(error = ERR_NONE, status = req.status)
+      sender ! CancelOrder.Res(status = req.status)
 
       t.stop()
       val numOfOrders = manager.getNumOfOrders

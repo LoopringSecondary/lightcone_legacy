@@ -278,8 +278,8 @@ class AccountManagerActor(
         (for {
           updatedOrders <- manager.cancelAllOrders()
           result = {
-            if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
-            else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
+            if (updatedOrders.nonEmpty) CancelOrder.Res(req.status)
+            else throw ErrorException(ERR_ORDER_NOT_EXIST)
           }
         } yield result).sendTo(sender)
       }
@@ -291,8 +291,8 @@ class AccountManagerActor(
         (for {
           updatedOrders <- manager.cancelOrders(marketPair)
           result = {
-            if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
-            else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
+            if (updatedOrders.nonEmpty) CancelOrder.Res(req.status)
+            else throw ErrorException(ERR_ORDER_NOT_EXIST)
           }
         } yield result).sendTo(sender)
       }
