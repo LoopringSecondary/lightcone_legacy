@@ -323,6 +323,7 @@ class MetadataManagerActor(
     if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickers.nonEmpty) {
       val tokenMetadataMap = tokenMetadatas.map(m => m.symbol -> m).toMap
       val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
+      //TODO:当只能按照tokenTicker的更新，如果新加了token或者cmc不存在的会被刷掉
       tokens = tokenTickers.map { ticker =>
         val symbol = ticker.symbol
         // 以ticker为基准，组装成tokens，提供给metadataRefresher同步。因为ticker额外包含了(eth,btc,rmb）

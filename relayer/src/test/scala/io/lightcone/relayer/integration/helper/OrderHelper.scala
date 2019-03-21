@@ -18,7 +18,6 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.core._
 import io.lightcone.ethereum._
-import io.lightcone.lib.SystemTimeProvider
 import io.lightcone.relayer.actors._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
@@ -26,8 +25,6 @@ import org.web3j.utils.Numeric
 import scala.math.BigInt
 
 trait OrderHelper {
-
-  val timeProvider = new SystemTimeProvider()
 
   def createRawOrder(
       tokenS: String = Metadatas.LRC_TOKEN.address,

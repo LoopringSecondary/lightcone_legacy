@@ -15,14 +15,9 @@
  */
 
 package io.lightcone.relayer.integration.helper
-import akka.util.Timeout
-import io.lightcone.core._
-import io.lightcone.lib.TimeProvider
-import io.lightcone.persistence._
-import io.lightcone.relayer.integration.Metadatas._
-import org.slf4s.Logging
 
-import scala.concurrent._
+import io.lightcone.persistence._
+import org.slf4s.Logging
 
 //数据库的prepare
 trait DbHelper extends Logging {
@@ -33,62 +28,6 @@ trait DbHelper extends Logging {
       t.deleteByFilter(_ => true)
     }
 //    dbModule.createTables()
-  }
-
-  def prepareMetadata(
-      dbModule: DatabaseModule,
-      metadataManager: MetadataManager
-    )(
-      implicit
-      timeout: Timeout,
-      timeProvider: TimeProvider
-    ) = {
-
-    dbModule.tokenMetadataDal.saveTokenMetadatas(TOKENS)
-    dbModule.tokenInfoDal.saveTokenInfos(TOKENS.map { t =>
-      TokenInfo(t.symbol)
-    })
-    dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(
-      TOKEN_SLUGS_SYMBOLS.map { t =>
-        CMCCrawlerConfigForToken(t._1, t._2)
-      }
-    )
-    dbModule.marketMetadataDal.saveMarkets(MARKETS)
-
-    val tokens = TOKENS.map { t =>
-      Token(
-        Some(t),
-        Some(TokenInfo(symbol = t.symbol)),
-        Some(TokenTicker(token = t.address, price = 0.1))
-      )
-    }
-
-    val markets = MARKETS.map { m =>
-      Market(
-        Some(m),
-        Some(
-          MarketTicker(
-            baseToken = m.marketPair.get.baseToken,
-            quoteToken = m.marketPair.get.quoteToken,
-            price = 0.0001
-          )
-        )
-      )
-    }
-    metadataManager.reset(
-      tokens,
-      markets
-    )
-    val tickers_ = externalTickers
-    Await.result(
-      dbModule.tokenTickerRecordDal.saveTickers(tickers_),
-      timeout.duration
-    )
-    Await.result(
-      dbModule.tokenTickerRecordDal.setValid(timeProvider.getTimeSeconds()),
-      timeout.duration
-    )
-
   }
 
 }
