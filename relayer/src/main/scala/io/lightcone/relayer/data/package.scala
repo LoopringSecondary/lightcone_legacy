@@ -146,6 +146,7 @@ package object data {
         amountS = order.amountS,
         amountB = order.amountB,
         amountFee = order.getFeeParams.amountFee,
+        validSince = order.validSince,
         submittedAt = order.getState.createdAt,
         status = order.getState.status,
         walletSplitPercentage = order.getFeeParams.waiveFeePercentage / 1000.0

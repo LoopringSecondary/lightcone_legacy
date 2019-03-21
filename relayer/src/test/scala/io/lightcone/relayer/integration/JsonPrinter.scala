@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.integration.helper
+package io.lightcone.relayer.integration
+import io.lightcone.lib.ProtoSerializer
+import io.lightcone.relayer.jsonrpc.JsonSupport
+import scalapb.GeneratedMessage
 
-import io.lightcone.persistence._
-import org.slf4s.Logging
+object JsonPrinter extends JsonSupport {
 
-//数据库的prepare
-trait DbHelper extends Logging {
+  val ps = new ProtoSerializer
 
-  def prepareDbModule(dbModule: DatabaseModule) = {
-
-    dbModule.tables.map { t =>
-      t.deleteByFilter(_ => true)
-    }
-//    dbModule.createTables()
+  def printJsonString(msg: GeneratedMessage) = {
+    serialization.write(ps.serialize(msg))
   }
 
+  def printJsonString(msg: Option[GeneratedMessage]) = {
+    serialization.write(ps.serialize(msg.get))
+  }
 }

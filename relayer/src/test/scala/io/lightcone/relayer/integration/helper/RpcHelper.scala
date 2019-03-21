@@ -29,7 +29,7 @@ import scala.concurrent.{Await, ExecutionContext}
 trait RpcHelper extends Logging {
   helper: Matchers =>
 
-  implicit class RichRequest[T <: GeneratedMessage](req: T) {
+  implicit class RichRequest[T](req: T) {
 
     def expectUntil[R <: GeneratedMessage](
         matcher: Matcher[R],
@@ -49,8 +49,12 @@ trait RpcHelper extends Logging {
              System.currentTimeMillis() <= lastTime) {
         val res = Await.result(entryPointActor ? req, expectTimeout.duration)
         resOpt = res match {
-          case err: ErrorException => throw err
-          case msg                 => Some(msg.asInstanceOf[R])
+          case err: ErrorException =>
+            if (m.runtimeClass == err.getClass)
+              Some(res.asInstanceOf[R])
+            else throw err
+          case msg =>
+            Some(msg.asInstanceOf[R])
         }
         res.getClass should be(m.runtimeClass)
         resMatched = matcher(resOpt.get).matches
@@ -69,19 +73,22 @@ trait RpcHelper extends Logging {
       }
     }
 
-    def expect[R <: GeneratedMessage](
+    def expect[R](
         matcher: Matcher[R]
       )(
         implicit
         timeout: Timeout,
         system: ActorSystem,
-        ec: ExecutionContext
+        ec: ExecutionContext,
+        m: Manifest[R]
       ) = {
       val res = Await
         .result(entryPointActor ? req, timeout.duration) match {
         case err: ErrorException =>
-          throw err
-        case m => m.asInstanceOf[R]
+          if (m.runtimeClass == err.getClass)
+            err.asInstanceOf[R]
+          else throw err
+        case msg => msg.asInstanceOf[R]
       }
       res should matcher
       res

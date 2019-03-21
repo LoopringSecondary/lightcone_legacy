@@ -43,8 +43,8 @@ package object integration extends MockFactory {
   val injector = integrationStarter.injector
 
   val eventDispatcher = injector.instance[EventDispatcher]
-  val dbModule = injector.instance[DatabaseModule]
-  val metadataManager = injector.instance[MetadataManager]
+  implicit val dbModule = injector.instance[DatabaseModule]
+  implicit val metadataManager = injector.instance[MetadataManager]
 
   //  //start ActorySystem
   val entryPointActor =
