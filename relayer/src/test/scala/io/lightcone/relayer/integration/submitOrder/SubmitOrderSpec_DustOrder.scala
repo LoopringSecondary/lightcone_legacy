@@ -16,18 +16,20 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
-import io.lightcone.core._
+import io.lightcone.core.OrderStatus.{STATUS_DUST_ORDER, STATUS_PENDING}
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
+import io.lightcone.relayer.integration.AddedMatchers._
 import org.scalatest._
 
 class SubmitOrderSpec_DustOrder
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit order") {
@@ -35,32 +37,53 @@ class SubmitOrderSpec_DustOrder
       implicit val account = getUniqueAccount()
       Given("a new account with enough balance and allowance")
 
-      When("submit an order that fiat value is smaller than dust threshold")
-
-      try {
-        val submitRes = SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                amountS = "1".zeros(LRC_TOKEN.decimals - 1),
-                amountFee = "1".zeros(LRC_TOKEN.decimals - 1),
-                amountB = "1".zeros(WETH_TOKEN.decimals - 5)
-              )
-            )
-          )
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-
-      GetOrders
-        .Req(owner = account.getAddress)
+      GetAccount
+        .Req(
+          address = account.getAddress,
+          tokens = Seq(dynamicBaseToken.getAddress())
+        )
         .expectUntil(
-          check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusDustOrder
-          })
+          check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
         )
 
+      When("submit an order that fiat value is smaller than dust threshold")
+      val order1 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        amountS = "1".zeros(dynamicBaseToken.getMetadata.decimals - 2),
+        amountFee = "1".zeros(dynamicBaseToken.getMetadata.decimals - 1),
+        amountB = "1".zeros(dynamicQuoteToken.getMetadata.decimals - 5)
+      )
+      SubmitOrder
+        .Req(Some(order1))
+        .expect(
+          check((res: SubmitOrder.Res) => !res.success)
+        )
+
+      Then("order submit is failed")
+
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_DUST_ORDER, order1.hash),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
+      )
+
+      And("order status is Status_Dust_Order")
+      And("order book is empty")
     }
   }
 

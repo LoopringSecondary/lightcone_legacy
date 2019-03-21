@@ -81,6 +81,7 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2014;
     ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2015;
     ERR_ORDER_DUST_VALUE                                    = 2016;
+    ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG                 = 2017;
 
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;

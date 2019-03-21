@@ -68,18 +68,15 @@ object AddedMatchers extends JsonSupport {
       state: RawOrder.State,
       hash: String
     ) = {
-    def findOrder(res: GetOrders.Res) =
-      res.orders.find(_.hash.toLowerCase() == hash.toLowerCase())
-
     Matcher { res: GetOrders.Res =>
       MatchResult(
-        findOrder(res).nonEmpty,
+        findOrder(res, hash).nonEmpty,
         s" ${JsonPrinter.printJsonString(res)} doesn't contains order: $hash",
         s"${JsonPrinter.printJsonString(res)} contains it."
       )
     } and
       Matcher { res: GetOrders.Res =>
-        val resState = findOrder(res).get.getState
+        val resState = findOrder(res, hash).get.getState
         val amountS: BigInt = resState.outstandingAmountS
         val amountB: BigInt = resState.outstandingAmountB
         val amountFee: BigInt = resState.outstandingAmountFee
@@ -91,7 +88,7 @@ object AddedMatchers extends JsonSupport {
             resState.outstandingAmountB == state.outstandingAmountB &&
             resState.outstandingAmountFee == state.outstandingAmountFee,
           s"The state of order:${JsonPrinter
-            .printJsonString(findOrder(res).get.getState)}, $amountS, $amountB, $amountS in result isn't  ${JsonPrinter
+            .printJsonString(findOrder(res, hash).get.getState)}, $amountS, $amountB, $amountS in result isn't  ${JsonPrinter
             .printJsonString(state)}, $expectedAdmountS, $expectedAmountB, $expectedAmountFee. ",
           "the state matched."
         )
@@ -148,5 +145,11 @@ object AddedMatchers extends JsonSupport {
         s"equals."
       )
   }
+
+  private def findOrder(
+      res: GetOrders.Res,
+      hash: String
+    ) =
+    res.orders.find(_.hash.toLowerCase() == hash.toLowerCase())
 
 }

@@ -16,12 +16,13 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
+import io.lightcone.core.ErrorCode.ERR_LOW_BALANCE
+import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -29,6 +30,7 @@ class SubmitOrderSpec_Continuous
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit  order ") {
@@ -37,247 +39,210 @@ class SubmitOrderSpec_Continuous
       Given(
         s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
-      addAccountExpects({
-        case req =>
-          GetAccount.Res(
-            Some(
-              AccountBalance(
-                address = req.address,
-                tokenBalanceMap = req.tokens.map { t =>
-                  t -> AccountBalance.TokenBalance(
-                    token = t,
-                    balance = "1000".zeros(18),
-                    allowance = "1000".zeros(18)
-                  )
-                }.toMap
-              )
-            )
-          )
-      })
-
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
-        tokens = Seq(LRC_TOKEN.address)
+        tokens = Seq(dynamicBaseToken.getAddress())
       )
-      val res = getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == "1000".zeros(
-            LRC_TOKEN.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "1000"
-            .zeros(
-              LRC_TOKEN.decimals
-            ) &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
-            LRC_TOKEN.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "1000"
-            .zeros(LRC_TOKEN.decimals)
-        })
+      getBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
 
       When("submit the first order of sell 100 LRC and set fee to 20 LRC.")
 
-      try {
-        val submitRes = SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                amountS = "100".zeros(LRC_TOKEN.decimals),
-                amountFee = "20".zeros(LRC_TOKEN.decimals)
-              )
-            )
+      val order1 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        amountS = "100".zeros(dynamicBaseToken.getMetadata.decimals),
+        amountFee = "20".zeros(dynamicBaseToken.getMetadata.decimals)
+      )
+
+      SubmitOrder
+        .Req(Some(order1))
+        .expect(check((res: SubmitOrder.Res) => res.success))
+
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order1.hash) and
+          outStandingMatcherInGetOrders(
+            RawOrder.State(
+              outstandingAmountS =
+                "100".zeros(dynamicBaseToken.getMetadata.decimals),
+              outstandingAmountB =
+                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
+              outstandingAmountFee =
+                "20".zeros(dynamicBaseToken.getMetadata.decimals)
+            ),
+            order1.hash
+          ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "880".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "880".zeros(dynamicBaseToken.getMetadata.decimals)
           )
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
-        .expectUntil(
-          check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusPending
-          })
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 100
+          ), defaultMatcher, defaultMatcher)
         )
+      )
 
       Then(
-        s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
+        "balance and allowance is 1000 , available balance and available allowance is 880 "
       )
 
-      getBalanceReq.expectUntil(
-        check(
-          (res: GetAccount.Res) => {
-            val lrc_ba =
-              res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-            NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
-              LRC_TOKEN.decimals
-            ) &&
-            NumericConversion.toBigInt(lrc_ba.getAllowance) == "1000".zeros(
-              LRC_TOKEN.decimals
-            ) &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "880"
-              .zeros(LRC_TOKEN.decimals) &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "880"
-              .zeros(LRC_TOKEN.decimals)
+      And("the outstanding amounts is 100")
 
-          }
-        )
+      And("sell amount of order book is 100")
+
+      val order2 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        amountS = "500".zeros(dynamicBaseToken.getMetadata.decimals),
+        amountFee = "20".zeros(dynamicBaseToken.getMetadata.decimals)
       )
-
-      And(
-        s"balance and allowance is 1000 , available balance and available allowance is 880 "
-      )
-
-      GetOrderbook
-        .Req(
-          size = 10,
-          marketPair = Some(
-            MarketPair(
-              LRC_TOKEN.address,
-              WETH_TOKEN.address
-            )
-          )
-        )
-        .expect(
-          check(
-            (res: GetOrderbook.Res) =>
-              res.getOrderbook.sells.head.amount.toDouble == 100
-          )
-        )
-
-      And(s" sell amount of order book is 100")
-
-      try {
-        val submitRes = SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                amountS = "500".zeros(LRC_TOKEN.decimals),
-                amountFee = "20".zeros(LRC_TOKEN.decimals)
-              )
-            )
-          )
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
+      SubmitOrder
+        .Req(Some(order2))
+        .expect(check((res: SubmitOrder.Res) => res.success))
 
       When("submit the second order of  sell 500 LRC and fee 20 LRC")
-      getBalanceReq.expectUntil(
-        check(
-          (res: GetAccount.Res) => {
-            val lrc_ba =
-              res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-            NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
-              LRC_TOKEN.decimals
-            ) &&
-            NumericConversion.toBigInt(lrc_ba.getAllowance) == "1000".zeros(
-              LRC_TOKEN.decimals
-            ) &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "360"
-              .zeros(LRC_TOKEN.decimals) &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "360"
-              .zeros(LRC_TOKEN.decimals)
 
-          }
-        )
-      )
-
-      Then(
-        s"balance and allowance is 1000 , available balance and available allowance is 360 "
-      )
-
-      GetOrderbook
-        .Req(
-          size = 10,
-          marketPair = Some(
-            MarketPair(
-              LRC_TOKEN.address,
-              WETH_TOKEN.address
-            )
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order2.hash) and
+          outStandingMatcherInGetOrders(
+            RawOrder.State(
+              outstandingAmountS =
+                "500".zeros(dynamicBaseToken.getMetadata.decimals),
+              outstandingAmountB =
+                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
+              outstandingAmountFee =
+                "20".zeros(dynamicBaseToken.getMetadata.decimals)
+            ),
+            order2.hash
+          ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "360".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "360".zeros(dynamicBaseToken.getMetadata.decimals)
           )
-        )
-        .expect(
-          check(
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
             (res: GetOrderbook.Res) =>
               res.getOrderbook.sells.map(_.amount.toDouble).sum == 600
-          )
-        )
-
-      And(s" sell amount of order book is 600")
-      try {
-        SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                amountS = "480".zeros(LRC_TOKEN.decimals),
-                amountFee = "20".zeros(LRC_TOKEN.decimals)
-              )
-            )
-          )
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-
-      When("submit the third order of  sell 480 LRC and fee 20 LRC")
-      getBalanceReq.expect(
-        check(
-          (res: GetAccount.Res) => {
-            val lrc_ba =
-              res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-            NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
-              LRC_TOKEN.decimals
-            ) &&
-            NumericConversion.toBigInt(lrc_ba.getAllowance) == "1000".zeros(
-              LRC_TOKEN.decimals
-            ) &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == 0 &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0
-          }
+          ), defaultMatcher, defaultMatcher)
         )
       )
 
       Then(
-        s"balance and allowance is 1000 , available balance and available allowance is 0 "
+        "balance and allowance is 1000, available balance and available allowance is 360 "
       )
+      And("the outstanding amounts is 500")
+      And("sell amount of order book is 600")
 
-      GetOrderbook
-        .Req(
-          size = 10,
-          marketPair = Some(
-            MarketPair(
-              LRC_TOKEN.address,
-              WETH_TOKEN.address
-            )
+      val order3 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        amountS = "480".zeros(dynamicBaseToken.getMetadata.decimals),
+        amountFee = "20".zeros(dynamicBaseToken.getMetadata.decimals)
+      )
+      SubmitOrder
+        .Req(Some(order3))
+        .expect(check((res: SubmitOrder.Res) => res.success))
+
+      When("submit the third order of  sell 480 LRC and fee 20 LRC")
+
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order3.hash) and
+          outStandingMatcherInGetOrders(
+            RawOrder.State(
+              outstandingAmountS =
+                "480".zeros(dynamicBaseToken.getMetadata.decimals),
+              outstandingAmountB =
+                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
+              outstandingAmountFee =
+                "20".zeros(dynamicBaseToken.getMetadata.decimals)
+            ),
+            order3.hash
+          ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "0".zeros(dynamicBaseToken.getMetadata.decimals)
           )
-        )
-        .expect(
-          check(
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
             (res: GetOrderbook.Res) =>
               res.getOrderbook.sells.map(_.amount.toDouble).sum == 945.6
-          )
+          ), defaultMatcher, defaultMatcher)
+        )
+      )
+
+      Then(
+        "balance and allowance is 1000, available balance and available allowance is 0"
+      )
+      And("outstanding amounts is 345.6")
+      And("sell amount of order book is 945.6")
+
+      When("submit the fourth order of  sell 490 LRC and fee 10 LRC")
+
+      val order4 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        amountS = "490".zeros(dynamicBaseToken.getMetadata.decimals),
+        amountFee = "10".zeros(dynamicBaseToken.getMetadata.decimals)
+      )
+      SubmitOrder
+        .Req(
+          Some(order4)
+        )
+        .expect(
+          check((err: ErrorException) => err.error.code == ERR_LOW_BALANCE)
         )
 
-      And(s" sell amount of order book is 945.6")
-
-      When("submit the third order of  sell 490 LRC and fee 10 LRC")
-      try {
-        SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                amountS = "490".zeros(LRC_TOKEN.decimals),
-                amountFee = "10".zeros(LRC_TOKEN.decimals)
-              )
-            )
+      defaultValidate(
+        getOrdersMatcher =
+          containsInGetOrders(STATUS_SOFT_CANCELLED_LOW_BALANCE, order4.hash),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "0".zeros(dynamicBaseToken.getMetadata.decimals)
           )
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-      Then("the result of submit order is false")
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 945.6
+          ), defaultMatcher, defaultMatcher)
+        )
+      )
     }
   }
 

@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
-import io.lightcone.core.ErrorCode.ERR_ORDER_VALIDATION_INVALID_SIG
+import io.lightcone.core.ErrorCode._
 import io.lightcone.core.ErrorException
 import io.lightcone.relayer.data.SubmitOrder
 import io.lightcone.relayer.getUniqueAccount
@@ -37,73 +37,64 @@ class SubmitOrderSpec_invalidData
         s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
 
-      When("submit an order that order sig is invalid")
-      try {
-        val order1 = createRawOrder()
-        SubmitOrder
-          .Req(
-            Some(
-              order1.copy(
-                params = order1.params
-                  .map(p => p.copy(sig = p.sig.replaceAll("f", "e")))
-              )
+      When("submit an order with an invalid order sig ")
+      val order1 = createRawOrder()
+      SubmitOrder
+        .Req(
+          Some(
+            order1.copy(
+              params = order1.params
+                .map(p => p.copy(sig = "0x0"))
             )
           )
-          .expect(
-            check(
-              (err: ErrorException) =>
-                err.error.code == ERR_ORDER_VALIDATION_INVALID_SIG
-            )
+        )
+        .expect(
+          check(
+            (err: ErrorException) =>
+              err.error.code == ERR_ORDER_VALIDATION_INVALID_SIG
           )
-      } catch {
-        case e: ErrorException =>
-      }
-
+        )
       Then("the error code of submit order is ERR_ORDER_VALIDATION_INVALID_SIG")
       When("submit an order that order owner is invalid")
-      try {
-        val order2 = createRawOrder()
-        SubmitOrder
-          .Req(
-            Some(
-              order2.copy(
-                owner = getUniqueAccount().getAddress
-              )
-            )
-          )
-          .expect(
-            check(
-              (err: ErrorException) =>
-                err.error.code == ERR_ORDER_VALIDATION_INVALID_SIG
-            )
-          )
-      } catch {
-        case e: ErrorException =>
-      }
 
-      Then("the error code of submit order is ERR_ORDER_VALIDATION_INVALID_SIG")
-
-      val order2 = createRawOrder(amountS = "20".zeros(18))
+      val order2 = createRawOrder(amountB = "20".zeros(18))
       SubmitOrder
         .Req(
           Some(
             order2.copy(
-              params = order2.params
+              owner = getUniqueAccount().getAddress
+            )
+          )
+        )
+        .expect(
+          check(
+            (err: ErrorException) =>
+              err.error.code == ERR_ORDER_VALIDATION_INVALID_SIG
+          )
+        )
+
+      Then("the error code of submit order is ERR_ORDER_VALIDATION_INVALID_SIG")
+
+      When("submit an order with an a wrong dualAuthAddr")
+      val order3 = createRawOrder(amountS = "30".zeros(18))
+      SubmitOrder
+        .Req(
+          Some(
+            order3.copy(
+              params = order3.params
                 .map(
-                  p => p.copy(dualAuthSig = p.sig)
+                  p => p.copy(dualAuthAddr = getUniqueAccount().getAddress)
                 )
             )
           )
         )
         .expect(
           check(
-            (err: SubmitOrder.Res) => {
-              println(err)
-              true
+            (err: ErrorException) => {
+              err.error.code == ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY
             }
           )
         )
-
     }
   }
 }
