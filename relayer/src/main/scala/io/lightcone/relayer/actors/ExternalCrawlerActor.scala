@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -69,7 +68,7 @@ class ExternalCrawlerActor(
     with RepeatedJobActor
     with ActorLogging {
 
-  val mediator = DistributedPubSub(context.system).mediator
+  @inline def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val selfConfig = config.getConfig(ExternalCrawlerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
@@ -114,7 +113,7 @@ class ExternalCrawlerActor(
       assert(persistTickers.nonEmpty)
       tokenSymbolSlugs = tokenSymbolSlugs_
       tickers = persistTickers
-      publish()
+      notifyChanged()
     }
   }
 
@@ -150,11 +149,8 @@ class ExternalCrawlerActor(
       tickers_
     }
 
-  private def publish() = {
-    mediator ! Publish(
-      ExternalCrawlerActor.pubsubTopic,
-      MetadataChanged()
-    )
+  private def notifyChanged() = {
+    metadataManagerActor ! MetadataChanged(false, false, false, true)
   }
 
 }

@@ -85,7 +85,6 @@ class MetadataManagerActor(
 
   override def initialize() = {
     val f = for {
-      _ <- mediator ? Subscribe(ExternalCrawlerActor.pubsubTopic, self)
       tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
       tokenInfos_ <- dbModule.tokenInfoDal.getTokenInfos()
       marketMetadatas_ <- dbModule.marketMetadataDal.getMarkets()
@@ -214,7 +213,7 @@ class MetadataManagerActor(
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case _: MetadataChanged => { // subscribe message from ExternalCrawlerActor
+    case _ @MetadataChanged(false, false, false, true) => { // subscribe message from ExternalCrawlerActor
       for {
         tickers_ <- getLastTickers()
       } yield {
