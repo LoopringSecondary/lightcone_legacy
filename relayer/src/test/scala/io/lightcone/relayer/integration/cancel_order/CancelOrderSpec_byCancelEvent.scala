@@ -50,22 +50,23 @@ class CancelOrderSpec_byCancelEvent
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
 
-      Then("submit an order or LRC-WETH.")
-      val order1 = createRawOrder()
+      Then("submit an order of market: base-quote.")
+      val order1 = createRawOrder(
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken
+      )
       val submitRes1 = SubmitOrder
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
       info(s"the result of submit order is ${submitRes1.success}")
 
-      Then("submit an order of market:GTO-WETH.")
+      Then("submit an order of market:quote-base.")
       val order2 =
         createRawOrder(
-          tokenS = GTO_TOKEN.address,
-          tokenFee = GTO_TOKEN.address,
+          tokenS = dynamicMarketPair.quoteToken,
+          tokenB = dynamicMarketPair.baseToken,
+          tokenFee = dynamicMarketPair.baseToken,
           validSince = timeProvider.getTimeSeconds().toInt - 1000
         )
       val submitRes2 = SubmitOrder
@@ -97,7 +98,7 @@ class CancelOrderSpec_byCancelEvent
         ),
         be(accountInitRes),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )

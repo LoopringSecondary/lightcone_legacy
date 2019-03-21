@@ -16,11 +16,11 @@
 
 package io.lightcone.relayer.integration
 
+import io.lightcone.core.MarketPair
 import io.lightcone.core.OrderStatus._
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 import scala.math.BigInt
@@ -45,18 +45,18 @@ class CancelOrderSpec_cancelAffectOtherOrders
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
-      val lrcTokenBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-      val gtoTokenBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(GTO_TOKEN.address)
+      val baseTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.baseToken
+        )
 
       Then("submit two orders that sum amountS of them bigger than balance.")
       val order1 = createRawOrder(
-        amountS = (lrcTokenBalance.availableBalance * 3) / 5,
-        amountFee = lrcTokenBalance.availableBalance / 10
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken,
+        tokenFee = dynamicMarketPair.baseToken,
+        amountS = (baseTokenBalance.availableBalance * 3) / 5,
+        amountFee = baseTokenBalance.availableBalance / 10
       )
       val submitRes1 = SubmitOrder
         .Req(Some(order1))
@@ -64,8 +64,11 @@ class CancelOrderSpec_cancelAffectOtherOrders
       info(s"the result of submit the first order is ${submitRes1.success}")
       Thread.sleep(1000)
       val order2 = createRawOrder(
-        amountS = (lrcTokenBalance.availableBalance * 3) / 5,
-        amountFee = lrcTokenBalance.availableBalance / 10
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken,
+        tokenFee = dynamicMarketPair.baseToken,
+        amountS = (baseTokenBalance.availableBalance * 3) / 5,
+        amountFee = baseTokenBalance.availableBalance / 10
       )
       val submitRes2 = SubmitOrder
         .Req(Some(order2))
@@ -88,9 +91,9 @@ class CancelOrderSpec_cancelAffectOtherOrders
         })
 
       Then("check the cancel result.")
-      val lrcExpectedBalance = lrcTokenBalance.copy(
-        availableBalance = lrcTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
-        availableAlloawnce = lrcTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
+      val lrcExpectedBalance = baseTokenBalance.copy(
+        availableBalance = baseTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
+        availableAlloawnce = baseTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(
@@ -101,9 +104,9 @@ class CancelOrderSpec_cancelAffectOtherOrders
             STATUS_PENDING,
             order2.hash
           ),
-        accountBalanceMatcher(LRC_TOKEN.address, lrcExpectedBalance),
+        accountBalanceMatcher(dynamicMarketPair.baseToken, lrcExpectedBalance),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (not(orderBookIsEmpty()),
+          dynamicMarketPair -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )

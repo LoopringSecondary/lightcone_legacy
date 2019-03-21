@@ -24,7 +24,6 @@ import io.lightcone.ethereum.event._
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 class CancelOrderSpec_cancelHasBeenOnchainCancelled
@@ -47,12 +46,13 @@ class CancelOrderSpec_cancelHasBeenOnchainCancelled
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
 
       Then("submit an order.")
-      val order = createRawOrder()
+      val order = createRawOrder(
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken,
+        tokenFee = dynamicMarketPair.baseToken
+      )
       val submitRes = SubmitOrder
         .Req(Some(order))
         .expect(check((res: SubmitOrder.Res) => true))
@@ -81,7 +81,7 @@ class CancelOrderSpec_cancelHasBeenOnchainCancelled
         ),
         be(accountInitRes),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )
@@ -107,7 +107,7 @@ class CancelOrderSpec_cancelHasBeenOnchainCancelled
         containsInGetOrders(STATUS_ONCHAIN_CANCELLED_BY_USER, order.hash),
         be(accountInitRes),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )

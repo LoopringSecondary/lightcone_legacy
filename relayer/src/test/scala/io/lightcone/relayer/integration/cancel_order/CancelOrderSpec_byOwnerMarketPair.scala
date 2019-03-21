@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.core.ErrorCode._
-import io.lightcone.core.ErrorException
+import io.lightcone.core.{ErrorException, MarketPair}
 import io.lightcone.core.OrderStatus.{
   STATUS_PENDING,
   STATUS_SOFT_CANCELLED_BY_USER
@@ -25,7 +25,6 @@ import io.lightcone.core.OrderStatus.{
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
 class CancelOrderSpec_byOwnerMarketPair
@@ -40,41 +39,54 @@ class CancelOrderSpec_byOwnerMarketPair
     scenario("3: cancel by owner-marketPair") {
 
       Given("an account with enough Balance")
+      val anotherTokens = createAndSaveNewMarket(1.0, 1.0)
+      val secondBaseToken = anotherTokens(0).getMetadata
+      val secondQuoteToken = anotherTokens(1).getMetadata
+      val secondMarket =
+        MarketPair(secondBaseToken.address, secondQuoteToken.address)
+
       implicit val account = getUniqueAccount()
       val getAccountReq =
         GetAccount.Req(address = account.getAddress, allTokens = true)
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
-      val lrcTokenBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-      val gtoTokenBalance =
-        accountInitRes.getAccountBalance.tokenBalanceMap(GTO_TOKEN.address)
+      val baseTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.baseToken
+        )
+      val secondBaseTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(secondMarket.baseToken)
 
-      Then("submit an order of market:LRC-WETH.")
-      val order1 = createRawOrder()
+      Then("submit an order of first market.")
+      val order1 = createRawOrder(
+        tokenS = dynamicMarketPair.baseToken,
+        tokenB = dynamicMarketPair.quoteToken,
+        tokenFee = dynamicMarketPair.baseToken
+      )
       val submitRes1 = SubmitOrder
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
-      info(s"the result of submit order of LRC-WETH is ${submitRes1.success}")
+      info(s"the result of submit order is ${submitRes1.success}")
 
-      Then("submit an order of market:GTO-WETH.")
+      Then("submit an order of second market.")
       val order2 =
-        createRawOrder(tokenS = GTO_TOKEN.address, tokenFee = GTO_TOKEN.address)
+        createRawOrder(
+          tokenS = secondMarket.baseToken,
+          tokenB = secondMarket.quoteToken,
+          tokenFee = secondMarket.baseToken
+        )
       val submitRes2 = SubmitOrder
         .Req(Some(order2))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
       Then(
-        s"cancel the orders of owner:${account.getAddress} and market:${LRC_WETH_MARKET.getMarketPair}."
+        s"cancel the orders of owner:${account.getAddress} and market:${dynamicMarketPair}."
       )
       val cancelByOwnerReq =
         CancelOrder.Req(
           owner = account.getAddress,
-          marketPair = Some(LRC_WETH_MARKET.getMarketPair),
+          marketPair = Some(dynamicMarketPair),
           status = STATUS_SOFT_CANCELLED_BY_USER,
           time = BigInt(timeProvider.getTimeSeconds())
         )
@@ -86,9 +98,9 @@ class CancelOrderSpec_byOwnerMarketPair
         })
 
       Then("check the cancel result.")
-      val gtoExpectedBalance = gtoTokenBalance.copy(
-        availableBalance = gtoTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
-        availableAlloawnce = gtoTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
+      val secondExpectedBalance = secondBaseTokenBalance.copy(
+        availableBalance = secondBaseTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
+        availableAlloawnce = secondBaseTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(
@@ -98,13 +110,16 @@ class CancelOrderSpec_byOwnerMarketPair
           STATUS_PENDING,
           order2.hash
         ),
-        accountBalanceMatcher(LRC_TOKEN.address, lrcTokenBalance)
-          and accountBalanceMatcher(GTO_TOKEN.address, gtoExpectedBalance),
+        accountBalanceMatcher(dynamicMarketPair.baseToken, baseTokenBalance)
+          and accountBalanceMatcher(
+            secondMarket.baseToken,
+            secondExpectedBalance
+          ),
         Map(
-          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
           marketFillsIsEmpty()),
-          GTO_WETH_MARKET.getMarketPair -> (not(orderBookIsEmpty()),
+          secondMarket -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),
           marketFillsIsEmpty())
         )
@@ -114,7 +129,7 @@ class CancelOrderSpec_byOwnerMarketPair
       val cancelAnotherReq =
         CancelOrder.Req(
           owner = account.getAddress,
-          marketPair = Some(LRC_WETH_MARKET.getMarketPair),
+          marketPair = Some(dynamicMarketPair),
           status = STATUS_SOFT_CANCELLED_BY_USER,
           time = BigInt(timeProvider.getTimeSeconds())
         )

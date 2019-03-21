@@ -21,6 +21,7 @@ import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer._
+import io.lightcone.relayer.integration.integrationStarter
 
 import scala.concurrent._
 
@@ -76,7 +77,8 @@ trait MetadataHelper extends DbHelper {
       dbModule: DatabaseModule,
       metadataManager: MetadataManager,
       timeout: Timeout,
-      timeProvider: TimeProvider
+      timeProvider: TimeProvider,
+      ec: ExecutionContext
     ): Seq[Token] = {
     val tokens =
       Seq(createNewToken(price = price1), createNewToken(price = price2))
@@ -116,6 +118,7 @@ trait MetadataHelper extends DbHelper {
       )
     )
     prepareMetadata(tokens, Seq(market), symbolSlugs)
+    integrationStarter.waiting()
     tokens
   }
 

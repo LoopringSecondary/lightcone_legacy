@@ -45,9 +45,6 @@ class CancelOrderSpec_byHash
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
-      info(
-        s"balance of this account:${account.getAddress} is :${accountInitRes.accountBalance}"
-      )
 
       Then("submit an order.")
       val order = createRawOrder()
