@@ -20,12 +20,10 @@ import io.lightcone.core._
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
 
-
 /**
-* 按照不同并且靠近的价格，下单，然后查看orderbook的深度汇总情况
+  * 按照不同并且靠近的价格，下单，然后查看orderbook的深度汇总情况
   */
 class OrderbookSpec
     extends FeatureSpec
@@ -94,11 +92,6 @@ class OrderbookSpec
 
       Then("check the result of level 1.")
       //根据不同的level需要有不同的汇总
-      val getOrderBook1 = GetOrderbook.Req(
-        0,
-        100,
-        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
-      )
       val orderbookLevel1Matcher = orderBookItemMatcher(
         Seq(
           Orderbook.Item("0.309161", "3.23457", "1.00000"),
