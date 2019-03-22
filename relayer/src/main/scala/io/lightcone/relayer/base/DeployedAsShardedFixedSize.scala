@@ -37,9 +37,7 @@ trait DeployedAsShardedFixedSize[T] extends DeployedAsSharded[T] {
     }
   }
 
-  def broadcast[T <: scalapb.GeneratedMessage with scalapb.Message[T]](
-      msg: T
-    ) = {
+  def broadcast(msg: Any) = {
     (0 until numOfEntities).foreach { entityId =>
       regionManager ! ShardingBroadcastEnvelope(
         longIdToStringName(entityId),
