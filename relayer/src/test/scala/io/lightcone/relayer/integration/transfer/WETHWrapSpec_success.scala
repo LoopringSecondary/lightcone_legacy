@@ -16,27 +16,28 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core.{Amount, _}
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.ethereum.event.{AddressBalanceUpdatedEvent, BlockEvent}
-import io.lightcone.ethereum.persistence.{Activity, TxEvents}
 import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities, GetPendingActivityNonce}
+import io.lightcone.relayer.data.{
+  AccountBalance,
+  GetAccount,
+  GetActivities,
+  GetPendingActivityNonce
+}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
-import scala.math.BigInt
 
 class WETHWrapSpec_success
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
-      with AccountHelper
-      with ActivityHelper
+    with AccountHelper
+    with ActivityHelper
     with Matchers {
 
   feature("WETH wrap success") {
@@ -67,50 +68,15 @@ class WETHWrapSpec_success
       )
 
       When("send some convert events")
-      Seq(
-        TxEvents(
-          TxEvents.Events.Activities(
-            TxEvents.Activities(
-              Seq(
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_WRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11
-                ),
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_WRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = WETH_TOKEN.address,
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11
-                )
-              )
-            )
-          )
-        )
+      wrapWethPendingActivities(
+        account.getAddress,
+        blockNumber,
+        txHash,
+        "10".zeros(18),
+        nonce
       ).foreach(eventDispatcher.dispatch)
-
       Thread.sleep(1000)
+
       Then("the account should query 2 pending activity")
       GetActivities
         .Req(account.getAddress)
@@ -122,78 +88,19 @@ class WETHWrapSpec_success
         )
 
       When("activities confirmed")
-      val blockEvent = BlockEvent(
-        blockNumber = blockNumber,
-        txs = Seq(
-          BlockEvent.Tx(
-            from = account.getAddress,
-            nonce = 11,
-            txHash = txHash
-          )
-        )
-      )
+      val blockEvent =
+        blockConfirmedEvent(account.getAddress, blockNumber, txHash, nonce)
       ActivityActor.broadcast(blockEvent)
       Thread.sleep(2000)
 
-      Seq(
-        TxEvents(
-          TxEvents.Events.Activities(
-            TxEvents.Activities(
-              Seq(
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_WRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11,
-                  txStatus = TxStatus.TX_STATUS_SUCCESS
-                ),
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_WRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = WETH_TOKEN.address,
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11,
-                  txStatus = TxStatus.TX_STATUS_SUCCESS
-                )
-              )
-            )
-          )
-        ),
-        AddressBalanceUpdatedEvent(
-          address = account.getAddress,
-          token = Address.ZERO.toString(),
-          balance = Some(
-            toAmount("10000000000000000000")
-          ),
-          block = blockNumber
-        ),
-        AddressBalanceUpdatedEvent(
-          address = account.getAddress,
-          token = WETH_TOKEN.address,
-          balance = Some(
-            toAmount("30000000000000000000")
-          ),
-          block = blockNumber
-        )
+      wethWrapConfirmedActivities(
+        account.getAddress,
+        blockNumber,
+        txHash,
+        "10".zeros(18),
+        nonce,
+        "10".zeros(18),
+        "40".zeros(18)
       ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
 
@@ -227,9 +134,9 @@ class WETHWrapSpec_success
               .availableBalance
               .get
           )
-          ethBalance == BigInt("10000000000000000000") && ethBalance == ethAvailableBalance && wethBalance == BigInt(
-            "30000000000000000000"
-          ) && wethBalance == wethAvailableBalance
+          ethBalance == "10"
+            .zeros(18) && ethBalance == ethAvailableBalance && wethBalance == "40"
+            .zeros(18) && wethBalance == wethAvailableBalance
         })
       )
     }

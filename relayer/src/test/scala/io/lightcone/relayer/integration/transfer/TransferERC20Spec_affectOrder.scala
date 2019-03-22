@@ -16,24 +16,16 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core._
-import io.lightcone.ethereum.TxStatus
-import io.lightcone.ethereum.event.{AddressBalanceUpdatedEvent, BlockEvent}
-import io.lightcone.ethereum.persistence.{Activity, TxEvents}
+import io.lightcone.core.OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER
+import io.lightcone.core.RawOrder
 import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
-import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{
-  AccountBalance,
-  GetAccount,
-  GetActivities,
-  SubmitOrder
-}
+import io.lightcone.relayer.data.{GetAccount, GetActivities, SubmitOrder}
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
+import io.lightcone.lib.NumericConversion.toAmount
 
 class TransferERC20Spec_affectOrder
     extends FeatureSpec
@@ -49,95 +41,36 @@ class TransferERC20Spec_affectOrder
       implicit val account = getUniqueAccount()
       val txHash =
         "0xbc6331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
-      val to = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
+      val to = getUniqueAccount()
       val blockNumber = 987L
       val nonce = 11L
 
       Given("initialize balance")
       mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
+      mockAccountWithFixedBalance(to.getAddress, dynamicMarketPair)
 
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
       )
       val getToAddressBalanceReq = GetAccount.Req(
-        to,
+        to.getAddress,
         allTokens = true
       )
 
-      Then("submit an order of market: base-quote.")
+      When("submit an order of market: base-quote.")
       val order1 = createRawOrder(
         tokenS = dynamicMarketPair.baseToken,
-        tokenB = dynamicMarketPair.quoteToken
+        tokenB = dynamicMarketPair.quoteToken,
+        "50".zeros(18)
       )
       val submitRes1 = SubmitOrder
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
       info(s"the result of submit order is ${submitRes1.success}")
-
-      When("send some transfer events")
-      tokenTransferPendingActivities(
-        account.getAddress,
-        to,
-        blockNumber,
-        txHash,
-        LRC_TOKEN.address,
-        "100".zeros(18),
-        nonce
-      ).foreach(eventDispatcher.dispatch)
-
       Thread.sleep(1000)
 
-      Then("the each account should query one pending activity")
-      GetActivities
-        .Req(account.getAddress)
-        .expectUntil(
-          check((res: GetActivities.Res) => {
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
-          })
-        )
-      GetActivities
-        .Req(to)
-        .expectUntil(
-          check((res: GetActivities.Res) => {
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
-          })
-        )
-
-      When("activities confirmed")
-      val blockEvent =
-        blockConfirmedEvent(account.getAddress, blockNumber, txHash, nonce)
-      ActivityActor.broadcast(blockEvent)
-      Thread.sleep(2000)
-
-      tokenTransferConfirmedActivities(
-        account.getAddress,
-        to,
-        blockNumber,
-        txHash,
-        LRC_TOKEN.address,
-        "100".zeros(18),
-        nonce,
-        "3900".zeros(18),
-        "4100".zeros(18)
-      ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(1000)
-
-      GetActivities
-        .Req(account.getAddress)
-        .expectUntil(
-          check((res: GetActivities.Res) => {
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
-          })
-        )
-      GetActivities
-        .Req(to)
-        .expectUntil(
-          check((res: GetActivities.Res) => {
-            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
-          })
-        )
-
+      Then("available balance should reduce")
       getFromAddressBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
           val balanceOpt = res.accountBalance
@@ -150,46 +83,83 @@ class TransferERC20Spec_affectOrder
               .availableBalance
               .get
           )
-          val lrcBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
+          val baseBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(dynamicMarketPair.baseToken).balance.get
           )
-          val lrcAvailableBalance = toBigInt(
+          val baseAvailableBalance = toBigInt(
             balanceOpt.get
-              .tokenBalanceMap(LRC_TOKEN.address)
+              .tokenBalanceMap(dynamicMarketPair.baseToken)
               .availableBalance
               .get
           )
           ethBalance == "20"
-            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "3900"
-            .zeros(18) && lrcBalance == lrcAvailableBalance
+            .zeros(18) && ethBalance == ethAvailableBalance && baseBalance == "50"
+            .zeros(18) && "0".zeros(18) == baseAvailableBalance
         })
       )
-      getToAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          val lrcBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
-          )
-          val lrcAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(LRC_TOKEN.address)
-              .availableBalance
-              .get
-          )
-          ethBalance == "20"
-            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4100"
-            .zeros(18) && lrcBalance == lrcAvailableBalance
-        })
+
+      When("activities confirmed")
+      tokenTransferConfirmedActivities(
+        account.getAddress,
+        to.getAddress,
+        blockNumber,
+        txHash,
+        dynamicMarketPair.baseToken,
+        "50".zeros(18),
+        nonce,
+        "0".zeros(18),
+        "100".zeros(18)
+      ).foreach(eventDispatcher.dispatch)
+      Thread.sleep(1000)
+
+
+      val balanceExpect = (res: GetAccount.Res) => {
+        val balanceOpt = res.accountBalance
+        val ethBalance = toBigInt(
+          balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+        )
+        val ethAvailableBalance = toBigInt(
+          balanceOpt.get
+            .tokenBalanceMap(Address.ZERO.toString)
+            .availableBalance
+            .get
+        )
+        val baseBalance = toBigInt(
+          balanceOpt.get.tokenBalanceMap(dynamicMarketPair.baseToken).balance.get
+        )
+        val baseAvailableBalance = toBigInt(
+          balanceOpt.get
+            .tokenBalanceMap(dynamicMarketPair.baseToken)
+            .availableBalance
+            .get
+        )
+        ethBalance == "20"
+          .zeros(18) && ethBalance == ethAvailableBalance && baseBalance == "0"
+          .zeros(18) && baseBalance == baseAvailableBalance
+      }
+
+      defaultValidate(
+        containsInGetOrders(
+          STATUS_ONCHAIN_CANCELLED_BY_USER,
+          order1.hash
+        ) and outStandingMatcherInGetOrders(
+          RawOrder.State(
+            outstandingAmountS = Some(
+              toAmount(0)
+            ),
+            outstandingAmountB = Some(toAmount(0)),
+            outstandingAmountFee = Some(toAmount(0))
+          ),
+          order1.hash
+        ),
+        be(balanceExpect),
+        Map(
+          dynamicMarketPair -> (orderBookIsEmpty(),
+            userFillsIsEmpty(),
+            marketFillsIsEmpty())
+        )
       )
+
     }
   }
 }

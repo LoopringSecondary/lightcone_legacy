@@ -16,10 +16,7 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.core._
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.ethereum.event.{AddressBalanceUpdatedEvent, BlockEvent}
-import io.lightcone.ethereum.persistence.{Activity, TxEvents}
 import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
@@ -27,13 +24,15 @@ import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
 import org.scalatest._
-import scala.math.BigInt
 
 class WETHUnwrapSpec_failed
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with AccountHelper
+    with ActivityHelper
     with Matchers {
 
   feature("WETH unwrap failed") {
@@ -42,97 +41,22 @@ class WETHUnwrapSpec_failed
       val txHash =
         "0xbc6331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       val blockNumber = 987L
+      val nonce = 11L
 
       Given("initialize eth balance")
-      addAccountExpects({
-        case req =>
-          GetAccount.Res(
-            Some(
-              AccountBalance(
-                address = req.address,
-                tokenBalanceMap = req.tokens.map {
-                  t =>
-                    val balance = t match {
-                      case ETH_TOKEN.address => "20000000000000000000" // 20 eth
-                      case WETH_TOKEN.address =>
-                        "20000000000000000000" // 20 weth
-                      case LRC_TOKEN.address =>
-                        "1000000000000000000000" // 1000 lrc
-                      case _ => "10000000000000000000" // 10 others
-                    }
-                    t -> AccountBalance.TokenBalance(
-                      token = t,
-                      balance = BigInt(balance),
-                      allowance = BigInt("1000000000000000000000"),
-                      availableAlloawnce = BigInt("1000000000000000000000"),
-                      availableBalance = BigInt(balance)
-                    )
-                }.toMap
-              )
-            )
-          )
-      })
+      mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
       )
-      getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val wethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
-          )
-          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt(
-            "20000000000000000000"
-          )
-        })
-      )
 
       When("send some convert events")
-      Seq(
-        TxEvents(
-          TxEvents.Events.Activities(
-            TxEvents.Activities(
-              Seq(
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_UNWRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = WETH_TOKEN.address,
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11
-                ),
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_UNWRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11
-                )
-              )
-            )
-          )
-        )
+      unwrapWethPendingActivities(
+        account.getAddress,
+        blockNumber,
+        txHash,
+        "10".zeros(18),
+        nonce
       ).foreach(eventDispatcher.dispatch)
 
       Thread.sleep(1000)
@@ -147,62 +71,17 @@ class WETHUnwrapSpec_failed
         )
 
       When("activities confirmed")
-      val blockEvent = BlockEvent(
-        blockNumber = blockNumber,
-        txs = Seq(
-          BlockEvent.Tx(
-            from = account.getAddress,
-            nonce = 11,
-            txHash = txHash
-          )
-        )
-      )
+      val blockEvent =
+        blockConfirmedEvent(account.getAddress, blockNumber, txHash, nonce)
       ActivityActor.broadcast(blockEvent)
       Thread.sleep(2000)
 
-      Seq(
-        TxEvents(
-          TxEvents.Events.Activities(
-            TxEvents.Activities(
-              Seq(
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_UNWRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = WETH_TOKEN.address,
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11,
-                  txStatus = TxStatus.TX_STATUS_FAILED
-                ),
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_UNWRAP,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherConversion(
-                    Activity.EtherConversion(
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11,
-                  txStatus = TxStatus.TX_STATUS_FAILED
-                )
-              )
-            )
-          )
-        )
+      wethUnwrapFailedActivities(
+        account.getAddress,
+        blockNumber,
+        txHash,
+        "10".zeros(18),
+        nonce
       ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
 
@@ -224,9 +103,7 @@ class WETHUnwrapSpec_failed
           val wethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt(
-            "20000000000000000000"
-          )
+          ethBalance == "20".zeros(18) && wethBalance == "30".zeros(18)
         })
       )
     }
