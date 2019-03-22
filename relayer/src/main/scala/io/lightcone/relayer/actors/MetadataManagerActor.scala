@@ -378,31 +378,42 @@ class MetadataManagerActor(
       market: MarketMetadata,
       usdTickers: Seq[TokenTickerRecord]
     ): MarketTicker = {
-    val baseTicker = getTickerBySymbol(market.baseTokenSymbol, usdTickers)
-    val quoteTicker = getTickerBySymbol(market.quoteTokenSymbol, usdTickers)
-    val rate = toDouble(BigDecimal(baseTicker.price / quoteTicker.price))
-    val volume24H = toDouble(
-      BigDecimal(baseTicker.volume24H / baseTicker.price) * rate
-    )
-//    val market_cap = toDouble(
-//      BigDecimal(baseTicker.marketCap / baseTicker.price) * rate
-//    )
-    val percentChange1H =
-      calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
-    val percentChange24H =
-      calc(baseTicker.percentChange24H, quoteTicker.percentChange24H)
-    val percentChange7D =
-      calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
-    MarketTicker(
-      market.marketPair.get.baseToken,
-      market.marketPair.get.quoteToken,
-      rate,
-      baseTicker.price,
-      volume24H,
-      toDouble(percentChange1H),
-      toDouble(percentChange24H),
-      toDouble(percentChange7D)
-    )
+    if (usdTickers.exists(t => t.symbol == market.baseTokenSymbol)) {
+      val baseTicker = getTickerBySymbol(market.baseTokenSymbol, usdTickers)
+      val quoteTicker = getTickerBySymbol(market.quoteTokenSymbol, usdTickers)
+      val rate = toDouble(
+        BigDecimal(baseTicker.price / quoteTicker.price),
+        market.priceDecimals
+      )
+      val volume24H = toDouble(
+        BigDecimal(baseTicker.volume24H / baseTicker.price) * rate,
+        market.precisionForTotal
+      )
+      //    val market_cap = toDouble(
+      //      BigDecimal(baseTicker.marketCap / baseTicker.price) * rate
+      //    )
+      val percentChange1H =
+        calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
+      val percentChange24H =
+        calc(baseTicker.percentChange24H, quoteTicker.percentChange24H)
+      val percentChange7D =
+        calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
+      MarketTicker(
+        market.marketPair.get.baseToken,
+        market.marketPair.get.quoteToken,
+        rate,
+        baseTicker.price,
+        volume24H,
+        toDouble(percentChange1H, 2),
+        toDouble(percentChange24H, 2),
+        toDouble(percentChange7D, 2)
+      )
+    } else {
+      MarketTicker(
+        market.marketPair.get.baseToken,
+        market.marketPair.get.quoteToken
+      )
+    }
   }
 
   private def getTickerBySymbol(
@@ -427,9 +438,12 @@ class MetadataManagerActor(
       .setScale(2, BigDecimal.RoundingMode.HALF_UP)
       .toDouble
 
-  private def toDouble(bigDecimal: BigDecimal): Double =
+  private def toDouble(
+      bigDecimal: BigDecimal,
+      scale: Int
+    ): Double =
     scala.util
-      .Try(bigDecimal.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .Try(bigDecimal.setScale(scale, BigDecimal.RoundingMode.HALF_UP).toDouble)
       .toOption
       .getOrElse(0)
 }
