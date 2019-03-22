@@ -106,6 +106,19 @@ class EthereumBatchCallRequestBuilder {
     BatchCallContracts.Req(cutoffCallReqs, shouldReturnBlockNumber(req.tag))
   }
 
+  def buildRequest(
+                    req: BatchGetBurnRate.Req,
+                    burnRateTableAddress: Address
+                  )(
+                    implicit
+                    rb: EthereumCallRequestBuilder
+                  ): BatchCallContracts.Req = {
+    val burnRateCallReqs = req.reqs.map { burnRateReq =>
+      rb.buildRequest(burnRateReq, burnRateTableAddress).reqs.head
+    }
+    BatchCallContracts.Req(burnRateCallReqs, shouldReturnBlockNumber(req.tag))
+  }
+
   private def buildBatchErc20AllowanceReq(
       delegateAddress: Address,
       owner: Address,

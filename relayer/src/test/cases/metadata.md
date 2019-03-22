@@ -21,7 +21,7 @@
 
     - **拥有者**: 杜永丰
 
-    - **其他信息**：NA
+    - **其他信息**：不应该在integration中测试
 
  1. **测试token metadata变动流程**
      - **Objective**：测试更新db里的token metadata，是否能在下一次定时同步时加载到最新变动

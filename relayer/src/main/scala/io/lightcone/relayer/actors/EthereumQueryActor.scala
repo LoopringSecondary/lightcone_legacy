@@ -218,6 +218,33 @@ class EthereumQueryActor(
             }
           }
       }
+    case req: BatchGetBurnRate.Req =>
+      batchCallEthereum(sender, brb.buildRequest(req, burnRateTableAddress)) {
+        result =>
+          BatchGetBurnRate.Res((req.reqs zip result.resps).map {
+            //TODO:需要简化
+            case (burnRateReq, res) => {
+              val formatResult = Numeric.cleanHexPrefix(result.resps.head.result)
+              if (formatResult.length == 64) {
+                val p2pRate = NumericConversion
+                  .toBigInt(formatResult.substring(56, 60))
+                  .doubleValue() / base
+                val marketRate = NumericConversion
+                  .toBigInt(formatResult.substring(60))
+                  .doubleValue() / base
+                GetBurnRate.Res(
+                  burnRate = Some(BurnRate(marketRate, p2pRate)),
+                  block = result.block
+                )
+              } else {
+                throw ErrorException(
+                  ErrorCode.ERR_UNEXPECTED_RESPONSE,
+                  "unexpected response"
+                )
+              }
+            }
+          })
+      }
 
     case req @ Notify("echo", _) =>
       sender ! req

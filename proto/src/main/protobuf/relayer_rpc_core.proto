@@ -257,6 +257,16 @@ message GetBurnRate {
     }
 }
 
+message BatchGetBurnRate {
+    message Req {
+        repeated GetBurnRate.Req reqs = 1;
+        string tag = 2;
+    }
+    message Res {
+        repeated GetBurnRate.Res resps = 1;
+    }
+}
+
 message SendRawTx {
     message Req {
         bytes data = 1;
