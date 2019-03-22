@@ -16,11 +16,13 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
+import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
 import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
 import org.scalatest._
@@ -29,6 +31,7 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit an order") {
@@ -37,7 +40,6 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
       Given(
         s"an new account with enough balance and not enough allowance: ${account.getAddress}"
       )
-
       addAccountExpects({
         case req =>
           GetAccount.Res(
@@ -48,7 +50,7 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
                   t -> AccountBalance.TokenBalance(
                     token = t,
                     balance = "30".zeros(LRC_TOKEN.decimals),
-                    allowance = "100000".zeros(LRC_TOKEN.decimals)
+                    allowance = "1000".zeros(LRC_TOKEN.decimals)
                   )
                 }.toMap
               )
@@ -58,90 +60,72 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
 
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
-        tokens = Seq(GTO_TOKEN.address)
+        tokens = Seq(dynamicBaseToken.getAddress())
       )
-      val res = getBalanceReq.expectUntil(
+      getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(GTO_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == "100000".zeros(
-            GTO_TOKEN.decimals
+          val ba =
+            res.getAccountBalance.tokenBalanceMap(dynamicBaseToken.getAddress())
+          NumericConversion.toBigInt(ba.getAllowance) == "1000".zeros(
+            dynamicBaseToken.getDecimals()
           ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "100000"
-            .zeros(GTO_TOKEN.decimals) &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) == "30".zeros(
-            GTO_TOKEN.decimals
+          NumericConversion.toBigInt(ba.getAvailableAlloawnce) == "1000"
+            .zeros(dynamicBaseToken.getDecimals()) &&
+          NumericConversion.toBigInt(ba.getBalance) == "30".zeros(
+            dynamicBaseToken.getDecimals()
           ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "30"
-            .zeros(GTO_TOKEN.decimals)
+          NumericConversion.toBigInt(ba.getAvailableBalance) == "30"
+            .zeros(dynamicBaseToken.getDecimals())
         })
       )
 
       When("submit an order.")
 
       val order = createRawOrder(
-        tokenS = GTO_TOKEN.address,
-        amountS = "50".zeros(GTO_TOKEN.decimals)
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        amountS = "50".zeros(dynamicBaseToken.getDecimals())
       )
-      try {
-        val submitRes = SubmitOrder
-          .Req(Some(order))
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
-        .expect(
-          check((res: GetOrders.Res) => {
-            res.orders.nonEmpty
-          })
-        )
+      SubmitOrder
+        .Req(Some(order))
+        .expect(check((res: SubmitOrder.Res) => res.success))
 
-      val reOrder = getOrdersRes.orders.head
+      Then("submit order successfully")
 
-      Then(
-        s"the status of the order just submitted is ${reOrder.getState.status}"
-      )
-      getBalanceReq.expect(
-        check(
-          (res: GetAccount.Res) => {
-            val lrc_ba =
-              res.getAccountBalance.tokenBalanceMap(GTO_TOKEN.address)
-            NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == 0 &&
-            NumericConversion
-              .toBigInt(lrc_ba.getAvailableAlloawnce) == NumericConversion
-              .toBigInt(lrc_ba.getAllowance) - "30".zeros(GTO_TOKEN.decimals)
-          }
-        )
-      )
-
-      val orderbookres = GetOrderbook
-        .Req(
-          size = 10,
-          marketPair = Some(
-            MarketPair(
-              baseToken = GTO_TOKEN.address,
-              quoteToken = WETH_TOKEN.address
-            )
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
+          outStandingMatcherInGetOrders(
+            RawOrder.State(
+              outstandingAmountS = "50".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountB = "1".zeros(dynamicQuoteToken.getDecimals()),
+              outstandingAmountFee = "3".zeros(dynamicBaseToken.getDecimals())
+            ),
+            order.hash
+          ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "30".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "970".zeros(dynamicBaseToken.getMetadata.decimals)
           )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 30
+          ), defaultMatcher, defaultMatcher)
         )
-        .expect(
-          check(
-            (res: GetOrderbook.Res) => res.getOrderbook.sells.nonEmpty
-          )
-        )
-
-      val sell = orderbookres.getOrderbook.sells.head
-
-      Then(
-        s" data of order book sell is ${sell.price}--${sell.amount}--${sell.total} "
       )
 
-      Then("clear data to avoid other tests being affected")
-
-      //     val cancelOrderReq  =  CancelOrder.Req(id =order.hash,owner = account.getAddress,time = NumericConversion.toAmount(BigInt(timeProvider.getTimeSeconds())))
-      //
-      //      cancelOrderReq.withSig()
+      Then("the status of the order just submitted is status pending")
+      And(
+        "balance = 30, allowance = 1000, availableBalance = 0, availableAllowance = 970"
+      )
+      And("sell amount of order book is 30")
 
     }
 

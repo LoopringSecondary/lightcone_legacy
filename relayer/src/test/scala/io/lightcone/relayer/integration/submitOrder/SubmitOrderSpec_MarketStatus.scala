@@ -16,146 +16,123 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
-import akka.pattern._
+import io.lightcone.core.ErrorCode.ERR_INVALID_MARKET
 import io.lightcone.core._
-import io.lightcone.lib.Address
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
-
-import scala.concurrent.Await
 
 class SubmitOrderSpec_MarketStatus
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit order") {
-    scenario("submit order accoring to different status of market") {
+    scenario("submit order according to different status of market") {
       implicit val account = getUniqueAccount()
-
-      val token1 = Address.normalize(getUniqueAccount().getAddress)
-      val token2 = Address.normalize(getUniqueAccount().getAddress)
-      val token3 = Address.normalize(getUniqueAccount().getAddress)
 
       Given("an account has enough balance and allowance")
 
-      And("set market status")
-
-      Await.result(
-        dbModule.tokenMetadataDal.saveTokenMetadatas(
-          Seq(
-            LRC_TOKEN.copy(
-              address = token1,
-              name = "token1",
-              symbol = "token1"
-            ),
-            LRC_TOKEN.copy(
-              address = token2,
-              name = "token2",
-              symbol = "token2"
-            ),
-            LRC_TOKEN.copy(
-              address = token3,
-              name = "token3",
-              symbol = "token3"
-            )
-          )
-        ),
-        timeout.duration
-      )
-
-      val marketRes = Await.result(
-        metadataManagerActor ? SaveMarketMetadatas.Req(
-          markets = Seq(
-            LRC_WETH_MARKET.copy(
-              baseTokenSymbol = "token1",
-              marketHash = MarketPair(token1, WETH_TOKEN.address).hashString,
-              marketPair = Some(MarketPair(token1, WETH_TOKEN.address))
-            ),
-            LRC_WETH_MARKET.copy(
-              baseTokenSymbol = "token2",
-              status = MarketMetadata.Status.READONLY,
-              marketHash = MarketPair(token2, WETH_TOKEN.address).hashString,
-              marketPair = Some(MarketPair(token2, WETH_TOKEN.address))
-            ),
-            LRC_WETH_MARKET.copy(
-              baseTokenSymbol = "token3",
-              status = MarketMetadata.Status.TERMINATED,
-              marketHash = MarketPair(token3, WETH_TOKEN.address).hashString,
-              marketPair = Some(MarketPair(token3, WETH_TOKEN.address))
-            )
-          )
-        ),
-        timeout.duration
-      )
-
-      Thread.sleep(10000)
-      println(marketRes)
-
-      When("submit an order of active market")
-
-      try {
-        val submitRes = SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                tokenS = token1,
-                amountS = "100".zeros(LRC_TOKEN.decimals),
-                amountFee = "20".zeros(LRC_TOKEN.decimals)
-              )
-            )
-          )
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-
-      Then("the result of submit order is true")
+      And("create a new market of status READONLY")
+      val tokens1 =
+        createAndSaveNewMarket(status = MarketMetadata.Status.READONLY)
+      val baseToken1 = tokens1.head
+      val quoteToken1 = tokens1(1)
+      val market1 =
+        MarketPair(baseToken1.getAddress(), quoteToken1.getAddress())
 
       When("submit an order of readonly market")
 
-      try {
-        val submitRes = SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                tokenS = token2,
-                amountS = "100".zeros(LRC_TOKEN.decimals),
-                amountFee = "20".zeros(LRC_TOKEN.decimals)
-              )
+      SubmitOrder
+        .Req(
+          Some(
+            createRawOrder(
+              tokenS = market1.baseToken,
+              tokenB = market1.quoteToken
             )
           )
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
+        )
+        .expect(
+          check(
+            (error: ErrorException) => error.error.code == ERR_INVALID_MARKET
+          )
+        )
+      Then("submit order failed caused by ERR_INVALID_MARKET")
 
-      Then("the result of submit order is false")
+      defaultValidate(
+        getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
+        accountMatcher = accountBalanceMatcher(
+          baseToken1.getAddress(),
+          TokenBalance(
+            token = baseToken1.getAddress(),
+            balance = "1000".zeros(baseToken1.getMetadata.decimals),
+            allowance = "1000".zeros(baseToken1.getMetadata.decimals),
+            availableBalance = "1000".zeros(baseToken1.getMetadata.decimals),
+            availableAlloawnce = "1000".zeros(baseToken1.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          market1 -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
+      )
+
+      Then("orders is empty")
+      And(
+        "balance and allowance is 1000, available balance and allowance is 1000 "
+      )
+      And("order book  is empty")
+
+      When("create a new market of status TERMINATED")
+      val tokens2 =
+        createAndSaveNewMarket(status = MarketMetadata.Status.TERMINATED)
+      val baseToken2 = tokens2.head
+      val quoteToken2 = tokens2(1)
+      val market2 =
+        MarketPair(baseToken1.getAddress(), quoteToken2.getAddress())
 
       When("submit an order of terminated market")
 
-      try {
-        val submitRes = SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                tokenS = token3,
-                amountS = "100".zeros(LRC_TOKEN.decimals),
-                amountFee = "20".zeros(LRC_TOKEN.decimals)
-              )
+      SubmitOrder
+        .Req(
+          Some(
+            createRawOrder(
+              tokenS = market2.baseToken,
+              tokenB = market2.quoteToken
             )
           )
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
+        )
+        .expect(
+          check(
+            (error: ErrorException) => error.error.code == ERR_INVALID_MARKET
+          )
+        )
+      Then("submit order failed caused by ERR_INVALID_MARKET")
 
-      Then("the result of submit order is false")
+      defaultValidate(
+        getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
+        accountMatcher = accountBalanceMatcher(
+          baseToken2.getAddress(),
+          TokenBalance(
+            token = baseToken2.getAddress(),
+            balance = "1000".zeros(baseToken2.getMetadata.decimals),
+            allowance = "1000".zeros(baseToken2.getMetadata.decimals),
+            availableBalance = "1000".zeros(baseToken2.getMetadata.decimals),
+            availableAlloawnce = "1000".zeros(baseToken2.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map.empty
+      )
+
+      Then("orders is empty")
+      And(
+        "balance and allowance is 1000, available balance and allowance is 1000 "
+      )
+      And("order book  is empty")
     }
 
   }

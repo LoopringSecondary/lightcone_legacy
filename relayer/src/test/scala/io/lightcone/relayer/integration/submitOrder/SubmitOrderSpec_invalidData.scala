@@ -18,9 +18,11 @@ package io.lightcone.relayer.integration.submitOrder
 
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core.ErrorException
-import io.lightcone.relayer.data.SubmitOrder
+import io.lightcone.core.OrderStatus.STATUS_PENDING
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
+import io.lightcone.relayer.data.{GetOrders, SubmitOrder}
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -28,6 +30,7 @@ class SubmitOrderSpec_invalidData
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit order") {
@@ -38,7 +41,11 @@ class SubmitOrderSpec_invalidData
       )
 
       When("submit an order with an invalid order sig ")
-      val order1 = createRawOrder()
+      val order1 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress()
+      )
       SubmitOrder
         .Req(
           Some(
@@ -55,8 +62,27 @@ class SubmitOrderSpec_invalidData
           )
         )
       Then("the error code of submit order is ERR_ORDER_VALIDATION_INVALID_SIG")
-      When("submit an order that order owner is invalid")
 
+      defaultValidate(
+        getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
+      )
+
+      When("submit an order that order owner is invalid")
       val order2 = createRawOrder(amountB = "20".zeros(18))
       SubmitOrder
         .Req(
@@ -73,7 +99,26 @@ class SubmitOrderSpec_invalidData
           )
         )
 
-      Then("the error code of submit order is ERR_ORDER_VALIDATION_INVALID_SIG")
+      Then("submit order failed caused by ERR_ORDER_VALIDATION_INVALID_SIG")
+
+      defaultValidate(
+        getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
+      )
 
       When("submit an order with an a wrong dualAuthAddr")
       val order3 = createRawOrder(amountS = "30".zeros(18))
@@ -95,6 +140,25 @@ class SubmitOrderSpec_invalidData
             }
           )
         )
+
+      defaultValidate(
+        getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
+      )
     }
   }
 }

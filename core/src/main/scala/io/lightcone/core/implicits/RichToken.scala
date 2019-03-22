@@ -58,6 +58,17 @@ private[core] class RichToken(token: Token) {
       .address
   }
 
+  def getDecimals() = {
+    token.metadata
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found metadata of token $token"
+        )
+      )
+      .decimals
+  }
+
   def getBurnRateForMarket() = {
     token.metadata
       .getOrElse(

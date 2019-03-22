@@ -16,12 +16,13 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
+import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
 import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -29,6 +30,7 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit an order") {
@@ -47,10 +49,8 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
                 tokenBalanceMap = req.tokens.map { t =>
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = "100000".zeros(LRC_TOKEN.decimals),
-                    allowance = "30".zeros(LRC_TOKEN.decimals),
-                    availableBalance = "100000".zeros(LRC_TOKEN.decimals),
-                    availableAlloawnce = "30".zeros(LRC_TOKEN.decimals)
+                    balance = "1000".zeros(18),
+                    allowance = "30".zeros(18)
                   )
                 }.toMap
               )
@@ -60,66 +60,79 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
 
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
-        tokens = Seq(LRC_TOKEN.address)
+        tokens = Seq(dynamicBaseToken.getAddress())
       )
-      val res = getBalanceReq.expectUntil(
+      getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
+          val lrc_ba =
+            res.getAccountBalance.tokenBalanceMap(dynamicBaseToken.getAddress())
           NumericConversion.toBigInt(lrc_ba.getAllowance) == "30".zeros(
-            LRC_TOKEN.decimals
+            dynamicBaseToken.getMetadata.decimals
           ) &&
           NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "30"
-            .zeros(LRC_TOKEN.decimals) &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) > "100".zeros(
-            LRC_TOKEN.decimals
+            .zeros(dynamicBaseToken.getMetadata.decimals) &&
+          NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
+            dynamicBaseToken.getMetadata.decimals
           ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) > "100"
-            .zeros(LRC_TOKEN.decimals)
+          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "1000"
+            .zeros(dynamicBaseToken.getMetadata.decimals)
         })
       )
 
       When("submit an order.")
 
-      val order = createRawOrder(amountS = "50".zeros(LRC_TOKEN.decimals))
-      try {
-        val submitRes = SubmitOrder
-          .Req(Some(order))
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
-        .expect(
-          check((res: GetOrders.Res) => {
-            true
-          })
+      val order = createRawOrder(
+        amountS = "50".zeros(dynamicBaseToken.getMetadata.decimals),
+        amountFee = "10".zeros(dynamicBaseToken.getMetadata.decimals),
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress()
+      )
+      SubmitOrder
+        .Req(Some(order))
+        .expect(check((res: SubmitOrder.Res) => res.success))
+
+      Then("submit order successfully")
+
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
+          outStandingMatcherInGetOrders(
+            RawOrder.State(
+              outstandingAmountS =
+                "50".zeros(dynamicBaseToken.getMetadata.decimals),
+              outstandingAmountB =
+                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
+              outstandingAmountFee =
+                "10".zeros(dynamicBaseToken.getMetadata.decimals)
+            ),
+            order.hash
+          ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "30".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "970".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "0".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 25
+          ), defaultMatcher, defaultMatcher)
         )
-
-      val reOrder = getOrdersRes.orders.head
-
+      )
       Then(
-        s"the status of the order just submitted is ${reOrder.getState.status}"
+        "status of order just submitted is status pending"
       )
-
-      getBalanceReq.expect(
-        check(
-          (res: GetAccount.Res) => {
-            val lrc_ba =
-              res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-            NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0 &&
-            NumericConversion
-              .toBigInt(lrc_ba.getAvailableBalance) == NumericConversion
-              .toBigInt(lrc_ba.getBalance) - "30".zeros(LRC_TOKEN.decimals)
-          }
-        )
+      And(
+        "balance is 1000, availableBalance is 970, allowance is 30 and availableAllowance is 0"
       )
-
-      Then("clear data to avoid other tests being affected")
-
-//     val cancelOrderReq  =  CancelOrder.Req(id =order.hash,owner = account.getAddress,time = NumericConversion.toAmount(BigInt(timeProvider.getTimeSeconds())))
-//
-//      cancelOrderReq.withSig()
+      And("sell amount of order book is 25")
 
     }
 

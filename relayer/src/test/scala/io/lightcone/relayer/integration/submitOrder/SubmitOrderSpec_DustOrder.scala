@@ -16,13 +16,14 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
-import io.lightcone.core.OrderStatus.{STATUS_DUST_ORDER, STATUS_PENDING}
+import io.lightcone.core.ErrorCode.ERR_ORDER_DUST_VALUE
+import io.lightcone.core.ErrorException
+import io.lightcone.core.OrderStatus.STATUS_DUST_ORDER
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration._
 import io.lightcone.relayer.integration.AddedMatchers._
+import io.lightcone.relayer.integration._
 import org.scalatest._
 
 class SubmitOrderSpec_DustOrder
@@ -58,10 +59,10 @@ class SubmitOrderSpec_DustOrder
       SubmitOrder
         .Req(Some(order1))
         .expect(
-          check((res: SubmitOrder.Res) => !res.success)
+          check((err: ErrorException) => err.error.code == ERR_ORDER_DUST_VALUE)
         )
 
-      Then("order submit is failed")
+      Then("submit order failed caused by ERR_ORDER_DUST_VALUE")
 
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_DUST_ORDER, order1.hash),
@@ -83,6 +84,7 @@ class SubmitOrderSpec_DustOrder
       )
 
       And("order status is Status_Dust_Order")
+      And("")
       And("order book is empty")
     }
   }

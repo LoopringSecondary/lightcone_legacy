@@ -16,11 +16,13 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
+import io.lightcone.core.ErrorCode.ERR_ORDER_VALIDATION_INVALID_CUTOFF
+import io.lightcone.core.OrderStatus.STATUS_PENDING_ACTIVE
 import io.lightcone.core._
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -30,6 +32,7 @@ class SubmitOrderSpec_OwnerCutoff
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit  order ") {
@@ -38,7 +41,6 @@ class SubmitOrderSpec_OwnerCutoff
       Given(
         s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
-
       addCutoffsExpects({
         case req =>
           BatchGetCutoffs.Res(
@@ -53,46 +55,88 @@ class SubmitOrderSpec_OwnerCutoff
           )
       })
 
-      And("submit the an order that valid since is smaller than cutoff")
-      try {
-        SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                amountS = "40".zeros(LRC_TOKEN.decimals),
-                amountFee = "10".zeros(LRC_TOKEN.decimals),
-                validSince = (timeProvider.getTimeSeconds() - 1).toInt
-              )
-            )
+      When("submit the an order that valid since is smaller than cutoff")
+      val order1 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        validSince = (timeProvider.getTimeSeconds() - 1).toInt
+      )
+      SubmitOrder
+        .Req(Some(order1))
+        .expect(
+          check(
+            (err: ErrorException) =>
+              err.error.code == ERR_ORDER_VALIDATION_INVALID_CUTOFF
           )
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
+        )
 
-      Then(
-        "the result of submit order that valid since is smaller than cutoff is false"
+      Then("submit order failed caused by ERR_ORDER_VALIDATION_INVALID_CUTOFF")
+
+      defaultValidate(
+        getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
       )
 
-      And("submit the an order that valid since is bigger than cutoff")
-      try {
-        SubmitOrder
-          .Req(
-            Some(
-              createRawOrder(
-                validSince = (timeProvider.getTimeSeconds() + 1).toInt
-              )
-            )
-          )
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
+      And("orders is empty")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 1000"
+      )
+      And("order book is empty")
+
+      When("submit the an order that valid since is bigger than cutoff")
+      val order2 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        validSince = (timeProvider.getTimeSeconds() + 1).toInt
+      )
+      SubmitOrder
+        .Req(Some(order2))
+        .expect(check((res: SubmitOrder.Res) => res.success))
 
       Then(
-        "the result of submit order that valid since is bigger than cutoff is true"
+        "submit order successfully"
+      )
+      defaultValidate(
+        getOrdersMatcher =
+          containsInGetOrders(STATUS_PENDING_ACTIVE, order2.hash),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
       )
 
+      And("order status is STATUS_PENDING_ACTIVE")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 1000"
+      )
+      And("order book is empty")
     }
   }
 

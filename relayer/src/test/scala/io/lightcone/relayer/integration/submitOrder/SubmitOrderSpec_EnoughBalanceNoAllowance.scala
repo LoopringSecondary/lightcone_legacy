@@ -16,12 +16,14 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
+import io.lightcone.core.ErrorCode.ERR_LOW_BALANCE
+import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
 import io.lightcone.core._
 import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -31,6 +33,7 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit  order ") {
@@ -39,7 +42,6 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
       Given(
         s"an new account with enough balance and no allowance: ${account.getAddress}"
       )
-
       addAccountExpects({
         case req =>
           GetAccount.Res(
@@ -49,10 +51,8 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
                 tokenBalanceMap = req.tokens.map { t =>
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = "100000".zeros(LRC_TOKEN.decimals),
-                    allowance = BigInt(0),
-                    availableBalance = "100000".zeros(LRC_TOKEN.decimals),
-                    availableAlloawnce = BigInt(0)
+                    balance = "1000".zeros(18),
+                    allowance = BigInt(0)
                   )
                 }.toMap
               )
@@ -60,43 +60,69 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
           )
       })
 
-      val getBalanceReq = GetAccount.Req(
-        account.getAddress,
-        tokens = Seq(LRC_TOKEN.address)
-      )
-      val res = getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) > "100".zeros(
-            LRC_TOKEN.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) > "100"
-            .zeros(LRC_TOKEN.decimals)
-        })
-      )
-
-      When("submit an order.")
-
-      try {
-        val submitRes = SubmitOrder
-          .Req(Some(createRawOrder()))
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
+      GetAccount
+        .Req(
+          account.getAddress,
+          tokens = Seq(dynamicBaseToken.getAddress())
+        )
         .expectUntil(
-          check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusSoftCancelledLowBalance
+          check((res: GetAccount.Res) => {
+            val lrc_ba =
+              res.getAccountBalance
+                .tokenBalanceMap(dynamicBaseToken.getAddress())
+            NumericConversion.toBigInt(lrc_ba.getAllowance) == 0 &&
+            NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0 &&
+            NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
+              dynamicBaseToken.getMetadata.decimals
+            ) &&
+            NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "1000"
+              .zeros(dynamicBaseToken.getMetadata.decimals)
           })
         )
 
-      Then(
-        s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
+      When("submit an order.")
+      val order1 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress()
       )
+      SubmitOrder
+        .Req(Some(order1))
+        .expect(
+          check(
+            (err: ErrorException) => err.error.code == ERR_LOW_BALANCE
+          )
+        )
+
+      Then("submit order failed caused by ERR_LOW_BALANCE")
+
+      defaultValidate(
+        getOrdersMatcher =
+          containsInGetOrders(STATUS_SOFT_CANCELLED_LOW_BALANCE, order1.hash),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "0".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
+      )
+
+      Then(
+        "status of order just submitted is status_soft_cancelled_low_balance"
+      )
+      And(
+        "balance and availableBalance is 1000, allowance and availableAllowance is 0"
+      )
+      And("order book is empty")
     }
   }
 

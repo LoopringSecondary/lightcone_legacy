@@ -64,6 +64,8 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
+      Then("submit order successfully")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order1.hash) and
           outStandingMatcherInGetOrders(
@@ -97,7 +99,7 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
         )
       )
 
-      Then("the status of the order just submitted is status pending")
+      And("the status of the order just submitted is status pending")
       And(
         "balance and allowance is 1000, available balance and available allowance is 950"
       )

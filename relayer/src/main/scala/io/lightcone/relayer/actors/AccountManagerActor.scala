@@ -206,10 +206,11 @@ class AccountManagerActor(
           case e: ErrorException =>
             e.error.code match {
 
-              case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
-                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
-                val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
-                Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
+              //TODO yadong 这里为什么不统一在失败的情况下向外抛出error
+//              case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
+//                  ERR_ORDER_VALIDATION_INVALID_CANCELED =>
+//                val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
+//                Future.successful(SubmitOrder.Res(Some(o.toOrder), false))
 
               case ERR_ORDER_PENDING_ACTIVE =>
                 for {
@@ -222,14 +223,14 @@ class AccountManagerActor(
                   resp = SubmitOrder.Res(Some(resRawOrder.toOrder), true)
                 } yield resp
 
-              case ERR_ORDER_DUST_VALUE =>
-                Future.successful(
-                  SubmitOrder
-                    .Res(
-                      Some(rawOrder.withStatus(STATUS_DUST_ORDER).toOrder()),
-                      false
-                    )
-                )
+//              case ERR_ORDER_DUST_VALUE =>
+//                Future.successful(
+//                  SubmitOrder
+//                    .Res(
+//                      Some(rawOrder.withStatus(STATUS_DUST_ORDER).toOrder()),
+//                      false
+//                    )
+//                )
               case _ => throw e
             }
         }

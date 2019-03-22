@@ -221,7 +221,7 @@ class SubmitOrderSpec_Continuous
         .expect(
           check((err: ErrorException) => err.error.code == ERR_LOW_BALANCE)
         )
-
+      Then("submit order failed caused by ERR_LOW_BALANCE")
       defaultValidate(
         getOrdersMatcher =
           containsInGetOrders(STATUS_SOFT_CANCELLED_LOW_BALANCE, order4.hash),
@@ -243,6 +243,11 @@ class SubmitOrderSpec_Continuous
           ), defaultMatcher, defaultMatcher)
         )
       )
+
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 0"
+      )
+      And("sell amount of order book is 945.6")
     }
   }
 

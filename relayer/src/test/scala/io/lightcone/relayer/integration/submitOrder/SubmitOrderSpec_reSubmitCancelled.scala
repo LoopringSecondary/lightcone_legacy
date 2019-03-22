@@ -16,13 +16,15 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
+import io.lightcone.core.ErrorCode.ERR_INTERNAL_UNKNOWN
+import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
 import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
 import io.lightcone.ethereum.event._
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -30,6 +32,7 @@ class SubmitOrderSpec_reSubmitCancelled
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit  order ") {
@@ -42,27 +45,56 @@ class SubmitOrderSpec_reSubmitCancelled
       When("submit an order.")
 
       val order = createRawOrder(
-        amountS = "40".zeros(LRC_TOKEN.decimals),
-        amountFee = "10".zeros(LRC_TOKEN.decimals)
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        amountS = "40".zeros(dynamicBaseToken.getDecimals()),
+        amountFee = "10".zeros(dynamicBaseToken.getDecimals())
       )
-      try {
-        SubmitOrder
-          .Req(Some(order))
-          .expect(check((res: SubmitOrder.Res) => res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
-        .expectUntil(
-          check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusPending
-          })
-        )
+      SubmitOrder
+        .Req(Some(order))
+        .expect(check((res: SubmitOrder.Res) => res.success))
 
-      Then(
-        s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
+      Then("submit order successfully")
+
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
+          outStandingMatcherInGetOrders(
+            RawOrder.State(
+              outstandingAmountS =
+                "40".zeros(dynamicBaseToken.getMetadata.decimals),
+              outstandingAmountB =
+                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
+              outstandingAmountFee =
+                "10".zeros(dynamicBaseToken.getMetadata.decimals)
+            ),
+            order.hash
+          ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "950".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "950".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 40
+          ), defaultMatcher, defaultMatcher)
+        )
       )
+
+      And("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 950"
+      )
+      And(s" sell amount of order book is 40")
 
       val cancelEvent = OrdersCancelledOnChainEvent(
         owner = account.getAddress,
@@ -81,15 +113,40 @@ class SubmitOrderSpec_reSubmitCancelled
 
       And("resubmit the order")
 
-      try {
-        SubmitOrder
-          .Req(Some(order))
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
+      SubmitOrder
+        .Req(Some(order))
+        .expect(
+          check((err: ErrorException) => err.error.code == ERR_INTERNAL_UNKNOWN)
+        )
 
-      Then("the result of resubmit is failed")
+      Then("submit order failed caused by ")
+
+      defaultValidate(
+        getOrdersMatcher =
+          containsInGetOrders(STATUS_ONCHAIN_CANCELLED_BY_USER, order.hash),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "1000".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
+      )
+
+      And("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 100"
+      )
+      And("order book is empty")
+
     }
   }
 

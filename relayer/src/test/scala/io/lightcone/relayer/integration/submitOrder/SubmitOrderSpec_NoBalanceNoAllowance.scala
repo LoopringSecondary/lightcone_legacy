@@ -16,12 +16,14 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
+import io.lightcone.core.ErrorCode.ERR_LOW_BALANCE
 import io.lightcone.core.ErrorException
+import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
 import io.lightcone.lib.NumericConversion
+import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.check
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -31,6 +33,7 @@ class SubmitOrderSpec_NoBalanceNoAllowance
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with ValidateHelper
     with Matchers {
 
   feature("submit order") {
@@ -48,9 +51,7 @@ class SubmitOrderSpec_NoBalanceNoAllowance
                   t -> AccountBalance.TokenBalance(
                     token = t,
                     balance = BigInt("0"),
-                    allowance = BigInt("0"),
-                    availableAlloawnce = BigInt("0"),
-                    availableBalance = BigInt("0")
+                    allowance = BigInt("0")
                   )
                 }.toMap
               )
@@ -60,36 +61,58 @@ class SubmitOrderSpec_NoBalanceNoAllowance
 
       val getBalanceReq = GetAccount.Req(
         account.getAddress,
-        tokens = Seq(LRC_TOKEN.address)
+        tokens = Seq(dynamicBaseToken.getAddress())
       )
-      val res = getBalanceReq.expectUntil(
+      getBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
-          val lrc_ba = res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-          NumericConversion.toBigInt(lrc_ba.getBalance) == 0 &&
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == 0
+          val ba =
+            res.getAccountBalance.tokenBalanceMap(dynamicBaseToken.getAddress())
+          NumericConversion.toBigInt(ba.getBalance) == 0 &&
+          NumericConversion.toBigInt(ba.getAllowance) == 0 &&
+          NumericConversion.toBigInt(ba.getAvailableBalance) == 0 &&
+          NumericConversion.toBigInt(ba.getAvailableAlloawnce) == 0
         })
       )
 
       When("submit an order.")
 
-      try {
-        val submitRes = SubmitOrder
-          .Req(Some(createRawOrder()))
-          .expect(check((res: SubmitOrder.Res) => !res.success))
-      } catch {
-        case e: ErrorException =>
-      }
-      val getOrdersRes = GetOrders
-        .Req(owner = account.getAddress)
-        .expectUntil(
-          check((res: GetOrders.Res) => {
-            res.orders.head.getState.status.isStatusSoftCancelledLowBalance
-          })
+      val order = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress()
+      )
+      SubmitOrder
+        .Req(Some(order))
+        .expect(
+          check((err: ErrorException) => err.error.code == ERR_LOW_BALANCE)
         )
 
-      Then(
-        s"the status of the order just submitted is ${getOrdersRes.orders.head.getState.status}"
+      Then("submit order successfully")
+
+      defaultValidate(
+        getOrdersMatcher =
+          containsInGetOrders(STATUS_SOFT_CANCELLED_LOW_BALANCE, order.hash),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            allowance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            availableAlloawnce =
+              "0".zeros(dynamicBaseToken.getMetadata.decimals)
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
+        )
       )
+
+      And("orders is empty")
+      And(
+        "allowance and available allowance is 0, available balance and balance is 0"
+      )
+      And("order book  is empty")
 
     }
   }
