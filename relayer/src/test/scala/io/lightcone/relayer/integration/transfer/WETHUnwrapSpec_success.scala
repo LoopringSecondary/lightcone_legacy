@@ -24,7 +24,12 @@ import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities, GetPendingActivityNonce}
+import io.lightcone.relayer.data.{
+  AccountBalance,
+  GetAccount,
+  GetActivities,
+  GetPendingActivityNonce
+}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
@@ -76,7 +81,9 @@ class WETHUnwrapSpec_success
           val wethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
+          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt(
+            "20000000000000000000"
+          )
         })
       )
 
@@ -130,7 +137,8 @@ class WETHUnwrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
+            res.activities.length == 2 && !res.activities
+              .exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
           })
         )
 
@@ -214,7 +222,8 @@ class WETHUnwrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 2 && !res.activities
+              .exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
           })
         )
 
@@ -227,7 +236,9 @@ class WETHUnwrapSpec_success
           val wethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          ethBalance == BigInt("30000000000000000000") && wethBalance == BigInt("10000000000000000000")
+          ethBalance == BigInt("30000000000000000000") && wethBalance == BigInt(
+            "10000000000000000000"
+          )
         })
       )
     }

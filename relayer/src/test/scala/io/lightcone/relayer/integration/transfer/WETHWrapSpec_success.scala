@@ -27,6 +27,7 @@ import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities, GetPendingActivityNonce}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.helper._
 import org.scalatest._
 import scala.math.BigInt
 
@@ -34,6 +35,8 @@ class WETHWrapSpec_success
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+      with AccountHelper
+      with ActivityHelper
     with Matchers {
 
   feature("WETH wrap success") {
@@ -42,33 +45,10 @@ class WETHWrapSpec_success
       val txHash =
         "0xbc6331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       val blockNumber = 987L
+      val nonce = 11L
 
       Given("initialize eth balance")
-      addAccountExpects({
-        case req =>
-          GetAccount.Res(
-            Some(
-              AccountBalance(
-                address = req.address,
-                tokenBalanceMap = req.tokens.map { t =>
-                  val balance = t match {
-                    case ETH_TOKEN.address => "20000000000000000000" // 20 eth
-                    case WETH_TOKEN.address => "20000000000000000000" // 20 weth
-                    case LRC_TOKEN.address => "1000000000000000000000" // 1000 lrc
-                    case _ => "10000000000000000000" // 10 others
-                  }
-                  t -> AccountBalance.TokenBalance(
-                    token = t,
-                    balance = BigInt(balance),
-                    allowance = BigInt("1000000000000000000000"),
-                    availableAlloawnce = BigInt("1000000000000000000000"),
-                    availableBalance = BigInt(balance)
-                  )
-                }.toMap
-              )
-            )
-          )
-      })
+      mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
@@ -82,7 +62,7 @@ class WETHWrapSpec_success
           val wethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
-          ethBalance == BigInt("20000000000000000000") && wethBalance == BigInt("20000000000000000000")
+          ethBalance == "20".zeros(18) && wethBalance == "30".zeros(18)
         })
       )
 
@@ -136,7 +116,8 @@ class WETHWrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
+            res.activities.length == 2 && !res.activities
+              .exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
           })
         )
 
@@ -220,7 +201,8 @@ class WETHWrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities.exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 2 && !res.activities
+              .exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
           })
         )
 
@@ -231,15 +213,23 @@ class WETHWrapSpec_success
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
           val ethAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
           )
           val wethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
           )
           val wethAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(WETH_TOKEN.address)
+              .availableBalance
+              .get
           )
-          ethBalance == BigInt("10000000000000000000") && ethBalance == ethAvailableBalance && wethBalance == BigInt("30000000000000000000") && wethBalance == wethAvailableBalance
+          ethBalance == BigInt("10000000000000000000") && ethBalance == ethAvailableBalance && wethBalance == BigInt(
+            "30000000000000000000"
+          ) && wethBalance == wethAvailableBalance
         })
       )
     }

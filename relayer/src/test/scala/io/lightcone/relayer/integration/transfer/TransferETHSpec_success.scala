@@ -16,12 +16,9 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.ethereum.persistence.{Activity, TxEvents}
-import io.lightcone.lib.{Address, NumericConversion}
-import io.lightcone.core._
+import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.data.{
-  AccountBalance,
   GetAccount,
   GetActivities,
   GetPendingActivityNonce
@@ -30,14 +27,15 @@ import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.lib.NumericConversion._
 import org.scalatest._
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.ethereum.event.{AddressBalanceUpdatedEvent, BlockEvent}
 import io.lightcone.relayer.actors.ActivityActor
-import scala.math.BigInt
+import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
 
 class TransferETHSpec_success
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with AccountHelper
+    with ActivityHelper
     with Matchers {
 
   feature("transfer success") {
@@ -47,27 +45,10 @@ class TransferETHSpec_success
         "0xbc6331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       val to = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
       val blockNumber = 987L
+      val nonce = 11L
 
       Given("initialize eth balance")
-      addAccountExpects({
-        case req =>
-          GetAccount.Res(
-            Some(
-              AccountBalance(
-                address = req.address,
-                tokenBalanceMap = req.tokens.map { t =>
-                  t -> AccountBalance.TokenBalance(
-                    token = t,
-                    balance = BigInt("20000000000000000000"),
-                    allowance = BigInt("1000000000000000000000"),
-                    availableAlloawnce = BigInt("1000000000000000000000"),
-                    availableBalance = BigInt("20000000000000000000")
-                  )
-                }.toMap
-              )
-            )
-          )
-      })
+      mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
 
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
@@ -83,7 +64,7 @@ class TransferETHSpec_success
           val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          ethBalance == BigInt("20000000000000000000")
+          ethBalance == "20".zeros(18)
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -92,54 +73,18 @@ class TransferETHSpec_success
           val ethBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
-          ethBalance == BigInt("20000000000000000000")
+          ethBalance == "20".zeros(18)
         })
       )
 
       When("send some transfer events")
-      Seq(
-        TxEvents(
-          TxEvents.Events.Activities(
-            TxEvents.Activities(
-              Seq(
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_OUT,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      account.getAddress,
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11
-                ),
-                Activity(
-                  owner = to,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_IN,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      to,
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11
-                )
-              )
-            )
-          )
-        )
+      ethTransferPendingActivities(
+        account.getAddress,
+        to,
+        blockNumber,
+        txHash,
+        "10".zeros(18),
+        nonce
       ).foreach(eventDispatcher.dispatch)
 
       Thread.sleep(1000)
@@ -149,22 +94,14 @@ class TransferETHSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--2 ${res}"
-            )
-            // res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
-            true
+            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
           })
         )
       GetActivities
         .Req(to)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            log.info(
-              s"--3 ${res}"
-            )
-            // res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
-            true
+            res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_PENDING
           })
         )
 
@@ -173,88 +110,24 @@ class TransferETHSpec_success
         .expectUntil(
           check((res: GetPendingActivityNonce.Res) => {
             res.nonces.head == 11
-            log.info(
-              s"--4 ${res.nonces.head}"
-            )
-            true
           })
         )
 
       When("activities confirmed")
-      val blockEvent = BlockEvent(
-        blockNumber = blockNumber,
-        txs = Seq(
-          BlockEvent.Tx(
-            from = account.getAddress,
-            nonce = 11,
-            txHash = txHash
-          )
-        )
-      )
+      val blockEvent =
+        blockConfirmedEvent(account.getAddress, blockNumber, txHash, nonce)
       ActivityActor.broadcast(blockEvent)
       Thread.sleep(2000)
 
-      Seq(
-        TxEvents(
-          TxEvents.Events.Activities(
-            TxEvents.Activities(
-              Seq(
-                Activity(
-                  owner = account.getAddress,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_OUT,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      account.getAddress,
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11,
-                  txStatus = TxStatus.TX_STATUS_SUCCESS
-                ),
-                Activity(
-                  owner = to,
-                  block = blockNumber,
-                  txHash = txHash,
-                  activityType = Activity.ActivityType.ETHER_TRANSFER_IN,
-                  timestamp = timeProvider.getTimeSeconds,
-                  token = Address.ZERO.toString(),
-                  detail = Activity.Detail.EtherTransfer(
-                    Activity.EtherTransfer(
-                      to,
-                      Some(
-                        toAmount("10000000000000000000")
-                      )
-                    )
-                  ),
-                  nonce = 11,
-                  txStatus = TxStatus.TX_STATUS_SUCCESS
-                )
-              )
-            )
-          )
-        ),
-        AddressBalanceUpdatedEvent(
-          address = account.getAddress,
-          token = Address.ZERO.toString(),
-          balance = Some(
-            toAmount("10000000000000000000")
-          ),
-          block = blockNumber
-        ),
-        AddressBalanceUpdatedEvent(
-          address = to,
-          token = Address.ZERO.toString(),
-          balance = Some(
-            toAmount("30000000000000000000")
-          ),
-          block = blockNumber
-        )
+      ethTransferConfirmedActivities(
+        account.getAddress,
+        to,
+        blockNumber,
+        txHash,
+        "10".zeros(18),
+        nonce,
+        "10".zeros(18),
+        "30".zeros(18)
       ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
 
@@ -288,9 +161,12 @@ class TransferETHSpec_success
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
           val ethAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
           )
-          ethBalance == BigInt("10000000000000000000") && ethBalance == ethAvailableBalance
+          ethBalance == "10".zeros(18) && ethBalance == ethAvailableBalance
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -300,9 +176,12 @@ class TransferETHSpec_success
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
           val ethAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
           )
-          ethBalance == BigInt("30000000000000000000") && ethBalance == ethAvailableBalance
+          ethBalance == "30".zeros(18) && ethBalance == ethAvailableBalance
         })
       )
     }

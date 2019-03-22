@@ -24,7 +24,12 @@ import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities, GetPendingActivityNonce}
+import io.lightcone.relayer.data.{
+  AccountBalance,
+  GetAccount,
+  GetActivities,
+  GetPendingActivityNonce
+}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
@@ -51,20 +56,23 @@ class TransferERC20Spec_success
             Some(
               AccountBalance(
                 address = req.address,
-                tokenBalanceMap = req.tokens.map { t =>
-                  val balance = t match {
-                    case ETH_TOKEN.address => "20000000000000000000" // 20 eth
-                    case WETH_TOKEN.address => "20000000000000000000" // 20 weth
-                    case LRC_TOKEN.address => "1000000000000000000000" // 1000 lrc
-                    case _ => "10000000000000000000" // 50 others
-                  }
-                  t -> AccountBalance.TokenBalance(
-                    token = t,
-                    balance = BigInt(balance),
-                    allowance = BigInt("1000000000000000000000"),
-                    availableAlloawnce = BigInt("1000000000000000000000"),
-                    availableBalance = BigInt(balance)
-                  )
+                tokenBalanceMap = req.tokens.map {
+                  t =>
+                    val balance = t match {
+                      case ETH_TOKEN.address => "20000000000000000000" // 20 eth
+                      case WETH_TOKEN.address =>
+                        "20000000000000000000" // 20 weth
+                      case LRC_TOKEN.address =>
+                        "1000000000000000000000" // 1000 lrc
+                      case _ => "10000000000000000000" // 50 others
+                    }
+                    t -> AccountBalance.TokenBalance(
+                      token = t,
+                      balance = BigInt(balance),
+                      allowance = BigInt("1000000000000000000000"),
+                      availableAlloawnce = BigInt("1000000000000000000000"),
+                      availableBalance = BigInt(balance)
+                    )
                 }.toMap
               )
             )
@@ -87,7 +95,9 @@ class TransferERC20Spec_success
           val lrcBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
           )
-          ethBalance == BigInt("20000000000000000000") && lrcBalance == BigInt("1000000000000000000000")
+          ethBalance == BigInt("20000000000000000000") && lrcBalance == BigInt(
+            "1000000000000000000000"
+          )
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -99,7 +109,9 @@ class TransferERC20Spec_success
           val lrcBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
           )
-          ethBalance == BigInt("20000000000000000000") && lrcBalance == BigInt("1000000000000000000000")
+          ethBalance == BigInt("20000000000000000000") && lrcBalance == BigInt(
+            "1000000000000000000000"
+          )
         })
       )
 
@@ -187,45 +199,45 @@ class TransferERC20Spec_success
         TxEvents(
           TxEvents.Events.Activities(
             TxEvents.Activities(
-                Seq(
-                  Activity(
-                    owner = account.getAddress,
-                    block = blockNumber,
-                    txHash = txHash,
-                    activityType = Activity.ActivityType.TOKEN_TRANSFER_OUT,
-                    timestamp = timeProvider.getTimeSeconds,
-                    token = LRC_TOKEN.address,
-                    detail = Activity.Detail.TokenTransfer(
-                      Activity.TokenTransfer(
-                        account.getAddress,
-                        LRC_TOKEN.address,
-                        Some(
-                          toAmount("100000000000000000000")
-                        )
+              Seq(
+                Activity(
+                  owner = account.getAddress,
+                  block = blockNumber,
+                  txHash = txHash,
+                  activityType = Activity.ActivityType.TOKEN_TRANSFER_OUT,
+                  timestamp = timeProvider.getTimeSeconds,
+                  token = LRC_TOKEN.address,
+                  detail = Activity.Detail.TokenTransfer(
+                    Activity.TokenTransfer(
+                      account.getAddress,
+                      LRC_TOKEN.address,
+                      Some(
+                        toAmount("100000000000000000000")
                       )
-                    ),
-                    nonce = 11,
-                    txStatus = TxStatus.TX_STATUS_SUCCESS
+                    )
                   ),
-                  Activity(
-                    owner = to,
-                    block = blockNumber,
-                    txHash = txHash,
-                    activityType = Activity.ActivityType.TOKEN_TRANSFER_IN,
-                    timestamp = timeProvider.getTimeSeconds,
-                    token = LRC_TOKEN.address,
-                    detail = Activity.Detail.TokenTransfer(
-                      Activity.TokenTransfer(
-                        to,
-                        LRC_TOKEN.address,
-                        Some(
-                          toAmount("100000000000000000000")
-                        )
+                  nonce = 11,
+                  txStatus = TxStatus.TX_STATUS_SUCCESS
+                ),
+                Activity(
+                  owner = to,
+                  block = blockNumber,
+                  txHash = txHash,
+                  activityType = Activity.ActivityType.TOKEN_TRANSFER_IN,
+                  timestamp = timeProvider.getTimeSeconds,
+                  token = LRC_TOKEN.address,
+                  detail = Activity.Detail.TokenTransfer(
+                    Activity.TokenTransfer(
+                      to,
+                      LRC_TOKEN.address,
+                      Some(
+                        toAmount("100000000000000000000")
                       )
-                    ),
-                    nonce = 11,
-                    txStatus = TxStatus.TX_STATUS_SUCCESS
-                  )
+                    )
+                  ),
+                  nonce = 11,
+                  txStatus = TxStatus.TX_STATUS_SUCCESS
+                )
               )
             )
           )
@@ -271,15 +283,23 @@ class TransferERC20Spec_success
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
           val ethAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
           )
           val lrcBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
           )
           val lrcAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(LRC_TOKEN.address)
+              .availableBalance
+              .get
           )
-          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt("900000000000000000000") && lrcBalance == lrcAvailableBalance
+          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt(
+            "900000000000000000000"
+          ) && lrcBalance == lrcAvailableBalance
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -289,15 +309,23 @@ class TransferERC20Spec_success
             balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
           )
           val ethAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
           )
           val lrcBalance = toBigInt(
             balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
           )
           val lrcAvailableBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).availableBalance.get
+            balanceOpt.get
+              .tokenBalanceMap(LRC_TOKEN.address)
+              .availableBalance
+              .get
           )
-          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt("1100000000000000000000") && lrcBalance == lrcAvailableBalance
+          ethBalance == BigInt("20000000000000000000") && ethBalance == ethAvailableBalance && lrcBalance == BigInt(
+            "1100000000000000000000"
+          ) && lrcBalance == lrcAvailableBalance
         })
       )
     }
