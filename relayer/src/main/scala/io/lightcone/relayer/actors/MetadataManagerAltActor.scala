@@ -37,16 +37,16 @@ object MetadataManagerAltActor extends DeployedAsSingleton {
   val pubsubTopic = "TOKEN_MARKET_METADATA_CHANGE"
 
   def start(
-             implicit
-             system: ActorSystem,
-             config: Config,
-             ec: ExecutionContext,
-             timeout: Timeout,
-             dbModule: DatabaseModule,
-             actors: Lookup[ActorRef],
-             metadataManager: MetadataManager,
-             deployActorsIgnoringRoles: Boolean
-           ): ActorRef = {
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeout: Timeout,
+      dbModule: DatabaseModule,
+      actors: Lookup[ActorRef],
+      metadataManager: MetadataManager,
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
     startSingleton(Props(new MetadataManagerActor()))
   }
 }
@@ -73,129 +73,12 @@ class MetadataManagerAltActor(
   val mediator = DistributedPubSub(context.system).mediator
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
-  private var tokenMap = Map.empty[String, Token]
-  private var marketMap = Map.empty[String, Market]
-
-  private def assembleTokens(metadatas:Map[String, TokenMetadata], infos:Map[String,TokenInfo], tickers:Map[String, TokenTicker]) = {
-    val tokenMapTmp = metadatas.map {
-      case (symbol, metadata) =>
-        symbol -> Token(
-          Some(metadata),
-          infos.get(symbol),
-          tickers.get(symbol)
-        )
-    }
-    val preTokenMap = tokenMap
-    tokenMap = tokenMapTmp
-    decideChangedEventAndPublish(preTokenMap, marketMap)
-  }
-
-  private def processTokenMetaChange(metadatas: Map[String, TokenMetadata]) = {
-    val preTokenMap = tokenMap
-    val currentTokenMap = metadatas.map {
-      case (symbol,meta) =>
-        if (tokenMap.contains(symbol)) {
-        symbol -> tokenMap(symbol)
-      } else {
-          symbol -> Token(
-            Some(meta),
-            Some(TokenInfo(symbol = symbol)),
-            Some(TokenTicker(token = meta.address))
-          )
-        }
-    }
-    tokenMap = currentTokenMap
-    decideChangedEventAndPublish(preTokenMap, marketMap)
-  }
-
-  private def processTokenInfoChange(infos: Map[String,TokenInfo]) = {
-    val preTokenMap = tokenMap
-    val currentTokenMap = tokenMap.map {
-      case (symbol,meta) =>
-          symbol -> tokenMap(symbol).copy(info = infos.get(symbol))
-    }
-    tokenMap = currentTokenMap
-    decideChangedEventAndPublish(preTokenMap, marketMap)
-  }
-
-  private def processTokenTickerChange(tickers: Map[String, TokenTicker]) = {
-    val preTokenMap = tokenMap
-    val currentTokenMap = tokenMap.map {
-      case (symbol,meta) =>
-        symbol -> tokenMap(symbol).copy(ticker = tickers.get(symbol))
-    }
-    tokenMap = currentTokenMap
-    decideChangedEventAndPublish(preTokenMap, marketMap)
-  }
-
-  private def decideChangedEventAndPublish(preTokenMap: Map[String, Token], preMarketMap: Map[String, Market]) = {
-    val (preMetas, preInfos, preTickers) = preTokenMap.values
-      .toSeq
-      .sortBy(_.getMetadata.symbol)
-      .unzip3(t => (t.getMetadata, t.getInfo, t.getTicker))
-
-    val (currentMetas, currentInfos, currentTickers) = tokenMap.values
-      .toSeq.
-      sortBy(_.getMetadata.symbol)
-      .unzip3(t => (t.getMetadata, t.getInfo, t.getTicker))
-
-    mediator ! MetadataChanged(
-      tokenMetadataChanged = preMetas == currentMetas,
-      tokenInfoChanged = preInfos == currentInfos,
-      tickerChanged = preTickers == currentTickers
-    )
-  }
-
-  private def getTokenMetadatas() = for {
-    tokenMetadatasInDb <- dbModule.tokenMetadataDal.getTokenMetadatas()
-    batchBurnRateReq = BatchGetBurnRate.Req(
-      reqs = tokenMetadatasInDb.map(
-        meta => GetBurnRate.Req(meta.address)
-      )
-    )
-    burnRates <- (ethereumQueryActor ? batchBurnRateReq).mapTo[BatchGetBurnRate.Res].map(_.resps)
-    tokenMetadatas <- Future.sequence(tokenMetadatasInDb.zipWithIndex.map {
-      case (meta,idx) =>
-        val currentBurnRateOpt = burnRates(idx).burnRate
-        for {
-        _ <- if (currentBurnRateOpt.nonEmpty && currentBurnRateOpt.get != meta.burnRate.get) {
-          dbModule.tokenMetadataDal
-            .updateBurnRate(
-              meta.address,
-              currentBurnRateOpt.get.forMarket,
-              currentBurnRateOpt.get.forP2P
-            )
-        }
-        else Future.unit
-        newMeta = MetadataManager.normalize(meta.copy(burnRate = currentBurnRateOpt))
-        } yield meta.symbol -> newMeta
-    })
-  } yield tokenMetadatas.toMap
-
-  private def getTokenInfos() = for {
-    tokenInfos_ <- dbModule.tokenInfoDal.getTokenInfos()
-    infos = tokenInfos_.map(info => info.symbol -> info).toMap
-  } yield infos
+  private var tokens = Map.empty[String, Token]
+  private var markets = Map.empty[String, Market]
 
   override def initialize() = {
-    val f = for {
-      tokenMetadatas <- getTokenMetadatas()
-      infos <- getTokenInfos()
-      tokenTickers <- getLastTickers()
-
-      marketMetadatas_ <- dbModule.marketMetadataDal.getMarkets()
-      marketMetadatas = marketMetadatas_.map(MetadataManager.normalize)
-      marketTickers = fillSupportMarketTickers(tokenTickers)
-    } yield {
-      assert(tokenMetadatas.nonEmpty)
-      assert(infos.nonEmpty)
-      assert(marketMetadatas_ nonEmpty)
-      assert(tokenTickers nonEmpty)
-
-      assembleTokens(tokenMetadatas, infos, tokenTickers)
-
-      setTokenAndMarket()
-    }
+    val (preTokens, preMarkets) = (tokens, markets)
+    val f = syncAndPublish
     f onComplete {
       case Success(_) =>
         becomeReady()
@@ -210,12 +93,11 @@ class MetadataManagerAltActor(
       name = "load_tokens_markets_metadata",
       dalayInSeconds = refreshIntervalInSeconds,
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () => syncMetadata()
+      run = () => syncAndPublish()
     )
   )
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
-
     case req: TokenBurnRateChangedEvent =>
       if (req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess) {
         (for {
@@ -242,10 +124,11 @@ class MetadataManagerAltActor(
       (for {
         result <- dbModule.tokenMetadataDal
           .invalidateTokenMetadata(req.address)
-        tokens_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
+        metasInDb <- dbModule.tokenMetadataDal.getTokenMetadatas()
+        metas = metasInDb.map(m => m.symbol -> m).toMap
       } yield {
         if (result == ERR_NONE) {
-          checkAndPublish(Some(tokens_), None, None)
+          processTokenMetaChange(metas)
         }
         InvalidateToken.Res(result)
       }).sendTo(sender)
@@ -254,10 +137,10 @@ class MetadataManagerAltActor(
       (for {
         saved <- dbModule.marketMetadataDal
           .saveMarkets(req.markets)
-        markets_ <- dbModule.marketMetadataDal.getMarkets()
+        metas <- getMarketMetas()
       } yield {
         if (saved.nonEmpty) {
-          checkAndPublish(None, None, Some(markets_))
+          processMarketMetaChange(metas)
         }
         SaveMarketMetadatas.Res(saved)
       }).sendTo(sender)
@@ -266,10 +149,10 @@ class MetadataManagerAltActor(
       (for {
         result <- dbModule.marketMetadataDal
           .updateMarket(req.market.get)
-        markets_ <- dbModule.marketMetadataDal.getMarkets()
+        metas <- getMarketMetas()
       } yield {
         if (result == ERR_NONE) {
-          checkAndPublish(None, None, Some(markets_))
+          processMarketMetaChange(metas)
         }
         UpdateMarketMetadata.Res(result)
       }).sendTo(sender)
@@ -278,201 +161,256 @@ class MetadataManagerAltActor(
       (for {
         result <- dbModule.marketMetadataDal
           .terminateMarketByKey(req.marketHash)
-        markets_ <- dbModule.marketMetadataDal.getMarkets()
+        metas <- getMarketMetas()
       } yield {
         if (result == ERR_NONE) {
-          checkAndPublish(None, None, Some(markets_))
+          processMarketMetaChange(metas)
         }
         TerminateMarket.Res(result)
       }).sendTo(sender)
 
-    case MetadataChanged(false, false, false, true) => { // subscribe message from ExternalCrawlerActor
+    case MetadataChanged(false, false, false, true) => // subscribe message from ExternalCrawlerActor
       for {
-        tickers_ <- getLastTickers()
+        tokenTickers <- getLatestTokenTickers()
       } yield {
-        if (tickers_.nonEmpty) {
-          tokenTickers = tickers_
-          marketTickers = fillSupportMarketTickers(tickers_)
-          setTokenAndMarket()
-          publish(false, false, false, true)
+        if (tokenTickers.nonEmpty) {
+          processTokenTickerChange(tokenTickers)
         }
       }
-    }
 
-    case _: GetTokens.Req =>
-      sender ! GetTokens
-        .Res(tokens) // support for MetadataRefresher to synchronize tokens
+    case _: GetTokens.Req => // support for MetadataRefresher to synchronize tokens
+      sender ! GetTokens.Res(tokens.values.toSeq)
 
-    case _: GetMarkets.Req => sender ! GetMarkets.Res(markets)
+    case _: GetMarkets.Req =>
+      sender ! GetMarkets.Res(markets.values.toSeq)
   }
 
-  private def getLastTickers(): Future[Map[String, TokenTicker]] =
-    for {
-      latestEffectiveTime <- dbModule.tokenTickerRecordDal
-        .getLastTickerTime()
-      tickers_ <- if (latestEffectiveTime.nonEmpty) {
-        dbModule.tokenTickerRecordDal.getTickers(
-          latestEffectiveTime.get
-        )
-      } else {
-        Future.successful(Seq.empty)
+  private def processTokenMetaChange(metadatas: Map[String, TokenMetadata]) =
+    tokens.synchronized {
+      val preTokenMap = tokens
+      val currentTokenMap = metadatas.map {
+        case (symbol, meta) =>
+          if (tokens.contains(symbol)) {
+            symbol -> tokens(symbol)
+          } else {
+            symbol -> Token(
+              Some(meta),
+              Some(TokenInfo(symbol = symbol)),
+              Some(TokenTicker(token = meta.address))
+            )
+          }
       }
-    tickers = tickers_.map{
-      tickerRecord =>
-      val ticker:TokenTicker = tickerRecord
-        tickerRecord.symbol -> ticker
-    }.toMap
-    assert(tickers.size == tickers_.size)
-    } yield tickers
+      tokens = currentTokenMap
+      decideChangedEventAndPublish(preTokenMap, markets)
+    }
 
-  private def publish(
-      tokenMetadataChanged: Boolean,
-      tokenInfoChanged: Boolean,
-      marketMetadataChanged: Boolean,
-      tickerChanged: Boolean
+  private def processTokenInfoChange(infos: Map[String, TokenInfo]) =
+    tokens.synchronized {
+      val preTokenMap = tokens
+      val currentTokenMap = tokens.map {
+        case (symbol, meta) =>
+          symbol -> tokens(symbol).copy(info = infos.get(symbol))
+      }
+      tokens = currentTokenMap
+      decideChangedEventAndPublish(preTokenMap, markets)
+    }
+
+  private def processTokenTickerChange(tickers: Map[String, TokenTicker]) =
+    tokens.synchronized {
+      val preTokenMap = tokens
+      val currentTokenMap = tokens.map {
+        case (symbol, meta) =>
+          symbol -> tokens(symbol).copy(ticker = tickers.get(symbol))
+      }
+      tokens = currentTokenMap
+      decideChangedEventAndPublish(preTokenMap, markets)
+    }
+
+  private def processMarketMetaChange(metas: Map[String, MarketMetadata]) =
+    markets.synchronized {
+      val preMarkets = markets
+      val currentMarkets = metas.map {
+        case (symbol, meta) =>
+          if (markets.contains(symbol)) {
+            symbol -> markets(symbol).copy(metadata = metas.get(symbol))
+          } else {
+            symbol -> Market(
+              Some(meta),
+              Some(
+                MarketTicker(
+                  baseToken = meta.getMarketPair.baseToken,
+                  quoteToken = meta.getMarketPair.quoteToken
+                )
+              )
+            )
+          }
+
+      }
+      markets = currentMarkets
+      decideChangedEventAndPublish(tokens, preMarkets)
+    }
+
+  private def decideChangedEventAndPublish(
+      preTokenMap: Map[String, Token],
+      preMarketMap: Map[String, Market]
     ) = {
+    val (preMetas, preInfos, preTickers) = preTokenMap.values.toSeq
+      .sortBy(_.getMetadata.symbol)
+      .unzip3(t => (t.getMetadata, t.getInfo, t.getTicker))
+
+    val (currentMetas, currentInfos, currentTickers) = tokens.values.toSeq
+      .sortBy(_.getMetadata.symbol)
+      .unzip3(t => (t.getMetadata, t.getInfo, t.getTicker))
+
+    val preMarkets = preMarketMap
+      .map(_._2.getMetadata)
+      .toSeq
+      .sortBy(_.marketHash)
+    val currentMarkets = markets
+      .map(_._2.getMetadata)
+      .toSeq
+      .sortBy(_.marketHash)
     mediator ! Publish(
       MetadataManagerActor.pubsubTopic,
       MetadataChanged(
-        tokenMetadataChanged,
-        tokenInfoChanged,
-        marketMetadataChanged,
-        tickerChanged
+        tokenMetadataChanged = preMetas == currentMetas,
+        tokenInfoChanged = preInfos == currentInfos,
+        tickerChanged = preTickers == currentTickers,
+        marketMetadataChanged = preMarkets == currentMarkets
       )
     )
   }
 
-  private def checkAndPublish(
-      tokenMetadatasOpt: Option[Seq[TokenMetadata]],
-      tokenInfosOpt: Option[Seq[TokenInfo]],
-      marketsOpt: Option[Seq[MarketMetadata]]
-    ): Unit = {
-    var tokenMetadataChanged = false
-    var tokenInfoChanged = false
-    var marketMetadataChanged = false
-    tokenMetadatasOpt foreach { tokenMetadatas_ =>
-      if (tokenMetadatas_ != tokenMetadatas) {
-        tokenMetadataChanged = true
-        tokenMetadatas = tokenMetadatas_
-      }
-    }
-
-    tokenInfosOpt foreach { tokenInfos_ =>
-      if (tokenInfos_ != tokenInfos) {
-        tokenInfoChanged = true
-        tokenInfos = tokenInfos_
-      }
-    }
-
-    marketsOpt foreach { markets_ =>
-      if (markets_ != marketMetadatas) {
-        marketMetadataChanged = true
-        marketMetadatas = markets_
-      }
-    }
-
-    if (tokenMetadataChanged || tokenInfoChanged || marketMetadataChanged) {
-      setTokenAndMarket()
-      publish(
-        tokenMetadataChanged,
-        tokenInfoChanged,
-        marketMetadataChanged,
-        false
-      )
-    }
-  }
-
-  private def syncMetadata() = {
-    log.info("MetadataManagerActor run tokens and markets reload job")
+  private def getTokenMetadatas() =
     for {
-      tokenMetadatas_ <- dbModule.tokenMetadataDal.getTokenMetadatas()
-      tokenInfos_ <- dbModule.tokenInfoDal.getTokenInfos()
-      marketMetadatas_ <- dbModule.marketMetadataDal.getMarkets()
-    } yield {
-      checkAndPublish(
-        Some(tokenMetadatas_),
-        Some(tokenInfos_),
-        Some(marketMetadatas_)
+      tokenMetadatasInDb <- dbModule.tokenMetadataDal.getTokenMetadatas()
+      batchBurnRateReq = BatchGetBurnRate.Req(
+        reqs = tokenMetadatasInDb.map(
+          meta => GetBurnRate.Req(meta.address)
+        )
       )
-    }
-  }
-
-  private def setTokenAndMarket(): Unit = this.synchronized {
-    if (tokenMetadatas.nonEmpty && tokenInfos.nonEmpty && tokenTickers.nonEmpty) {
-      val tokenInfoMap = tokenInfos.map(i => i.symbol -> i).toMap
-      val tickerMap = tokenTickers.map(t => t.symbol -> t).toMap
-      val metadataTokens = tokenMetadatas.map { m =>
-        val symbol = m.symbol
-        val info = tokenInfoMap.getOrElse(symbol, TokenInfo(symbol = symbol))
-        val tickerRecord =
-          tickerMap.getOrElse(symbol, TokenTickerRecord(symbol = symbol))
-        val tokenTicker: TokenTicker = tickerRecord
-        Token(
-          Some(m),
-          Some(info),
-          Some(tokenTicker)
-        )
-      }
-      val extraInTickers =
-        tokenTickers.map(_.symbol).diff(tokenMetadatas.map(_.symbol)).map {
-          symbol =>
-            val tokenTicker: TokenTicker = tickerMap(symbol)
-            Token(
-              Some(
-                TokenMetadata(
-                  `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
-                  symbol = symbol
+      burnRates <- (ethereumQueryActor ? batchBurnRateReq)
+        .mapTo[BatchGetBurnRate.Res]
+        .map(_.resps)
+      tokenMetadatas <- Future.sequence(tokenMetadatasInDb.zipWithIndex.map {
+        case (meta, idx) =>
+          val currentBurnRateOpt = burnRates(idx).burnRate
+          for {
+            _ <- if (currentBurnRateOpt.nonEmpty && currentBurnRateOpt.get != meta.burnRate.get) {
+              dbModule.tokenMetadataDal
+                .updateBurnRate(
+                  meta.address,
+                  currentBurnRateOpt.get.forMarket,
+                  currentBurnRateOpt.get.forP2P
                 )
-              ),
-              Some(TokenInfo(symbol = symbol)),
-              Some(tokenTicker)
+            } else Future.unit
+            newMeta = MetadataManager.normalize(
+              meta.copy(burnRate = currentBurnRateOpt)
             )
-        }
-      tokens = metadataTokens ++ extraInTickers
-    }
-    if (marketMetadatas.nonEmpty && marketTickers.nonEmpty) {
-      val marketTickerMap = marketTickers.map { m =>
-        MarketHash(MarketPair(m.baseToken, m.quoteToken)).hashString() -> m
-      }.toMap
-      markets = marketMetadatas.map { m =>
-        Market(
-          Some(m),
-          marketTickerMap.get(MarketHash(m.marketPair.get).hashString())
-        )
+          } yield meta.symbol -> newMeta
+      })
+    } yield tokenMetadatas.toMap
+
+  private def getTokenInfos() =
+    for {
+      tokenInfos_ <- dbModule.tokenInfoDal.getTokenInfos()
+      infos = tokenInfos_.map(info => info.symbol -> info).toMap
+    } yield infos
+
+  def getLatestTokens() =
+    for {
+      metas <- getTokenMetadatas()
+      infos <- getTokenInfos()
+      tickers <- getLatestTokenTickers()
+      tokens_ = metas.map {
+        case (symbol, metadata) =>
+          symbol -> Token(
+            Some(metadata),
+            infos.get(symbol),
+            tickers.get(symbol)
+          )
       }
+    } yield {
+      assert(metas.nonEmpty)
+      assert(infos.nonEmpty)
+      assert(tickers nonEmpty)
+      tokens_
+    }
+
+  def getLatestMarkets() =
+    for {
+      metas <- getMarketMetas()
+      tickers = getMarketTickers(metas)
+      markets_ = metas.map {
+        case (marketHash, meta) =>
+          marketHash -> Market(
+            Some(meta),
+            tickers.get(meta.marketHash)
+          )
+      }
+    } yield {
+      assert(metas nonEmpty)
+      markets_
+    }
+
+  def syncAndPublish() = {
+    val (preTokens, preMarkets) = (tokens, markets)
+    for {
+      tokens_ <- getLatestTokens()
+      markets_ <- getLatestMarkets()
+    } yield {
+      tokens = tokens_
+      markets = markets_
+      decideChangedEventAndPublish(preTokens, preMarkets)
     }
   }
 
-  //TODO：为什么只取可用的market的ticker？
-//  private def fillSupportMarketTickers(
-//      tokenTickers: Map[String,TokenTicker]
-//    ): Map[String, Option[MarketTicker]] = {
-//    val effectiveMarket = metadataManager
-//      .getMarkets()
-//      .filter(_.metadata.get.status != MarketMetadata.Status.TERMINATED)
-//      .map(_.metadata.get)
-//    effectiveMarket.map(m => m.marketHash -> calculateMarketQuote(m, tokenTickers)).toMap
-//  }
+  def getMarketMetas() =
+    for {
+      marketMetadatas_ <- dbModule.marketMetadataDal.getMarkets()
+      marketMetadatas = marketMetadatas_.map { meta =>
+        meta.marketHash -> MetadataManager.normalize(meta)
+      }
+    } yield marketMetadatas.toMap
 
-  private def calculateMarketTicker(
-      market: MarketMetadata,
-      tokenTickers: Map[String, TokenTicker]
-    ): Option[MarketTicker] = {
-    if (tokenTickers.contains(market.baseTokenSymbol) && tokenTickers.contains(market.quoteTokenSymbol)) {
-      val baseTicker = tokenTickers(market.baseTokenSymbol)
-      val quoteTicker = tokenTickers(market.quoteTokenSymbol)
+  def getMarketTickers(metadatas: Map[String, MarketMetadata]) = {
+    metadatas.map {
+      case (marketHash, meta) => marketHash -> calculateMarketTicker(meta)
+    }
+  }
+
+  private def getLatestTokenTickers(): Future[Map[String, TokenTicker]] =
+    for {
+      latestTime <- dbModule.tokenTickerRecordDal
+        .getLastTickerTime()
+      tickersInDb <- dbModule.tokenTickerRecordDal.getTickers(latestTime.get)
+      tickers = tickersInDb.map { tickerRecord =>
+        val ticker: TokenTicker = tickerRecord
+        tickerRecord.symbol -> ticker
+      }.toMap
+    } yield {
+      assert(tickers.size == tickersInDb.size)
+      tickers
+    }
+
+  private def calculateMarketTicker(market: MarketMetadata): MarketTicker = {
+    if (tokens.contains(market.baseTokenSymbol) && tokens.contains(
+          market.quoteTokenSymbol
+        )) {
+      val baseTicker = tokens(market.baseTokenSymbol).getTicker
+      val quoteTicker = tokens(market.quoteTokenSymbol).getTicker
       val rate = toDouble(BigDecimal(baseTicker.price / quoteTicker.price))
       val volume24H = toDouble(
         BigDecimal(baseTicker.volume24H / baseTicker.price) * rate
       )
 
       val percentChange1H =
-      calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
+        calc(baseTicker.percentChange1H, quoteTicker.percentChange1H)
       val percentChange24H =
         calc(baseTicker.percentChange24H, quoteTicker.percentChange24H)
       val percentChange7D =
         calc(baseTicker.percentChange7D, quoteTicker.percentChange7D)
-      Some(MarketTicker(
+      MarketTicker(
         market.marketPair.get.baseToken,
         market.marketPair.get.quoteToken,
         rate,
@@ -481,12 +419,14 @@ class MetadataManagerAltActor(
         toDouble(percentChange1H),
         toDouble(percentChange24H),
         toDouble(percentChange7D)
-      ))
+      )
     } else {
       //TODO:如果tokenTicker不存在时，marketTicker如何处理
-      None
+      MarketTicker(
+        market.marketPair.get.baseToken,
+        market.marketPair.get.quoteToken
+      )
     }
-
   }
 
   private def calc(
@@ -498,7 +438,7 @@ class MetadataManagerAltActor(
       .toDouble
 
   private def toDouble(bigDecimal: BigDecimal): Double =
-  //TODO:8是哪里来的？不是应该是market.priceDecimals???
+    //TODO:8是哪里来的？不是应该是market.priceDecimals???
     scala.util
       .Try(bigDecimal.setScale(8, BigDecimal.RoundingMode.HALF_UP).toDouble)
       .toOption
