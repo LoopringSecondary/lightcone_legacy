@@ -270,12 +270,15 @@ class CoreModule(
       )
       .register(classOf[Activity], SocketIONotificationActor.name)
       .register(classOf[Fill], SocketIONotificationActor.name)
+      //TODO:该处会将Activity的发送给RingAndFillPersistenceActor，可能需要处理下根据内容再分发，或者将Activity和Fill拆分开
       .register(
         classOf[TxEvents],
-        ActivityActor.name,
         RingAndFillPersistenceActor.name
       )
-
+      .registerBroadcast(
+        classOf[TxEvents],
+        ActivityActor
+      )
   }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
