@@ -224,6 +224,7 @@ class MetadataRefresher(
     }
   }
 
+  // TODO(yongfeng): 法币精度保留至2位是否够？0.001目前算法会变为0.00，是否要变为0.01？
   private def calcuatePricePrecision(quoteCurrency: Currency) = {
     if (QUOTE_TOKEN.contains(quoteCurrency.name)) { // ETH, BTC will set to 8 or token's precision
       val quoteTokenOpt = tokens.find(_.getSymbol() == quoteCurrency.name)
