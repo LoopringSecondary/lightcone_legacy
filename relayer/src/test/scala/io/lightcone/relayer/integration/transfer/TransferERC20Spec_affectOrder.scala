@@ -84,7 +84,10 @@ class TransferERC20Spec_affectOrder
               .get
           )
           val baseBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(dynamicMarketPair.baseToken).balance.get
+            balanceOpt.get
+              .tokenBalanceMap(dynamicMarketPair.baseToken)
+              .balance
+              .get
           )
           val baseAvailableBalance = toBigInt(
             balanceOpt.get
@@ -112,7 +115,6 @@ class TransferERC20Spec_affectOrder
       ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
 
-
       val balanceExpect = (res: GetAccount.Res) => {
         val balanceOpt = res.accountBalance
         val ethBalance = toBigInt(
@@ -125,7 +127,10 @@ class TransferERC20Spec_affectOrder
             .get
         )
         val baseBalance = toBigInt(
-          balanceOpt.get.tokenBalanceMap(dynamicMarketPair.baseToken).balance.get
+          balanceOpt.get
+            .tokenBalanceMap(dynamicMarketPair.baseToken)
+            .balance
+            .get
         )
         val baseAvailableBalance = toBigInt(
           balanceOpt.get
@@ -155,8 +160,8 @@ class TransferERC20Spec_affectOrder
         be(balanceExpect),
         Map(
           dynamicMarketPair -> (orderBookIsEmpty(),
-            userFillsIsEmpty(),
-            marketFillsIsEmpty())
+          userFillsIsEmpty(),
+          marketFillsIsEmpty())
         )
       )
 

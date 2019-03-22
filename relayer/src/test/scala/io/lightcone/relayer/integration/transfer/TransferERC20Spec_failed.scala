@@ -91,7 +91,15 @@ class TransferERC20Spec_failed
       ActivityActor.broadcast(blockEvent)
       Thread.sleep(2000)
 
-      tokenTransferFailedActivities(account.getAddress, to.getAddress, blockNumber, txHash, LRC_TOKEN.address, "100".zeros(18), nonce).foreach(eventDispatcher.dispatch)
+      tokenTransferFailedActivities(
+        account.getAddress,
+        to.getAddress,
+        blockNumber,
+        txHash,
+        LRC_TOKEN.address,
+        "100".zeros(18),
+        nonce
+      ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
 
       GetActivities
@@ -130,7 +138,9 @@ class TransferERC20Spec_failed
               .availableBalance
               .get
           )
-          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4000".zeros(18) && lrcBalance == lrcAvailableBalance
+          ethBalance == "20"
+            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4000"
+            .zeros(18) && lrcBalance == lrcAvailableBalance
         })
       )
       getToAddressBalanceReq.expectUntil(
@@ -154,7 +164,9 @@ class TransferERC20Spec_failed
               .availableBalance
               .get
           )
-          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4000".zeros(18) && lrcBalance == lrcAvailableBalance
+          ethBalance == "20"
+            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4000"
+            .zeros(18) && lrcBalance == lrcAvailableBalance
         })
       )
     }

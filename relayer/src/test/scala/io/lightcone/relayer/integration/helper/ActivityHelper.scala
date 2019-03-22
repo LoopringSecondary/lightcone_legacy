@@ -712,13 +712,15 @@ trait ActivityHelper {
     )
   }
 
-  def tokenTransferFailedActivities(outAddress: String,
-                                    inAddress: String,
-                                    blockNumber: Long,
-                                    txHash: String,
-                                    tokenAddress:String,
-                                    transferAmount: BigInt,
-                                    nonce: Long) = {
+  def tokenTransferFailedActivities(
+      outAddress: String,
+      inAddress: String,
+      blockNumber: Long,
+      txHash: String,
+      tokenAddress: String,
+      transferAmount: BigInt,
+      nonce: Long
+    ) = {
     Seq(
       TxEvents(
         TxEvents.Events.Activities(
