@@ -21,7 +21,7 @@ import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities}
+import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
@@ -45,9 +45,23 @@ class WETHWrapSpec_failed
 
       Given("initialize eth balance")
       mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
+
+      Then("check initialize balance")
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
+      )
+      getFromAddressBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => {
+          val balanceOpt = res.accountBalance
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+          )
+          val wethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
+          )
+          ethBalance == "20".zeros(18) && wethBalance == "30".zeros(18)
+        })
       )
 
       When("send some convert events")

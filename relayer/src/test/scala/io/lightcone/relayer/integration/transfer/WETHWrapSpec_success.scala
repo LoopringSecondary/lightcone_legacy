@@ -21,12 +21,7 @@ import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{
-  AccountBalance,
-  GetAccount,
-  GetActivities,
-  GetPendingActivityNonce
-}
+import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
@@ -50,6 +45,8 @@ class WETHWrapSpec_success
 
       Given("initialize eth balance")
       mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
+
+      Then("check initialize balance")
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true

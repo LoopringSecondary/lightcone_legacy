@@ -18,11 +18,7 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.lib.Address
 import io.lightcone.relayer._
-import io.lightcone.relayer.data.{
-  GetAccount,
-  GetActivities,
-  GetPendingActivityNonce
-}
+import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.lib.NumericConversion._
 import org.scalatest._
@@ -49,8 +45,9 @@ class TransferETHSpec_success
 
       Given("initialize eth balance")
       mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
-      mockAccountWithFixedBalance(to, dynamicMarketPair)
+      mockAccountWithFixedBalance(to.getAddress, dynamicMarketPair)
 
+      Then("check initialize balance")
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
@@ -106,14 +103,6 @@ class TransferETHSpec_success
           })
         )
 
-      GetPendingActivityNonce
-        .Req(account.getAddress, 2)
-        .expectUntil(
-          check((res: GetPendingActivityNonce.Res) => {
-            res.nonces.head == 11
-          })
-        )
-
       When("activities confirmed")
       val blockEvent =
         blockConfirmedEvent(account.getAddress, blockNumber, txHash, nonce)
@@ -122,7 +111,7 @@ class TransferETHSpec_success
 
       ethTransferConfirmedActivities(
         account.getAddress,
-        to,
+        to.getAddress,
         blockNumber,
         txHash,
         "10".zeros(18),
@@ -144,14 +133,6 @@ class TransferETHSpec_success
         .expectUntil(
           check((res: GetActivities.Res) => {
             res.activities.length == 1 && res.activities.head.txStatus == TxStatus.TX_STATUS_SUCCESS
-          })
-        )
-
-      GetPendingActivityNonce
-        .Req(account.getAddress, 2)
-        .expectUntil(
-          check((res: GetPendingActivityNonce.Res) => {
-            res.nonces.head == 11
           })
         )
 

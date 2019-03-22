@@ -48,6 +48,7 @@ class TransferERC20Spec_success
       mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
       mockAccountWithFixedBalance(to.getAddress, dynamicMarketPair)
 
+      Then("check initialize balance")
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
@@ -55,6 +56,10 @@ class TransferERC20Spec_success
       val getToAddressBalanceReq = GetAccount.Req(
         to.getAddress,
         allTokens = true
+      )
+      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      getToAddressBalanceReq.expectUntil(
+        initializeCheck(dynamicMarketPair)
       )
 
       When("send some transfer events")

@@ -21,7 +21,7 @@ import io.lightcone.core.RawOrder
 import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
-import io.lightcone.relayer.data.{GetAccount, GetActivities, SubmitOrder}
+import io.lightcone.relayer.data.{GetAccount, SubmitOrder}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
@@ -49,6 +49,7 @@ class TransferERC20Spec_affectOrder
       mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
       mockAccountWithFixedBalance(to.getAddress, dynamicMarketPair)
 
+      Then("check initialize balance")
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
@@ -56,6 +57,36 @@ class TransferERC20Spec_affectOrder
       val getToAddressBalanceReq = GetAccount.Req(
         to.getAddress,
         allTokens = true
+      )
+      getFromAddressBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => {
+          val balanceOpt = res.accountBalance
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+          )
+          val ethAvailableBalance = toBigInt(
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
+          )
+          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance
+        })
+      )
+      getToAddressBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => {
+          val balanceOpt = res.accountBalance
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+          )
+          val ethAvailableBalance = toBigInt(
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
+          )
+          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance
+        })
       )
 
       When("submit an order of market: base-quote.")
@@ -71,6 +102,37 @@ class TransferERC20Spec_affectOrder
       Thread.sleep(1000)
 
       Then("available balance should reduce")
+      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+
+//      getFromAddressBalanceReq.expectUntil(
+//        check((res: GetAccount.Res) => {
+//          val balanceOpt = res.accountBalance
+//          val ethBalance = toBigInt(
+//            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+//          )
+//          val ethAvailableBalance = toBigInt(
+//            balanceOpt.get
+//              .tokenBalanceMap(Address.ZERO.toString)
+//              .availableBalance
+//              .get
+//          )
+//          val baseBalance = toBigInt(
+//            balanceOpt.get
+//              .tokenBalanceMap(dynamicMarketPair.baseToken)
+//              .balance
+//              .get
+//          )
+//          val baseAvailableBalance = toBigInt(
+//            balanceOpt.get
+//              .tokenBalanceMap(dynamicMarketPair.baseToken)
+//              .availableBalance
+//              .get
+//          )
+//          ethBalance == "20"
+//            .zeros(18) && ethBalance == ethAvailableBalance && baseBalance == "50"
+//            .zeros(18) && "0".zeros(18) == baseAvailableBalance
+//        })
+
       getFromAddressBalanceReq.expectUntil(
         check((res: GetAccount.Res) => {
           val balanceOpt = res.accountBalance

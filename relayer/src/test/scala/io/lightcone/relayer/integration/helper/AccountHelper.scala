@@ -17,15 +17,19 @@
 package io.lightcone.relayer.integration.helper
 
 import io.lightcone.core.MarketPair
+import io.lightcone.lib.Address
+import io.lightcone.lib.NumericConversion.toBigInt
 import io.lightcone.relayer.data.{AccountBalance, GetAccount}
+import io.lightcone.relayer.integration.AddedMatchers.check
 import io.lightcone.relayer.integration.Metadatas.{
   ETH_TOKEN,
   LRC_TOKEN,
   WETH_TOKEN
 }
 import io.lightcone.relayer.integration._
+import org.slf4s.Logging
 
-trait AccountHelper {
+trait AccountHelper extends Logging {
   my: MockHelper =>
 
   def mockAccountWithFixedBalance(
@@ -59,6 +63,48 @@ trait AccountHelper {
             )
           )
         )
+    })
+  }
+
+  def initializeCheck(dynamicMarketPair: MarketPair) = {
+    check((res: GetAccount.Res) => {
+      val balanceOpt = res.accountBalance
+      val ethBalance = toBigInt(
+        balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+      )
+      val ethAvailableBalance = toBigInt(
+        balanceOpt.get
+          .tokenBalanceMap(Address.ZERO.toString)
+          .availableBalance
+          .get
+      )
+      val baseBalance = toBigInt(
+        balanceOpt.get
+          .tokenBalanceMap(dynamicMarketPair.baseToken)
+          .balance
+          .get
+      )
+      val baseAvailableBalance = toBigInt(
+        balanceOpt.get
+          .tokenBalanceMap(dynamicMarketPair.baseToken)
+          .availableBalance
+          .get
+      )
+      val quoteBalance = toBigInt(
+        balanceOpt.get
+          .tokenBalanceMap(dynamicMarketPair.quoteToken)
+          .balance
+          .get
+      )
+      val quoteAvailableBalance = toBigInt(
+        balanceOpt.get
+          .tokenBalanceMap(dynamicMarketPair.quoteToken)
+          .availableBalance
+          .get
+      )
+      ethBalance == "20"
+        .zeros(18) && ethBalance == ethAvailableBalance && baseBalance == "50"
+        .zeros(18) && baseBalance == baseAvailableBalance && quoteBalance == "60".zeros(18) && quoteBalance == quoteAvailableBalance
     })
   }
 }

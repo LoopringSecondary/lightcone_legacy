@@ -21,7 +21,7 @@ import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{AccountBalance, GetAccount, GetActivities}
+import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
@@ -48,6 +48,7 @@ class TransferERC20Spec_failed
       mockAccountWithFixedBalance(account.getAddress, dynamicMarketPair)
       mockAccountWithFixedBalance(to.getAddress, dynamicMarketPair)
 
+      Then("check initialize balance")
       val getFromAddressBalanceReq = GetAccount.Req(
         account.getAddress,
         allTokens = true
@@ -55,6 +56,36 @@ class TransferERC20Spec_failed
       val getToAddressBalanceReq = GetAccount.Req(
         to.getAddress,
         allTokens = true
+      )
+      getFromAddressBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => {
+          val balanceOpt = res.accountBalance
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+          )
+          val ethAvailableBalance = toBigInt(
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
+          )
+          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance
+        })
+      )
+      getToAddressBalanceReq.expectUntil(
+        check((res: GetAccount.Res) => {
+          val balanceOpt = res.accountBalance
+          val ethBalance = toBigInt(
+            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+          )
+          val ethAvailableBalance = toBigInt(
+            balanceOpt.get
+              .tokenBalanceMap(Address.ZERO.toString)
+              .availableBalance
+              .get
+          )
+          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance
+        })
       )
 
       When("send some transfer events")
