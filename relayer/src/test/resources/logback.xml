@@ -7,9 +7,9 @@
         </encoder>
     </appender>
     <logger name="org.apache.cassandra" level="ERROR" />
-    <logger name="com.datastax.driver" level="ERROR" />
-    <logger name="akka" level="ERROR" />
-    <root level="ERROR">
+    <logger name="com.datastax.driver" level="WARN" />
+    <logger name="akka" level="WARN" />
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
