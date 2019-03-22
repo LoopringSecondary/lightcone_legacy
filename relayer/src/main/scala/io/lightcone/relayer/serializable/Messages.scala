@@ -20,8 +20,7 @@ package io.lightcone.relayer.serializable
 
 sealed trait AkkaSeralizableMessage
 
-final case class ShardingBroadcastEnvelope[
-    T <: scalapb.GeneratedMessage with scalapb.Message[T]
-  ](entityId: String,
-    msg: T)
+final case class ShardingBroadcastEnvelope(
+    entityId: String,
+    msg: Any)
     extends AkkaSeralizableMessage

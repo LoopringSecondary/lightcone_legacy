@@ -28,6 +28,7 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
     extends EventDispatcher
     with Logging {
   var targets = Map.empty[Class[_], Set[String]]
+  var broadcastTargets = Map.empty[Class[_], Set[DeployedAsShardedFixedSize[_]]]
 
   def register(
       cls: Class[_],
@@ -35,6 +36,18 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
     ) = {
     val t = targets.getOrElse(cls, Set.empty[String]) ++ actorNames.toSet
     targets = targets + (cls -> t)
+    this
+  }
+
+  def registerBroadcast(
+      cls: Class[_],
+      ts: DeployedAsShardedFixedSize[_]*
+    ) = {
+    val t = broadcastTargets.getOrElse(
+      cls,
+      Set.empty[DeployedAsShardedFixedSize[_]]
+    ) ++ ts.toSet
+    broadcastTargets = broadcastTargets + (cls -> t)
     this
   }
 
@@ -54,6 +67,15 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
         }
 
         found.map(actors.get).foreach(_ ! evt)
+    }
+
+    broadcastTargets.get(evt.getClass) match {
+      case None =>
+        log.error(
+          s"unable to broadcast message of type: ${evt.getClass.getName}"
+        )
+      case Some(receivers) =>
+        receivers.foreach(_.broadcast(evt))
     }
   }
 

@@ -15,7 +15,7 @@
  */
 
 package io.lightcone.relayer.integration
-import io.lightcone.core.{OrderStatus, RawOrder}
+import io.lightcone.core.{OrderStatus, Orderbook, RawOrder}
 import io.lightcone.lib.ProtoSerializer
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
@@ -106,6 +106,35 @@ object AddedMatchers extends JsonSupport {
         s"${JsonPrinter.printJsonString(res)} of orderBook isEmpty."
       )
     }
+  }
+
+  def orderBookItemMatcher(
+      sells: Seq[Orderbook.Item],
+      buys: Seq[Orderbook.Item]
+    ) = {
+    Matcher { res: GetOrderbook.Res =>
+      MatchResult(
+        res.orderbook.nonEmpty,
+        s" ${JsonPrinter.printJsonString(res)} of orderBook nonEmpty.",
+        s"${JsonPrinter.printJsonString(res)} of orderBook isEmpty."
+      )
+    } and
+      Matcher { res: GetOrderbook.Res =>
+        MatchResult(
+          res.getOrderbook.sells == sells,
+          s" ${res.getOrderbook.sells.map(JsonPrinter.printJsonString)} doesn't match ${sells
+            .map(JsonPrinter.printJsonString)}.",
+          s"sells matched."
+        )
+      } and
+      Matcher { res: GetOrderbook.Res =>
+        MatchResult(
+          res.getOrderbook.buys == buys,
+          s" ${res.getOrderbook.buys.map(JsonPrinter.printJsonString)} doesn't match ${buys
+            .map(JsonPrinter.printJsonString)}.",
+          s"buys matched."
+        )
+      }
   }
 
   def userFillsIsEmpty() = {

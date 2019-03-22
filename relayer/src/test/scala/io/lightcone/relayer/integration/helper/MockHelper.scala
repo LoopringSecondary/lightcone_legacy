@@ -142,10 +142,8 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
               tokenBalanceMap = req.tokens.map { t =>
                 t -> AccountBalance.TokenBalance(
                   token = t,
-                  balance = BigInt("1000000000000000000000"),
-                  allowance = BigInt("1000000000000000000000"),
-                  availableAlloawnce = BigInt("1000000000000000000000"),
-                  availableBalance = BigInt("1000000000000000000000")
+                  balance = BigInt("1000000000000000000000000"),
+                  allowance = BigInt("1000000000000000000000000")
                 )
               }.toMap
             )
