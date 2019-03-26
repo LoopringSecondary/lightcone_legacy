@@ -43,6 +43,9 @@ object MockHelper {
 
   var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
 
+  var batchBurnRateExpects
+    : MockExpects[BatchGetBurnRate.Req, BatchGetBurnRate.Res] = _
+
   var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
 
   var orderCancelExpects
@@ -107,6 +110,13 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       })
       .anyNumberOfTimes()
 
+    (queryProvider.batchBurnRate _)
+      .expects(*)
+      .onCall({ req: BatchGetBurnRate.Req =>
+        MockHelper.batchBurnRateExpects(req)
+      })
+      .anyNumberOfTimes()
+
     //batchGetCutoffs
     (queryProvider.batchGetCutoffs _)
       .expects(*)
@@ -162,8 +172,17 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       }
     MockHelper.burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res] {
       case req =>
-        GetBurnRate.Res(burnRate = Some(BurnRate()))
+        GetBurnRate.Res(burnRate = Some(BurnRate(0.4, 0.5)))
     }
+
+    MockHelper.batchBurnRateExpects =
+      MockExpects[BatchGetBurnRate.Req, BatchGetBurnRate.Res] {
+        case req =>
+          BatchGetBurnRate.Res(resps = req.reqs.map { req =>
+            GetBurnRate.Res(burnRate = Some(BurnRate(0.4, 0.5)))
+          })
+      }
+
     MockHelper.cutoffsExpects =
       MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
         case req =>

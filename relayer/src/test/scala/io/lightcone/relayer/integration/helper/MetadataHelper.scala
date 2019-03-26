@@ -33,6 +33,7 @@ trait MetadataHelper extends DbHelper {
       symbolSlugs: Seq[CMCCrawlerConfigForToken]
     )(
       implicit
+      ec: ExecutionContext,
       dbModule: DatabaseModule,
       metadataManager: MetadataManager,
       timeout: Timeout,
@@ -50,23 +51,24 @@ trait MetadataHelper extends DbHelper {
       )
     }
 
-    dbModule.tokenMetadataDal.saveTokenMetadatas(tokens.map(_.getMetadata))
-    dbModule.tokenInfoDal.saveTokenInfos(tokens.map(_.getInfo))
-    dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(symbolSlugs)
-    dbModule.marketMetadataDal.saveMarkets(markets.map(_.getMetadata))
+    val f = Future.sequence(
+      Seq(
+        dbModule.tokenMetadataDal.saveTokenMetadatas(tokens.map(_.getMetadata)),
+        dbModule.tokenInfoDal.saveTokenInfos(tokens.map(_.getInfo)),
+        dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(symbolSlugs),
+        dbModule.marketMetadataDal.saveMarkets(markets.map(_.getMetadata)),
+        dbModule.tokenTickerRecordDal.saveTickers(externalTickerRecords),
+        dbModule.tokenTickerRecordDal.setValid(10)
+      )
+    )
+
+    Await.result(f, timeout.duration)
 
     metadataManager.reset(
       metadataManager.getTokens() ++ tokens,
       metadataManager.getMarkets() ++ markets
     )
-    Await.result(
-      dbModule.tokenTickerRecordDal.saveTickers(externalTickerRecords),
-      timeout.duration
-    )
-    Await.result(
-      dbModule.tokenTickerRecordDal.setValid(10),
-      timeout.duration
-    )
+
   }
 
   def createAndSaveNewMarket(
