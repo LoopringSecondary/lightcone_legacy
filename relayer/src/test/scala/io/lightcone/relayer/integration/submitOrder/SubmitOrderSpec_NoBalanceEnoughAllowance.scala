@@ -19,7 +19,6 @@ package io.lightcone.relayer.integration.submitOrder
 import io.lightcone.core.ErrorCode.ERR_LOW_BALANCE
 import io.lightcone.core.ErrorException
 import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
-import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
@@ -64,17 +63,16 @@ class SubmitOrderSpec_NoBalanceEnoughAllowance
         tokens = Seq(dynamicBaseToken.getAddress())
       )
       getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val ba =
-            res.getAccountBalance.tokenBalanceMap(dynamicBaseToken.getAddress())
-          NumericConversion.toBigInt(ba.getBalance) == 0 &&
-          NumericConversion.toBigInt(ba.getAvailableBalance) == 0 &&
-          NumericConversion.toBigInt(ba.getAllowance) == "1000".zeros(
-            dynamicBaseToken.getDecimals()
-          ) &&
-          NumericConversion.toBigInt(ba.getAvailableAlloawnce) == "1000"
-            .zeros(dynamicBaseToken.getDecimals())
-        })
+        accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "0".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "0".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "1000".zeros(dynamicBaseToken.getDecimals())
+          )
+        )
       )
 
       When("submit an order.")

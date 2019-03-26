@@ -62,8 +62,9 @@ final class CancelOrderValidator(
     } else {
       req match {
         case CancelOrder.Req("", owner, _, None, _, _) =>
-          if (checkSign(req))
-            Future.successful(Right(req.copy(owner = Address.normalize(owner))))
+          val newReq = req.copy(owner = Address.normalize(owner))
+          if (validateSign(newReq))
+            Future.successful(Right(newReq))
           else {
             Future.successful(Left(ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG))
           }
@@ -71,13 +72,12 @@ final class CancelOrderValidator(
           Future {
             try {
               metadataManager.isMarketStatus(marketPair, ACTIVE, READONLY)
-              if (checkSign(req))
-                Right(
-                  req.copy(
-                    owner = Address.normalize(owner),
-                    marketPair = Some(marketPair.normalize())
-                  )
-                )
+              val newReq = req.copy(
+                owner = Address.normalize(owner),
+                marketPair = Some(marketPair.normalize())
+              )
+              if (validateSign(newReq))
+                Right(newReq)
               else Left(ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG)
             } catch {
               case _: Throwable =>
@@ -93,9 +93,9 @@ final class CancelOrderValidator(
                   order.getState.status == STATUS_PENDING ||
                   order.getState.status == STATUS_PENDING_ACTIVE ||
                   order.getState.status == STATUS_PARTIALLY_FILLED) {
-                val cancelReq = req.copy(owner = Address.normalize(order.owner))
-                if (checkSign(cancelReq))
-                  Right(cancelReq)
+                val newReq = req.copy(owner = Address.normalize(order.owner))
+                if (validateSign(newReq))
+                  Right(newReq)
                 else Left(ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG)
               } else {
                 Left(ERR_ORDER_VALIDATION_INVALID_CANCELED)
@@ -108,7 +108,7 @@ final class CancelOrderValidator(
 
   }
 
-  private def checkSign(req: CancelOrder.Req): Boolean = {
+  private def validateSign(req: CancelOrder.Req): Boolean = {
     val cancelRequest = Map(
       "id" -> req.id,
       "owner" -> req.owner,

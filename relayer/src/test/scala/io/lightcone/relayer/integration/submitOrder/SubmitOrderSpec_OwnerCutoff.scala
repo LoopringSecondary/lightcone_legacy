@@ -23,6 +23,7 @@ import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
+import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -41,6 +42,25 @@ class SubmitOrderSpec_OwnerCutoff
       Given(
         s"an new account with enough balance and enough allowance: ${account.getAddress}"
       )
+
+      addAccountExpects({
+        case req =>
+          GetAccount.Res(
+            Some(
+              AccountBalance(
+                address = req.address,
+                tokenBalanceMap = req.tokens.map { t =>
+                  t -> AccountBalance.TokenBalance(
+                    token = t,
+                    balance = "1000".zeros(LRC_TOKEN.decimals),
+                    allowance = "1000".zeros(LRC_TOKEN.decimals)
+                  )
+                }.toMap
+              )
+            )
+          )
+      })
+
       addCutoffsExpects({
         case req =>
           BatchGetCutoffs.Res(
