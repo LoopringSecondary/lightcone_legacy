@@ -23,7 +23,6 @@ import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -50,8 +49,8 @@ class SubmitOrderSpec_Continuous
                 tokenBalanceMap = req.tokens.map { t =>
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = "1000".zeros(LRC_TOKEN.decimals),
-                    allowance = "1000".zeros(LRC_TOKEN.decimals)
+                    balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+                    allowance = "1000".zeros(dynamicBaseToken.getDecimals())
                   )
                 }.toMap
               )
@@ -73,8 +72,8 @@ class SubmitOrderSpec_Continuous
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "100".zeros(dynamicBaseToken.getMetadata.decimals),
-        amountFee = "20".zeros(dynamicBaseToken.getMetadata.decimals)
+        amountS = "100".zeros(dynamicBaseToken.getDecimals()),
+        amountFee = "20".zeros(dynamicBaseToken.getDecimals())
       )
 
       SubmitOrder
@@ -85,12 +84,9 @@ class SubmitOrderSpec_Continuous
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order1.hash) and
           outStandingMatcherInGetOrders(
             RawOrder.State(
-              outstandingAmountS =
-                "100".zeros(dynamicBaseToken.getMetadata.decimals),
-              outstandingAmountB =
-                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
-              outstandingAmountFee =
-                "20".zeros(dynamicBaseToken.getMetadata.decimals)
+              outstandingAmountS = "100".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountB = "1".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountFee = "20".zeros(dynamicBaseToken.getDecimals())
             ),
             order1.hash
           ),
@@ -98,12 +94,10 @@ class SubmitOrderSpec_Continuous
           dynamicBaseToken.getAddress(),
           TokenBalance(
             token = dynamicBaseToken.getAddress(),
-            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableBalance =
-              "880".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
-              "880".zeros(dynamicBaseToken.getMetadata.decimals)
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "880".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "880".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -126,8 +120,8 @@ class SubmitOrderSpec_Continuous
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "500".zeros(dynamicBaseToken.getMetadata.decimals),
-        amountFee = "20".zeros(dynamicBaseToken.getMetadata.decimals)
+        amountS = "500".zeros(dynamicBaseToken.getDecimals()),
+        amountFee = "20".zeros(dynamicBaseToken.getDecimals())
       )
       SubmitOrder
         .Req(Some(order2))
@@ -139,12 +133,9 @@ class SubmitOrderSpec_Continuous
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order2.hash) and
           outStandingMatcherInGetOrders(
             RawOrder.State(
-              outstandingAmountS =
-                "500".zeros(dynamicBaseToken.getMetadata.decimals),
-              outstandingAmountB =
-                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
-              outstandingAmountFee =
-                "20".zeros(dynamicBaseToken.getMetadata.decimals)
+              outstandingAmountS = "500".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountB = "1".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountFee = "20".zeros(dynamicBaseToken.getDecimals())
             ),
             order2.hash
           ),
@@ -152,12 +143,10 @@ class SubmitOrderSpec_Continuous
           dynamicBaseToken.getAddress(),
           TokenBalance(
             token = dynamicBaseToken.getAddress(),
-            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableBalance =
-              "360".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
-              "360".zeros(dynamicBaseToken.getMetadata.decimals)
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "360".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "360".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -178,8 +167,8 @@ class SubmitOrderSpec_Continuous
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "480".zeros(dynamicBaseToken.getMetadata.decimals),
-        amountFee = "20".zeros(dynamicBaseToken.getMetadata.decimals)
+        amountS = "480".zeros(dynamicBaseToken.getDecimals()),
+        amountFee = "20".zeros(dynamicBaseToken.getDecimals())
       )
       SubmitOrder
         .Req(Some(order3))
@@ -191,12 +180,9 @@ class SubmitOrderSpec_Continuous
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order3.hash) and
           outStandingMatcherInGetOrders(
             RawOrder.State(
-              outstandingAmountS =
-                "480".zeros(dynamicBaseToken.getMetadata.decimals),
-              outstandingAmountB =
-                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
-              outstandingAmountFee =
-                "20".zeros(dynamicBaseToken.getMetadata.decimals)
+              outstandingAmountS = "480".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountB = "1".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountFee = "20".zeros(dynamicBaseToken.getDecimals())
             ),
             order3.hash
           ),
@@ -204,9 +190,9 @@ class SubmitOrderSpec_Continuous
           dynamicBaseToken.getAddress(),
           TokenBalance(
             token = dynamicBaseToken.getAddress(),
-            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "0".zeros(dynamicBaseToken.getDecimals()),
             availableAlloawnce =
               "0".zeros(dynamicBaseToken.getMetadata.decimals)
           )
@@ -231,8 +217,8 @@ class SubmitOrderSpec_Continuous
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "490".zeros(dynamicBaseToken.getMetadata.decimals),
-        amountFee = "10".zeros(dynamicBaseToken.getMetadata.decimals)
+        amountS = "490".zeros(dynamicBaseToken.getDecimals()),
+        amountFee = "10".zeros(dynamicBaseToken.getDecimals())
       )
       SubmitOrder
         .Req(
@@ -249,11 +235,10 @@ class SubmitOrderSpec_Continuous
           dynamicBaseToken.getAddress(),
           TokenBalance(
             token = dynamicBaseToken.getAddress(),
-            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
-              "0".zeros(dynamicBaseToken.getMetadata.decimals)
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "0".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "0".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(

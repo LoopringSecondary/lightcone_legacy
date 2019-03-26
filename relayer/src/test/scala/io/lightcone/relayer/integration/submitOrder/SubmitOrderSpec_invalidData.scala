@@ -55,8 +55,8 @@ class SubmitOrderSpec_invalidData
                 tokenBalanceMap = req.tokens.map { t =>
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = "1000".zeros(LRC_TOKEN.decimals),
-                    allowance = "1000".zeros(LRC_TOKEN.decimals)
+                    balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+                    allowance = "1000".zeros(dynamicBaseToken.getDecimals())
                   )
                 }.toMap
               )

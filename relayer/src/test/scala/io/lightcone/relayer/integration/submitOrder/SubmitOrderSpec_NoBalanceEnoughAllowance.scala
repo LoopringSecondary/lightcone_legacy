@@ -50,7 +50,7 @@ class SubmitOrderSpec_NoBalanceEnoughAllowance
                   t -> AccountBalance.TokenBalance(
                     token = t,
                     balance = BigInt("0"),
-                    allowance = "1000".zeros(18)
+                    allowance = "1000".zeros(dynamicBaseToken.getDecimals())
                   )
                 }.toMap
               )
