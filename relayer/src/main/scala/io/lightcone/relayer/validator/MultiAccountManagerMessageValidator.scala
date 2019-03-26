@@ -24,6 +24,7 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
+import MessageValidator._
 
 import scala.concurrent._
 
@@ -53,20 +54,6 @@ final class MultiAccountManagerMessageValidator(
 
   val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
   val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()
-
-  def normalize(addrOrSymbol: String): String = {
-    metadataManager.getTokenWithSymbol(addrOrSymbol) match {
-      case Some(t) =>
-        t.getAddress()
-      case None if Address.isValid(addrOrSymbol) =>
-        Address.normalize(addrOrSymbol)
-      case _ =>
-        throw ErrorException(
-          code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid address or symbol $addrOrSymbol"
-        )
-    }
-  }
 
   def validate = {
     case req: CancelOrder.Req =>

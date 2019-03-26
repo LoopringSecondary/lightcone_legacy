@@ -23,6 +23,7 @@ import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
+import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -37,6 +38,24 @@ class SubmitOrderSpec_DustOrder
     scenario("check dust order") {
       implicit val account = getUniqueAccount()
       Given("a new account with enough balance and allowance")
+
+      addAccountExpects({
+        case req =>
+          GetAccount.Res(
+            Some(
+              AccountBalance(
+                address = req.address,
+                tokenBalanceMap = req.tokens.map { t =>
+                  t -> AccountBalance.TokenBalance(
+                    token = t,
+                    balance = "1000".zeros(LRC_TOKEN.decimals),
+                    allowance = "1000".zeros(LRC_TOKEN.decimals)
+                  )
+                }.toMap
+              )
+            )
+          )
+      })
 
       GetAccount
         .Req(
@@ -84,7 +103,7 @@ class SubmitOrderSpec_DustOrder
       )
 
       And("order status is Status_Dust_Order")
-      And("")
+      And("balance,allowance,available balance and available allowance is 1000")
       And("order book is empty")
     }
   }

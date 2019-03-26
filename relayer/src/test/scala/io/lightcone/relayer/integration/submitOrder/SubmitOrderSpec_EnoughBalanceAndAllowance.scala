@@ -18,16 +18,10 @@ package io.lightcone.relayer.integration.submitOrder
 
 import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
-import io.lightcone.relayer.integration.AddedMatchers.{
-  accountBalanceMatcher,
-  check,
-  containsInGetOrders,
-  outStandingMatcherInGetOrders
-}
+import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
 import org.scalatest._
@@ -43,6 +37,25 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
     scenario("enough balance and enough allowance") {
       implicit val account = getUniqueAccount()
       Given("an new account with enough balance and enough allowance")
+
+      addAccountExpects({
+        case req =>
+          GetAccount.Res(
+            Some(
+              AccountBalance(
+                address = req.address,
+                tokenBalanceMap = req.tokens.map { t =>
+                  t -> AccountBalance.TokenBalance(
+                    token = t,
+                    balance = "1000".zeros(LRC_TOKEN.decimals),
+                    allowance = "1000".zeros(LRC_TOKEN.decimals)
+                  )
+                }.toMap
+              )
+            )
+          )
+      })
+
       GetAccount
         .Req(
           address = account.getAddress,
@@ -103,7 +116,7 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
       And(
         "balance and allowance is 1000, available balance and available allowance is 950"
       )
-      And(s" sell amount of order book is 40")
+      And("sell amount of order book is 40")
     }
   }
 
