@@ -50,7 +50,7 @@ trait AccountHelper extends Logging {
                     case LRC_TOKEN.address            => "400".zeros(18)
                     case dynamicMarketPair.baseToken  => "50".zeros(18)
                     case dynamicMarketPair.quoteToken => "60".zeros(18)
-                    case _                            => "90".zeros(18) // 50 others
+                    case _                            => "90".zeros(18)
                   }
                   t -> AccountBalance.TokenBalance(
                     token = t,
