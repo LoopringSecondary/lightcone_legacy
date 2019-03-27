@@ -72,9 +72,9 @@
         1. 提交一条该市场的订单
         1. 等待3s，确定已经同步完成
             - 结果验证：
-                1. **给accountManager发消息**：给GTO-WETH 发提交订单请求，返回异常
-                1. **给market-shard发消息**：给GTO-WETH marketActor 发MetadataChanged，返回异常
-                1. **给orderbook发消息**：给GTO-WETH orderbookActor 发MetadataChanged，返回异常
+                1. **验证orderbook**：orderbook正常为提交的订单的金额
+                1. **验证MarketManagerActor**：提交一个该市场的订单，应该无法提交，返回INVALID_MARKET
+                1. **socket推送**：socket收到MetadataChanged事件
     
     - **状态**: Planned
     
@@ -83,38 +83,21 @@
     - **其他信息**：可参考原测试  DynamicAdjustMarketsSpec
     
  1. **测试market metadata变动，市场由active->terminated->active的流程**
-     - **Objective**：测试市场从有效状态变为无效，再恢复成有效的情况
+     - **Objective**：测试市场dynamicMarketPair变成Terminated，再恢复成Avtivity时，orderbook等正常
      
      - **测试设置**：
-         1. 设置A1账号有1000个LRC，授权充足
-         1. 依次启动ExternalTicker，MetadataManagerActor，MetadataRefresher
-             - 结果验证：
-                 1. **给market-shard发消息**：给LRC-WETH marketActor发消息，应返正常返回
-                 1. **给orderbook发消息**：给LRC-WETH orderbookActor发消息，应返正常返回
-         1. 在LRC-WETH市场下一个卖10个LRC的单，价格是0.01WETH，返回orderHash：O1
-             - 结果验证：
-                 1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
-                 1. **读取市场深度**：在LRC-WETH市场有10个卖单深度
-                 1. **读取我的成交**: 无
-                 1. **读取市场成交**：无
-                 1. **读取我的账号**: LRC 可用余额应为990
-         1. 调用UpdateMarketMetadata，参数(MarketMetadata(market=LRC-WETH, status=TERMINATED))
-         1. 等待3s，确定已经同步完成
-             - 结果验证：
-                 1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET
-                 1. **读取市场深度**：在LRC-WETH市场有查询深度会报错
-                 1. **提交订单**：在LRC-WETH市场发提交订单请求，返回异常
-                 1. **给market-shard发消息**：给LRC-WETH marketActor 发MetadataChanged，返回异常
-                 1. **给orderbook发消息**：给LRC-WETH orderbookActor 发MetadataChanged，返回异常
-         1. 调用UpdateMarketMetadata，参数(MarketMetadata(market=LRC-WETH, status=ACTIVE))
-         1. 等待3s，确定已经同步完成
-         1. 在LRC-WETH市场下一个卖10个LRC的单，价格是0.01WETH，返回orderHash：O1
-             - 结果验证：
-                 1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
-                 1. **读取市场深度**：在LRC-WETH市场有10个卖单深度
-                 1. **读取我的成交**: 无
-                 1. **读取市场成交**：无
-                 1. **读取我的账号**: LRC 可用余额应为990
+         1. 提交一个dynamicMarketPair的市场订单
+         1. 将db中db中dynamicMarketPair的状态更改为Terminated
+         1. 等待n秒，确保MetadataManagerActor同步完成
+            - 结果验证：
+                1. **验证orderbook**：获取orderbook时，返回错误，INVALID_MARKET
+                1. **socket推送**：socket收到MetadataChanged事件
+         1. 将db中db中dynamicMarketPair的状态更改为Activity
+         1. 等待n秒，确保MetadataManagerActor同步完成
+                     - 结果验证：
+                         1. **验证orderbook**：获取orderbook时，应该为提交的订单的金额
+                         1. **验证MarketManger**：提交一个该市场的订单，并返回成功
+                         1. **socket推送**：socket收到MetadataChanged事件
      
      - **状态**: Planned
      
