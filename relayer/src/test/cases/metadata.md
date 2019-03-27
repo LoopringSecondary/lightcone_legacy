@@ -23,22 +23,18 @@
      - **其他信息**：N/A
      
  1. **测试market metadata变动，新增市场流程**
-     - **Objective**：测试更新db里的market metadata，通过keepAliveActor的激活是否能新增一个市场
+     - **Objective**：测试在db里增加一个新的market metadata，然后激活该市场的MarketManager和OrderbookManager，再提交该市场的订单，验证是否添加成功
   
      - **测试设置**：
   
-         1. 在tokenMetadata里新增一个token配置 ZRX
-         1. 依次启动ExternalTicker，MetadataManagerActor，MetadataRefresher
+         1. 在MarketMetadata里增加一个market metadata, dynamicBaseToken -> WETH
+         1. 等待n秒，确保MetadataManagerActor同步完成
+         1. 激活新添加的市场
+         1. 提交一个该市场的卖单
             - 结果验证：
-                1. **给market发消息**：给ZRX-WETH marketActor发消息，返回异常
-                1. **给orderbook发消息**：给ZRX-WETH orderbookActor发消息，返回异常
-         1. 调用TokenBurnRateChangedEvent接口更新GTO的metadata，burnRateForP2P从0.0到0.5，为了触发tokens重新加载。
-          调用SaveMarketMetadatas接口新增ZRX-WETH market配置
-         1. 等待3s，确定已经同步完成
-            - 结果验证：
-                1. **给market发消息**：给新增的ZRX-WETH marketActor发消息，应正常返回
-                1. **给orderbook发消息**：给新增的ZRX-WETH orderbookActor发消息，应正常返回
-                1. **socket推送**：socket收到MetadataChange(tokenMetadataChanged) MetadataChange(marketMetadataChanged)
+                1. **读取我的订单**：通过getOrders应该看到该订单，其中的status应该为STATUS_PENDING
+                1. **读取市场深度**：卖单深度为该订单的大小
+                1. **socket推送**：socket收到MetadataChanged事件
   
      - **状态**: Planned
   
@@ -46,21 +42,19 @@
   
      - **其他信息**：NA
 
- 1. **测试market metadata变动，终结市场流程**
-    - **Objective**：测试更新db里的market metadata，通过marketManager接收MetadataChanged是否能终结一个市场
+ 1. **测试market metadata变动，终止市场流程**
+    - **Objective**：测试在db中将一个市场状态更新为Terminated，然后等待MetadataManagerActor重新同步一次之后，该市场应该被终止了，无法执行提交订单等操作
    
     - **测试设置**：
    
-        1. 依次启动ExternalTicker，MetadataManagerActor，MetadataRefresher
+        1. 提交一个dynamicMarketPair市场的订单，确认该市场正常可用
+        1. 在db中将dynamicMarketPair的状态更改为Terminated
+        1. 等待n秒，确保MetadataManagerActor同步完成
             - 结果验证：
-                1. **给market-shard发消息**：给GTO-WETH marketActor发消息，应返正常返回
-                1. **给orderbook发消息**：给GTO-WETH orderbookActor发消息，应返正常返回
-        1. 调用TerminateMarket接口更新GTO-WETH市场为终结状态
-        1. 等待3s，确定已经同步完成
-            - 结果验证：
-                1. **给market-shard发消息**：给GTO-WETH marketActor发消息，返回异常
-                1. **给orderbook发消息**：给GTO-WETH orderbookActor发消息，返回异常
-                1. **socket推送**：socket收到MetadataChange(marketMetadataChanged)
+                1. **MarketManagerActor状态**：dynamicMarketPair市场的MarketManagerActor 和OrderbookManagerActor都已经停止
+                1. **提交订单**：提交该市场的订单时，无法提交成功，返回错误 ERR_INVALID_MARKET
+                1. **orderbook**：请求该市场的orderbook时，无法成功，返回错误 ERR_INVALID_MARKET
+                1. **socket推送**：socket收到MetadataChanged事件
    
     - **状态**: Planned
    
@@ -69,15 +63,13 @@
     - **其他信息**：NA
        
  1. **测试market metadata变动，市场变为readonly的流程**
-    - **Objective**：测试更新db里的market metadata，通过marketManager接收MetadataChanged是否能更新一个市场为readonly状态
+    - **Objective**：测试修改db中dynamicMarketPair的状态为Readonly，然后验证提交订单以及获取深度等逻辑
     
     - **测试设置**：
     
-        1. 依次启动ExternalTicker，MetadataManagerActor，MetadataRefresher
-            - 结果验证：
-                1. **给market-shard发消息**：给GTO-WETH marketActor发消息，应返正常返回
-                1. **给orderbook发消息**：给GTO-WETH orderbookActor发消息，应返正常返回
-        1. 调用UpdateMarketMetadata，参数(MarketMetadata(market=GTO-WETH, status=READONLY))
+        1. 将db中dynamicMarketPair的状态更改为Readonly
+        1. 等待n秒，确保MetadataManagerActor同步完成
+        1. 提交一条该市场的订单
         1. 等待3s，确定已经同步完成
             - 结果验证：
                 1. **给accountManager发消息**：给GTO-WETH 发提交订单请求，返回异常
