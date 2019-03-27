@@ -20,7 +20,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.ethereummock._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.OneInstancePerTest
-
 import scala.math.BigInt
 
 //TODO:可以考虑设置请求次数
@@ -47,6 +46,8 @@ object MockHelper {
 
   var orderCancelExpects
     : MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
+
+  var getNonceExpects: MockExpects[GetNonce.Req, GetNonce.Res] = _
 }
 
 trait MockHelper extends MockFactory with OneInstancePerTest {
@@ -82,6 +83,15 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       ]
     ) = {
     MockHelper.orderCancelExpects.addExpect(expect)
+  }
+
+  def addGetNonceExpects(
+      expect: PartialFunction[
+        GetNonce.Req,
+        GetNonce.Res
+      ]
+    ) = {
+    MockHelper.getNonceExpects.addExpect(expect)
   }
 
   //eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
@@ -128,6 +138,13 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       .expects(*)
       .onCall({ req: GetFilledAmount.Req =>
         MockHelper.filledAmountExpects(req)
+      })
+      .anyNumberOfTimes()
+
+    (queryProvider.getNonce _)
+      .expects(*)
+      .onCall({ req: GetNonce.Req =>
+        MockHelper.getNonceExpects(req)
       })
       .anyNumberOfTimes()
   }
@@ -186,5 +203,12 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
             block = 100
           )
       }
+
+    MockHelper.getNonceExpects = MockExpects[GetNonce.Req, GetNonce.Res] {
+      case req =>
+        GetNonce.Res(
+          result = "0"
+        )
+    }
   }
 }

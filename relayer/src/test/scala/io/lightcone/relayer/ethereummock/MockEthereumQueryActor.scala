@@ -53,5 +53,8 @@ class MockEthereumQueryActor(
 
     case req @ Notify("echo", _) =>
       sender ! req
+
+    case req: GetNonce.Req =>
+      sender ! queryProvider.getNonce(req)
   }
 }
