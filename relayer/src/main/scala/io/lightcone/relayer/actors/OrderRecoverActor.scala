@@ -80,7 +80,6 @@ class OrderRecoverActor(
   def ready: Receive = {
     case req: ActorRecover.RequestBatch =>
       log.info(s"started order recover - $req")
-      println(s"received RequestBatch $req--${timeProvider.getTimeSeconds()}")
       batch = req
 
       sender ! batch // echo back to coordinator
@@ -148,11 +147,8 @@ class OrderRecoverActor(
             batch.requestMap.keys.toSeq
               .map(resolveActorRef)
               .foreach { actor =>
-                println(s"sending to ${actor.path.toSerializationFormat}")
                 actor ! ActorRecover.Finished(false)
               }
-
-            println(s"recover finished ${batch.requestMap}")
 
             context.stop(self)
         }

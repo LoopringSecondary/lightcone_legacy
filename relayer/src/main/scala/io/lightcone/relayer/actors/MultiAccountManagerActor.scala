@@ -192,11 +192,8 @@ class MultiAccountManagerActor(
   def recover: Receive = {
     case req: ActorRecover.RecoverOrderReq => handleRequest(req)
 
-    case _ @ActorRecover.Finished(timeout) =>
+    case ActorRecover.Finished(timeout) =>
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
-      println(
-        s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
-      )
       becomeReady()
 
       recoverTimer.foreach(_.stop)
