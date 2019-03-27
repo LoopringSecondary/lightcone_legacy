@@ -267,7 +267,7 @@ class AccountManagerActor(
           .sliding(2)
           .find(s => s(1) - s(0) > 1)
           .map(_(0) + 1)
-          .getOrElse(nonceFromDbRes.nonces.headOption.map(_ + 1).getOrElse(0L))
+          .getOrElse(nonceFromDbRes.nonces.lastOption.map(_ + 1).getOrElse(0L))
         nonce = if (nonceFromEth >= nonceFromDb) nonceFromEth else nonceFromDb
         res = GetAccountNonce.Res(nonce)
       } yield res).sendTo(sender)
