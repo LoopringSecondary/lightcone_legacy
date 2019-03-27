@@ -27,8 +27,8 @@ import io.lightcone.relayer.integration._
 trait ActivityHelper {
 
   def ethTransferPendingActivities(
-      outAddress: String,
-      inAddress: String,
+      from: String,
+      to: String,
       blockNumber: Long,
       txHash: String,
       transferAmount: BigInt,
@@ -40,7 +40,7 @@ trait ActivityHelper {
           TxEvents.Activities(
             Seq(
               Activity(
-                owner = outAddress,
+                owner = from,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.ETHER_TRANSFER_OUT,
@@ -48,7 +48,7 @@ trait ActivityHelper {
                 token = Address.ZERO.toString(),
                 detail = Activity.Detail.EtherTransfer(
                   Activity.EtherTransfer(
-                    outAddress,
+                    from,
                     Some(
                       toAmount(transferAmount)
                     )
@@ -57,7 +57,7 @@ trait ActivityHelper {
                 nonce = nonce
               ),
               Activity(
-                owner = inAddress,
+                owner = to,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.ETHER_TRANSFER_IN,
@@ -65,7 +65,7 @@ trait ActivityHelper {
                 token = Address.ZERO.toString(),
                 detail = Activity.Detail.EtherTransfer(
                   Activity.EtherTransfer(
-                    inAddress,
+                    to,
                     Some(
                       toAmount(transferAmount)
                     )
@@ -81,8 +81,8 @@ trait ActivityHelper {
   }
 
   def tokenTransferPendingActivities(
-      outAddress: String,
-      inAddress: String,
+      from: String,
+      to: String,
       blockNumber: Long,
       txHash: String,
       tokenAddress: String,
@@ -95,7 +95,7 @@ trait ActivityHelper {
           TxEvents.Activities(
             Seq(
               Activity(
-                owner = outAddress,
+                owner = from,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.TOKEN_TRANSFER_OUT,
@@ -103,7 +103,7 @@ trait ActivityHelper {
                 token = tokenAddress,
                 detail = Activity.Detail.TokenTransfer(
                   Activity.TokenTransfer(
-                    outAddress,
+                    from,
                     tokenAddress,
                     Some(
                       toAmount(transferAmount)
@@ -113,7 +113,7 @@ trait ActivityHelper {
                 nonce = nonce
               ),
               Activity(
-                owner = inAddress,
+                owner = to,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.TOKEN_TRANSFER_IN,
@@ -121,7 +121,7 @@ trait ActivityHelper {
                 token = tokenAddress,
                 detail = Activity.Detail.TokenTransfer(
                   Activity.TokenTransfer(
-                    inAddress,
+                    to,
                     tokenAddress,
                     Some(
                       toAmount(transferAmount)
@@ -258,8 +258,8 @@ trait ActivityHelper {
   }
 
   def tokenTransferConfirmedActivities(
-      outAddress: String,
-      inAddress: String,
+      from: String,
+      to: String,
       blockNumber: Long,
       txHash: String,
       tokenAddress: String,
@@ -274,7 +274,7 @@ trait ActivityHelper {
           TxEvents.Activities(
             Seq(
               Activity(
-                owner = outAddress,
+                owner = from,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.TOKEN_TRANSFER_OUT,
@@ -282,7 +282,7 @@ trait ActivityHelper {
                 token = tokenAddress,
                 detail = Activity.Detail.TokenTransfer(
                   Activity.TokenTransfer(
-                    outAddress,
+                    from,
                     tokenAddress,
                     Some(
                       toAmount(transferAmount)
@@ -293,7 +293,7 @@ trait ActivityHelper {
                 txStatus = TxStatus.TX_STATUS_SUCCESS
               ),
               Activity(
-                owner = inAddress,
+                owner = to,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.TOKEN_TRANSFER_IN,
@@ -301,7 +301,7 @@ trait ActivityHelper {
                 token = tokenAddress,
                 detail = Activity.Detail.TokenTransfer(
                   Activity.TokenTransfer(
-                    inAddress,
+                    to,
                     tokenAddress,
                     Some(
                       toAmount(transferAmount)
@@ -316,7 +316,7 @@ trait ActivityHelper {
         )
       ),
       AddressBalanceUpdatedEvent(
-        address = outAddress,
+        address = from,
         token = tokenAddress,
         balance = Some(
           toAmount(outBalanceTo)
@@ -324,7 +324,7 @@ trait ActivityHelper {
         block = blockNumber
       ),
       AddressBalanceUpdatedEvent(
-        address = inAddress,
+        address = to,
         token = tokenAddress,
         balance = Some(
           toAmount(inBalanceTo)
@@ -335,8 +335,8 @@ trait ActivityHelper {
   }
 
   def ethTransferConfirmedActivities(
-      outAddress: String,
-      inAddress: String,
+      from: String,
+      to: String,
       blockNumber: Long,
       txHash: String,
       transferAmount: BigInt,
@@ -350,7 +350,7 @@ trait ActivityHelper {
           TxEvents.Activities(
             Seq(
               Activity(
-                owner = outAddress,
+                owner = from,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.ETHER_TRANSFER_OUT,
@@ -358,7 +358,7 @@ trait ActivityHelper {
                 token = Address.ZERO.toString(),
                 detail = Activity.Detail.EtherTransfer(
                   Activity.EtherTransfer(
-                    outAddress,
+                    from,
                     Some(
                       toAmount(transferAmount)
                     )
@@ -368,7 +368,7 @@ trait ActivityHelper {
                 txStatus = TxStatus.TX_STATUS_SUCCESS
               ),
               Activity(
-                owner = inAddress,
+                owner = to,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.ETHER_TRANSFER_IN,
@@ -376,7 +376,7 @@ trait ActivityHelper {
                 token = Address.ZERO.toString(),
                 detail = Activity.Detail.EtherTransfer(
                   Activity.EtherTransfer(
-                    inAddress,
+                    to,
                     Some(
                       toAmount(transferAmount)
                     )
@@ -390,7 +390,7 @@ trait ActivityHelper {
         )
       ),
       AddressBalanceUpdatedEvent(
-        address = outAddress,
+        address = from,
         token = Address.ZERO.toString(),
         balance = Some(
           toAmount(outBalanceTo)
@@ -398,7 +398,7 @@ trait ActivityHelper {
         block = blockNumber
       ),
       AddressBalanceUpdatedEvent(
-        address = inAddress,
+        address = to,
         token = Address.ZERO.toString(),
         balance = Some(
           toAmount(inBalanceTo)
@@ -551,8 +551,8 @@ trait ActivityHelper {
   }
 
   def ethTransferFailedActivities(
-      outAddress: String,
-      inAddress: String,
+      from: String,
+      to: String,
       blockNumber: Long,
       txHash: String,
       transferAmount: BigInt,
@@ -564,7 +564,7 @@ trait ActivityHelper {
           TxEvents.Activities(
             Seq(
               Activity(
-                owner = outAddress,
+                owner = from,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.ETHER_TRANSFER_OUT,
@@ -572,7 +572,7 @@ trait ActivityHelper {
                 token = Address.ZERO.toString(),
                 detail = Activity.Detail.EtherTransfer(
                   Activity.EtherTransfer(
-                    outAddress,
+                    from,
                     Some(
                       toAmount(transferAmount)
                     )
@@ -582,7 +582,7 @@ trait ActivityHelper {
                 txStatus = TxStatus.TX_STATUS_FAILED
               ),
               Activity(
-                owner = inAddress,
+                owner = to,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.ETHER_TRANSFER_IN,
@@ -590,7 +590,7 @@ trait ActivityHelper {
                 token = Address.ZERO.toString(),
                 detail = Activity.Detail.EtherTransfer(
                   Activity.EtherTransfer(
-                    inAddress,
+                    to,
                     Some(
                       toAmount(transferAmount)
                     )
@@ -713,8 +713,8 @@ trait ActivityHelper {
   }
 
   def tokenTransferFailedActivities(
-      outAddress: String,
-      inAddress: String,
+      from: String,
+      to: String,
       blockNumber: Long,
       txHash: String,
       tokenAddress: String,
@@ -727,7 +727,7 @@ trait ActivityHelper {
           TxEvents.Activities(
             Seq(
               Activity(
-                owner = outAddress,
+                owner = from,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.TOKEN_TRANSFER_OUT,
@@ -735,7 +735,7 @@ trait ActivityHelper {
                 token = tokenAddress,
                 detail = Activity.Detail.TokenTransfer(
                   Activity.TokenTransfer(
-                    outAddress,
+                    from,
                     tokenAddress,
                     Some(
                       toAmount(transferAmount)
@@ -746,7 +746,7 @@ trait ActivityHelper {
                 txStatus = TxStatus.TX_STATUS_FAILED
               ),
               Activity(
-                owner = inAddress,
+                owner = to,
                 block = blockNumber,
                 txHash = txHash,
                 activityType = Activity.ActivityType.TOKEN_TRANSFER_IN,
@@ -754,7 +754,7 @@ trait ActivityHelper {
                 token = tokenAddress,
                 detail = Activity.Detail.TokenTransfer(
                   Activity.TokenTransfer(
-                    inAddress,
+                    to,
                     tokenAddress,
                     Some(
                       toAmount(transferAmount)

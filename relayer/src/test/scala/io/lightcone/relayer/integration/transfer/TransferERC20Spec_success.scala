@@ -17,8 +17,6 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.lib.Address
-import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
@@ -104,8 +102,8 @@ class TransferERC20Spec_success
         LRC_TOKEN.address,
         "100".zeros(18),
         nonce,
-        "3900".zeros(18),
-        "4100".zeros(18)
+        "300".zeros(18),
+        "500".zeros(18)
       ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
 
@@ -125,56 +123,16 @@ class TransferERC20Spec_success
         )
 
       getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          val lrcBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
-          )
-          val lrcAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(LRC_TOKEN.address)
-              .availableBalance
-              .get
-          )
-          ethBalance == "20"
-            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "3900"
-            .zeros(18) && lrcBalance == lrcAvailableBalance
-        })
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("20", "20", "50", "50", "60", "60", "300", "300")
+        )
       )
       getToAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          val lrcBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
-          )
-          val lrcAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(LRC_TOKEN.address)
-              .availableBalance
-              .get
-          )
-          ethBalance == "20"
-            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4100"
-            .zeros(18) && lrcBalance == lrcAvailableBalance
-        })
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("20", "20", "50", "50", "60", "60", "500", "500")
+        )
       )
     }
   }

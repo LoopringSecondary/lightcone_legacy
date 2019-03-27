@@ -322,7 +322,7 @@
 
    - 其他信息：NA
 
-4.    测试作为fee的token转出
+4. 测试作为fee的token转出
 
    - 目标：测试token转账流程中，引起余额的变化，进而引起订单可成交量的变化和orderbook的变化
 
@@ -348,7 +348,7 @@
 
    - 其他信息：NA
 
-5.    token转入对order影响
+5. token转入对order影响
 
    - 目标：测试token转入，余额增加之后对订单和orderbook的影响
 
@@ -374,7 +374,7 @@
 
    - 其他信息：NA
 
-6.    作为fee的token转入对order影响
+6. 作为fee的token转入对order影响
 
    - 目标：测试作为fee的token转入，余额增加之后对订单和orderbook的影响
 

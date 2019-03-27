@@ -16,11 +16,9 @@
 
 package io.lightcone.relayer.integration
 
-import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.lib.NumericConversion._
 import org.scalatest._
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.relayer.actors.ActivityActor
@@ -56,23 +54,9 @@ class TransferETHSpec_success
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          ethBalance == "20".zeros(18)
-        })
-      )
+      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
       getToAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          ethBalance == "20".zeros(18)
-        })
+        initializeCheck(dynamicMarketPair)
       )
 
       When("send some transfer events")
@@ -137,34 +121,16 @@ class TransferETHSpec_success
         )
 
       getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          ethBalance == "10".zeros(18) && ethBalance == ethAvailableBalance
-        })
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("10", "10", "50", "50", "60", "60", "400", "400")
+        )
       )
       getToAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          ethBalance == "30".zeros(18) && ethBalance == ethAvailableBalance
-        })
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("30", "30", "50", "50", "60", "60", "400", "400")
+        )
       )
     }
   }

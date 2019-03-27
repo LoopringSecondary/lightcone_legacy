@@ -17,13 +17,10 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.lib.Address
-import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
 
@@ -51,18 +48,7 @@ class WETHWrapSpec_success
         account.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val wethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
-          )
-          ethBalance == "20".zeros(18) && wethBalance == "30".zeros(18)
-        })
-      )
+      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
 
       When("send some convert events")
       wrapWethPendingActivities(
@@ -111,30 +97,14 @@ class WETHWrapSpec_success
         )
 
       getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("10", "10", "50", "50", "60", "60", "400", "400")
+        ) and
+          wethBalanceCheck(
+            "40",
+            "40"
           )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          val wethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
-          )
-          val wethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(WETH_TOKEN.address)
-              .availableBalance
-              .get
-          )
-          ethBalance == "10"
-            .zeros(18) && ethBalance == ethAvailableBalance && wethBalance == "40"
-            .zeros(18) && wethBalance == wethAvailableBalance
-        })
       )
     }
   }

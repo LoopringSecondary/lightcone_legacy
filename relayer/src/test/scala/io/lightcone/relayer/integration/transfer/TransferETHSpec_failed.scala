@@ -17,8 +17,6 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.lib.Address
-import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
@@ -56,23 +54,9 @@ class TransferETHSpec_failed
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          ethBalance == "20".zeros(18)
-        })
-      )
+      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
       getToAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          ethBalance == "20".zeros(18)
-        })
+        initializeCheck(dynamicMarketPair)
       )
 
       When("send some transfer events")
@@ -134,24 +118,18 @@ class TransferETHSpec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          ethBalance == "20".zeros(18)
-        })
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("20", "20", "50", "50", "60", "60", "400", "400")
+        )
       )
 
       getToAddressBalanceReq
         .expectUntil(
-          check((res: GetAccount.Res) => {
-            val balanceOpt = res.accountBalance
-            val ethBalance = toBigInt(
-              balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-            )
-            ethBalance == "20".zeros(18)
-          })
+          balanceCheck(
+            dynamicMarketPair,
+            Seq("20", "20", "50", "50", "60", "60", "400", "400")
+          )
         )
     }
   }

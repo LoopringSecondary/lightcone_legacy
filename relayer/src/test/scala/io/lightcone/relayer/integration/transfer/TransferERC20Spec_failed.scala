@@ -17,8 +17,6 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.lib.Address
-import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
@@ -57,35 +55,9 @@ class TransferERC20Spec_failed
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance
-        })
-      )
+      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
       getToAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          ethBalance == "20".zeros(18) && ethBalance == ethAvailableBalance
-        })
+        initializeCheck(dynamicMarketPair)
       )
 
       When("send some transfer events")
@@ -149,56 +121,16 @@ class TransferERC20Spec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          val lrcBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
-          )
-          val lrcAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(LRC_TOKEN.address)
-              .availableBalance
-              .get
-          )
-          ethBalance == "20"
-            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4000"
-            .zeros(18) && lrcBalance == lrcAvailableBalance
-        })
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("20", "20", "50", "50", "60", "60", "400", "400")
+        )
       )
       getToAddressBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val balanceOpt = res.accountBalance
-          val ethBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-          )
-          val ethAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(Address.ZERO.toString)
-              .availableBalance
-              .get
-          )
-          val lrcBalance = toBigInt(
-            balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
-          )
-          val lrcAvailableBalance = toBigInt(
-            balanceOpt.get
-              .tokenBalanceMap(LRC_TOKEN.address)
-              .availableBalance
-              .get
-          )
-          ethBalance == "20"
-            .zeros(18) && ethBalance == ethAvailableBalance && lrcBalance == "4000"
-            .zeros(18) && lrcBalance == lrcAvailableBalance
-        })
+        balanceCheck(
+          dynamicMarketPair,
+          Seq("20", "20", "50", "50", "60", "60", "400", "400")
+        )
       )
     }
   }
