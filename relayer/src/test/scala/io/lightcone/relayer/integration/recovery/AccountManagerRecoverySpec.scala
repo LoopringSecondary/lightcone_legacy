@@ -17,16 +17,13 @@
 package io.lightcone.relayer.integration.recovery
 
 import akka.actor.PoisonPill
-import akka.pattern._
-import io.lightcone.relayer.base._
+import io.lightcone.core.ErrorCode.ERR_REJECTED_DURING_RECOVER
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
 import io.lightcone.relayer.integration._
+import io.lightcone.core._
 import org.scalatest._
-
-import scala.concurrent.Await
 
 class AccountManagerRecoverySpec
     extends FeatureSpec
@@ -62,14 +59,19 @@ class AccountManagerRecoverySpec
 
       Given("three accounts with enough balance and allowance")
 
+      When("send an request to make specific MultiAccountManager start")
       GetAccount
         .Req(
           address = account1.getAddress,
           allTokens = true
         )
-        .expectUntil(
-          check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
+        .expect(
+          check(
+            (err: Error) => err.code == ERR_REJECTED_DURING_RECOVER
+          )
         )
+
+      Thread.sleep(6000)
 
       When("submit an order: sell 100")
 
@@ -101,7 +103,6 @@ class AccountManagerRecoverySpec
         )
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-
       And("submit an order: sell 60")
 
       SubmitOrder
@@ -117,7 +118,6 @@ class AccountManagerRecoverySpec
         )
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-
       GetOrderbook
         .Req(
           size = 20,
@@ -131,33 +131,24 @@ class AccountManagerRecoverySpec
         )
       Then("total amount for sell is 240")
 
-      val shardActor = getAccountManagerShardActor(account1.getAddress)
-
-      println(shardActor.toString())
-
-      getAccountManagerShardActor(account1.getAddress) ! PoisonPill
-
-      Thread.sleep(1000)
-
-      val f = (getAccountManagerShardActor(account1.getAddress) ? GetAccount
-        .Req(
-          address = account1.getAddress,
-          allTokens = true
-        )).mapAs[GetAccount.Res]
-
-      Await.result(f, timeout.duration)
-
-      GetOrderbook
-        .Req(
-          size = 20,
-          marketPair = Some(dynamicMarketPair)
-        )
-        .expectUntil(
-          check(
-            (res: GetOrderbook.Res) =>
-              res.getOrderbook.sells.map(_.amount.toDouble).sum == 240
-          )
-        )
+      When("send PoisonPill to kill specific mulitiAccountManagerActor shard")
+//      getAccountManagerShardActor(account1.getAddress) ! PoisonPill
+//
+//      GetOrderbook
+//        .Req(
+//          size = 20,
+//          marketPair = Some(dynamicMarketPair)
+//        )
+//        .expectUntil(
+//          check(
+//            (res: GetOrderbook.Res) =>
+//              res.getOrderbook.sells.map(_.amount.toDouble).sum == 240
+//          )
+//        )
+//
+//      Then("the order book is recovered")
+//
+//      And("account is recovered")
     }
   }
 }

@@ -27,8 +27,6 @@ import io.lightcone.relayer.data._
 
 trait RecoveryHelper {
 
-  private def getEntityNums(name: String) =
-    config.getInt(s"$name.num-of-entities")
   private def getShardNums(name: String) =
     config.getInt(s"${name}.num-of-shards")
 
@@ -39,15 +37,6 @@ trait RecoveryHelper {
     val shardStr = s"${name}_$entityId"
     (shardStr.hashCode % getShardNums(name)).abs
   }
-
-  private def getAccountManagerEntityId(addr: String) =
-    (addr.hashCode % getEntityNums(MultiAccountManagerActor.name)).abs
-
-  private def getMarketManagerEntityId(marketPair: MarketPair) =
-    marketPair.longId
-
-  private def getOrderBookEntityId(marketPair: MarketPair) = marketPair.longId
-
   private def getShardActorPath(
       name: String,
       entityId: Long,
@@ -55,7 +44,7 @@ trait RecoveryHelper {
     ) = s"/system/sharding/$name/$shardId/${name}_$entityId"
 
   def getAccountManagerShardActor(addr: String) = {
-    val entityId = getAccountManagerEntityId(addr)
+    val entityId = MultiAccountManagerActor.getEntityId(addr)
     val shardId = getShardId(entityId, MultiAccountManagerActor.name)
     val path =
       getShardActorPath(MultiAccountManagerActor.name, entityId, shardId)
@@ -63,14 +52,14 @@ trait RecoveryHelper {
   }
 
   def getMarketManagerShardActor(marketPair: MarketPair) = {
-    val entityId = getMarketManagerEntityId(marketPair)
+    val entityId = MarketManagerActor.getEntityId(marketPair)
     val shardId = getShardId(entityId, MarketManagerActor.name)
     val path = getShardActorPath(MarketManagerActor.name, entityId, shardId)
     system.actorSelection(path)
   }
 
   def getOrderBookShardActor(marketPair: MarketPair) = {
-    val entityId = getOrderBookEntityId(marketPair)
+    val entityId = OrderbookManagerActor.getEntityId(marketPair)
     val shardId = getShardId(entityId, OrderbookManagerActor.name)
     val path = getShardActorPath(OrderbookManagerActor.name, entityId, shardId)
     system.actorSelection(path)

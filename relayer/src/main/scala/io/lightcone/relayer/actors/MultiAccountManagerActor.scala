@@ -167,6 +167,7 @@ class MultiAccountManagerActor(
       becomeReady()
     } else {
       log.debug(s"actor recover started: ${self.path}")
+      println(s"actor recover started: ${self.path}")
       context.become(recover)
       for {
         _ <- actors.get(EthereumQueryActor.name) ? Notify("echo") //检测以太坊准备好之后才发起恢复请求
@@ -191,8 +192,11 @@ class MultiAccountManagerActor(
   def recover: Receive = {
     case req: ActorRecover.RecoverOrderReq => handleRequest(req)
 
-    case ActorRecover.Finished(timeout) =>
+    case _ @ActorRecover.Finished(timeout) =>
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
+      println(
+        s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
+      )
       becomeReady()
 
       recoverTimer.foreach(_.stop)
