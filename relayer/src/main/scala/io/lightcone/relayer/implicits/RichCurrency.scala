@@ -31,6 +31,15 @@ private[relayer] class RichCurrency(currency: Currency) {
     }
   }
 
+  // TODO(yongfeng): 法币精度保留至2位是否够？0.001目前算法会变为0.00，是否要变为0.01？
+  def pricePrecision() = {
+    if (QUOTE_TOKEN.contains(currency.name)) {
+      8
+    } else {
+      2
+    }
+  }
+
   def getSlug() = {
     if (QUOTE_TOKEN.contains(currency.name)) {
       currency match {

@@ -178,19 +178,53 @@ class MetadataManagerActor(
         }).sendTo(sender)
       }
 
-    case MetadataChanged(false, false, false, true) => // subscribe message from ExternalCrawlerActor
+    case changed: MetadataChanged => // subscribe message from ExternalCrawlerActor
       blocking {
-        log.debug(s"--MetadataManagerActor-- receive MetadataChanged ")
+        log.debug(
+          s"--MetadataManagerActor-- receive MetadataChanged, $changed "
+        )
         for {
-          tokenTickers <- getLatestTokenTickers()
-        } yield {
-          if (tokenTickers.nonEmpty) {
-            processTokenTickerChange(tokenTickers)
-          }
-        }
+          _ <- if (changed.tokenMetadataChanged) {
+            for {
+              tokenMetas <- getTokenMetadatas()
+            } yield {
+              if (tokenMetas.nonEmpty) {
+                processTokenMetaChange(tokenMetas)
+              }
+            }
+          } else Future.unit
+          _ <- if (changed.tokenInfoChanged) {
+            for {
+              tokenInfos <- getTokenInfos()
+            } yield {
+              if (tokenInfos.nonEmpty) {
+                processTokenInfoChange(tokenInfos)
+              }
+            }
+          } else Future.unit
+          _ <- if (changed.marketMetadataChanged) {
+            for {
+              marketMetas <- getMarketMetas()
+            } yield {
+              if (marketMetas.nonEmpty) {
+                processMarketMetaChange(marketMetas)
+              }
+            }
+          } else Future.unit
+          _ <- if (changed.tickerChanged) {
+            for {
+              tokenTickers <- getLatestTokenTickers()
+            } yield {
+              if (tokenTickers.nonEmpty) {
+                processTokenTickerChange(tokenTickers)
+              }
+            }
+          } else Future.unit
+        } yield Unit
       }
 
-    case _: GetTokens.Req => // support for MetadataRefresher to synchronize tokens
+    case _: GetTokens.Req => //support for MetadataRefresher to synchronize tokens
+      println(s"### manager ${tokens.values.toSeq.mkString}")
       sender ! GetTokens.Res(tokens.values.toSeq)
 
     case _: GetMarkets.Req =>
@@ -279,6 +313,10 @@ class MetadataManagerActor(
       preTokenMap: Map[String, Token],
       preMarketMap: Map[String, Market]
     ) = {
+
+    println(
+      s"#### preTokenMap: ${preTokenMap.mkString}, tokens: ${tokens.mkString}"
+    )
     val (preMetas, preInfos, preTickers) = preTokenMap.values.toSeq
       .sortBy(_.getMetadata.symbol)
       .unzip3(t => (t.getMetadata, t.getInfo, t.getTicker))
@@ -296,21 +334,25 @@ class MetadataManagerActor(
       .toSeq
       .sortBy(_.marketHash)
 
-    mediator ! Publish(
-      MetadataManagerActor.pubsubTopic,
-      MetadataChanged(
-        tokenMetadataChanged = preMetas == currentMetas,
-        tokenInfoChanged = preInfos == currentInfos,
-        tickerChanged = preTickers == currentTickers,
-        marketMetadataChanged = preMarkets == currentMarkets
-      )
+    val changed = MetadataChanged(
+      tokenMetadataChanged = preMetas != currentMetas,
+      tokenInfoChanged = preInfos != currentInfos,
+      tickerChanged = preTickers != currentTickers,
+      marketMetadataChanged = preMarkets != currentMarkets
     )
+
+    println(s"##### changed ${changed}")
+    if (changed.marketMetadataChanged || changed.tokenMetadataChanged || changed.tokenInfoChanged || changed.tickerChanged) {
+      mediator ! Publish(
+        MetadataManagerActor.pubsubTopic,
+        changed
+      )
+    }
   }
 
   private def getTokenMetadatas() =
     for {
       tokenMetadatasInDb <- dbModule.tokenMetadataDal.getTokenMetadatas()
-      _ = println(s"###### tokenMetadatasInDb ${tokenMetadatasInDb.mkString}")
       batchBurnRateReq = BatchGetBurnRate.Req(
         reqs = tokenMetadatasInDb.map(
           meta => GetBurnRate.Req(meta.address)
@@ -347,8 +389,11 @@ class MetadataManagerActor(
   def getLatestTokens() =
     for {
       metas <- getTokenMetadatas()
+      _ = println(s"#### metas ${metas}")
       infos <- getTokenInfos()
+      _ = println(s"#### infos ${infos}")
       tickers <- getLatestTokenTickers()
+      _ = println(s"#### tickers ${tickers}")
       tokens_ = metas.map {
         case (symbol, metadata) =>
           symbol -> Token(
@@ -358,7 +403,6 @@ class MetadataManagerActor(
           )
       }
     } yield {
-      println(s"####### latestTokens ${metas}")
       assert(metas.nonEmpty)
       assert(infos.nonEmpty)
       assert(tickers nonEmpty)
@@ -416,6 +460,9 @@ class MetadataManagerActor(
         val ticker: TokenTicker = tickerRecord
         tickerRecord.symbol -> ticker
       }.toMap
+      _ = println(
+        s"### getLatestTokenTickers ${latestTime}, tickersInDb: ${tickersInDb}, tickers: ${tickers}"
+      )
     } yield {
       assert(tickers.size == tickersInDb.size)
       tickers

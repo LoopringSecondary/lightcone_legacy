@@ -72,6 +72,12 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
     MockHelper.burnRateExpects.addExpect(expect)
   }
 
+  def addBatchBurnRateExpects(
+      expect: PartialFunction[BatchGetBurnRate.Req, BatchGetBurnRate.Res]
+    ) = {
+    MockHelper.batchBurnRateExpects.addExpect(expect)
+  }
+
   def addCutoffsExpects(
       expect: PartialFunction[BatchGetCutoffs.Req, BatchGetCutoffs.Res]
     ) = {

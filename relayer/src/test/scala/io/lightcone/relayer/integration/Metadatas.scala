@@ -58,6 +58,14 @@ object Metadatas {
     status = TokenMetadata.Status.VALID
   )
 
+  val RMB_TOKEN = TokenMetadata(
+    `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
+    decimals = 18,
+    symbol = Currency.RMB.name,
+    name = Currency.RMB.name,
+    status = TokenMetadata.Status.VALID
+  )
+
   val LRC_WETH_MARKET = MarketMetadata(
     status = MarketMetadata.Status.ACTIVE,
     baseTokenSymbol = LRC_TOKEN.symbol,
@@ -110,6 +118,11 @@ object Metadatas {
       Some(ETH_TOKEN),
       Some(TokenInfo(symbol = ETH_TOKEN.symbol)),
       Some(TokenTicker(token = ETH_TOKEN.address, price = 122.020909611))
+    ),
+    Token(
+      Some(RMB_TOKEN),
+      Some(TokenInfo(symbol = RMB_TOKEN.name)),
+      Some(TokenTicker(token = RMB_TOKEN.address, price = 0.1487497))
     )
   )
 
