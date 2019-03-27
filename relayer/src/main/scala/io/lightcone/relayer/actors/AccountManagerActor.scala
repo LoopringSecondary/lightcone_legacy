@@ -263,9 +263,9 @@ class AccountManagerActor(
         nonceFromDbRes <- (activityActor ? GetPendingActivityNonce
           .Req(owner, numOfActivitiesForCalculatingNonce))
           .mapAs[GetPendingActivityNonce.Res]
-        nonceFromDb = nonceFromDbRes.nonces
+        nonceFromDb = nonceFromDbRes.nonces.reverse
           .sliding(2)
-          .find(s => s(0) - s(1) > 1)
+          .find(s => s(1) - s(0) > 1)
           .map(_(0) + 1)
           .getOrElse(nonceFromDbRes.nonces.headOption.map(_ + 1).getOrElse(0L))
         nonce = if (nonceFromEth >= nonceFromDb) nonceFromEth else nonceFromDb
