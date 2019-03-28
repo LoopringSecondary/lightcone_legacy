@@ -322,7 +322,7 @@ message GetMarkets {
         bool require_metadata = 1;
         bool require_ticker = 2;
         bool query_loopring_ticker = 3;
-        io.lightcone.core.Currency quote_currency_for_ticker = 4;  // USD, RMB
+        string quote_currency_for_ticker = 4;  // USD, RMB
         repeated io.lightcone.core.MarketPair market_pairs = 5; // empty for query all
     }
 
@@ -336,7 +336,7 @@ message GetTokens {
         bool require_metadata = 1;
         bool require_info = 2;
         bool require_price = 3;
-        io.lightcone.core.Currency quote_currency_for_price = 4;  // USD, RMB
+        string quote_currency_for_price = 4;  // USD, CNY
         repeated string tokens = 5; // addresses
     }
 

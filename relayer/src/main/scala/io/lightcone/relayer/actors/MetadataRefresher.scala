@@ -28,6 +28,8 @@ import io.lightcone.relayer.implicits._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
+
+import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.util._
 import scala.concurrent.duration._
@@ -69,7 +71,11 @@ class MetadataRefresher(
 
   val mediator = DistributedPubSub(context.system).mediator
 
-  private var currencies = Map.empty[String, Token]
+  private var currencies = config
+    .getStringList("external_crawler.currencies")
+    .asScala
+    .map(_ -> 0.0)
+    .toMap + ("USD" -> 1.0)
 
   override def initialize() = {
     val f = for {
@@ -103,9 +109,13 @@ class MetadataRefresher(
         .foreach(_ ! req.metadataChanged)
 
     case req: GetTokens.Req => {
+      val request =
+        if (req.quoteCurrencyForPrice.isEmpty)
+          req.copy(quoteCurrencyForPrice = "USD")
+        else req
       val requestTokens =
-        if (req.tokens.nonEmpty)
-          req.tokens
+        if (request.tokens.nonEmpty)
+          request.tokens
             .map(metadataManager.getTokenWithAddress)
             .filter(_.nonEmpty)
             .map(_.get)
@@ -113,15 +123,15 @@ class MetadataRefresher(
           metadataManager.getTokens()
 
       val res = requestTokens.map { t =>
-        val metadataOpt = if (req.requireMetadata) t.metadata else None
-        val infoOpt = if (req.requireInfo) t.info else None
-        val tickerOpt = if (!req.requirePrice) {
+        val metadataOpt = if (request.requireMetadata) t.metadata else None
+        val infoOpt = if (request.requireInfo) t.info else None
+        val tickerOpt = if (!request.requirePrice) {
           None
         } else {
           Some(
             changeTokenTickerWithQuoteCurrency(
               t.getTicker,
-              req.quoteCurrencyForPrice
+              request.quoteCurrencyForPrice
             )
           )
         }
@@ -132,20 +142,24 @@ class MetadataRefresher(
 
     case req: GetMarkets.Req =>
       // TODO(yongfeng): req.queryLoopringTicker
-      if (!currencies.contains(req.quoteCurrencyForTicker.name)) {
+      val request =
+        if (req.quoteCurrencyForTicker.isEmpty)
+          req.copy(quoteCurrencyForTicker = "USD")
+        else req
+      if (!currencies.contains(request.quoteCurrencyForTicker)) {
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found exchange rate of currency:${req.quoteCurrencyForTicker.name}"
+          s"not found exchange rate of currency:${request.quoteCurrencyForTicker}"
         )
       }
-      val markets_ = if (req.marketPairs.isEmpty) {
+      val markets_ = if (request.marketPairs.isEmpty) {
         metadataManager.getMarkets()
       } else {
-        req.marketPairs.map(metadataManager.getMarket)
+        request.marketPairs.map(metadataManager.getMarket)
       }
       val res = markets_.map { m =>
-        val metadataOpt = if (req.requireMetadata) m.metadata else None
-        val tickerOpt = if (!req.requireTicker) {
+        val metadataOpt = if (request.requireMetadata) m.metadata else None
+        val tickerOpt = if (!request.requireTicker) {
           None
         } else {
           val baseTokenTicker = changeTokenTickerWithQuoteCurrency(
@@ -153,7 +167,7 @@ class MetadataRefresher(
               .getTokenWithSymbol(m.getMetadata.baseTokenSymbol)
               .get
               .getTicker,
-            req.quoteCurrencyForTicker
+            request.quoteCurrencyForTicker
           )
           Some(
             m.getTicker.copy(
@@ -178,20 +192,14 @@ class MetadataRefresher(
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      currencies = tokens_.map { t =>
-        (Currency.fromName(t.getMetadata.symbol), t)
-      }.filter(_._1.nonEmpty)
-        .map {
-          case (Some(c), t) => c.name -> t
-        }
-        .toMap
-      currencies = currencies + (Currency.USD.name -> Token(
-        ticker = Some(
-          TokenTicker(
-            price = 1
-          )
-        )
-      ))
+      currencies = currencies.map {
+        case (c, _) =>
+          c -> tokens_
+            .find(_.getMetadata.symbol == c)
+            .getOrElse(Token(ticker = Some(TokenTicker())))
+            .getTicker
+            .price
+      }
       metadataManager.reset(tokens_.filterNot { t =>
         currencies.contains(t.getMetadata.symbol)
       }, markets_)
@@ -219,14 +227,16 @@ class MetadataRefresher(
 
   private def changeTokenTickerWithQuoteCurrency(
       baseTokenTicker: TokenTicker,
-      toCurrency: Currency
+      toCurrency: String
     ) = {
-    val precision = toCurrency.pricePrecision()
-    val currencyTicker = currencies(toCurrency.name).getTicker
+    val precision = if (toCurrency == "ETH" || toCurrency == "BTC") 8 else 2
+    println(
+      s"##### toCurrency ${toCurrency}, ${currencies.mkString}, ${precision}"
+    )
+    val currencyPrice = currencies(toCurrency)
     baseTokenTicker.copy(
-      price = calculate(baseTokenTicker.price, currencyTicker.price, precision),
-      volume24H =
-        calculate(baseTokenTicker.volume24H, currencyTicker.price, precision)
+      price = calculate(baseTokenTicker.price, currencyPrice, precision),
+      volume24H = calculate(baseTokenTicker.volume24H, currencyPrice, precision)
     )
   }
 

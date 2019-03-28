@@ -30,6 +30,7 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.implicits._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util._
 
@@ -74,6 +75,12 @@ class MetadataManagerActor(
 
   val mediator = DistributedPubSub(context.system).mediator
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
+
+  private var currencies = config
+    .getStringList("external_crawler.currencies")
+    .asScala
+    .map(_ -> 0.0)
+    .toMap + ("USD" -> 1.0)
 
   private var tokens = Map.empty[String, Token]
   private var markets = Map.empty[String, Market]
@@ -224,8 +231,19 @@ class MetadataManagerActor(
       }
 
     case _: GetTokens.Req => //support for MetadataRefresher to synchronize tokens
-      println(s"### manager ${tokens.values.toSeq.mkString}")
-      sender ! GetTokens.Res(tokens.values.toSeq)
+      log.debug(
+        s"MetadataMangerActor -- GetTokens.Req -- ${tokens.values.toSeq.mkString}"
+      )
+      //TODO:将currenies作为特殊token返回
+      val currencyTokens = currencies.map {
+        case (currency, price) =>
+          Token(
+            Some(TokenMetadata(symbol = currency, name = currency)),
+            None,
+            Some(TokenTicker(price = price))
+          )
+      }
+      sender ! GetTokens.Res(tokens.values.toSeq ++ currencyTokens)
 
     case _: GetMarkets.Req =>
       sender ! GetMarkets.Res(markets.values.toSeq)
@@ -237,7 +255,9 @@ class MetadataManagerActor(
       currentTokens <- Future.sequence(metadatas.map {
         case (symbol, meta) =>
           if (tokens.contains(symbol)) {
-            Future.successful(symbol -> tokens(symbol))
+            Future.successful(
+              symbol -> tokens(symbol).copy(metadata = Some(meta))
+            )
           } else {
             for {
               infos <- dbModule.tokenInfoDal.getTokenInfos(Seq(symbol))
@@ -277,11 +297,12 @@ class MetadataManagerActor(
     }
     tokens = currentTokenMap
     val marketTickers =
-      getMarketTickers(markets.map(m => m._1 -> m._2.getMetadata))
+      getMarketTickers(markets.map(m => m._1 -> m._2.getMetadata), tickers)
     val currentMarkets = markets.map {
       case (marketHash, market) =>
         marketHash -> market.copy(ticker = marketTickers.get(marketHash))
     }
+    currencies = getCurrencies(tickers)
     markets = currentMarkets
     decideChangedEventAndPublish(preTokens, preMarkets)
   }
@@ -309,13 +330,21 @@ class MetadataManagerActor(
     decideChangedEventAndPublish(tokens, preMarkets)
   }
 
+  private def getCurrencies(tokenTickers: Map[String, TokenTicker]) = {
+    currencies.map {
+      case (c, _) => c -> tokenTickers.getOrElse(c, TokenTicker()).price
+    } +
+      ("USD" -> 1.0) +
+      ("ETH" -> tokenTickers.getOrElse("ETH", TokenTicker()).price)
+  }
+
   private def decideChangedEventAndPublish(
       preTokenMap: Map[String, Token],
       preMarketMap: Map[String, Market]
     ) = {
 
-    log.info(
-      s"#### preTokenMap: ${preTokenMap.mkString}, tokens: ${tokens.mkString}"
+    log.debug(
+      s"MetadataMangerActor -- decideChangedEventAndPublish -- preTokens: ${preTokenMap.mkString}, tokens: ${tokens.mkString}"
     )
     val (preMetas, preInfos, preTickers) = preTokenMap.values.toSeq
       .sortBy(_.getMetadata.symbol)
@@ -341,7 +370,9 @@ class MetadataManagerActor(
       marketMetadataChanged = preMarkets != currentMarkets
     )
 
-    log.info(s"##### changed ${changed}")
+    log.debug(
+      s"MetadataMangerActor -- decideChangedEventAndPublish -- changed ${changed}"
+    )
     if (changed.marketMetadataChanged || changed.tokenMetadataChanged || changed.tokenInfoChanged || changed.tickerChanged) {
       mediator ! Publish(
         MetadataManagerActor.pubsubTopic,
@@ -378,6 +409,7 @@ class MetadataManagerActor(
             )
           } yield meta.symbol -> newMeta
       })
+
     } yield tokenMetadatas.toMap
 
   private def getTokenInfos() =
@@ -386,14 +418,21 @@ class MetadataManagerActor(
       infos = tokenInfos_.map(info => info.symbol -> info).toMap
     } yield infos
 
-  def getLatestTokens() =
+  def syncAndPublish() = {
+    val (preTokens, preMarkets) = (tokens, markets)
     for {
       metas <- getTokenMetadatas()
-      _ = log.info(s"#### metas ${metas}")
+      _ = log.debug(
+        s"MetadataManagerAcgor -- getLatestTokens -- meta: ${metas}"
+      )
       infos <- getTokenInfos()
-      _ = log.info(s"#### infos ${infos}")
+      _ = log.debug(
+        s"MetadataManagerAcgor -- getLatestTokens -- infos ${infos}"
+      )
       tickers <- getLatestTokenTickers()
-      _ = log.info(s"#### tickers ${tickers}")
+      _ = log.debug(
+        s"MetadataManagerAcgor -- getLatestTokens -- tickers ${tickers}"
+      )
       tokens_ = metas.map {
         case (symbol, metadata) =>
           symbol -> Token(
@@ -402,37 +441,20 @@ class MetadataManagerActor(
             tickers.get(symbol)
           )
       }
-    } yield {
-      assert(metas.nonEmpty)
-      assert(infos.nonEmpty)
-      assert(tickers nonEmpty)
-      tokens_
-    }
-
-  def getLatestMarkets() =
-    for {
-      metas <- getMarketMetas()
-      tickers = getMarketTickers(metas)
-      markets_ = metas.map {
+      currencies_ = getCurrencies(tickers)
+      marketMetas <- getMarketMetas()
+      marketTickers = getMarketTickers(marketMetas, tickers)
+      markets_ = marketMetas.map {
         case (marketHash, meta) =>
           marketHash -> Market(
             Some(meta),
-            tickers.get(meta.marketHash)
+            marketTickers.get(meta.marketHash)
           )
       }
     } yield {
-      assert(metas nonEmpty)
-      markets_
-    }
-
-  def syncAndPublish() = {
-    val (preTokens, preMarkets) = (tokens, markets)
-    for {
-      tokens_ <- getLatestTokens()
-      markets_ <- getLatestMarkets()
-    } yield {
       tokens = tokens_
       markets = markets_
+      currencies = currencies_
       decideChangedEventAndPublish(preTokens, preMarkets)
     }
   }
@@ -445,9 +467,13 @@ class MetadataManagerActor(
       }
     } yield marketMetadatas.toMap
 
-  def getMarketTickers(metadatas: Map[String, MarketMetadata]) = {
+  def getMarketTickers(
+      metadatas: Map[String, MarketMetadata],
+      tokenTickers: Map[String, TokenTicker]
+    ) = {
     metadatas.map {
-      case (marketHash, meta) => marketHash -> calculateMarketTicker(meta)
+      case (marketHash, meta) =>
+        marketHash -> calculateMarketTicker(meta, tokenTickers)
     }
   }
 
@@ -468,11 +494,14 @@ class MetadataManagerActor(
       tickers
     }
 
-  private def calculateMarketTicker(market: MarketMetadata): MarketTicker = {
-    if (tokens.contains(market.baseTokenSymbol) &&
-        tokens.contains(market.quoteTokenSymbol)) {
-      val baseTicker = tokens(market.baseTokenSymbol).getTicker
-      val quoteTicker = tokens(market.quoteTokenSymbol).getTicker
+  private def calculateMarketTicker(
+      market: MarketMetadata,
+      tokenTickers: Map[String, TokenTicker]
+    ): MarketTicker = {
+    if (tokenTickers.contains(market.baseTokenSymbol) &&
+        tokenTickers.contains(market.quoteTokenSymbol)) {
+      val baseTicker = tokenTickers(market.baseTokenSymbol)
+      val quoteTicker = tokenTickers(market.quoteTokenSymbol)
       val rate = BigDecimal(baseTicker.price / quoteTicker.price)
       val volume24H = BigDecimal(baseTicker.volume24H / baseTicker.price) * rate
 

@@ -48,8 +48,8 @@ class CMCCrawlerSpec
         )
       r.nonEmpty should be(true)
       val map = r.map(t => t.symbol -> t.price).toMap
-      map.contains(Currency.RMB.name) should be(true)
-      map(Currency.RMB.name) > 0 should be(true)
+      map.contains(Currency.CNY.name) should be(true)
+      map(Currency.CNY.name) > 0 should be(true)
       map.contains(Currency.JPY.name) should be(true)
       map(Currency.JPY.name) > 0 should be(true)
       map.contains(Currency.EUR.name) should be(true)
@@ -134,7 +134,7 @@ class CMCCrawlerSpec
         t.ticker.nonEmpty should be(true)
       }
       val f2 = singleRequest(
-        GetTokens.Req(true, true, true, Currency.ETH),
+        GetTokens.Req(true, true, true, "ETH"),
         "get_tokens"
       )
       val res2 = Await.result(f2.mapTo[GetTokens.Res], timeout.duration)
@@ -146,7 +146,7 @@ class CMCCrawlerSpec
       }
 
       val f3 = singleRequest(
-        GetTokens.Req(true, true, true, Currency.RMB),
+        GetTokens.Req(true, true, true, "CNY"),
         "get_tokens"
       )
       val res3 = Await.result(f3.mapTo[GetTokens.Res], timeout.duration)
@@ -222,7 +222,7 @@ class CMCCrawlerSpec
       }
 
       val f2 = singleRequest(
-        GetMarkets.Req(true, true, false, Currency.BTC),
+        GetMarkets.Req(true, true, false, "BTC"),
         "get_markets"
       )
       val res2 = Await.result(f2.mapTo[GetMarkets.Res], timeout.duration)
@@ -234,7 +234,7 @@ class CMCCrawlerSpec
       }
 
       val f3 = singleRequest(
-        GetMarkets.Req(true, true, false, Currency.GBP),
+        GetMarkets.Req(true, true, false, "GBP"),
         "get_markets"
       )
       val res3 = Await.result(f3.mapTo[GetMarkets.Res], timeout.duration)

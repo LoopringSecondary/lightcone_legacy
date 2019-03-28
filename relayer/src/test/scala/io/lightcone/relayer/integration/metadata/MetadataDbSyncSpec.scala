@@ -60,7 +60,7 @@ class MetadataDbSyncSpec
           true,
           true,
           true,
-          Currency.USD,
+          "USD",
           Seq(GTO_TOKEN.address)
         )
       val getTokensInitRes = getTokensReq

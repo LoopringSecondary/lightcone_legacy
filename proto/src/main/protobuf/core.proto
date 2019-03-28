@@ -341,7 +341,7 @@ message ChainReorganizationImpact {
 enum Currency {
     // fiat currency
     USD = 0;
-    RMB = 1;
+    CNY = 1;
     JPY = 2; // 日元
     EUR = 3; // 欧元
     GBP = 4; // 英镑

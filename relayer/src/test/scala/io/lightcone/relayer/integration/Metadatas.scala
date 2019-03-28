@@ -61,8 +61,8 @@ object Metadatas {
   val RMB_TOKEN = TokenMetadata(
     `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
     decimals = 18,
-    symbol = Currency.RMB.name,
-    name = Currency.RMB.name,
+    symbol = Currency.CNY.name,
+    name = Currency.CNY.name,
     status = TokenMetadata.Status.VALID
   )
 
@@ -132,7 +132,7 @@ object Metadatas {
     CMCCrawlerConfigForToken("WETH", "weth"),
     CMCCrawlerConfigForToken("LRC", "loopring"),
     CMCCrawlerConfigForToken("GTO", "gifto"),
-    CMCCrawlerConfigForToken(Currency.RMB.name, Currency.RMB.getSlug()),
+    CMCCrawlerConfigForToken(Currency.CNY.name, Currency.CNY.getSlug()),
     CMCCrawlerConfigForToken(Currency.JPY.name, Currency.JPY.getSlug()),
     CMCCrawlerConfigForToken(Currency.EUR.name, Currency.EUR.getSlug()),
     CMCCrawlerConfigForToken(Currency.GBP.name, Currency.GBP.getSlug())
@@ -233,8 +233,8 @@ object Metadatas {
       "CMC"
     ),
     TokenTickerRecord(
-      symbol = Currency.RMB.name,
-      slug = Currency.RMB.getSlug(),
+      symbol = Currency.CNY.name,
+      slug = Currency.CNY.getSlug(),
       price = 0.1487497,
       isValid = false,
       dataSource = "Sina"

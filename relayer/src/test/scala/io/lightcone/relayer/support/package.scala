@@ -98,7 +98,7 @@ package object support {
     ("WETH", "weth"),
     ("LRC", "loopring"),
     ("GTO", "gifto"),
-    (Currency.RMB.name, Currency.RMB.getSlug()),
+    (Currency.CNY.name, Currency.CNY.getSlug()),
     (Currency.JPY.name, Currency.JPY.getSlug()),
     (Currency.EUR.name, Currency.EUR.getSlug()),
     (Currency.GBP.name, Currency.GBP.getSlug())
