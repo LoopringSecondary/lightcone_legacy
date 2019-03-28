@@ -83,7 +83,6 @@ class SubmitOrderSpec_DustOrder
       Then("submit order failed caused by ERR_ORDER_DUST_VALUE")
 
       defaultValidate(
-        getOrdersMatcher = containsInGetOrders(STATUS_DUST_ORDER, order1.hash),
         accountMatcher = accountBalanceMatcher(
           dynamicBaseToken.getAddress(),
           TokenBalance(
