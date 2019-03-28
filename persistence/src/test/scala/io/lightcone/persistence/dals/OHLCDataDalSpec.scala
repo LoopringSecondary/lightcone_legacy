@@ -19,12 +19,8 @@ package io.lightcone.persistence.dals
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.persistence._
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
-// TODO(yongfeng): remove dependency to relayer.data._
-import io.lightcone.relayer.data._
 
 class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
   def getDal = new OHLCDataDalImpl()
@@ -42,9 +38,10 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       price = 400
     )
     val result1 = dal.saveData(data1)
-    val res1 = Await.result(result1.mapTo[PersistOHLCData.Res], 5.second)
-    res1.error should be(ErrorCode.ERR_NONE)
-    res1.record.get should be(data1)
+    val res1 =
+      Await.result(result1.mapTo[(ErrorCode, Option[OHLCRawData])], 5.second)
+    res1._1 should be(ErrorCode.ERR_NONE)
+    res1._2.get should be(data1)
 
     val data2 = OHLCRawData(
       blockHeight = 10001,
@@ -58,9 +55,10 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       price = 50
     )
     val result2 = dal.saveData(data2)
-    val res2 = Await.result(result2.mapTo[PersistOHLCData.Res], 5.second)
-    res2.error should be(ErrorCode.ERR_NONE)
-    res2.record.get should be(data2)
+    val res2 =
+      Await.result(result2.mapTo[(ErrorCode, Option[OHLCRawData])], 5.second)
+    res2._1 should be(ErrorCode.ERR_NONE)
+    res2._2.get should be(data2)
 
     val data3 = OHLCRawData(
       blockHeight = 10002,
@@ -74,9 +72,10 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       price = 100
     )
     val result3 = dal.saveData(data3)
-    val res3 = Await.result(result3.mapTo[PersistOHLCData.Res], 5.second)
-    res3.error should be(ErrorCode.ERR_NONE)
-    res3.record.get should be(data3)
+    val res3 =
+      Await.result(result3.mapTo[(ErrorCode, Option[OHLCRawData])], 5.second)
+    res3._1 should be(ErrorCode.ERR_NONE)
+    res3._2.get should be(data3)
 
     val marketHash = "111222"
     val interval = 50

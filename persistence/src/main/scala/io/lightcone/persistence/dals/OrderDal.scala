@@ -18,7 +18,6 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent._
 
@@ -47,7 +46,12 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
   // also, if the order is NEW, the status field needs to save as NEW
   // and the created_at and updated_at fileds should both be the current timestamp;
   // if the order already exists, no field should be changed.
-  def saveOrder(order: RawOrder): Future[PersistOrder.Res]
+  //
+  // returns:
+  //    ErrorCode: save result
+  //    Option[RawOrder]: return stored order
+  //    Boolean:  exist or not
+  def saveOrder(order: RawOrder): Future[(ErrorCode, Option[RawOrder], Boolean)]
 
   // Returns orders with given hashes
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]]
@@ -66,19 +70,19 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       tokenBSet: Set[String] = Set.empty,
       marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[SortingType] = None,
-      paging: Option[CursorPaging] = None
+      sort: SortingType = SortingType.ASC,
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
       statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
-      feeToken: Option[String] = None,
-      sort: Option[SortingType] = None,
-      paging: Option[CursorPaging] = None
+      ownerOpt: Option[String] = None,
+      tokensOpt: Option[String] = None,
+      tokenbOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
+      feeTokenOpt: Option[String] = None,
+      sort: SortingType = SortingType.ASC,
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]]
 
   // Count the number of orders
@@ -87,7 +91,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
+      marketHashOpt: Option[MarketHash] = None,
       feeToken: Option[String] = None
     ): Future[Int]
 
@@ -97,11 +101,6 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       marketEntityIds: Set[Long] = Set.empty,
       accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
-    ): Future[Seq[RawOrder]]
-
-  def getCutoffAffectedOrders(
-      retrieveCondition: RetrieveOrdersToCancel,
-      take: Int
     ): Future[Seq[RawOrder]]
 
   def getOrdersToActivate(

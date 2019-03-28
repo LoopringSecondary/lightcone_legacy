@@ -18,7 +18,6 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.core._
 import io.lightcone.persistence._
-import io.lightcone.relayer.data.GetUserFills.Req
 import scala.concurrent.Await
 import io.lightcone.ethereum.persistence._
 import scala.concurrent.duration._
@@ -38,71 +37,332 @@ class FillDalSpec extends DalSpec[FillDal] {
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query fills: by owner")
-    val q3 = Req(owner = owner1, paging = Some(CursorPaging(size = 10)))
-    val r3 = Await.result(dal.getFills(q3).mapTo[Seq[Fill]], 5.second)
-    val c3 = Await.result(dal.countFills(q3).mapTo[Int], 5.second)
+    val r3 = Await.result(
+      dal
+        .getFills(
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          Some(CursorPaging(size = 10))
+        )
+        .mapTo[Seq[Fill]],
+      5.second
+    )
+    val c3 = Await.result(
+      dal
+        .countFills(
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          ""
+        )
+        .mapTo[Int],
+      5.second
+    )
     assert(r3.length == 2 && c3 == 2)
 
     info("query fills: sort")
-    val q3_2 = Req(
-      owner = owner1,
-      sort = SortingType.DESC,
-      paging = Some(CursorPaging(size = 10))
+    val r3_2 = Await.result(
+      dal
+        .getFills(
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.DESC,
+          Some(CursorPaging(size = 10))
+        )
+        .mapTo[Seq[Fill]],
+      5.second
     )
-    val r3_2 = Await.result(dal.getFills(q3_2).mapTo[Seq[Fill]], 5.second)
     assert(r3_2.length == 2)
     assert(r3.head == r3_2.last)
 
     info("query fills: skip")
-    val q3_3 = Req(paging = Some(CursorPaging(cursor = 1, size = 10)))
-    val r3_3 = Await.result(dal.getFills(q3_3).mapTo[Seq[Fill]], 5.second)
+    val r3_3 = Await.result(
+      dal
+        .getFills(
+          "",
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          Some(CursorPaging(cursor = 1, size = 10))
+        )
+        .mapTo[Seq[Fill]],
+      5.second
+    )
     assert(r3_3.length == 3)
 
     info("query fills: by owner and market")
-    val q4 =
-      Req(owner = owner1, marketPair = Some(MarketPair(tokenS1, tokenB1)))
-    val r4 = Await.result(dal.getFills(q4).mapTo[Seq[Fill]], 5.second)
-    val c4 = Await.result(dal.countFills(q4).mapTo[Int], 5.second)
+    val r4 = Await.result(
+      dal
+        .getFills(
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          Some(MarketHash(MarketPair(tokenS1, tokenB1))),
+          "",
+          "",
+          SortingType.ASC,
+          None
+        )
+        .mapTo[Seq[Fill]],
+      5.second
+    )
+    val c4 = Await.result(
+      dal
+        .countFills(
+          owner1,
+          "",
+          "",
+          None,
+          None,
+          None,
+          None,
+          None,
+          Some(MarketHash(MarketPair(tokenS1, tokenB1))),
+          "",
+          ""
+        )
+        .mapTo[Int],
+      5.second
+    )
     assert(r4.length == 2 && c4 == 2)
 
     info("query fills: by ring")
-    val q6 = Req(ring = Some(Req.RingFilter(hash2)))
-    val r6 = Await.result(dal.getFills(q6).mapTo[Seq[Fill]], 5.second)
-    val c6 = Await.result(dal.countFills(q6).mapTo[Int], 5.second)
+    val r6 = Await.result(
+      dal
+        .getFills(
+          "",
+          "",
+          "",
+          Some(hash2),
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          None
+        )
+        .mapTo[Seq[Fill]],
+      5.second
+    )
+    val c6 = Await.result(
+      dal
+        .countFills(
+          "",
+          "",
+          "",
+          Some(hash2),
+          None,
+          None,
+          None,
+          None,
+          None,
+          "",
+          ""
+        )
+        .mapTo[Int],
+      5.second
+    )
     assert(r6.length == 2 && c6 == 2)
-    val q7 = Req(ring = Some(Req.RingFilter(hash2, "2", "1")))
-    val r7 = Await.result(dal.getFills(q7).mapTo[Seq[Fill]], 5.second)
-    val c7 = Await.result(dal.countFills(q7).mapTo[Int], 5.second)
+
+    val r7 = Await.result(
+      dal
+        .getFills(
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(1),
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          None
+        )
+        .mapTo[Seq[Fill]],
+      5.second
+    )
+    val c7 = Await.result(
+      dal
+        .countFills(
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(1),
+          None,
+          None,
+          None,
+          "",
+          ""
+        )
+        .mapTo[Int],
+      5.second
+    )
     assert(r7.length == 1 && c7 == 1)
-    val q8 = Req(ring = Some(Req.RingFilter(hash2, "2", "2")))
-    val r8 = Await.result(dal.getFills(q8).mapTo[Seq[Fill]], 5.second)
-    val c8 = Await.result(dal.countFills(q8).mapTo[Int], 5.second)
+    val r8 = Await.result(
+      dal
+        .getFills(
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(2),
+          None,
+          None,
+          None,
+          "",
+          "",
+          SortingType.ASC,
+          None
+        )
+        .mapTo[Seq[Fill]],
+      5.second
+    )
+    val c8 = Await.result(
+      dal
+        .countFills(
+          "",
+          "",
+          "",
+          Some(hash2),
+          Some(2),
+          Some(2),
+          None,
+          None,
+          None,
+          "",
+          ""
+        )
+        .mapTo[Int],
+      5.second
+    )
     assert(r8.isEmpty && c8 == 0)
 
     info("query fills: full parameters")
-    val q9 = Req(
-      owner = owner1,
-      txHash = hash1,
-      orderHash = hash1,
-      marketPair = Some(MarketPair(tokenS1, tokenB1)),
-      ring = Some(Req.RingFilter(hash1, "1", "0")),
-      wallet = wallet,
-      miner = miner
+    val r9 = Await.result(
+      dal
+        .getFills(
+          owner1,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner,
+          SortingType.ASC,
+          None
+        )
+        .mapTo[Seq[Fill]],
+      5.second
     )
-    val r9 = Await.result(dal.getFills(q9).mapTo[Seq[Fill]], 5.second)
-    val c9 = Await.result(dal.countFills(q9).mapTo[Int], 5.second)
+    val c9 = Await.result(
+      dal
+        .countFills(
+          owner1,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner
+        )
+        .mapTo[Int],
+      5.second
+    )
     assert(r9.length == 1 && c9 == 1)
-    val q10 = Req(
-      owner = owner2,
-      txHash = hash1,
-      orderHash = hash1,
-      marketPair = Some(MarketPair(tokenS1, tokenB1)),
-      ring = Some(Req.RingFilter(hash1, "1", "0")),
-      wallet = wallet,
-      miner = miner
+    val r10 = Await.result(
+      dal
+        .getFills(
+          owner2,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner,
+          SortingType.ASC,
+          None
+        )
+        .mapTo[Seq[Fill]],
+      5.second
     )
-    val r10 = Await.result(dal.getFills(q10).mapTo[Seq[Fill]], 5.second)
-    val c10 = Await.result(dal.countFills(q10).mapTo[Int], 5.second)
+    val c10 = Await.result(
+      dal
+        .countFills(
+          owner2,
+          hash1,
+          hash1,
+          Some(hash1),
+          Some(1),
+          Some(0),
+          Some(tokenS1),
+          Some(tokenB1),
+          None,
+          wallet,
+          miner
+        )
+        .mapTo[Int],
+      5.second
+    )
     assert(r10.isEmpty && c10 == 0)
   }
 

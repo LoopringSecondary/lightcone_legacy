@@ -21,7 +21,6 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
@@ -70,7 +69,7 @@ class OrderPersistenceActor(
           } yield {
             cancelRes.headOption match {
               case Some(res) =>
-                if (res.order.isEmpty)
+                if (res._2.isEmpty)
                   throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
                 CancelOrder.Res(req.status)
               case None =>

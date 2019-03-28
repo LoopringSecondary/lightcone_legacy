@@ -16,16 +16,25 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.core.ErrorCode
+import io.lightcone.ethereum.event.BlockEvent
+import io.lightcone.persistence.SettlementTx
 import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
 import scala.concurrent._
 
-// TODO(yongfeng): delete this?
 trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
-  def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res]
-  // get all pending txs with given owner
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
+  def saveTx(tx: SettlementTx): Future[ErrorCode]
 
-  // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
+  def getPendingTxs(
+      owner: String,
+      timeBefore: Long
+    ): Future[Seq[SettlementTx]]
+
+  def updateInBlock(
+      txHash: String,
+      from: String,
+      nonce: Long
+    ): Future[ErrorCode]
+
+  def cleanTxsForReorg(event: BlockEvent): Future[Int]
 }

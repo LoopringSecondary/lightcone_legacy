@@ -28,7 +28,6 @@ import io.lightcone.ethereum.extractor._
 import io.lightcone.ethereum.extractor.tx.TxTransferEventExtractor
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class BalanceUpdateAddressExtractor @Inject()(

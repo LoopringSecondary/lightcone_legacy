@@ -16,8 +16,8 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.persistence.MissingBlocksRecord
 import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
 import scala.concurrent._
 
 trait MissingBlocksRecordDal

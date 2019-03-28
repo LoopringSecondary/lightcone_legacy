@@ -18,16 +18,44 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
+import io.lightcone.persistence.{CursorPaging, SortingType}
 import scala.concurrent._
 
 trait FillDal extends BaseDalImpl[FillTable, Fill] {
   def saveFill(fill: Fill): Future[ErrorCode]
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
-  def getFills(request: GetUserFills.Req): Future[Seq[Fill]]
-  def countFills(request: GetUserFills.Req): Future[Int]
+
+  def getFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
+      wallet: String,
+      miner: String,
+      sort: SortingType,
+      paging: Option[CursorPaging]
+    ): Future[Seq[Fill]]
+
+  def countFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
+      wallet: String,
+      miner: String
+    ): Future[Int]
 
   def getMarketFills(
       marketPair: MarketPair,
