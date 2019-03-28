@@ -84,10 +84,7 @@ class SubmitOrderSpec_OwnerCutoff
       SubmitOrder
         .Req(Some(order1))
         .expect(
-          check(
-            (err: ErrorException) =>
-              err.error.code == ERR_ORDER_VALIDATION_INVALID_CUTOFF
-          )
+          check((res: SubmitOrder.Res) => !res.success)
         )
 
       Then("submit order failed caused by ERR_ORDER_VALIDATION_INVALID_CUTOFF")

@@ -90,8 +90,7 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
         .Req(Some(order1))
         .expect(
           check(
-            (err: ErrorException) =>
-              err.error.code == ERR_ORDER_VALIDATION_INVALID_CUTOFF
+            (res: SubmitOrder.Res) => !res.success
           )
         )
 
