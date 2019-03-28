@@ -270,6 +270,12 @@ class CoreModule(
       )
       .register(classOf[Activity], SocketIONotificationActor.name)
       .register(classOf[Fill], SocketIONotificationActor.name)
+      .register(
+        classOf[BlockEvent],
+        RingAndFillPersistenceActor.name,
+        ChainReorganizationManagerActor.name,
+        MarketHistoryActor.name
+      )
       //TODO:该处会将Activity的发送给RingAndFillPersistenceActor，可能需要处理下根据内容再分发，或者将Activity和Fill拆分开
       .register(
         classOf[TxEvents],
