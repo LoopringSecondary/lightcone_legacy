@@ -108,6 +108,7 @@ class OrderbookManagerActor(
   val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
   @inline def marketManagerActor = actors.get(MarketManagerActor.name)
+  @inline def socketIoNotifier = actors.get(SocketIONotificationActor.name)
 
   val repeatedJobs = Seq(
     Job(
@@ -125,7 +126,7 @@ class OrderbookManagerActor(
     case req: Orderbook.InternalUpdate =>
       log.info(s"receive Orderbook.InternalUpdate ${req}")
       val updates = manager.processInternalUpdate(req)
-    // TODO(yadong): send updates to socket io.
+      updates.foreach(update => socketIoNotifier ! update)
 
     case GetOrderbook.Req(level, size, Some(marketPair)) =>
       Future {
@@ -166,17 +167,14 @@ class OrderbookManagerActor(
       res <- (marketManagerActor ? GetOrderbookSlots.Req(
         Some(marketPair),
         orderbookRecoverSize
-      )).mapTo[GetOrderbookSlots.Res]
+      )).mapAs[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
       updates = {
         if (res.update.nonEmpty) Nil
         else manager.processInternalUpdate(res.update.get)
       }
       _ = log.debug(s"orderbook incremental updates: $updates")
-      _ <- {
-        Future.unit
-        // TODO(yadong): send updates to socket io.
-      }
+      _ = updates.foreach(update => socketIoNotifier ! update)
     } yield Unit
 
 }

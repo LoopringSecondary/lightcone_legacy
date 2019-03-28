@@ -17,16 +17,24 @@
 package io.lightcone.relayer.integration.recovery
 
 import akka.actor.PoisonPill
+import akka.util.Timeout
 import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
+import io.lightcone.relayer.actors.{
+  KeepAliveActor,
+  MarketManagerActor,
+  OrderbookManagerActor
+}
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
+
+import scala.concurrent.duration._
 import org.scalatest._
 
-class AccountManagerRecoverySpec
+class AccountManagerRecoverySpec_system
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -276,23 +284,38 @@ class AccountManagerRecoverySpec
 
       And(s" ${account2.getAddress} available balance and allowance is 794")
 
-      When("send PoisonPill to kill specific multiAccountManagerActor shard")
+      When(
+        "send PoisonPill to kill specific multiAccountManagerActor marketManagerActor and OrderBookManagerActor shard"
+      )
+      getOrderBookShardActor(dynamicMarketPair) ! PoisonPill
       getAccountManagerShardActor(account1.getAddress) ! PoisonPill
+      getMarketManagerShardActor(dynamicMarketPair) ! PoisonPill
 
-      GetOrderbook
-        .Req(
-          size = 20,
-          marketPair = Some(dynamicMarketPair)
-        )
-        .expectUntil(
-          check(
-            (res: GetOrderbook.Res) =>
-              res.getOrderbook.sells.map(_.amount.toDouble).sum == 440 &&
-                res.getOrderbook.buys.map(_.amount.toDouble).sum == 580
-          )
-        )
+      /*
+       * must guard the restart sequence of OrderbookManagerActor,then MarketManagerActor and finally MultiAccountManagerActor
+       * */
+      And("send a request to make specific order book manager actor restart")
 
-      Then("the order book is recovered")
+      actors.get(OrderbookManagerActor.name) ! Notify(
+        KeepAliveActor.NOTIFY_MSG,
+        s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
+      )
+
+      And("send a request to make specific market manager actor restart")
+
+      actors.get(MarketManagerActor.name) ! Notify(
+        KeepAliveActor.NOTIFY_MSG,
+        s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
+      )
+
+      And("send an request to make specific MultiAccountManager restart")
+
+      entryPointActor ! GetAccount.Req(
+        address = account1.getAddress,
+        allTokens = true
+      )
+
+      Thread.sleep(10000)
 
       GetOrders
         .Req(
@@ -309,23 +332,8 @@ class AccountManagerRecoverySpec
           )
         )
 
-      GetOrders
-        .Req(
-          owner = account2.getAddress
-        )
-        .expectUntil(
-          containsInGetOrders(
-            STATUS_PENDING,
-            order6.hash,
-            order7.hash,
-            order8.hash,
-            order9.hash
-          )
-        )
+      Then("orders are recovered")
 
-      And("orders are recovered")
-
-      Thread.sleep(5000)
       GetAccount
         .Req(
           address = account1.getAddress,
@@ -369,6 +377,21 @@ class AccountManagerRecoverySpec
         )
 
       And(s"${account2.getAddress} is recovered")
+
+      GetOrderbook
+        .Req(
+          size = 20,
+          marketPair = Some(dynamicMarketPair)
+        )
+        .expectUntil(
+          check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 440 &&
+                res.getOrderbook.buys.map(_.amount.toDouble).sum == 580
+          )
+        )
+
+      And("the order book is recovered")
 
     }
   }
