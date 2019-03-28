@@ -17,7 +17,6 @@
 package io.lightcone.persistence
 
 import slick.jdbc.MySQLProfile.api._
-
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
 import io.lightcone.core.Amount
@@ -55,4 +54,9 @@ package object base {
       }, bytes => Some(Ring.Fees.parseFrom(bytes)))
 
   val PENDING_BLOCK_HEIGHT: Long = 1000000000L
+
+  def stringCacheKey(params: Any*) = {
+    Math.abs(params.hashCode()).toString
+    // Math.abs(Objects.hash(params: _*)).toString
+  }
 }

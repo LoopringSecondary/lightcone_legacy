@@ -16,14 +16,18 @@
 
 package io.lightcone.persistence
 
+import io.lightcone.core.ErrorCode
+import io.lightcone.ethereum.persistence.{Interval, OHLCData, OHLCRawData}
 import scala.concurrent.Future
-
-// TODO(yongfeng): remove this dependency
-import io.lightcone.relayer.data._
 
 trait OHLCDataService {
 
-  def saveData(record: PersistOHLCData.Req): Future[PersistOHLCData.Res]
+  def saveData(data: OHLCRawData): Future[(ErrorCode, Option[OHLCRawData])]
 
-  def getOHLCData(request: GetMarketHistory.Req): Future[GetMarketHistory.Res]
+  def getOHLCData(
+      marketHash: String,
+      interval: Interval,
+      beginTime: Long,
+      endTime: Long
+    ): Future[Seq[OHLCData]]
 }

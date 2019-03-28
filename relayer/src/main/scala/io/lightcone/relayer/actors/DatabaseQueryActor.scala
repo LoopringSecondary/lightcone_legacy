@@ -26,7 +26,7 @@ import io.lightcone.core._
 import io.lightcone.ethereum.persistence.Fill
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.data.GetOrders._
+import io.lightcone.relayer.data.GetRings.Req.Filter._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
@@ -65,7 +65,7 @@ class DatabaseQueryActor(
 
   def ready: Receive = LoggingReceive {
     case req: GetOrders.Req =>
-      val (tokensOpt, tokenbOpt, marketIdOpt) =
+      val (tokensOpt, tokenbOpt, marketHashOpt) =
         getMarketQueryParameters(req.market)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
@@ -73,9 +73,9 @@ class DatabaseQueryActor(
           Some(req.owner),
           tokensOpt,
           tokenbOpt,
-          marketIdOpt,
+          marketHashOpt,
           None,
-          Some(req.sort),
+          req.sort,
           req.paging
         )
       } yield {
@@ -96,7 +96,28 @@ class DatabaseQueryActor(
 
     case req: GetUserFills.Req =>
       (for {
-        fills <- dbModule.fillDal.getFills(req)
+        _ <- Future.unit
+        (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameters(
+          req.market
+        )
+        (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
+          req.ring
+        )
+        fills <- dbModule.fillDal.getFills(
+          req.owner,
+          req.txHash,
+          req.orderHash,
+          ringHashOpt,
+          ringIndexOpt,
+          fillIndexOpt,
+          tokensOpt,
+          tokenbOpt,
+          marketHashOpt,
+          req.wallet,
+          req.miner,
+          req.sort,
+          req.paging
+        )
       } yield {
         val fills_ = fills.map { f =>
           new Fill(
@@ -133,21 +154,63 @@ class DatabaseQueryActor(
 
     case req: GetRings.Req =>
       (for {
-        result <- dbModule.ringDal.getRings(req)
+        _ <- Future.unit
+        (ringHashOpt, ringIndexOpt) = req.filter match {
+          case RingHash(h)  => (Some(h), None)
+          case RingIndex(i) => (None, Some(i))
+          case Empty        => (None, None)
+        }
+        result <- dbModule.ringDal
+          .getRings(ringHashOpt, ringIndexOpt, req.sort, req.paging)
       } yield GetRings.Res(result)) sendTo sender
   }
 
-  private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {
+  private def getMarketQueryParameters(marketOpt: Option[MarketFilter]) = {
     marketOpt match {
-      case Some(m)
-          if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
-        (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).longId))
-      case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
-        (Some(m.tokenS), Some(m.tokenB), None)
-      case Some(m) if m.tokenS.nonEmpty => (Some(m.tokenS), None, None)
-      case Some(m) if m.tokenB.nonEmpty => (None, Some(m.tokenB), None)
-      case None                         => (None, None, None)
+      case Some(m) =>
+        m.direction match {
+          case MarketFilter.Direction.BOTH =>
+            (None, None, Some(MarketHash(m.marketPair.get)))
+          case MarketFilter.Direction.BUY =>
+            (
+              Some(m.marketPair.get.quoteToken),
+              Some(m.marketPair.get.baseToken),
+              None
+            )
+          case MarketFilter.Direction.SELL =>
+            (
+              Some(m.marketPair.get.baseToken),
+              Some(m.marketPair.get.quoteToken),
+              None
+            )
+
+          case _ =>
+            throw ErrorException(
+              ErrorCode.ERR_INTERNAL_UNKNOWN,
+              "unrecognized direction"
+            )
+        }
+      case None => (None, None, None)
     }
+  }
+
+  private def getRingQueryParameters(
+      ringOpt: Option[GetUserFills.Req.RingFilter]
+    ) = {
+    ringOpt match {
+      case Some(r) =>
+        val ringHash = getOptString(r.ringHash)
+        val ringIndex =
+          if (r.ringIndex.nonEmpty) Some(r.ringIndex.toLong) else None
+        val fillIndex =
+          if (r.fillIndex.nonEmpty) Some(r.fillIndex.toInt) else None
+        (ringHash, ringIndex, fillIndex)
+      case None => (None, None, None)
+    }
+  }
+
+  private def getOptString(str: String) = {
+    if (str.nonEmpty) Some(str) else None
   }
 
 }

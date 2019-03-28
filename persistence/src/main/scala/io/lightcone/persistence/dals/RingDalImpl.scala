@@ -23,7 +23,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.lib._
-import io.lightcone.relayer.data._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
@@ -37,8 +36,6 @@ class RingDalImpl @Inject()(
     @Named("dbconfig-dal-ring") val dbConfig: DatabaseConfig[JdbcProfile],
     timeProvider: TimeProvider)
     extends RingDal {
-
-  import GetRings.Req.Filter._
 
   val query = TableQuery[RingTable]
 
@@ -58,23 +55,32 @@ class RingDalImpl @Inject()(
     Future.sequence(rings.map(saveRing))
 
   private def queryFilters(
-      ring: GetRings.Req.Filter = Empty
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long]
     ): Query[RingTable, RingTable#TableElementType, Seq] = {
     var filters = query.filter(_.ringIndex >= 0L)
-    filters = ring match {
-      case RingHash(r)  => filters.filter(_.ringHash === r)
-      case RingIndex(i) => filters.filter(_.ringIndex === i)
-      case Empty        => filters
+    filters = ringHashOpt match {
+      case None    => filters
+      case Some(h) => filters.filter(_.ringHash === h)
+    }
+    filters = ringIndexOpt match {
+      case None    => filters
+      case Some(h) => filters.filter(_.ringIndex === h)
     }
     filters
   }
 
-  def getRings(request: GetRings.Req): Future[Seq[Ring]] = {
+  def getRings(
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      sort: SortingType,
+      pagingOpt: Option[CursorPaging]
+    ): Future[Seq[Ring]] = {
     var filters =
-      queryFilters(request.filter)
-    if (request.paging.nonEmpty) {
-      val paging = request.paging.get
-      filters = request.sort match {
+      queryFilters(ringHashOpt, ringIndexOpt)
+    if (pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      filters = sort match {
         case SortingType.DESC =>
           if (paging.cursor > 0) {
             filters
@@ -98,8 +104,11 @@ class RingDalImpl @Inject()(
     db.run(filters.result)
   }
 
-  def countRings(request: GetRings.Req): Future[Int] = {
-    val filters = queryFilters(request.filter)
+  def countRings(
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long]
+    ): Future[Int] = {
+    val filters = queryFilters(ringHashOpt, ringIndexOpt)
     db.run(filters.size.result)
   }
 }
