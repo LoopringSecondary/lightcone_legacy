@@ -24,7 +24,6 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.lib._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.implicits._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
@@ -71,11 +70,12 @@ class MetadataRefresher(
 
   val mediator = DistributedPubSub(context.system).mediator
 
+  val baseCurrency = config.getString("external_crawler.base_currency")
   private var currencies = config
     .getStringList("external_crawler.currencies")
     .asScala
     .map(_ -> 0.0)
-    .toMap + ("USD" -> 1.0)
+    .toMap + (baseCurrency -> 1.0)
 
   override def initialize() = {
     val f = for {
@@ -111,7 +111,7 @@ class MetadataRefresher(
     case req: GetTokens.Req => {
       val request =
         if (req.quoteCurrencyForPrice.isEmpty)
-          req.copy(quoteCurrencyForPrice = "USD")
+          req.copy(quoteCurrencyForPrice = baseCurrency)
         else req
       val requestTokens =
         if (request.tokens.nonEmpty)
@@ -144,7 +144,7 @@ class MetadataRefresher(
       // TODO(yongfeng): req.queryLoopringTicker
       val request =
         if (req.quoteCurrencyForTicker.isEmpty)
-          req.copy(quoteCurrencyForTicker = "USD")
+          req.copy(quoteCurrencyForTicker = baseCurrency)
         else req
       if (!currencies.contains(request.quoteCurrencyForTicker)) {
         throw ErrorException(
@@ -230,9 +230,6 @@ class MetadataRefresher(
       toCurrency: String
     ) = {
     val precision = if (toCurrency == "ETH" || toCurrency == "BTC") 8 else 2
-    println(
-      s"##### toCurrency ${toCurrency}, ${currencies.mkString}, ${precision}"
-    )
     val currencyPrice = currencies(toCurrency)
     baseTokenTicker.copy(
       price = calculate(baseTokenTicker.price, currencyPrice, precision),

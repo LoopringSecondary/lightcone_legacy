@@ -89,7 +89,7 @@ class MetadataDbSyncSpec
       Await.result(saveF, timeout.duration)
       Await.result(dbModule.tokenTickerRecordDal.setValid(ts), timeout.duration)
 
-      Thread.sleep((metadataRefresherInterval + 2) * 1000)
+      Thread.sleep((metadataRefresherInterval + 5) * 1000)
       val getTokensRes = getTokensReq
         .expect(check((res: GetTokens.Res) => res.tokens.nonEmpty))
 

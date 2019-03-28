@@ -135,7 +135,12 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
         )
       )
 
-    integrationStarter.waiting()
+    try {
+      integrationStarter.waiting()
+    } catch {
+      case e: Exception =>
+        println(s"##### Exception $e")
+    }
     tokens
   }
 

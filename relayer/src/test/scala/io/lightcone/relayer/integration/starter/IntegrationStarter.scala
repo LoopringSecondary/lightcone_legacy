@@ -105,7 +105,7 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
       timeout: Timeout,
       ec: ExecutionContext
     ) = {
-    Thread.sleep(5000) //waiting for system
+    Thread.sleep(3000) //waiting for system
     //waiting for market
 
     try Unreliables.retryUntilTrue(

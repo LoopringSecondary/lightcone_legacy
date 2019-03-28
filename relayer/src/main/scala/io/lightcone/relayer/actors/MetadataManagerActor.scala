@@ -76,11 +76,12 @@ class MetadataManagerActor(
   val mediator = DistributedPubSub(context.system).mediator
   @inline def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
+  val baseCurrency = config.getString("external_crawler.base_currency")
   private var currencies = config
     .getStringList("external_crawler.currencies")
     .asScala
     .map(_ -> 0.0)
-    .toMap + ("USD" -> 1.0)
+    .toMap + (baseCurrency -> 1.0)
 
   private var tokens = Map.empty[String, Token]
   private var markets = Map.empty[String, Market]
@@ -334,7 +335,7 @@ class MetadataManagerActor(
     currencies.map {
       case (c, _) => c -> tokenTickers.getOrElse(c, TokenTicker()).price
     } +
-      ("USD" -> 1.0) +
+      (baseCurrency -> 1.0) +
       ("ETH" -> tokenTickers.getOrElse("ETH", TokenTicker()).price)
   }
 
