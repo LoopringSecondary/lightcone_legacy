@@ -16,7 +16,7 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.relayer.data._
+import io.lightcone.persistence.MissingBlocksRecord
 import scala.concurrent.Await
 import scala.concurrent.duration._
 

@@ -24,10 +24,9 @@ import io.lightcone.relayer.base._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
-
+import io.lightcone.relayer.data.GetMarketHistory
 import scala.concurrent.ExecutionContext
 
 object MarketHistoryActor extends DeployedAsSingleton {
@@ -65,19 +64,33 @@ class MarketHistoryActor(
       (for {
         saveRes <- dbModule.ohlcDataDal.saveData(data)
       } yield {
-        saveRes.error match {
+        saveRes._1 match {
           case ERR_NONE =>
-            saveRes.record
+            saveRes._2
           case _ =>
             throw ErrorException(
-              saveRes.error,
+              saveRes._1,
               s"failed to save ohlcRawData: $data"
             )
         }
       }) sendTo sender
 
-    case req: GetMarketHistory.Req =>
-      dbModule.ohlcDataService.getOHLCData(req).sendTo(sender)
+    case req: GetMarketHistory.Req => {
+      val marketPair = req.marketPair.getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"invalid marketPair:${req.marketPair}"
+        )
+      )
+      dbModule.ohlcDataService
+        .getOHLCData(
+          MarketHash(marketPair).hashString,
+          req.interval,
+          req.beginTime,
+          req.endTime
+        )
+        .sendTo(sender)
+    }
 
     case req: BlockEvent =>
       (for {

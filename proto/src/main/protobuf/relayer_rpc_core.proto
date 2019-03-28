@@ -366,7 +366,7 @@ message GetUserFills {
         string        owner      = 1;
         string        tx_hash    = 2;
         string        order_hash = 3;
-        io.lightcone.core.MarketPair  market_pair = 4;
+        MarketFilter  market     = 4;
         RingFilter    ring       = 5;
         string        wallet     = 6;
         string        miner      = 7;
