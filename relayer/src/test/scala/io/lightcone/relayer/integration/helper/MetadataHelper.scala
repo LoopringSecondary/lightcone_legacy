@@ -21,11 +21,13 @@ import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer._
+import io.lightcone.relayer.integration._
 import io.lightcone.relayer.integration.integrationStarter
+import org.scalatest.Matchers
 
 import scala.concurrent._
 
-trait MetadataHelper extends DbHelper {
+trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
 
   def prepareMetadata(
       tokens: Seq[Token],
@@ -57,12 +59,12 @@ trait MetadataHelper extends DbHelper {
         dbModule.tokenInfoDal.saveTokenInfos(tokens.map(_.getInfo)),
         dbModule.cmcCrawlerConfigForTokenDal.saveConfigs(symbolSlugs),
         dbModule.marketMetadataDal.saveMarkets(markets.map(_.getMetadata)),
-        dbModule.tokenTickerRecordDal.saveTickers(externalTickerRecords),
-        dbModule.tokenTickerRecordDal.setValid(10)
+        dbModule.tokenTickerRecordDal.saveTickers(externalTickerRecords)
       )
     )
 
     Await.result(f, timeout.duration)
+    Await.result(dbModule.tokenTickerRecordDal.setValid(10), timeout.duration)
 
     metadataManager.reset(
       metadataManager.getTokens() ++ tokens,
@@ -120,6 +122,19 @@ trait MetadataHelper extends DbHelper {
       )
     )
     prepareMetadata(tokens, Seq(market), symbolSlugs)
+
+    GetTokens
+      .Req(
+        requireMetadata = true,
+        tokens =
+          Seq(tokens(0).getMetadata.address, tokens(1).getMetadata.address)
+      )
+      .expectUntil(
+        AddedMatchers.check(
+          (res: GetTokens.Res) => res.tokens.size == 2
+        )
+      )
+
     integrationStarter.waiting()
     tokens
   }
@@ -131,12 +146,13 @@ trait MetadataHelper extends DbHelper {
       status: TokenMetadata.Status = TokenMetadata.Status.VALID,
       price: Double = 1.0
     ): Token = {
+    val i = getUniqueInt()
     val meta = TokenMetadata(
       address = address,
       decimals = decimals,
       burnRate = Some(burnRate),
-      symbol = s"d-${getUniqueInt()}",
-      name = s"dynamic-${getUniqueInt()}",
+      symbol = s"d-$i",
+      name = s"dynamic-$i",
       status = status
     )
     Token(

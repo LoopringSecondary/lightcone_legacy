@@ -86,6 +86,7 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
     prepareDbModule(dbModule)
+    metadataManager.reset(Seq.empty, Seq.empty)
     prepareMetadata(TOKENS, MARKETS, TOKEN_SLUGS_SYMBOLS)
 
     injector

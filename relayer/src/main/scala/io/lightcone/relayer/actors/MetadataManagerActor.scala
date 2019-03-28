@@ -183,7 +183,7 @@ class MetadataManagerActor(
         log.debug(
           s"--MetadataManagerActor-- receive MetadataChanged, $changed "
         )
-        for {
+        (for {
           _ <- if (changed.tokenMetadataChanged) {
             for {
               tokenMetas <- getTokenMetadatas()
@@ -220,7 +220,7 @@ class MetadataManagerActor(
               }
             }
           } else Future.unit
-        } yield Unit
+        } yield Unit) sendTo (sender)
       }
 
     case _: GetTokens.Req => //support for MetadataRefresher to synchronize tokens
@@ -314,7 +314,7 @@ class MetadataManagerActor(
       preMarketMap: Map[String, Market]
     ) = {
 
-    println(
+    log.info(
       s"#### preTokenMap: ${preTokenMap.mkString}, tokens: ${tokens.mkString}"
     )
     val (preMetas, preInfos, preTickers) = preTokenMap.values.toSeq
@@ -341,7 +341,7 @@ class MetadataManagerActor(
       marketMetadataChanged = preMarkets != currentMarkets
     )
 
-    println(s"##### changed ${changed}")
+    log.info(s"##### changed ${changed}")
     if (changed.marketMetadataChanged || changed.tokenMetadataChanged || changed.tokenInfoChanged || changed.tickerChanged) {
       mediator ! Publish(
         MetadataManagerActor.pubsubTopic,
@@ -389,11 +389,11 @@ class MetadataManagerActor(
   def getLatestTokens() =
     for {
       metas <- getTokenMetadatas()
-      _ = println(s"#### metas ${metas}")
+      _ = log.info(s"#### metas ${metas}")
       infos <- getTokenInfos()
-      _ = println(s"#### infos ${infos}")
+      _ = log.info(s"#### infos ${infos}")
       tickers <- getLatestTokenTickers()
-      _ = println(s"#### tickers ${tickers}")
+      _ = log.info(s"#### tickers ${tickers}")
       tokens_ = metas.map {
         case (symbol, metadata) =>
           symbol -> Token(
@@ -460,7 +460,7 @@ class MetadataManagerActor(
         val ticker: TokenTicker = tickerRecord
         tickerRecord.symbol -> ticker
       }.toMap
-      _ = println(
+      _ = log.info(
         s"### getLatestTokenTickers ${latestTime}, tickersInDb: ${tickersInDb}, tickers: ${tickers}"
       )
     } yield {

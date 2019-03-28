@@ -35,7 +35,9 @@ class MetadataTerminatedThenActiveSpec
     with ValidateHelper
     with Matchers {
 
-  feature("change a market to mode of TERMINATED, and then change it to ACTIVITY") {
+  feature(
+    "change a market to mode of TERMINATED, and then change it to ACTIVITY"
+  ) {
     scenario(
       "in mode of TERMINATED the actor of this market should be stopped, " +
         "and in mode of ACTIVITY the actor of this market shoud be running."
@@ -84,12 +86,12 @@ class MetadataTerminatedThenActiveSpec
       Then(
         "the status of MarketManagerActor and OrderbookManagerActor must be stopped"
       )
-      val checkActorAliveRes2 =
+      val isActorAliveRes2 =
         Await.result(
-          checkActorAlive(system, dynamicMarketPair),
+          isActorAlive(system, dynamicMarketPair),
           timeout.duration
         )
-      checkActorAliveRes2 should be(false)
+      isActorAliveRes2 should be(false)
 
       And("check the response of submitting an order")
       val order2 =

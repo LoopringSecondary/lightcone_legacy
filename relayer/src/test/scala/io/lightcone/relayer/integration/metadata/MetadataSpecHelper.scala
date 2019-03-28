@@ -27,7 +27,7 @@ trait MetadataSpecHelper {
   val metadataRefresherInterval =
     system.settings.config.getInt("metadata_manager.refresh-interval-seconds")
 
-  protected def checkActorAlive(
+  protected def isActorAlive(
       system: ActorSystem,
       market: MarketPair
     ): Future[Boolean] = {

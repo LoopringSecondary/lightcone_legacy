@@ -17,9 +17,11 @@
 package io.lightcone.relayer.integration.helper
 import io.lightcone.core.{Amount, BurnRate}
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.integration.JsonPrinter
 import io.lightcone.relayer.ethereummock._
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.OneInstancePerTest
+import org.scalatest.{FeatureSpec, OneInstancePerTest}
+import org.slf4s.Logging
 
 import scala.math.BigInt
 
@@ -50,9 +52,12 @@ object MockHelper {
 
   var orderCancelExpects
     : MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
+
+  var sendRawTxExpects
+    : MockExpects[SendRawTransaction.Req, SendRawTransaction.Res] = _
 }
 
-trait MockHelper extends MockFactory with OneInstancePerTest {
+trait MockHelper extends MockFactory with OneInstancePerTest with Logging {
 
   def addAccountExpects(
       expect: PartialFunction[GetAccount.Req, GetAccount.Res]
@@ -91,6 +96,15 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       ]
     ) = {
     MockHelper.orderCancelExpects.addExpect(expect)
+  }
+
+  def addSendRawTxExpects(
+      expect: PartialFunction[
+        SendRawTransaction.Req,
+        SendRawTransaction.Res
+      ]
+    ) = {
+    MockHelper.sendRawTxExpects.addExpect(expect)
   }
 
   //eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
@@ -144,6 +158,14 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       .expects(*)
       .onCall({ req: GetFilledAmount.Req =>
         MockHelper.filledAmountExpects(req)
+      })
+      .anyNumberOfTimes()
+
+    //sendRawTransaction
+    (accessProvider.sendRawTransaction _)
+      .expects(*)
+      .onCall({ req: SendRawTransaction.Req =>
+        MockHelper.sendRawTxExpects(req)
       })
       .anyNumberOfTimes()
   }
@@ -210,6 +232,15 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
             cancelled = false,
             block = 100
           )
+      }
+
+    MockHelper.sendRawTxExpects =
+      MockExpects[SendRawTransaction.Req, SendRawTransaction.Res] {
+        case req =>
+          log.info(
+            s"receive SendRawTransaction ${JsonPrinter.printJsonString(req)}"
+          )
+          SendRawTransaction.Res()
       }
   }
 }

@@ -38,6 +38,7 @@ trait CommonHelper
   override protected def beforeEach(): Unit = {
     setDefaultEthExpects()
     prepareDbModule(dbModule)
+    metadataManager.reset(Seq.empty, Seq.empty)
     prepareMetadata(TOKENS, MARKETS, TOKEN_SLUGS_SYMBOLS)
     val tokens = createAndSaveNewMarket()
     dynamicBaseToken = tokens(0)

@@ -33,6 +33,7 @@ class MetadataDbSyncSpec
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
+    with MetadataSpecHelper
     with CancelHelper
     with ValidateHelper
     with Matchers {
@@ -88,9 +89,7 @@ class MetadataDbSyncSpec
       Await.result(saveF, timeout.duration)
       Await.result(dbModule.tokenTickerRecordDal.setValid(ts), timeout.duration)
 
-      val refreshInterval = system.settings.config
-        .getInt("metadata_manager.refresh-interval-seconds")
-      Thread.sleep((refreshInterval + 3) * 1000)
+      Thread.sleep((metadataRefresherInterval + 2) * 1000)
       val getTokensRes = getTokensReq
         .expect(check((res: GetTokens.Res) => res.tokens.nonEmpty))
 

@@ -47,8 +47,10 @@ package object integration extends MockFactory {
   implicit val metadataManager = injector.instance[MetadataManager]
 
   //  //start ActorySystem
+  val actorRefs = injector.instance[Lookup[ActorRef]]
+
   val entryPointActor =
-    injector.instance[Lookup[ActorRef]].get(EntryPointActor.name)
+    actorRefs.get(EntryPointActor.name)
 
   implicit val system = injector.instance[ActorSystem]
 

@@ -83,7 +83,7 @@ class MetadataTerminatedSpec
       )
       val checkActorAliveRes2 =
         Await.result(
-          checkActorAlive(system, dynamicMarketPair),
+          isActorAlive(system, dynamicMarketPair),
           timeout.duration
         )
       checkActorAliveRes2 should be(false)
