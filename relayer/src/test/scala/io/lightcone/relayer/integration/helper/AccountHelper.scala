@@ -28,87 +28,6 @@ import io.lightcone.relayer.integration.AddedMatchers._
 trait AccountHelper extends Logging {
   my: MockHelper =>
 
-  def mockAccountWithFixedBalance(
-      address: String,
-      dynamicMarketPair: MarketPair
-    ) = {
-    addAccountExpects({
-      case req =>
-        GetAccount.Res(
-          Some(
-            AccountBalance(
-              address = req.address,
-              tokenBalanceMap = req.tokens.map {
-                t =>
-                  val balance = t match {
-                    case ETH_TOKEN.address =>
-                      AccountHelper.initialBalance
-                        .tokenBalanceMap(ETH_TOKEN.address)
-                    case WETH_TOKEN.address =>
-                      AccountHelper.initialBalance
-                        .tokenBalanceMap(WETH_TOKEN.address)
-                    case LRC_TOKEN.address =>
-                      AccountHelper.initialBalance
-                        .tokenBalanceMap(LRC_TOKEN.address)
-                    case dynamicMarketPair.baseToken =>
-                      AccountHelper.initialBalance
-                        .tokenBalanceMap("baseToken")
-                    case dynamicMarketPair.quoteToken =>
-                      AccountHelper.initialBalance
-                        .tokenBalanceMap("quoteToken")
-                    case _ =>
-                      AccountHelper.initialBalance
-                        .tokenBalanceMap("otherToken")
-                  }
-                  t -> balance
-                    .copy(token = t) // reset token for dynamicMarketPair
-              }.toMap
-            )
-          )
-        )
-    })
-  }
-
-  def initializeMatcher(dynamicMarketPair: MarketPair) = {
-    accountSimpleBalanceAndAvailableMatcher(
-      Address.ZERO.toString,
-      AccountHelper.initialBalance.tokenBalanceMap(ETH_TOKEN.address).balance
-    ) and
-      accountSimpleBalanceAndAvailableMatcher(
-        WETH_TOKEN.address,
-        AccountHelper.initialBalance.tokenBalanceMap(WETH_TOKEN.address).balance
-      ) and
-      accountSimpleBalanceAndAvailableMatcher(
-        LRC_TOKEN.address,
-        AccountHelper.initialBalance.tokenBalanceMap(LRC_TOKEN.address).balance
-      ) and
-      accountSimpleBalanceAndAvailableMatcher(
-        dynamicMarketPair.baseToken,
-        AccountHelper.initialBalance.tokenBalanceMap("baseToken").balance
-      ) and
-      accountSimpleBalanceAndAvailableMatcher(
-        dynamicMarketPair.quoteToken,
-        AccountHelper.initialBalance.tokenBalanceMap("quoteToken").balance
-      )
-  }
-
-  def balanceMatcher(
-      ethExpect: TokenBalance,
-      wethExpect: TokenBalance,
-      lrcExpect: TokenBalance,
-      baseExpect: TokenBalance,
-      quoteExpect: TokenBalance
-    ) = {
-    accountBalanceMatcher(ethExpect.token, ethExpect) and
-      accountBalanceMatcher(wethExpect.token, wethExpect) and
-      accountBalanceMatcher(lrcExpect.token, lrcExpect) and
-      accountBalanceMatcher(baseExpect.token, baseExpect) and
-      accountBalanceMatcher(quoteExpect.token, quoteExpect)
-  }
-}
-
-object AccountHelper {
-
   val initialBalance = AccountBalance(
     tokenBalanceMap = Map(
       Address.ZERO.toString -> TokenBalance(
@@ -155,4 +74,82 @@ object AccountHelper {
       )
     )
   )
+
+  def mockAccountWithFixedBalance(
+      address: String,
+      dynamicMarketPair: MarketPair
+    ) = {
+    addAccountExpects({
+      case req =>
+        GetAccount.Res(
+          Some(
+            AccountBalance(
+              address = req.address,
+              tokenBalanceMap = req.tokens.map {
+                t =>
+                  val balance = t match {
+                    case ETH_TOKEN.address =>
+                      initialBalance
+                        .tokenBalanceMap(t)
+                    case WETH_TOKEN.address =>
+                      initialBalance
+                        .tokenBalanceMap(t)
+                    case LRC_TOKEN.address =>
+                      initialBalance
+                        .tokenBalanceMap(t)
+                    case dynamicMarketPair.baseToken =>
+                      initialBalance
+                        .tokenBalanceMap("baseToken")
+                    case dynamicMarketPair.quoteToken =>
+                      initialBalance
+                        .tokenBalanceMap("quoteToken")
+                    case _ =>
+                      initialBalance
+                        .tokenBalanceMap("otherToken")
+                  }
+                  t -> balance
+                    .copy(token = t) // reset token for dynamicMarketPair
+              }.toMap
+            )
+          )
+        )
+    })
+  }
+
+  def initializeMatcher(dynamicMarketPair: MarketPair) = {
+    accountSimpleBalanceAndAvailableMatcher(
+      Address.ZERO.toString,
+      initialBalance.tokenBalanceMap(ETH_TOKEN.address).balance
+    ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        WETH_TOKEN.address,
+        initialBalance.tokenBalanceMap(WETH_TOKEN.address).balance
+      ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        LRC_TOKEN.address,
+        initialBalance.tokenBalanceMap(LRC_TOKEN.address).balance
+      ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        dynamicMarketPair.baseToken,
+        initialBalance.tokenBalanceMap("baseToken").balance
+      ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        dynamicMarketPair.quoteToken,
+        initialBalance.tokenBalanceMap("quoteToken").balance
+      )
+  }
+
+  def balanceMatcher(
+      ethExpect: TokenBalance,
+      wethExpect: TokenBalance,
+      lrcExpect: TokenBalance,
+      baseExpect: TokenBalance,
+      quoteExpect: TokenBalance
+    ) = {
+    accountBalanceMatcher(ethExpect.token, ethExpect) and
+      accountBalanceMatcher(wethExpect.token, wethExpect) and
+      accountBalanceMatcher(lrcExpect.token, lrcExpect) and
+      accountBalanceMatcher(baseExpect.token, baseExpect) and
+      accountBalanceMatcher(quoteExpect.token, quoteExpect)
+  }
 }
