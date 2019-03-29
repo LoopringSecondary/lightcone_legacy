@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration.helper
 
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.ethereum.event.{AddressBalanceUpdatedEvent, BlockEvent}
+import io.lightcone.ethereum.event.{AddressAllowanceUpdatedEvent, AddressBalanceUpdatedEvent, BlockEvent}
 import io.lightcone.ethereum.persistence.{Activity, TxEvents}
 import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion.toAmount
@@ -544,6 +544,53 @@ trait ActivityHelper {
         token = Address.ZERO.toString(),
         balance = Some(
           toAmount(ethBalanceTo)
+        ),
+        block = blockNumber
+      )
+    )
+  }
+
+  def approveConfirmedActivities(
+                                     owner: String,
+                                     blockNumber: Long,
+                                     txHash: String,
+                                     approveToken: String,
+                                     approveAmount: BigInt,
+                                     nonce: Long
+                                   ) = {
+    Seq(
+      TxEvents(
+        TxEvents.Events.Activities(
+          TxEvents.Activities(
+            Seq(
+              Activity(
+                owner = owner,
+                block = blockNumber,
+                txHash = txHash,
+                activityType = Activity.ActivityType.TOKEN_AUTH,
+                timestamp = timeProvider.getTimeSeconds,
+                token = approveToken,
+                detail = Activity.Detail.TokenAuth(
+                  Activity.TokenAuth(
+                    approveToken,
+                    "0x1",
+                    Some(
+                      toAmount(approveAmount)
+                    )
+                  )
+                ),
+                nonce = nonce,
+                txStatus = TxStatus.TX_STATUS_SUCCESS
+              )
+            )
+          )
+        )
+      ),
+      AddressAllowanceUpdatedEvent(
+        address = owner,
+        token = WETH_TOKEN.address,
+        allowance = Some(
+          toAmount(approveAmount)
         ),
         block = blockNumber
       )
