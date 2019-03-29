@@ -17,6 +17,7 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
+import io.lightcone.lib.Address
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
@@ -24,6 +25,7 @@ import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
 import org.scalatest._
 import io.lightcone.relayer._
+import io.lightcone.lib.NumericConversion._
 
 class TransferERC20Spec_success
     extends FeatureSpec
@@ -33,7 +35,7 @@ class TransferERC20Spec_success
     with ActivityHelper
     with Matchers {
 
-  feature("transfer ERC20 success") {
+  feature("transfer out some ERC20 token to verify activities and balance") {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -55,8 +57,9 @@ class TransferERC20Spec_success
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
-      getToAddressBalanceReq.expectUntil(
+      val fromInitBalanceRes =
+        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
         initializeCheck(dynamicMarketPair)
       )
 
@@ -94,13 +97,14 @@ class TransferERC20Spec_success
       ActivityActor.broadcast(blockEvent)
       Thread.sleep(2000)
 
+      val transferAmount = "100".zeros(18)
       tokenTransferConfirmedActivities(
         account.getAddress,
         to.getAddress,
         blockNumber,
         txHash,
         LRC_TOKEN.address,
-        "100".zeros(18),
+        transferAmount,
         nonce,
         "300".zeros(18),
         "500".zeros(18)
@@ -122,16 +126,53 @@ class TransferERC20Spec_success
           })
         )
 
+      val lrcBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        LRC_TOKEN.address
+      )
+      val lrcMatcher = lrcBalance.copy(
+        balance = toBigInt(lrcBalance.balance) - transferAmount,
+        availableBalance = toBigInt(lrcBalance.availableBalance) - transferAmount
+      )
       getFromAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "50", "60", "60", "300", "300")
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          lrcMatcher,
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
+      )
+
+      val lrcBalance2 = toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        LRC_TOKEN.address
+      )
+      val lrcMatcher2 = lrcBalance2.copy(
+        balance = toBigInt(lrcBalance2.balance) + transferAmount,
+        availableBalance = toBigInt(lrcBalance2.availableBalance) + transferAmount
       )
       getToAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "50", "60", "60", "500", "500")
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          lrcMatcher2,
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
       )
     }

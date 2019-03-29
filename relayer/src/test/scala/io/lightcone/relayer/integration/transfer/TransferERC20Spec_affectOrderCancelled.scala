@@ -18,12 +18,14 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
 import io.lightcone.core.RawOrder
+import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.data.{GetAccount, SubmitOrder}
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
-import io.lightcone.lib.NumericConversion.toAmount
+import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.lib.NumericConversion._
 
 class TransferERC20Spec_affectOrderCancelled
     extends FeatureSpec
@@ -34,7 +36,7 @@ class TransferERC20Spec_affectOrderCancelled
     with ActivityHelper
     with Matchers {
 
-  feature("transfer ERC20 affect order") {
+  feature("transfer out some ERC20 token will affect order's status => STATUS_SOFT_CANCELLED_LOW_BALANCE") {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -56,8 +58,9 @@ class TransferERC20Spec_affectOrderCancelled
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
-      getToAddressBalanceReq.expectUntil(
+      val fromInitBalanceRes =
+        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
         initializeCheck(dynamicMarketPair)
       )
 
@@ -76,37 +79,95 @@ class TransferERC20Spec_affectOrderCancelled
       Thread.sleep(1000)
 
       Then("available balance should reduce")
+      val lrcBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        LRC_TOKEN.address
+      )
+      val lrcMatcher = lrcBalance.copy(
+        availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
+          order1.getFeeParams.amountFee
+        ),
+        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+          order1.getFeeParams.amountFee
+        )
+      )
+      val baseBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        dynamicMarketPair.baseToken
+      )
+      val baseMatcher = baseBalance.copy(
+        availableBalance = baseBalance.availableBalance - order1.amountS,
+        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+          order1.amountS
+        )
+      )
       getFromAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "0", "60", "60", "400", "397")
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          lrcMatcher,
+          baseMatcher,
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
       )
 
       getToAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "50", "60", "60", "400", "400")
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            LRC_TOKEN.address
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
       )
 
       When("transfer activities confirmed")
+      val transferAmount = "50".zeros(18)
       tokenTransferConfirmedActivities(
         account.getAddress,
         to.getAddress,
         blockNumber,
         txHash,
         dynamicMarketPair.baseToken,
-        "50".zeros(18),
+        transferAmount,
         nonce,
         "0".zeros(18),
         "100".zeros(18)
       ).foreach(eventDispatcher.dispatch)
       Thread.sleep(1000)
 
+      val baseMatcher2 = baseBalance.copy(
+        balance = toBigInt(baseBalance.balance) - transferAmount,
+        availableBalance = toBigInt(baseBalance.availableBalance) - transferAmount
+      )
       val balanceMatcher = balanceCheck(
-        dynamicMarketPair,
-        Seq("20", "20", "0", "0", "60", "60", "400", "400")
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          Address.ZERO.toString
+        ),
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          WETH_TOKEN.address
+        ),
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          LRC_TOKEN.address
+        ),
+        baseMatcher2,
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.quoteToken
+        )
       )
 
       defaultValidate(

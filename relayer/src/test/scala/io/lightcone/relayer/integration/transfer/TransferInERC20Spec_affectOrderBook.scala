@@ -18,12 +18,15 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core.{Orderbook, RawOrder}
+import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion.toAmount
 import io.lightcone.relayer._
 import io.lightcone.relayer.data.{GetAccount, GetOrderbook, SubmitOrder}
 import io.lightcone.relayer.integration.AddedMatchers._
+import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
+import io.lightcone.lib.NumericConversion._
 
 class TransferInERC20Spec_affectOrderBook
     extends FeatureSpec
@@ -34,7 +37,7 @@ class TransferInERC20Spec_affectOrderBook
     with ActivityHelper
     with Matchers {
 
-  feature("transfer in ERC20 affect order") {
+  feature("transfer in some ERC20 token after submit order will affect order's actual amountS") {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -56,8 +59,9 @@ class TransferInERC20Spec_affectOrderBook
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
-      getToAddressBalanceReq.expectUntil(
+      val fromInitBalanceRes =
+        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
         initializeCheck(dynamicMarketPair)
       )
 
@@ -91,27 +95,73 @@ class TransferInERC20Spec_affectOrderBook
       orderbook1 should orderbookMatcher1
 
       Then("available balance should reduce")
-      getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "0", "60", "60", "400", "396")
+      val lrcBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        LRC_TOKEN.address
+      )
+      val lrcMatcher = lrcBalance.copy(
+        availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
+          order1.getFeeParams.amountFee
+        ),
+        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+          order1.getFeeParams.amountFee
         )
       )
+      val baseBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        dynamicMarketPair.baseToken
+      )
+      val zero: BigInt = 0
+      val actualOrderAmount: BigInt =
+        if (order1.amountS > baseBalance.balance) baseBalance.balance
+        else order1.amountS // min(order.amounts, account.balance)
+      val baseMatcher = baseBalance.copy(
+        availableBalance = zero,
+        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - actualOrderAmount
+      )
+      getFromAddressBalanceReq.expectUntil(
+        balanceCheck(
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          lrcMatcher,
+          baseMatcher,
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
+        )
+      )
+
       getToAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "50", "60", "60", "400", "400")
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            LRC_TOKEN.address
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
       )
 
       When("transfer confirmed")
+      val transferAmount = "50".zeros(18)
       tokenTransferConfirmedActivities(
         to.getAddress,
         account.getAddress,
         blockNumber,
         txHash,
         dynamicMarketPair.baseToken,
-        "50".zeros(18),
+        transferAmount,
         nonce,
         "0".zeros(18),
         "100".zeros(18)
@@ -119,16 +169,52 @@ class TransferInERC20Spec_affectOrderBook
       Thread.sleep(1000)
 
       Then("available balance should reduce")
+      val baseBalance2 = toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        dynamicMarketPair.baseToken
+      )
+      val baseMatcher2 = baseBalance2.copy(
+        balance = toBigInt(baseBalance2.balance) - transferAmount,
+        availableBalance = toBigInt(baseBalance2.availableBalance) - transferAmount
+      )
       getToAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "0", "0", "60", "60", "400", "400")
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            LRC_TOKEN.address
+          ),
+          baseMatcher2,
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
       )
 
+      val baseMatcher3 = baseBalance.copy(
+        balance = toBigInt(baseBalance.balance) + transferAmount,
+        availableBalance = toBigInt(baseBalance.availableBalance) + transferAmount - toBigInt(
+          order1.amountS
+        ),
+        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+          order1.amountS
+        )
+      )
       val balanceMatcher = balanceCheck(
-        dynamicMarketPair,
-        Seq("20", "20", "100", "0", "60", "60", "400", "396")
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          Address.ZERO.toString
+        ),
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          WETH_TOKEN.address
+        ),
+        lrcMatcher,
+        baseMatcher3,
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.quoteToken
+        )
       )
 
       defaultValidate(

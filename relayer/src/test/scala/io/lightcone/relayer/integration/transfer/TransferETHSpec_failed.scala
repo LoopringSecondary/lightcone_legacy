@@ -17,10 +17,12 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
+import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
+import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
 
@@ -32,7 +34,7 @@ class TransferETHSpec_failed
     with ActivityHelper
     with Matchers {
 
-  feature("transfer failed") {
+  feature("transfer out some ETH failed to verify activities and balances") {
     scenario("transfer ETH") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -54,8 +56,9 @@ class TransferETHSpec_failed
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
-      getToAddressBalanceReq.expectUntil(
+      val fromInitBalanceRes =
+        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
         initializeCheck(dynamicMarketPair)
       )
 
@@ -119,16 +122,42 @@ class TransferETHSpec_failed
 
       getFromAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "50", "60", "60", "400", "400")
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            Address.ZERO.toString
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            LRC_TOKEN.address
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
       )
 
       getToAddressBalanceReq
         .expectUntil(
           balanceCheck(
-            dynamicMarketPair,
-            Seq("20", "20", "50", "50", "60", "60", "400", "400")
+            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+              Address.ZERO.toString
+            ),
+            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+              WETH_TOKEN.address
+            ),
+            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+              LRC_TOKEN.address
+            ),
+            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+              dynamicMarketPair.baseToken
+            ),
+            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+              dynamicMarketPair.quoteToken
+            )
           )
         )
     }

@@ -19,14 +19,9 @@ package io.lightcone.relayer.integration
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{
-  GetAccount,
-  GetAccountNonce,
-  GetActivities,
-  GetNonce
-}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
+import io.lightcone.relayer.integration.helper._
 import org.scalatest._
 import akka.pattern._
 import scala.concurrent.Await
@@ -39,7 +34,7 @@ class TransferETHSpec_nonceFromChain
     with ActivityHelper
     with Matchers {
 
-  feature("transfer success") {
+  feature("transfer out some ERC20 token to verify activities => get a larger nonce on chain") {
     scenario("transfer ETH") {
       implicit val account = getUniqueAccount()
       val txHash =

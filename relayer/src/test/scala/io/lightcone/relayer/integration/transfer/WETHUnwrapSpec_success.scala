@@ -17,12 +17,15 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
+import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.data.{GetAccount, GetActivities}
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
+import io.lightcone.relayer.integration.Metadatas._
+import io.lightcone.relayer.integration.helper._
 import org.scalatest._
+import io.lightcone.lib.NumericConversion._
 
 class WETHUnwrapSpec_success
     extends FeatureSpec
@@ -32,7 +35,7 @@ class WETHUnwrapSpec_success
     with ActivityHelper
     with Matchers {
 
-  feature("WETH unwrap success") {
+  feature("when WETH unwrap success verify activities and balances") {
     scenario("unwrap WETH") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -48,18 +51,20 @@ class WETHUnwrapSpec_success
         account.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      val fromInitBalanceRes =
+        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
 
       When("send some convert events")
+      val unwrapAmount = "10".zeros(18)
       unwrapWethPendingActivities(
         account.getAddress,
         blockNumber,
         txHash,
-        "10".zeros(18),
+        unwrapAmount,
         nonce
       ).foreach(eventDispatcher.dispatch)
-
       Thread.sleep(1000)
+
       Then("the account should query 2 pending activity")
       GetActivities
         .Req(account.getAddress)
@@ -80,7 +85,7 @@ class WETHUnwrapSpec_success
         account.getAddress,
         blockNumber,
         txHash,
-        "10".zeros(18),
+        unwrapAmount,
         nonce,
         "30".zeros(18),
         "20".zeros(18)
@@ -96,15 +101,34 @@ class WETHUnwrapSpec_success
           })
         )
 
+      val ethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        Address.ZERO.toString
+      )
+      val ethMatcher = ethBalance.copy(
+        balance = toBigInt(ethBalance.balance) + unwrapAmount,
+        availableBalance = toBigInt(ethBalance.availableBalance) + unwrapAmount
+      )
+      val wethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        WETH_TOKEN.address
+      )
+      val wethMatcher = wethBalance.copy(
+        balance = toBigInt(wethBalance.balance) - unwrapAmount,
+        availableBalance = toBigInt(wethBalance.availableBalance) - unwrapAmount
+      )
       getFromAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "50", "60", "60", "400", "400")
-        ) and
-          wethBalanceCheck(
-            "20",
-            "20"
+          ethMatcher,
+          wethMatcher,
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            LRC_TOKEN.address
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
           )
+        )
       )
     }
   }

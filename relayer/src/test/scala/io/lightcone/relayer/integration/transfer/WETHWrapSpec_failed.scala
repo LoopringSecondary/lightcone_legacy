@@ -32,7 +32,7 @@ class WETHWrapSpec_failed
     with ActivityHelper
     with Matchers {
 
-  feature("WETH wrap failed") {
+  feature("when WETH wrap failed verify activities and balances") {
     scenario("wrap WETH") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -95,14 +95,7 @@ class WETHWrapSpec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
-          dynamicMarketPair,
-          Seq("20", "20", "50", "50", "60", "60", "400", "400")
-        ) and
-          wethBalanceCheck(
-            "30",
-            "30"
-          )
+        initializeCheck(dynamicMarketPair)
       )
     }
   }

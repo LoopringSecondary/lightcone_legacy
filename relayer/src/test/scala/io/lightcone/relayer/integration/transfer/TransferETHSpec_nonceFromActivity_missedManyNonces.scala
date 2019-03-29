@@ -24,7 +24,10 @@ import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
 import org.scalatest._
 import akka.pattern._
+import io.lightcone.lib.Address
+import io.lightcone.relayer.integration.Metadatas._
 import scala.concurrent.Await
+import io.lightcone.lib.NumericConversion._
 
 class TransferETHSpec_nonceFromActivity_missedManyNonces
     extends FeatureSpec
@@ -34,7 +37,7 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
     with ActivityHelper
     with Matchers {
 
-  feature("transfer success") {
+  feature("transfer out some ETH to verify account's nonce => when missed some nonce in activity") {
     scenario("transfer ETH") {
       implicit val account = getUniqueAccount()
       val txHash =
@@ -54,8 +57,9 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
-      getToAddressBalanceReq.expectUntil(
+      val fromInitBalanceRes =
+        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
         initializeCheck(dynamicMarketPair)
       )
 
@@ -81,7 +85,7 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
             901,
             "0x1c6331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4",
             "1".zeros(18),
-            2,
+            1,
             "18".zeros(18),
             "22".zeros(18)
           )
@@ -178,16 +182,53 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
           })
         )
 
+      val ethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        Address.ZERO.toString
+      )
+      val amount = "8".zeros(18) // totally 8 eth transfer
+      val ethMatcher = ethBalance.copy(
+        balance = toBigInt(ethBalance.balance) - amount,
+        availableBalance = toBigInt(ethBalance.availableBalance) - amount
+      )
       getFromAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("12", "12", "50", "50", "60", "60", "400", "400")
+          ethMatcher,
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            LRC_TOKEN.address
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
+      )
+      val ethBalance2 = toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+        Address.ZERO.toString
+      )
+      val ethMatcher2 = ethBalance2.copy(
+        balance = toBigInt(ethBalance2.balance) + amount,
+        availableBalance = toBigInt(ethBalance2.availableBalance) + amount
       )
       getToAddressBalanceReq.expectUntil(
         balanceCheck(
-          dynamicMarketPair,
-          Seq("28", "28", "50", "50", "60", "60", "400", "400")
+          ethMatcher2,
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            WETH_TOKEN.address
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            LRC_TOKEN.address
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.baseToken
+          ),
+          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
+            dynamicMarketPair.quoteToken
+          )
         )
       )
 
@@ -196,7 +237,7 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
           .mapTo[GetAccountNonce.Res],
         timeout.duration
       )
-      res.nonce should be(1)
+      res.nonce should be(2)
     }
   }
 }
