@@ -58,9 +58,11 @@ class TransferERC20Spec_success
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
       val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("send some transfer events")
@@ -129,19 +131,19 @@ class TransferERC20Spec_success
       val lrcBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         LRC_TOKEN.address
       )
-      val lrcMatcher = lrcBalance.copy(
+      val lrcExpect = lrcBalance.copy(
         balance = toBigInt(lrcBalance.balance) - transferAmount,
         availableBalance = toBigInt(lrcBalance.availableBalance) - transferAmount
       )
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),
-          lrcMatcher,
+          lrcExpect,
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             dynamicMarketPair.baseToken
           ),
@@ -154,19 +156,19 @@ class TransferERC20Spec_success
       val lrcBalance2 = toInitBalanceRes.getAccountBalance.tokenBalanceMap(
         LRC_TOKEN.address
       )
-      val lrcMatcher2 = lrcBalance2.copy(
+      val lrcExpect2 = lrcBalance2.copy(
         balance = toBigInt(lrcBalance2.balance) + transferAmount,
         availableBalance = toBigInt(lrcBalance2.availableBalance) + transferAmount
       )
       getToAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),
-          lrcMatcher2,
+          lrcExpect2,
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             dynamicMarketPair.baseToken
           ),

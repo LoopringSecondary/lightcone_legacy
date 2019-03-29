@@ -52,7 +52,9 @@ class WETHUnwrapSpec_success
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
 
       When("send some convert events")
       val unwrapAmount = "10".zeros(18)
@@ -104,21 +106,21 @@ class WETHUnwrapSpec_success
       val ethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         Address.ZERO.toString
       )
-      val ethMatcher = ethBalance.copy(
+      val ethExpect = ethBalance.copy(
         balance = toBigInt(ethBalance.balance) + unwrapAmount,
         availableBalance = toBigInt(ethBalance.availableBalance) + unwrapAmount
       )
       val wethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         WETH_TOKEN.address
       )
-      val wethMatcher = wethBalance.copy(
+      val wethExpect = wethBalance.copy(
         balance = toBigInt(wethBalance.balance) - unwrapAmount,
         availableBalance = toBigInt(wethBalance.availableBalance) - unwrapAmount
       )
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
-          ethMatcher,
-          wethMatcher,
+        balanceMatcher(
+          ethExpect,
+          wethExpect,
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             LRC_TOKEN.address
           ),

@@ -58,9 +58,11 @@ class TransferETHSpec_success
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
       val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("send some transfer events")
@@ -127,13 +129,13 @@ class TransferETHSpec_success
       val ethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         Address.ZERO.toString
       )
-      val ethMatcher = ethBalance.copy(
+      val ethExpect = ethBalance.copy(
         balance = toBigInt(ethBalance.balance) - transferAmount,
         availableBalance = toBigInt(ethBalance.availableBalance) - transferAmount
       )
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
-          ethMatcher,
+        balanceMatcher(
+          ethExpect,
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),
@@ -151,13 +153,13 @@ class TransferETHSpec_success
       val ethBalance2 = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         Address.ZERO.toString
       )
-      val ethMatcher2 = ethBalance2.copy(
+      val ethExpect2 = ethBalance2.copy(
         balance = toBigInt(ethBalance2.balance) + transferAmount,
         availableBalance = toBigInt(ethBalance2.availableBalance) + transferAmount
       )
       getToAddressBalanceReq.expectUntil(
-        balanceCheck(
-          ethMatcher2,
+        balanceMatcher(
+          ethExpect2,
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),

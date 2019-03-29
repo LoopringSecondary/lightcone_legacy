@@ -60,9 +60,11 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
       val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("activities confirmed")
@@ -188,13 +190,13 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
         Address.ZERO.toString
       )
       val amount = "8".zeros(18) // totally 8 eth transfer
-      val ethMatcher = ethBalance.copy(
+      val ethExpect = ethBalance.copy(
         balance = toBigInt(ethBalance.balance) - amount,
         availableBalance = toBigInt(ethBalance.availableBalance) - amount
       )
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
-          ethMatcher,
+        balanceMatcher(
+          ethExpect,
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),
@@ -212,13 +214,13 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
       val ethBalance2 = toInitBalanceRes.getAccountBalance.tokenBalanceMap(
         Address.ZERO.toString
       )
-      val ethMatcher2 = ethBalance2.copy(
+      val ethExpect2 = ethBalance2.copy(
         balance = toBigInt(ethBalance2.balance) + amount,
         availableBalance = toBigInt(ethBalance2.availableBalance) + amount
       )
       getToAddressBalanceReq.expectUntil(
-        balanceCheck(
-          ethMatcher2,
+        balanceMatcher(
+          ethExpect2,
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),

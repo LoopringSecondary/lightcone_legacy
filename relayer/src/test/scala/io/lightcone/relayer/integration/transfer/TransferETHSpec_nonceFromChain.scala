@@ -62,9 +62,9 @@ class TransferETHSpec_nonceFromChain
         to.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      getFromAddressBalanceReq.expectUntil(initializeMatcher(dynamicMarketPair))
       getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("activities confirmed")

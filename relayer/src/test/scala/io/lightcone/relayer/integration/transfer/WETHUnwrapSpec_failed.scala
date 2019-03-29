@@ -51,7 +51,9 @@ class WETHUnwrapSpec_failed
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
 
       When("send some convert events")
       unwrapWethPendingActivities(
@@ -98,7 +100,7 @@ class WETHUnwrapSpec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),

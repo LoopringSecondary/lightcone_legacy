@@ -52,7 +52,9 @@ class WETHWrapSpec_success
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
 
       When("send some convert events")
       val wrapAmount = "10".zeros(18)
@@ -104,21 +106,21 @@ class WETHWrapSpec_success
       val ethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         Address.ZERO.toString
       )
-      val ethMatcher = ethBalance.copy(
+      val ethExpect = ethBalance.copy(
         balance = toBigInt(ethBalance.balance) - wrapAmount,
         availableBalance = toBigInt(ethBalance.availableBalance) - wrapAmount
       )
       val wethBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         WETH_TOKEN.address
       )
-      val wethMatcher = wethBalance.copy(
+      val wethExpect = wethBalance.copy(
         balance = toBigInt(wethBalance.balance) + wrapAmount,
         availableBalance = toBigInt(wethBalance.availableBalance) + wrapAmount
       )
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
-          ethMatcher,
-          wethMatcher,
+        balanceMatcher(
+          ethExpect,
+          wethExpect,
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             LRC_TOKEN.address
           ),

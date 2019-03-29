@@ -59,9 +59,11 @@ class TransferERC20Spec_failed
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
       val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("send some transfer events")
@@ -125,7 +127,7 @@ class TransferERC20Spec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
@@ -144,7 +146,7 @@ class TransferERC20Spec_failed
         )
       )
       getToAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),

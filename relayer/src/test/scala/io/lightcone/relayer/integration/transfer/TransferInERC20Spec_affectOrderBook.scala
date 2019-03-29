@@ -62,9 +62,11 @@ class TransferInERC20Spec_affectOrderBook
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
       val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When(
@@ -100,7 +102,7 @@ class TransferInERC20Spec_affectOrderBook
       val lrcBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         LRC_TOKEN.address
       )
-      val lrcMatcher = lrcBalance.copy(
+      val lrcExpect = lrcBalance.copy(
         availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
           order1.getFeeParams.amountFee
         ),
@@ -115,20 +117,20 @@ class TransferInERC20Spec_affectOrderBook
       val actualOrderAmount: BigInt =
         if (order1.amountS > baseBalance.balance) baseBalance.balance
         else order1.amountS // min(order.amounts, account.balance)
-      val baseMatcher = baseBalance.copy(
+      val baseExpect = baseBalance.copy(
         availableBalance = zero,
         availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - actualOrderAmount
       )
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),
-          lrcMatcher,
-          baseMatcher,
+          lrcExpect,
+          baseExpect,
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             dynamicMarketPair.quoteToken
           )
@@ -136,7 +138,7 @@ class TransferInERC20Spec_affectOrderBook
       )
 
       getToAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
@@ -174,12 +176,12 @@ class TransferInERC20Spec_affectOrderBook
       val baseBalance2 = toInitBalanceRes.getAccountBalance.tokenBalanceMap(
         dynamicMarketPair.baseToken
       )
-      val baseMatcher2 = baseBalance2.copy(
+      val baseExpect2 = baseBalance2.copy(
         balance = toBigInt(baseBalance2.balance) - transferAmount,
         availableBalance = toBigInt(baseBalance2.availableBalance) - transferAmount
       )
       getToAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
@@ -189,14 +191,14 @@ class TransferInERC20Spec_affectOrderBook
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             LRC_TOKEN.address
           ),
-          baseMatcher2,
+          baseExpect2,
           toInitBalanceRes.getAccountBalance.tokenBalanceMap(
             dynamicMarketPair.quoteToken
           )
         )
       )
 
-      val baseMatcher3 = baseBalance.copy(
+      val baseExpect3 = baseBalance.copy(
         balance = toBigInt(baseBalance.balance) + transferAmount,
         availableBalance = toBigInt(baseBalance.availableBalance) + transferAmount - toBigInt(
           order1.amountS
@@ -205,15 +207,15 @@ class TransferInERC20Spec_affectOrderBook
           order1.amountS
         )
       )
-      val balanceMatcher = balanceCheck(
+      val balanceMatcher2 = balanceMatcher(
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
           Address.ZERO.toString
         ),
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
           WETH_TOKEN.address
         ),
-        lrcMatcher,
-        baseMatcher3,
+        lrcExpect,
+        baseExpect3,
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
           dynamicMarketPair.quoteToken
         )
@@ -233,7 +235,7 @@ class TransferInERC20Spec_affectOrderBook
           ),
           order1.hash
         ),
-        balanceMatcher,
+        balanceMatcher2,
         Map(
           dynamicMarketPair -> (not(orderBookIsEmpty()),
           userFillsIsEmpty(),

@@ -62,9 +62,11 @@ class TransferFeeTokenSpec_affectOrderBook
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
       val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When(
@@ -99,7 +101,7 @@ class TransferFeeTokenSpec_affectOrderBook
       val lrcBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         LRC_TOKEN.address
       )
-      val lrcMatcher = lrcBalance.copy(
+      val lrcExpect = lrcBalance.copy(
         availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
           order1.getFeeParams.amountFee
         ),
@@ -110,22 +112,22 @@ class TransferFeeTokenSpec_affectOrderBook
       val baseBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         dynamicMarketPair.baseToken
       )
-      val baseMatcher = baseBalance.copy(
+      val baseExpect = baseBalance.copy(
         availableBalance = baseBalance.availableBalance - order1.amountS,
         availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
           order1.amountS
         )
       )
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             WETH_TOKEN.address
           ),
-          lrcMatcher,
-          baseMatcher,
+          lrcExpect,
+          baseExpect,
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             dynamicMarketPair.quoteToken
           )
@@ -153,19 +155,19 @@ class TransferFeeTokenSpec_affectOrderBook
       ) - transferAmount
       val lrcAvailableMatcher: BigInt =
         if (lrcAvailable > 0) lrcAvailable else 0
-      val lrcMatcher2 = lrcBalance.copy(
+      val lrcExpect2 = lrcBalance.copy(
         balance = toBigInt(lrcBalance.balance) - transferAmount,
         availableBalance = lrcAvailableMatcher
       )
-      val balanceMatcher = balanceCheck(
+      val balanceMatcher2 = balanceMatcher(
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
           Address.ZERO.toString
         ),
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
           WETH_TOKEN.address
         ),
-        lrcMatcher2,
-        baseMatcher,
+        lrcExpect2,
+        baseExpect,
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
           dynamicMarketPair.quoteToken
         )
@@ -185,7 +187,7 @@ class TransferFeeTokenSpec_affectOrderBook
           ),
           order1.hash
         ),
-        balanceMatcher,
+        balanceMatcher2,
         Map(
           dynamicMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),

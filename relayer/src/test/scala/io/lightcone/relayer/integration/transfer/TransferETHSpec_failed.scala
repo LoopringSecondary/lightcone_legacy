@@ -57,9 +57,11 @@ class TransferETHSpec_failed
         allTokens = true
       )
       val fromInitBalanceRes =
-        getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+        getFromAddressBalanceReq.expectUntil(
+          initializeMatcher(dynamicMarketPair)
+        )
       val toInitBalanceRes = getToAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("send some transfer events")
@@ -121,7 +123,7 @@ class TransferETHSpec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        balanceCheck(
+        balanceMatcher(
           fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
             Address.ZERO.toString
           ),
@@ -142,7 +144,7 @@ class TransferETHSpec_failed
 
       getToAddressBalanceReq
         .expectUntil(
-          balanceCheck(
+          balanceMatcher(
             toInitBalanceRes.getAccountBalance.tokenBalanceMap(
               Address.ZERO.toString
             ),

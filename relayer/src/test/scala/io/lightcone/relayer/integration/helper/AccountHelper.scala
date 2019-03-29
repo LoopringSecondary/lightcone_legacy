@@ -41,20 +41,27 @@ trait AccountHelper extends Logging {
               tokenBalanceMap = req.tokens.map {
                 t =>
                   val balance = t match {
-                    case ETH_TOKEN.address            => "20".zeros(18)
-                    case WETH_TOKEN.address           => "30".zeros(18)
-                    case LRC_TOKEN.address            => "400".zeros(18)
-                    case dynamicMarketPair.baseToken  => "50".zeros(18)
-                    case dynamicMarketPair.quoteToken => "60".zeros(18)
-                    case _                            => "90".zeros(18)
+                    case ETH_TOKEN.address =>
+                      AccountHelper.initialBalance
+                        .tokenBalanceMap(ETH_TOKEN.address)
+                    case WETH_TOKEN.address =>
+                      AccountHelper.initialBalance
+                        .tokenBalanceMap(WETH_TOKEN.address)
+                    case LRC_TOKEN.address =>
+                      AccountHelper.initialBalance
+                        .tokenBalanceMap(LRC_TOKEN.address)
+                    case dynamicMarketPair.baseToken =>
+                      AccountHelper.initialBalance
+                        .tokenBalanceMap("baseToken")
+                    case dynamicMarketPair.quoteToken =>
+                      AccountHelper.initialBalance
+                        .tokenBalanceMap("quoteToken")
+                    case _ =>
+                      AccountHelper.initialBalance
+                        .tokenBalanceMap("otherToken")
                   }
-                  t -> AccountBalance.TokenBalance(
-                    token = t,
-                    balance = balance,
-                    allowance = "1000".zeros(18),
-                    availableAlloawnce = "1000".zeros(18),
-                    availableBalance = balance
-                  )
+                  t -> balance
+                    .copy(token = t) // reset token for dynamicMarketPair
               }.toMap
             )
           )
@@ -62,40 +69,90 @@ trait AccountHelper extends Logging {
     })
   }
 
-  def initializeCheck(dynamicMarketPair: MarketPair) = {
+  def initializeMatcher(dynamicMarketPair: MarketPair) = {
     accountSimpleBalanceAndAvailableMatcher(
       Address.ZERO.toString,
-      "20".zeros(18)
+      AccountHelper.initialBalance.tokenBalanceMap(ETH_TOKEN.address).balance
     ) and
       accountSimpleBalanceAndAvailableMatcher(
         WETH_TOKEN.address,
-        "30".zeros(18)
+        AccountHelper.initialBalance.tokenBalanceMap(WETH_TOKEN.address).balance
       ) and
       accountSimpleBalanceAndAvailableMatcher(
         LRC_TOKEN.address,
-        "400".zeros(18)
+        AccountHelper.initialBalance.tokenBalanceMap(LRC_TOKEN.address).balance
       ) and
       accountSimpleBalanceAndAvailableMatcher(
         dynamicMarketPair.baseToken,
-        "50".zeros(18)
+        AccountHelper.initialBalance.tokenBalanceMap("baseToken").balance
       ) and
       accountSimpleBalanceAndAvailableMatcher(
         dynamicMarketPair.quoteToken,
-        "60".zeros(18)
+        AccountHelper.initialBalance.tokenBalanceMap("quoteToken").balance
       )
   }
 
-  def balanceCheck(
-      ethMatcher: TokenBalance,
-      wethMatcher: TokenBalance,
-      lrcMatcher: TokenBalance,
-      baseMatcher: TokenBalance,
-      quoteMatcher: TokenBalance
+  def balanceMatcher(
+      ethExpect: TokenBalance,
+      wethExpect: TokenBalance,
+      lrcExpect: TokenBalance,
+      baseExpect: TokenBalance,
+      quoteExpect: TokenBalance
     ) = {
-    accountBalanceMatcher(ethMatcher.token, ethMatcher) and
-      accountBalanceMatcher(wethMatcher.token, wethMatcher) and
-      accountBalanceMatcher(lrcMatcher.token, lrcMatcher) and
-      accountBalanceMatcher(baseMatcher.token, baseMatcher) and
-      accountBalanceMatcher(quoteMatcher.token, quoteMatcher)
+    accountBalanceMatcher(ethExpect.token, ethExpect) and
+      accountBalanceMatcher(wethExpect.token, wethExpect) and
+      accountBalanceMatcher(lrcExpect.token, lrcExpect) and
+      accountBalanceMatcher(baseExpect.token, baseExpect) and
+      accountBalanceMatcher(quoteExpect.token, quoteExpect)
   }
+}
+
+object AccountHelper {
+
+  val initialBalance = AccountBalance(
+    tokenBalanceMap = Map(
+      Address.ZERO.toString -> TokenBalance(
+        Address.ZERO.toString,
+        "20".zeros(18),
+        "1000".zeros(18),
+        "20".zeros(18),
+        "1000".zeros(18)
+      ),
+      WETH_TOKEN.address -> TokenBalance(
+        WETH_TOKEN.address,
+        "30".zeros(18),
+        "1000".zeros(18),
+        "30".zeros(18),
+        "1000".zeros(18)
+      ),
+      LRC_TOKEN.address -> TokenBalance(
+        LRC_TOKEN.address,
+        "400".zeros(18),
+        "1000".zeros(18),
+        "400".zeros(18),
+        "1000".zeros(18)
+      ),
+      "baseToken" -> TokenBalance(
+        "baseToken",
+        "50".zeros(18),
+        "1000".zeros(18),
+        "50".zeros(18),
+        "1000".zeros(18)
+      ),
+      "quoteToken" -> TokenBalance(
+        "quoteToken",
+        "60".zeros(18),
+        "1000".zeros(18),
+        "60".zeros(18),
+        "1000".zeros(18)
+      ),
+      "otherToken" -> TokenBalance(
+        "otherToken",
+        "90".zeros(18),
+        "1000".zeros(18),
+        "90".zeros(18),
+        "1000".zeros(18)
+      )
+    )
+  )
 }

@@ -48,7 +48,7 @@ class WETHWrapSpec_failed
         account.getAddress,
         allTokens = true
       )
-      getFromAddressBalanceReq.expectUntil(initializeCheck(dynamicMarketPair))
+      getFromAddressBalanceReq.expectUntil(initializeMatcher(dynamicMarketPair))
 
       When("send some convert events")
       wrapWethPendingActivities(
@@ -95,7 +95,7 @@ class WETHWrapSpec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        initializeCheck(dynamicMarketPair)
+        initializeMatcher(dynamicMarketPair)
       )
     }
   }
