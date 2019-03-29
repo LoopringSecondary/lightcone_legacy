@@ -23,7 +23,6 @@ import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -49,8 +48,8 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
                 tokenBalanceMap = req.tokens.map { t =>
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = "30".zeros(LRC_TOKEN.decimals),
-                    allowance = "1000".zeros(LRC_TOKEN.decimals)
+                    balance = "30".zeros(dynamicBaseToken.getDecimals()),
+                    allowance = "1000".zeros(dynamicBaseToken.getDecimals())
                   )
                 }.toMap
               )

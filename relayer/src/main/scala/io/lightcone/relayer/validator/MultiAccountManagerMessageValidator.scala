@@ -17,7 +17,7 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
-import io.lightcone.core.ErrorCode.ERR_INVALID_ARGUMENT
+import io.lightcone.core.ErrorCode._
 import io.lightcone.core._
 import io.lightcone.ethereum._
 import io.lightcone.lib._
@@ -42,6 +42,7 @@ final class MultiAccountManagerMessageValidator(
     timeProvider: TimeProvider,
     ec: ExecutionContext,
     metadataManager: MetadataManager,
+    dustOrderEvaluator: DustOrderEvaluator,
     eip712Support: EIP712Support,
     dbModule: DatabaseModule)
     extends MessageValidator {
@@ -133,6 +134,13 @@ final class MultiAccountManagerMessageValidator(
               message = s"invalid order in SubmitOrder.Req:$order"
             )
           case Right(rawOrder) =>
+            if (dustOrderEvaluator.isOriginalDust(rawOrder.toOrder())) {
+              throw ErrorException(
+                ERR_ORDER_DUST_VALUE,
+                message = s"order value is too little"
+              )
+            }
+
             val marketPair = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
             metadataManager.assertMarketStatus(marketPair, ACTIVE)
 

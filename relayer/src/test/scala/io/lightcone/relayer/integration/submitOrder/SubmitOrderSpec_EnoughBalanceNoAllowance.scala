@@ -51,7 +51,7 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
                 tokenBalanceMap = req.tokens.map { t =>
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = "1000".zeros(18),
+                    balance = "1000".zeros(dynamicBaseToken.getDecimals()),
                     allowance = BigInt(0)
                   )
                 }.toMap

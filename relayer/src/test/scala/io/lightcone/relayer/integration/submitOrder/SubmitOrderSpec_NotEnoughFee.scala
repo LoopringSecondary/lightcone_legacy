@@ -57,8 +57,8 @@ class SubmitOrderSpec_NotEnoughFee
                     } else {
                       t -> AccountBalance.TokenBalance(
                         token = t,
-                        balance = "1000".zeros(18),
-                        allowance = "1000".zeros(18)
+                        balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+                        allowance = "1000".zeros(dynamicBaseToken.getDecimals())
                       )
                     }
                 }.toMap

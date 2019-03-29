@@ -23,7 +23,6 @@ import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas.LRC_TOKEN
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
@@ -52,8 +51,8 @@ class SubmitOrderSpec_OwnerCutoff
                 tokenBalanceMap = req.tokens.map { t =>
                   t -> AccountBalance.TokenBalance(
                     token = t,
-                    balance = "1000".zeros(LRC_TOKEN.decimals),
-                    allowance = "1000".zeros(LRC_TOKEN.decimals)
+                    balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+                    allowance = "1000".zeros(dynamicBaseToken.getDecimals())
                   )
                 }.toMap
               )
@@ -85,10 +84,7 @@ class SubmitOrderSpec_OwnerCutoff
       SubmitOrder
         .Req(Some(order1))
         .expect(
-          check(
-            (err: ErrorException) =>
-              err.error.code == ERR_ORDER_VALIDATION_INVALID_CUTOFF
-          )
+          check((res: SubmitOrder.Res) => !res.success)
         )
 
       Then("submit order failed caused by ERR_ORDER_VALIDATION_INVALID_CUTOFF")
