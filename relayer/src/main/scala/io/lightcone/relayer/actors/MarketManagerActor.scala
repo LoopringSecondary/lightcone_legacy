@@ -252,6 +252,7 @@ class MarketManagerActor(
     case SubmitSimpleOrder(_, Some(order)) =>
       count.refine("label" -> "recover_order").increment()
       submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
+        .sendTo(sender)
 
     case msg @ ActorRecover.Finished(timeout) =>
       autoSwitchBackToReady.foreach(_.cancel)

@@ -177,7 +177,7 @@ class AccountManagerActor(
                   )
 
               case ERR_ORDER_PENDING_ACTIVE =>
-                log.error("received orders of PENDIGN_ACTIVE during recovery")
+                log.error("received orders of PENDING_ACTIVE during recovery")
                 throw e
 
               case _ => throw e

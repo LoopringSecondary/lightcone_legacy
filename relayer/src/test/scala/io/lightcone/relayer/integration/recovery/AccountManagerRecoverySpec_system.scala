@@ -20,11 +20,7 @@ import akka.actor.PoisonPill
 import akka.util.Timeout
 import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
-import io.lightcone.relayer.actors.{
-  KeepAliveActor,
-  MarketManagerActor,
-  OrderbookManagerActor
-}
+import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
@@ -288,7 +284,7 @@ class AccountManagerRecoverySpec_system
         "send PoisonPill to kill specific multiAccountManagerActor marketManagerActor and OrderBookManagerActor shard"
       )
       getOrderBookShardActor(dynamicMarketPair) ! PoisonPill
-      getAccountManagerShardActor(account1.getAddress) ! PoisonPill
+//      getAccountManagerShardActor(account1.getAddress) ! PoisonPill
       getMarketManagerShardActor(dynamicMarketPair) ! PoisonPill
 
       /*
@@ -308,14 +304,16 @@ class AccountManagerRecoverySpec_system
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )
 
-      And("send an request to make specific MultiAccountManager restart")
-
-      entryPointActor ! GetAccount.Req(
-        address = account1.getAddress,
-        allTokens = true
-      )
-
       Thread.sleep(10000)
+
+//      And("send an request to make specific MultiAccountManager restart")
+//
+//      entryPointActor ! GetAccount.Req(
+//        address = account1.getAddress,
+//        allTokens = true
+//      )
+//
+//      Thread.sleep(10000)
 
       GetOrders
         .Req(

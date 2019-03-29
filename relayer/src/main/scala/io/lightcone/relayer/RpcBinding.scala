@@ -27,6 +27,10 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetTime.Req]
     .replies[GetTime.Res]
 
+  method("get_gas_price")
+    .accepts[GetGasPrice.Req]
+    .replies[GetGasPrice.Res]
+
   method("get_orderbook")
   // .accepts[ext.GetOrderbook.Req, GetOrderbook.Req]
   // .replies[GetOrderbook.Res, ext.GetOrderbook.Res]

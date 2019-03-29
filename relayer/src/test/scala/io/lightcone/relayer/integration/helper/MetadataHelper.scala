@@ -91,7 +91,7 @@ trait MetadataHelper extends DbHelper {
       quoteTokenSymbol = tokens(1).getMetadata.symbol,
       maxNumbersOfOrders = 1000,
       priceDecimals = 6,
-      orderbookAggLevels = 6,
+      orderbookAggLevels = 3,
       precisionForAmount = 5,
       precisionForTotal = 5,
       browsableInWallet = true,
