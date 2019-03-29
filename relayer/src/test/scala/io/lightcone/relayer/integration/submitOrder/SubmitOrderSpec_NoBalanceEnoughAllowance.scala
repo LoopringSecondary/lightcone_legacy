@@ -38,8 +38,8 @@ class SubmitOrderSpec_NoBalanceEnoughAllowance
 
   feature("submit order") {
     scenario("no balance and enough allowance") {
-      implicit val account = getUniqueAccount()
       Given("an new account with no balance and enough allowance")
+      implicit val account = getUniqueAccount()
       addAccountExpects({
         case req =>
           GetAccount.Res(
@@ -90,6 +90,12 @@ class SubmitOrderSpec_NoBalanceEnoughAllowance
 
       Then("submit order failed caused by ERR_LOW_BALANCE")
 
+      Then("orders is empty")
+      And(
+        "allowance and available allowance is 1000, available balance and balance is 0"
+      )
+      And("order book  is empty")
+
       defaultValidate(
         getOrdersMatcher =
           containsInGetOrders(STATUS_SOFT_CANCELLED_LOW_BALANCE, order.hash),
@@ -108,12 +114,6 @@ class SubmitOrderSpec_NoBalanceEnoughAllowance
           dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
         )
       )
-
-      Then("orders is empty")
-      And(
-        "allowance and available allowance is 1000, available balance and balance is 0"
-      )
-      And("order book  is empty")
     }
   }
 }

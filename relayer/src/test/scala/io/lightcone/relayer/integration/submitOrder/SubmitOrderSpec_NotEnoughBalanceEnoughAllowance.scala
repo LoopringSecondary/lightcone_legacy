@@ -91,6 +91,12 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
 
       Then("submit order successfully")
 
+      Then("the status of the order just submitted is status pending")
+      And(
+        "balance = 30, allowance = 1000, availableBalance = 0, availableAllowance = 970"
+      )
+      And("sell amount of order book is 30")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
           outStandingMatcherInGetOrders(
@@ -119,12 +125,6 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
           ), defaultMatcher, defaultMatcher)
         )
       )
-
-      Then("the status of the order just submitted is status pending")
-      And(
-        "balance = 30, allowance = 1000, availableBalance = 0, availableAllowance = 970"
-      )
-      And("sell amount of order book is 30")
 
     }
 

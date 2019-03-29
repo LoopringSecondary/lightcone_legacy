@@ -80,14 +80,8 @@ trait AccountManagerProcessors {
               )).mapAs[MarketManager.MatchResult]
 
               _ = matchRes.taker.status match {
-                case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES =>
-                  self ! CancelOrder.Req(
-                    matchRes.taker.id,
-                    owner,
-                    matchRes.taker.status,
-                    Some(MarketPair(order.tokenS, order.tokenB))
-                  )
-                case STATUS_DUST_ORDER =>
+                case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
+                    STATUS_DUST_ORDER =>
                   self ! CancelOrder.Req(
                     matchRes.taker.id,
                     owner,

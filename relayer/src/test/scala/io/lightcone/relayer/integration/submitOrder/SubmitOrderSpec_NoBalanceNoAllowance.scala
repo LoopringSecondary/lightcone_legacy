@@ -38,8 +38,8 @@ class SubmitOrderSpec_NoBalanceNoAllowance
 
   feature("submit order") {
     scenario("no balance and no allowance ") {
-      implicit val account = getUniqueAccount()
       Given("an new account with no balance and no allowance")
+      implicit val account = getUniqueAccount()
 
       addAccountExpects({
         case req =>
@@ -87,7 +87,11 @@ class SubmitOrderSpec_NoBalanceNoAllowance
           check((err: ErrorException) => err.error.code == ERR_LOW_BALANCE)
         )
 
-      Then("submit order successfully")
+      And("orders is empty")
+      And(
+        "allowance and available allowance is 0, available balance and balance is 0"
+      )
+      And("order book  is empty")
 
       defaultValidate(
         getOrdersMatcher =
@@ -107,13 +111,6 @@ class SubmitOrderSpec_NoBalanceNoAllowance
           dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
         )
       )
-
-      And("orders is empty")
-      And(
-        "allowance and available allowance is 0, available balance and balance is 0"
-      )
-      And("order book  is empty")
-
     }
   }
 

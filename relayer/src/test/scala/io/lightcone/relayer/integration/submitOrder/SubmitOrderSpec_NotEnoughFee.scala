@@ -91,6 +91,12 @@ class SubmitOrderSpec_NotEnoughFee
         "submit order successfully"
       )
 
+      And("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 990"
+      )
+      And("sell amount of order book is 5")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash),
         accountMatcher = accountBalanceMatcher(
@@ -112,12 +118,6 @@ class SubmitOrderSpec_NotEnoughFee
           ), defaultMatcher, defaultMatcher)
         )
       )
-
-      And("the status of the order just submitted is status pending")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 990"
-      )
-      And("sell amount of order book is 5")
 
     }
   }

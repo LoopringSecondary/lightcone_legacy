@@ -39,7 +39,6 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
       Given(
         s"an new account with enough balance and not enough allowance: ${account.getAddress}"
       )
-
       addAccountExpects({
         case req =>
           GetAccount.Res(
@@ -94,6 +93,14 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
 
       Then("submit order successfully")
 
+      Then(
+        "status of order just submitted is status pending"
+      )
+      And(
+        "balance is 1000, availableBalance is 970, allowance is 30 and availableAllowance is 0"
+      )
+      And("sell amount of order book is 25")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
           outStandingMatcherInGetOrders(
@@ -126,14 +133,6 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
           ), defaultMatcher, defaultMatcher)
         )
       )
-      Then(
-        "status of order just submitted is status pending"
-      )
-      And(
-        "balance is 1000, availableBalance is 970, allowance is 30 and availableAllowance is 0"
-      )
-      And("sell amount of order book is 25")
-
     }
 
   }

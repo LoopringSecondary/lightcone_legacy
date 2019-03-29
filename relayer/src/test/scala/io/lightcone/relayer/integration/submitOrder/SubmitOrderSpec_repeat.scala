@@ -83,6 +83,12 @@ class SubmitOrderSpec_repeat
 
       Then("submit order successfully")
 
+      And("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 950"
+      )
+      And(s" sell amount of order book is 40")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
           outStandingMatcherInGetOrders(
@@ -115,12 +121,6 @@ class SubmitOrderSpec_repeat
           ), defaultMatcher, defaultMatcher)
         )
       )
-
-      And("the status of the order just submitted is status pending")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 950"
-      )
-      And(s" sell amount of order book is 40")
 
       When("submit the same  order for the second time.")
       SubmitOrder
@@ -129,7 +129,13 @@ class SubmitOrderSpec_repeat
           check((err: ErrorException) => err.error.code == ERR_INTERNAL_UNKNOWN)
         )
 
-      Then("submit order failed caused by")
+      Then("submit order failed caused by ERR_INTERNAL_UNKNOWN")
+
+      And("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 950"
+      )
+      And(s" sell amount of order book is 40")
 
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
@@ -163,12 +169,6 @@ class SubmitOrderSpec_repeat
           ), defaultMatcher, defaultMatcher)
         )
       )
-
-      And("the status of the order just submitted is status pending")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 950"
-      )
-      And(s" sell amount of order book is 40")
 
     }
   }

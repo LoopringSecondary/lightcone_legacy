@@ -35,10 +35,10 @@ class SubmitOrderSpec_Continuous
 
   feature("submit  order ") {
     scenario("continuous submit orders") {
-      implicit val account = getUniqueAccount()
       Given(
-        s"an new account with enough balance and enough allowance: ${account.getAddress}"
+        s"an new account with enough balance and enough allowance"
       )
+      implicit val account = getUniqueAccount()
 
       addAccountExpects({
         case req =>
@@ -80,6 +80,14 @@ class SubmitOrderSpec_Continuous
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
+      Then(
+        "balance and allowance is 1000 , available balance and available allowance is 880 "
+      )
+
+      And("the outstanding amounts is 100")
+
+      And("sell amount of order book is 100")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order1.hash) and
           outStandingMatcherInGetOrders(
@@ -108,13 +116,7 @@ class SubmitOrderSpec_Continuous
         )
       )
 
-      Then(
-        "balance and allowance is 1000 , available balance and available allowance is 880 "
-      )
-
-      And("the outstanding amounts is 100")
-
-      And("sell amount of order book is 100")
+      When("submit the second order of  sell 500 LRC and fee 20 LRC")
 
       val order2 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
@@ -127,7 +129,11 @@ class SubmitOrderSpec_Continuous
         .Req(Some(order2))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      When("submit the second order of  sell 500 LRC and fee 20 LRC")
+      Then(
+        "balance and allowance is 1000, available balance and available allowance is 360 "
+      )
+      And("the outstanding amounts is 500")
+      And("sell amount of order book is 600")
 
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order2.hash) and
@@ -157,11 +163,7 @@ class SubmitOrderSpec_Continuous
         )
       )
 
-      Then(
-        "balance and allowance is 1000, available balance and available allowance is 360 "
-      )
-      And("the outstanding amounts is 500")
-      And("sell amount of order book is 600")
+      When("submit the third order of  sell 480 LRC and fee 20 LRC")
 
       val order3 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
@@ -174,7 +176,11 @@ class SubmitOrderSpec_Continuous
         .Req(Some(order3))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      When("submit the third order of  sell 480 LRC and fee 20 LRC")
+      Then(
+        "balance and allowance is 1000, available balance and available allowance is 0"
+      )
+      And("outstanding amounts is 345.6")
+      And("sell amount of order book is 945.6")
 
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order3.hash) and
@@ -205,14 +211,7 @@ class SubmitOrderSpec_Continuous
         )
       )
 
-      Then(
-        "balance and allowance is 1000, available balance and available allowance is 0"
-      )
-      And("outstanding amounts is 345.6")
-      And("sell amount of order book is 945.6")
-
       When("submit the fourth order of  sell 490 LRC and fee 10 LRC")
-
       val order4 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
@@ -228,6 +227,12 @@ class SubmitOrderSpec_Continuous
           check((err: ErrorException) => err.error.code == ERR_LOW_BALANCE)
         )
       Then("submit order failed caused by ERR_LOW_BALANCE")
+
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 0"
+      )
+      And("sell amount of order book is 945.6")
+
       defaultValidate(
         getOrdersMatcher =
           containsInGetOrders(STATUS_SOFT_CANCELLED_LOW_BALANCE, order4.hash),
@@ -248,11 +253,6 @@ class SubmitOrderSpec_Continuous
           ), defaultMatcher, defaultMatcher)
         )
       )
-
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 0"
-      )
-      And("sell amount of order book is 945.6")
     }
   }
 

@@ -35,8 +35,8 @@ class SubmitOrderSpec_MarketStatus
 
   feature("submit order") {
     scenario("submit order according to different status of market") {
-      implicit val account = getUniqueAccount()
       Given("an account has enough balance and allowance")
+      implicit val account = getUniqueAccount()
 
       addAccountExpects({
         case req =>
@@ -56,7 +56,7 @@ class SubmitOrderSpec_MarketStatus
           )
       })
 
-      And("create a new market of status READONLY")
+      Then("create a new market of status READONLY")
       val tokens1 =
         createAndSaveNewMarket(status = MarketMetadata.Status.READONLY)
       val baseToken1 = tokens1.head
@@ -65,7 +65,6 @@ class SubmitOrderSpec_MarketStatus
         MarketPair(baseToken1.getAddress(), quoteToken1.getAddress())
 
       When("submit an order of readonly market")
-
       SubmitOrder
         .Req(
           Some(
@@ -81,6 +80,12 @@ class SubmitOrderSpec_MarketStatus
           )
         )
       Then("submit order failed caused by ERR_INVALID_MARKET")
+
+      Then("orders is empty")
+      And(
+        "balance and allowance is 1000, available balance and allowance is 1000 "
+      )
+      And("order book  is empty")
 
       defaultValidate(
         getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
@@ -98,14 +103,8 @@ class SubmitOrderSpec_MarketStatus
           market1 -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
         )
       )
+      Then("create a new market of status TERMINATED")
 
-      Then("orders is empty")
-      And(
-        "balance and allowance is 1000, available balance and allowance is 1000 "
-      )
-      And("order book  is empty")
-
-      When("create a new market of status TERMINATED")
       val tokens2 =
         createAndSaveNewMarket(status = MarketMetadata.Status.TERMINATED)
       val baseToken2 = tokens2.head
@@ -131,6 +130,12 @@ class SubmitOrderSpec_MarketStatus
         )
       Then("submit order failed caused by ERR_INVALID_MARKET")
 
+      Then("orders is empty")
+      And(
+        "balance and allowance is 1000, available balance and allowance is 1000 "
+      )
+      And("order book  is empty")
+
       defaultValidate(
         getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
         accountMatcher = accountBalanceMatcher(
@@ -146,11 +151,6 @@ class SubmitOrderSpec_MarketStatus
         marketMatchers = Map.empty
       )
 
-      Then("orders is empty")
-      And(
-        "balance and allowance is 1000, available balance and allowance is 1000 "
-      )
-      And("order book  is empty")
     }
 
   }
