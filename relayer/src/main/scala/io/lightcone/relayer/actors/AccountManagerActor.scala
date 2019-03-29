@@ -398,6 +398,7 @@ class AccountManagerActor(
     case evt: OrderFilledEvent //
         if evt.header.nonEmpty && evt.getHeader.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "order_filled").increment()
+      println(s"received OrderFilledEvent ${evt}")
       blocking {
         (for {
           orderOpt <- dbModule.orderService.getOrder(evt.orderHash)
