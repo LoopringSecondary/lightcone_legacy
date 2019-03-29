@@ -332,9 +332,9 @@ class AccountManagerRecoverySpec
         address = account2.getAddress,
         allTokens = true
       )
-      Then("sleep 5 seconds to wait for recover completion")
+      Then("sleep 10 seconds to wait for recover completion")
 
-      Thread.sleep(5000)
+      Thread.sleep(10000)
       Then("the order book is recovered")
       GetOrderbook
         .Req(

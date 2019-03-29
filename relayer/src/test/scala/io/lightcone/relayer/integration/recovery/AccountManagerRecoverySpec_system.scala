@@ -321,9 +321,9 @@ class AccountManagerRecoverySpec_system
         allTokens = true
       )
 
-      Then("sleep 5 seconds to wait for recover completion")
+      Then("sleep 10 seconds to wait for recover completion")
 
-      Thread.sleep(5000)
+      Thread.sleep(10000)
 
       Then("orders are recovered")
 
