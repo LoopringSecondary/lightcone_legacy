@@ -86,7 +86,6 @@ trait EventExtraction {
               )
             )
 
-            ActivityActor.broadcast(blockEvent)
             //TODO: 如何发送，是否需要等待返回结果之后再发送其余的events，否则会导致数据不一致
             eventDispatcher.dispatch(blockEvent)
             self ! RETRIEVE_RECEIPTS

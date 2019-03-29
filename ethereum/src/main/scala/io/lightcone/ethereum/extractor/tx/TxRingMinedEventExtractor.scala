@@ -438,13 +438,25 @@ class TxRingMinedEventExtractor @Inject()(
     }
   }
 
+  private def isP2p(order: RawOrder) = {
+    order.getFeeParams.tokenBFeePercentage != 0 ||
+    order.getFeeParams.tokenSFeePercentage != 0
+  }
+
+  //目前只允许p2p与p2p订单撮合
   private def isP2P(
       orders: Seq[RawOrder],
       txFrom: String
     ): Boolean = {
-    orders.exists { order =>
-      order.owner == txFrom
-    }
+    //判断订单是否为p2p订单
+    orders.exists(
+      order =>
+        order.getFeeParams.tokenBFeePercentage != 0 ||
+          order.getFeeParams.tokenSFeePercentage != 0
+    )
+//    orders.exists { order =>
+//      order.owner == txFrom
+//    }
   }
 
 }

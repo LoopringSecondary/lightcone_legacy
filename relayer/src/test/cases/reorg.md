@@ -54,9 +54,9 @@
 
    - 测试前置条件：
 
-     1. 存入db一条transfer eth的activity，nonce 为10，block设置为100
+     1. dispatch一条transfer eth的activity，block设置为100
      2. 设置一条block event ，block设置为99
-     3. 设置一条transfer eth的success 的activity，nonce 为10，block 为101
+     3. 设置一条transfer eth的success 的activity，block 为101
 
    - 测试步骤和结果校验：
 
@@ -70,7 +70,7 @@
 
    - 状态: Planned
 
-   - 拥有者: 亚东
+   - 拥有者: 亚东、红雨
 
    - 其他信息：NA
 
@@ -80,9 +80,9 @@
 
    - 测试前置条件：
 
-     1. 存入db一条transfer eth的activity，nonce 为10，block设置为100
+     1. 存入db一条transfer的activity，nonce为10，txHash = "0x23c90be4c23abe114cbcc5b8cf7a0418ca35a70c0859ffdcfc9c4d26d422a03f"，block设置为100
      2. 设置一条block event ，block设置为99
-     3. 设置一条transfer lrc 的success 的activity，nonce 为10，block 为101
+     3. 设置一条transfer的success 的activity，nonce为10， txHash = "0x33c90be4c23abe114cbcc5b8cf7a0418ca35a70c0859ffdcfc9c4d26d422a03f", block 为101
 
    - 测试步骤和结果校验：
 
@@ -92,11 +92,11 @@
 
      2. 发出第二条activity
 
-        ==> 验证transfer eth  activity是不是被删除，transfer lrc activity是不是被正确存储。
+        ==> 验证 第一条activity被删除，第二条是不是为SUCCESS。
 
    - 状态: Planned
 
-   - 拥有者: 亚东
+   - 拥有者: 亚东、红雨
 
    - 其他信息：NA
 

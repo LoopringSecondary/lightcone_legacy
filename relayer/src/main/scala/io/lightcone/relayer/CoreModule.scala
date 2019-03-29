@@ -281,6 +281,7 @@ class CoreModule(
         classOf[TxEvents],
         RingAndFillPersistenceActor.name
       )
+      .registerBroadcast(classOf[BlockEvent], ActivityActor)
       .registerBroadcast(
         classOf[TxEvents],
         ActivityActor

@@ -64,7 +64,7 @@ class ReorgSpec_Fill
         )
       )
       eventDispatcher.dispatch(txEvents)
-      Then("check this fill should be saved in db.")
+      Then(" this fill should be saved in db.")
 
       val res = GetUserFills
         .Req(
