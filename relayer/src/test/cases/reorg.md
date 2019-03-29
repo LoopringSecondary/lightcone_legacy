@@ -144,7 +144,7 @@
 
    - 状态: Planned
 
-   - 拥有者: 亚东
+   - 拥有者: 亚东、红雨
 
    - 其他信息：NA
 
@@ -159,7 +159,7 @@
      1. 设置block = 100,  ohlcdata 100 LRC -> 0.1WETH  
      2. 设置block = 101,  ohlcdata 150 LRC -> 0.2WETH  
      3. 设置block = 102,  ohlcdata 150 LRC -> 0.2WETH 
-     4. 设置block event ，block =100
+     4. 设置block event ，block =101
 
    - 测试步骤和结果校验：
 
@@ -171,7 +171,7 @@
 
    - 状态: Planned
 
-   - 拥有者: 亚东
+   - 拥有者: 亚东、红雨
 
    - 其他信息：NA
 

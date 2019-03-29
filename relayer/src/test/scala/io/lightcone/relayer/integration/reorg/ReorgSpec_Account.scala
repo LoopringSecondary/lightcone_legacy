@@ -147,13 +147,14 @@ class ReorgSpec_Account
       Thread.sleep(1000)
       val accountRes1 = getAccountReq.expectUntil(
         check(
-          (res: GetAccount.Res) => res.accountBalance.nonEmpty &&
-            res.getAccountBalance
-              .tokenBalanceMap(token)
-              .allowance ==
-              accountInitRes.getAccountBalance
+          (res: GetAccount.Res) =>
+            res.accountBalance.nonEmpty &&
+              res.getAccountBalance
                 .tokenBalanceMap(token)
-                .allowance
+                .allowance ==
+                accountInitRes.getAccountBalance
+                  .tokenBalanceMap(token)
+                  .allowance
         )
       )
     }
