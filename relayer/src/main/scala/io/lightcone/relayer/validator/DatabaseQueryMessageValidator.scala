@@ -52,11 +52,18 @@ final class DatabaseQueryMessageValidator(
             )
           else MessageValidator.normalizeAddress(req.owner)
         val marketOpt = req.market match {
+          case None => None
           case Some(m) =>
-            val tokenS = MessageValidator.normalizeAddress(m.tokenS)
-            val tokenB = MessageValidator.normalizeAddress(m.tokenB)
-            Some(GetOrders.Req.Market(tokenS, tokenB, m.isQueryBothSide))
-          case _ => None
+            if (m.marketPair.isEmpty)
+              throw ErrorException(
+                ERR_INVALID_ARGUMENT,
+                "Parameter marketPair could not be empty"
+              )
+            val base =
+              MessageValidator.normalizeAddress(m.marketPair.get.baseToken)
+            val quote =
+              MessageValidator.normalizeAddress(m.marketPair.get.quoteToken)
+            Some(MarketFilter(Some(MarketPair(base, quote)), m.direction))
         }
         req.copy(
           owner = owner,
@@ -97,12 +104,24 @@ final class DatabaseQueryMessageValidator(
             Some(GetUserFills.Req.RingFilter(ringHash, ringIndex, fillIndex))
           case _ => None
         }
-        val marketOpt = req.marketPair match {
+        val marketOpt = req.market match {
+          case None => None
           case Some(m) =>
-            val base = MessageValidator.normalizeAddress(m.baseToken)
-            val quote = MessageValidator.normalizeAddress(m.quoteToken)
-            Some(MarketPair(base, quote))
-          case _ => None
+            if (m.marketPair.isEmpty)
+              throw ErrorException(
+                ERR_INVALID_ARGUMENT,
+                "Parameter marketPair could not be empty"
+              )
+            val base =
+              MessageValidator.normalizeAddress(m.marketPair.get.baseToken)
+            val quote =
+              MessageValidator.normalizeAddress(m.marketPair.get.quoteToken)
+            if (m.direction.isUnrecognized)
+              throw ErrorException(
+                ErrorCode.ERR_INTERNAL_UNKNOWN,
+                "unrecognized direction"
+              )
+            Some(MarketFilter(Some(MarketPair(base, quote)), m.direction))
         }
         GetUserFills.Req(
           MessageValidator.normalizeAddress(req.owner),

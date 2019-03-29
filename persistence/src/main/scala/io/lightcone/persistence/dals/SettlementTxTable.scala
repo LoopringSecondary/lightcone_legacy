@@ -15,9 +15,8 @@
  */
 
 package io.lightcone.persistence.dals
-
+import io.lightcone.persistence.SettlementTx
 import io.lightcone.persistence.base._
-import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._
 
 class SettlementTxTable(tag: Tag)
@@ -28,6 +27,7 @@ class SettlementTxTable(tag: Tag)
   def txHash = columnHash("tx_hash")
   def from = columnAddress("from")
   def to = columnAddress("to")
+  def blockNumber = column[Long]("block_number")
   def gas = column[String]("gas")
   def gasPrice = column[String]("gas_price")
   def value = column[String]("value")
@@ -43,12 +43,14 @@ class SettlementTxTable(tag: Tag)
   def idx_from_nonce = index("idx_from_nonce", (from, nonce), unique = false)
   def idx_status = index("idx_status", (status), unique = false)
   def idx_create_at = index("idx_submit_at", (createAt), unique = false)
+  def idx_block = index("idx_block", (blockNumber), unique = false)
 
   def * =
     (
       txHash,
       from,
       to,
+      blockNumber,
       gas,
       gasPrice,
       value,

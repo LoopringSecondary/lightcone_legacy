@@ -20,7 +20,6 @@ import com.google.inject.Inject
 import io.lightcone.persistence.dals._
 import io.lightcone.lib.cache._
 import io.lightcone.core._
-import io.lightcone.relayer.data._
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
@@ -67,10 +66,10 @@ class OrderServiceImpl @Inject()(
       )
     }
     orderDal.saveOrder(order).map { r =>
-      if (r.error == ErrorCode.ERR_NONE) {
-        Left(r.order.get)
+      if (r._1 == ErrorCode.ERR_NONE) {
+        Left(r._2.get)
       } else {
-        Right(r.error)
+        Right(r._1)
       }
     }
   }
@@ -88,8 +87,8 @@ class OrderServiceImpl @Inject()(
       tokenBSet: Set[String],
       marketIds: Set[Long],
       feeTokenSet: Set[String],
-      sort: Option[SortingType],
-      paging: Option[CursorPaging]
+      sort: SortingType,
+      pagingOpt: Option[CursorPaging]
     ): Future[Seq[RawOrder]] =
     orderDal
       .getOrders(
@@ -100,30 +99,30 @@ class OrderServiceImpl @Inject()(
         marketIds,
         feeTokenSet,
         sort,
-        paging
+        pagingOpt
       )
       .map(_.map(r => giveUserOrder(Some(r)).get))
 
   def getOrdersForUser(
       statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketIds: Option[Long] = None,
-      feeTokenSet: Option[String] = None,
-      sort: Option[SortingType] = None,
-      paging: Option[CursorPaging] = None
+      ownerOpt: Option[String] = None,
+      tokenSOpt: Option[String] = None,
+      tokenBOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
+      feeTokenOpt: Option[String] = None,
+      sort: SortingType = SortingType.ASC,
+      pagingOpt: Option[CursorPaging] = None
     ): Future[Seq[RawOrder]] =
     orderDal
       .getOrdersForUser(
         statuses,
-        owner,
-        tokenS,
-        tokenB,
-        marketIds,
-        feeTokenSet,
+        ownerOpt,
+        tokenSOpt,
+        tokenBOpt,
+        marketHashOpt,
+        feeTokenOpt,
         sort,
-        paging
+        pagingOpt
       )
       .map(_.map(r => giveUserOrder(Some(r)).get))
 
@@ -140,12 +139,6 @@ class OrderServiceImpl @Inject()(
       skip
     )
 
-  def getCutoffAffectedOrders(
-      retrieveCondition: RetrieveOrdersToCancel,
-      take: Int
-    ): Future[Seq[RawOrder]] =
-    orderDal.getCutoffAffectedOrders(retrieveCondition, take)
-
   def getOrdersToActivate(
       activateLaggingInSecond: Int,
       limit: Int
@@ -161,18 +154,18 @@ class OrderServiceImpl @Inject()(
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketId: Option[Long] = None,
+      ownerOpt: Option[String] = None,
+      tokenSOpt: Option[String] = None,
+      tokenBOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
       feeTokenSet: Option[String] = None
     ): Future[Int] =
     orderDal.countOrdersForUser(
       statuses,
-      owner,
-      tokenS,
-      tokenB,
-      marketId,
+      ownerOpt,
+      tokenSOpt,
+      tokenBOpt,
+      marketHashOpt,
       feeTokenSet
     )
 
@@ -203,14 +196,14 @@ class OrderServiceImpl @Inject()(
   def cancelOrders(
       orderHashes: Seq[String],
       status: OrderStatus
-    ): Future[Seq[UserCancelOrder.Res.Result]] =
+    ): Future[Seq[(String, Option[RawOrder], ErrorCode)]] =
     for {
       updated <- orderDal.updateOrdersStatus(orderHashes, status)
       selectOwners <- orderDal.getOrdersMap(orderHashes)
     } yield {
       if (updated == ErrorCode.ERR_NONE) {
         orderHashes.map { orderHash =>
-          UserCancelOrder.Res.Result(
+          (
             orderHash,
             giveUserOrder(selectOwners.get(orderHash)),
             ErrorCode.ERR_NONE

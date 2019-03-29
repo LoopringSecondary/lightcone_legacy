@@ -17,38 +17,52 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
-import io.lightcone.core.MarketHash
+import io.lightcone.core.ErrorCode
+import io.lightcone.ethereum.persistence.{Interval, OHLCData, OHLCRawData}
 import io.lightcone.lib.cache._
+import io.lightcone.persistence.cache.OHLCDatas
 import io.lightcone.persistence.dals._
-import io.lightcone.relayer.data._
-
 import scala.concurrent.{ExecutionContext, Future}
+import io.lightcone.persistence.base._
+import org.slf4s.Logging
 
 class OHLCDataServiceImpl @Inject()(
     implicit
     basicCache: Cache[String, Array[Byte]],
     ohlcDataDal: OHLCDataDal,
     val ec: ExecutionContext)
-    extends OHLCDataService {
+    extends OHLCDataService
+    with Logging {
 
-  private val cache = ProtoCache[GetMarketHistory.Res]("ohlc")
+  private val cache = ProtoCache[OHLCDatas]("ohlc")
 
-  def saveData(req: PersistOHLCData.Req): Future[PersistOHLCData.Res] =
-    ohlcDataDal.saveData(req.data.get)
+  def saveData(data: OHLCRawData): Future[(ErrorCode, Option[OHLCRawData])] =
+    ohlcDataDal.saveData(data)
 
-  def getOHLCData(request: GetMarketHistory.Req): Future[GetMarketHistory.Res] =
+  def getOHLCData(
+      marketHash: String,
+      interval: Interval,
+      beginTime: Long,
+      endTime: Long
+    ): Future[Seq[OHLCData]] = {
     cache
-      .read(request, 60 /*seconds*/ ) {
+      .read(
+        stringCacheKey(marketHash, interval, beginTime, endTime),
+        60 /*seconds*/
+      ) {
         ohlcDataDal
           .getOHLCData(
-            MarketHash(request.getMarketPair).hashString(),
-            request.interval.value,
-            request.beginTime,
-            request.endTime
+            marketHash,
+            interval.value,
+            beginTime,
+            endTime
           )
           .map { r =>
-            Option(GetMarketHistory.Res(data = r.map(t => OHLCData(data = t))))
+            Option(OHLCDatas(datas = r.map(t => OHLCData(data = t))))
           }
       }
-      .map(_.getOrElse(GetMarketHistory.Res()))
+      .map(_.getOrElse(OHLCDatas()))
+      .map(_.datas)
+  }
+
 }

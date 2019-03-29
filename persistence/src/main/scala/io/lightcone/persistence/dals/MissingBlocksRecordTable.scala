@@ -16,8 +16,8 @@
 
 package io.lightcone.persistence.dals
 
+import io.lightcone.persistence.MissingBlocksRecord
 import io.lightcone.persistence.base.BaseTable
-import io.lightcone.relayer.data.MissingBlocksRecord
 import slick.jdbc.MySQLProfile.api._
 
 class MissingBlocksRecordTable(tag: Tag)

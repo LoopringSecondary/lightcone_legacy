@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+package io.lightcone.persistence.cache;
+
+import "core.proto";
+import "persistence.proto";
+import "ethereum_persistence.proto";
+
+message OHLCDatas {
+    repeated io.lightcone.ethereum.persistence.OHLCData datas = 1;
+}

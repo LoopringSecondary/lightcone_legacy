@@ -87,16 +87,11 @@ message GetOrderByHash {
 
 message GetOrders {
     message Req {
-        message Market {
-            string token_s = 1;
-            string token_b = 2;
-            bool   is_query_both_side = 3; // 是否查询两个方向的订单
-        }
-        string               owner      = 1;
-        repeated io.lightcone.core.OrderStatus statuses   = 2;
-        Market               market     = 3;
-        io.lightcone.persistence.SortingType   sort   = 4;
-        io.lightcone.persistence.CursorPaging  paging = 5;
+        string                                 owner       = 1;
+        repeated io.lightcone.core.OrderStatus statuses    = 2;
+        MarketFilter                           market      = 3;
+        io.lightcone.persistence.SortingType   sort        = 4;
+        io.lightcone.persistence.CursorPaging  paging      = 5;
     }
 
     message Res {
@@ -121,7 +116,7 @@ message UserCancelOrder {
 
 message PersistSettlementTx {
     message Req {
-        SettlementTx tx = 1;
+        io.lightcone.persistence.SettlementTx tx = 1;
     }
 
     message Res {
@@ -136,7 +131,7 @@ message GetPendingTxs {
     }
 
     message Res {
-        repeated SettlementTx txs = 1;
+        repeated io.lightcone.persistence.SettlementTx txs = 1;
     }
 }
 
@@ -163,31 +158,15 @@ message PersistOHLCData {
 }
 
 message GetMarketHistory {
-    enum Interval {
-        OHCL_INTERVAL_INVALID            = 0; // don't use it
-        OHLC_INTERVAL_ONE_MINUTES        = 60;
-        OHLC_INTERVAL_FIVE_MINUTES       = 300;
-        OHLC_INTERVAL_FIFTEEN_MINUTES    = 900;
-        OHLC_INTERVAL_THIRTY_MINUTES     = 1800;
-        OHLC_INTERVAL_ONE_HOUR           = 3600;
-        OHLC_INTERVAL_TWO_HOURS          = 7200;
-        OHLC_INTERVAL_FOUR_HOURS         = 14400;
-        OHLC_INTERVAL_TWELVE_HOURS       = 43200;
-        OHLC_INTERVAL_ONE_DAY            = 86400;
-        OHLC_INTERVAL_THREE_DAYS         = 259200;
-        OHLC_INTERVAL_FIVE_DAYS          = 432000;
-        OHLC_INTERVAL_ONE_WEEK           = 604800;
-    }
-
     message Req {
-        io.lightcone.core.MarketPair    market_pair    = 1;
-        Interval                        interval       = 2;
-        int64                           begin_time      = 3;
-        int64                           end_time        = 4;
+        io.lightcone.core.MarketPair                 market_pair    = 1;
+        io.lightcone.ethereum.persistence.Interval   interval       = 2;
+        int64                                        begin_time     = 3;
+        int64                                        end_time       = 4;
     }
 
     message Res {
-        repeated OHLCData data  = 1;
+        repeated io.lightcone.ethereum.persistence.OHLCData data  = 1;
     }
 }
 

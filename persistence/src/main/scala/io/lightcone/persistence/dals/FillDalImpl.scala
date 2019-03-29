@@ -24,7 +24,6 @@ import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.persistence._
 import io.lightcone.ethereum.persistence._
-import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -63,30 +62,37 @@ class FillDalImpl @Inject()(
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]] =
     Future.sequence(fills.map(saveFill))
 
-  def getFills(request: GetUserFills.Req): Future[Seq[Fill]] = {
-    val marketHashOpt = request.marketPair match {
-      case None    => None
-      case Some(m) => Some(MarketHash(m).hashString())
-    }
-    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      request.ring
-    )
+  def getFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
+      wallet: String,
+      miner: String,
+      sort: SortingType,
+      pagingOpt: Option[CursorPaging]
+    ): Future[Seq[Fill]] = {
     var filters = queryFilters(
-      getOptString(request.owner),
-      getOptString(request.txHash),
-      getOptString(request.orderHash),
+      getOptString(owner),
+      getOptString(txHash),
+      getOptString(orderHash),
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
-      None,
-      None,
+      tokensOpt,
+      tokenbOpt,
       marketHashOpt,
-      getOptString(request.wallet),
-      getOptString(request.miner)
+      getOptString(wallet),
+      getOptString(miner)
     )
-    if (request.paging.nonEmpty) {
-      val paging = request.paging.get
-      filters = request.sort match {
+    if (pagingOpt.nonEmpty) {
+      val paging = pagingOpt.get
+      filters = sort match {
         case SortingType.DESC =>
           if (paging.cursor > 0) {
             filters
@@ -110,26 +116,31 @@ class FillDalImpl @Inject()(
     db.run(filters.result)
   }
 
-  def countFills(request: GetUserFills.Req): Future[Int] = {
-    val marketHashOpt = request.marketPair match {
-      case None    => None
-      case Some(m) => Some(MarketHash(m).hashString())
-    }
-    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
-      request.ring
-    )
+  def countFills(
+      owner: String,
+      txHash: String,
+      orderHash: String,
+      ringHashOpt: Option[String],
+      ringIndexOpt: Option[Long],
+      fillIndexOpt: Option[Int],
+      tokensOpt: Option[String],
+      tokenbOpt: Option[String],
+      marketHashOpt: Option[MarketHash],
+      wallet: String,
+      miner: String
+    ): Future[Int] = {
     val filters = queryFilters(
-      getOptString(request.owner),
-      getOptString(request.txHash),
-      getOptString(request.orderHash),
+      getOptString(owner),
+      getOptString(txHash),
+      getOptString(orderHash),
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
-      None,
-      None,
+      tokensOpt,
+      tokenbOpt,
       marketHashOpt,
-      getOptString(request.wallet),
-      getOptString(request.miner)
+      getOptString(wallet),
+      getOptString(miner)
     )
     db.run(filters.size.result)
   }
@@ -168,7 +179,7 @@ class FillDalImpl @Inject()(
       fillIndex: Option[Int] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHashOpt: Option[String] = None,
+      marketHashOpt: Option[MarketHash] = None,
       wallet: Option[String] = None,
       miner: Option[String] = None
     ): Query[FillTable, FillTable#TableElementType, Seq] = {
@@ -185,24 +196,9 @@ class FillDalImpl @Inject()(
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
     if (marketHashOpt.nonEmpty)
-      filters = filters.filter(_.marketHash === marketHashOpt.get)
+      filters = filters.filter(_.marketHash === marketHashOpt.get.hashString)
     if (wallet.nonEmpty) filters = filters.filter(_.wallet === wallet.get)
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
     filters
-  }
-
-  private def getRingQueryParameters(
-      ringOpt: Option[GetUserFills.Req.RingFilter]
-    ) = {
-    ringOpt match {
-      case Some(r) =>
-        val ringHash = getOptString(r.ringHash)
-        val ringIndex =
-          if (r.ringIndex.nonEmpty) Some(r.ringIndex.toLong) else None
-        val fillIndex =
-          if (r.fillIndex.nonEmpty) Some(r.fillIndex.toInt) else None
-        (ringHash, ringIndex, fillIndex)
-      case None => (None, None, None)
-    }
   }
 }
