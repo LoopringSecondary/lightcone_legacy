@@ -92,7 +92,7 @@
 
      2. 发出第二条activity
 
-        ==> 验证 第一条activity被删除，第二条是不是为SUCCESS。
+        ==> 验证 第一条activity被删除，第二条为SUCCESS。
 
    - 状态: Planned
 
@@ -120,7 +120,7 @@
 
    - 状态: Planned
 
-   - 拥有者: 亚东
+   - 拥有者: 亚东、红雨
 
    - 其他信息：NA
 
