@@ -34,7 +34,9 @@ class TransferERC20Spec_failed
     with ActivityHelper
     with Matchers {
 
-  feature("transfer out some ERC20 token failed to verify activities and balance") {
+  feature(
+    "transfer out some ERC20 token failed to verify activities and balance"
+  ) {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =

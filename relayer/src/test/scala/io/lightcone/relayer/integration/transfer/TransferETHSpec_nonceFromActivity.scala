@@ -37,7 +37,9 @@ class TransferETHSpec_nonceFromActivity
     with ActivityHelper
     with Matchers {
 
-  feature("transfer out some ETH to verify account's nonce => from continuous activities max nonce + 1") {
+  feature(
+    "transfer out some ETH to verify account's nonce => from continuous activities max nonce + 1"
+  ) {
     scenario("transfer ETH") {
       implicit val account = getUniqueAccount()
       val txHash =

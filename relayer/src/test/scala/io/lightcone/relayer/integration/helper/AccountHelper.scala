@@ -22,8 +22,8 @@ import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data.{AccountBalance, GetAccount}
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
-import org.scalatest.matchers.{MatchResult, Matcher}
 import org.slf4s.Logging
+import io.lightcone.relayer.integration.AddedMatchers._
 
 trait AccountHelper extends Logging {
   my: MockHelper =>
@@ -63,87 +63,26 @@ trait AccountHelper extends Logging {
   }
 
   def initializeCheck(dynamicMarketPair: MarketPair) = {
-    Matcher { res: GetAccount.Res =>
-      val balanceOpt = res.accountBalance
-      val balance: BigInt =
-        balanceOpt.get.tokenBalanceMap(Address.ZERO.toString).balance.get
-      val availableBalance: BigInt =
-        balanceOpt.get
-          .tokenBalanceMap(Address.ZERO.toString)
-          .availableBalance
-          .get
-      MatchResult(
-        balance == "20".zeros(18) && balance == availableBalance,
-        s" ${JsonPrinter.printJsonString(
-          res.getAccountBalance.tokenBalanceMap(Address.ZERO.toString)
-        )} balance and availableBalance not equal to ${"20".zeros(18)}.",
-        s"accountBalance of ETH matches."
+    accountSimpleBalanceAndAvailableMatcher(
+      Address.ZERO.toString,
+      "20".zeros(18)
+    ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        WETH_TOKEN.address,
+        "30".zeros(18)
+      ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        LRC_TOKEN.address,
+        "400".zeros(18)
+      ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        dynamicMarketPair.baseToken,
+        "50".zeros(18)
+      ) and
+      accountSimpleBalanceAndAvailableMatcher(
+        dynamicMarketPair.quoteToken,
+        "60".zeros(18)
       )
-    } and Matcher { res: GetAccount.Res =>
-      val balanceOpt = res.accountBalance
-      val balance: BigInt =
-        balanceOpt.get.tokenBalanceMap(WETH_TOKEN.address).balance.get
-      val availableBalance: BigInt =
-        balanceOpt.get
-          .tokenBalanceMap(WETH_TOKEN.address)
-          .availableBalance
-          .get
-      MatchResult(
-        balance == "30".zeros(18) && balance == availableBalance,
-        s" ${JsonPrinter.printJsonString(
-          res.getAccountBalance.tokenBalanceMap(WETH_TOKEN.address)
-        )} balance and availableBalance not equal to ${"30".zeros(18)}.",
-        s"accountBalance of WETH matches."
-      )
-    } and Matcher { res: GetAccount.Res =>
-      val balanceOpt = res.accountBalance
-      val balance: BigInt =
-        balanceOpt.get.tokenBalanceMap(LRC_TOKEN.address).balance.get
-      val availableBalance: BigInt =
-        balanceOpt.get
-          .tokenBalanceMap(LRC_TOKEN.address)
-          .availableBalance
-          .get
-      MatchResult(
-        balance == "400".zeros(18) && balance == availableBalance,
-        s" ${JsonPrinter.printJsonString(
-          res.getAccountBalance.tokenBalanceMap(LRC_TOKEN.address)
-        )} balance and availableBalance not equal to ${"400".zeros(18)}.",
-        s"accountBalance of LRC matches."
-      )
-    } and Matcher { res: GetAccount.Res =>
-      val balanceOpt = res.accountBalance
-      val balance: BigInt =
-        balanceOpt.get.tokenBalanceMap(dynamicMarketPair.baseToken).balance.get
-      val availableBalance: BigInt =
-        balanceOpt.get
-          .tokenBalanceMap(dynamicMarketPair.baseToken)
-          .availableBalance
-          .get
-      MatchResult(
-        balance == "50".zeros(18) && balance == availableBalance,
-        s" ${JsonPrinter.printJsonString(
-          res.getAccountBalance.tokenBalanceMap(dynamicMarketPair.baseToken)
-        )} balance and availableBalance not equal to ${"50".zeros(18)}.",
-        s"accountBalance of BaseToken matches."
-      )
-    } and Matcher { res: GetAccount.Res =>
-      val balanceOpt = res.accountBalance
-      val balance: BigInt =
-        balanceOpt.get.tokenBalanceMap(dynamicMarketPair.quoteToken).balance.get
-      val availableBalance: BigInt =
-        balanceOpt.get
-          .tokenBalanceMap(dynamicMarketPair.quoteToken)
-          .availableBalance
-          .get
-      MatchResult(
-        balance == "60".zeros(18) && balance == availableBalance,
-        s" ${JsonPrinter.printJsonString(
-          res.getAccountBalance.tokenBalanceMap(dynamicMarketPair.quoteToken)
-        )} balance and availableBalance not equal to ${"60".zeros(18)}.",
-        s"accountBalance of QuoteToken matches."
-      )
-    }
   }
 
   def balanceCheck(
@@ -153,43 +92,10 @@ trait AccountHelper extends Logging {
       baseMatcher: TokenBalance,
       quoteMatcher: TokenBalance
     ) = {
-    Matcher { res: GetAccount.Res =>
-      MatchResult(
-        res.getAccountBalance
-          .tokenBalanceMap(Address.ZERO.toString) == ethMatcher,
-        s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(Address.ZERO.toString))} was not equal to  ${JsonPrinter
-          .printJsonString(ethMatcher)}.",
-        s"accountBalance of ETH matches."
-      )
-    } and Matcher { res: GetAccount.Res =>
-      MatchResult(
-        res.getAccountBalance.tokenBalanceMap(wethMatcher.token) == wethMatcher,
-        s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(wethMatcher.token))} was not equal to  ${JsonPrinter
-          .printJsonString(wethMatcher)}.",
-        s"accountBalance of WETH matches."
-      )
-    } and Matcher { res: GetAccount.Res =>
-      MatchResult(
-        res.getAccountBalance.tokenBalanceMap(lrcMatcher.token) == lrcMatcher,
-        s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(lrcMatcher.token))} was not equal to  ${JsonPrinter
-          .printJsonString(lrcMatcher)}.",
-        s"accountBalance of LRC matches."
-      )
-    } and Matcher { res: GetAccount.Res =>
-      MatchResult(
-        res.getAccountBalance.tokenBalanceMap(baseMatcher.token) == baseMatcher,
-        s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(baseMatcher.token))} was not equal to  ${JsonPrinter
-          .printJsonString(baseMatcher)}.",
-        s"accountBalance of BaseToken matches."
-      )
-    } and Matcher { res: GetAccount.Res =>
-      MatchResult(
-        res.getAccountBalance
-          .tokenBalanceMap(quoteMatcher.token) == quoteMatcher,
-        s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(quoteMatcher.token))} was not equal to  ${JsonPrinter
-          .printJsonString(quoteMatcher)}.",
-        s"accountBalance of QuoteToken matches."
-      )
-    }
+    accountBalanceMatcher(ethMatcher.token, ethMatcher) and
+      accountBalanceMatcher(wethMatcher.token, wethMatcher) and
+      accountBalanceMatcher(lrcMatcher.token, lrcMatcher) and
+      accountBalanceMatcher(baseMatcher.token, baseMatcher) and
+      accountBalanceMatcher(quoteMatcher.token, quoteMatcher)
   }
 }

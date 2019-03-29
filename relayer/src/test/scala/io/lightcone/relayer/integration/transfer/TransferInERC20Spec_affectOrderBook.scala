@@ -37,7 +37,9 @@ class TransferInERC20Spec_affectOrderBook
     with ActivityHelper
     with Matchers {
 
-  feature("transfer in some ERC20 token after submit order will affect order's actual amountS") {
+  feature(
+    "transfer in some ERC20 token after submit order will affect order's actual amountS"
+  ) {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =

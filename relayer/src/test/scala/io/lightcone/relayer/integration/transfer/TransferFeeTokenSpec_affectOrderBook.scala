@@ -37,7 +37,9 @@ class TransferFeeTokenSpec_affectOrderBook
     with ActivityHelper
     with Matchers {
 
-  feature("transfer out some fee token after submit order will affect order's actual amountS") {
+  feature(
+    "transfer out some fee token after submit order will affect order's actual amountS"
+  ) {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =

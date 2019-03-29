@@ -34,7 +34,9 @@ class TransferETHSpec_nonceFromChain
     with ActivityHelper
     with Matchers {
 
-  feature("transfer out some ERC20 token to verify activities => get a larger nonce on chain") {
+  feature(
+    "transfer out some ERC20 token to verify activities => get a larger nonce on chain"
+  ) {
     scenario("transfer ETH") {
       implicit val account = getUniqueAccount()
       val txHash =

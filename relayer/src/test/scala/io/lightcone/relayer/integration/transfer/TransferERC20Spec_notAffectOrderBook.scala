@@ -36,7 +36,9 @@ class TransferERC20Spec_notAffectOrderBook
     with ActivityHelper
     with Matchers {
 
-  feature("transfer out some ERC20 token when balance still larger than order's amountS will not affect order") {
+  feature(
+    "transfer out some ERC20 token when balance still larger than order's amountS will not affect order"
+  ) {
     scenario("transfer ERC20") {
       implicit val account = getUniqueAccount()
       val txHash =

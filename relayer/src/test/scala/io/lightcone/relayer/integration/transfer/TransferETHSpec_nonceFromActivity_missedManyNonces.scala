@@ -37,7 +37,9 @@ class TransferETHSpec_nonceFromActivity_missedManyNonces
     with ActivityHelper
     with Matchers {
 
-  feature("transfer out some ETH to verify account's nonce => when missed some nonce in activity") {
+  feature(
+    "transfer out some ETH to verify account's nonce => when missed some nonce in activity"
+  ) {
     scenario("transfer ETH") {
       implicit val account = getUniqueAccount()
       val txHash =
