@@ -75,6 +75,12 @@ class SubmitOrderSpec_reSubmitCancelled
 
       Then("submit order successfully")
 
+      And("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 950"
+      )
+      And(s" sell amount of order book is 40")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
           outStandingMatcherInGetOrders(
@@ -108,12 +114,6 @@ class SubmitOrderSpec_reSubmitCancelled
         )
       )
 
-      And("the status of the order just submitted is status pending")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 950"
-      )
-      And(s" sell amount of order book is 40")
-
       val cancelEvent = OrdersCancelledOnChainEvent(
         owner = account.getAddress,
         header = Some(EventHeader(txStatus = TX_STATUS_SUCCESS)),
@@ -137,7 +137,13 @@ class SubmitOrderSpec_reSubmitCancelled
           check((err: ErrorException) => err.error.code == ERR_INTERNAL_UNKNOWN)
         )
 
-      Then("submit order failed caused by ")
+      Then("submit order failed caused by ERR_INTERNAL_UNKNOWN")
+
+      And("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 100"
+      )
+      And("order book is empty")
 
       defaultValidate(
         getOrdersMatcher =
@@ -158,12 +164,6 @@ class SubmitOrderSpec_reSubmitCancelled
           dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
         )
       )
-
-      And("the status of the order just submitted is status pending")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 100"
-      )
-      And("order book is empty")
 
     }
   }

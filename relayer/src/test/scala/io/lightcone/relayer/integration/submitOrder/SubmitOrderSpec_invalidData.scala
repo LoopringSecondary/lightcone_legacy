@@ -125,6 +125,14 @@ class SubmitOrderSpec_invalidData
 
       Then("submit order failed caused by ERR_ORDER_VALIDATION_INVALID_SIG")
 
+      Then(
+        "status of order just submitted is status pending"
+      )
+      And(
+        "balance, availableBalance, allowance and availableAllowance is 1000"
+      )
+      And("orderbook is empty")
+
       defaultValidate(
         getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
         accountMatcher = accountBalanceMatcher(
@@ -164,6 +172,18 @@ class SubmitOrderSpec_invalidData
             }
           )
         )
+
+      Then(
+        "submit order failed caused by ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY"
+      )
+
+      Then(
+        "status of order just submitted is status pending"
+      )
+      And(
+        "balance, availableBalance, allowance and availableAllowance is 1000"
+      )
+      And("orderbook is empty")
 
       defaultValidate(
         getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),

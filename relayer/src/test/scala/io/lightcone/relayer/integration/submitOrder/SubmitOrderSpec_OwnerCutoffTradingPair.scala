@@ -98,6 +98,12 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
         "submit order failed caused by ERR_ORDER_VALIDATION_INVALID_CUTOFF"
       )
 
+      And("orders is empty")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 1000"
+      )
+      And("order book is empty")
+
       defaultValidate(
         getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
         accountMatcher = accountBalanceMatcher(
@@ -115,12 +121,6 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
         )
       )
 
-      And("orders is empty")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 1000"
-      )
-      And("order book is empty")
-
       When("submit the an order that valid since is bigger than cutoff")
 
       val order2 = createRawOrder(
@@ -136,6 +136,12 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
       Then(
         "submit an order successfully"
       )
+
+      And("order status is STATUS_PENDING_ACTIVE")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 1000"
+      )
+      And("order book is empty")
 
       defaultValidate(
         getOrdersMatcher =
@@ -155,12 +161,6 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
         )
       )
 
-      And("order status is STATUS_PENDING_ACTIVE")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 1000"
-      )
-      And("order book is empty")
-
       When("submit an order of another market")
       val tokens1 =
         createAndSaveNewMarket()
@@ -179,6 +179,13 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
         .expect(check((res: SubmitOrder.Res) => res.success))
 
       Then("submit order successfully")
+
+      And("order status is STATUS_PENDING")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 987"
+      )
+      And("sum of order book sell amount is 10")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order3.hash),
         accountMatcher = accountBalanceMatcher(
@@ -198,12 +205,6 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
           ), defaultMatcher, defaultMatcher)
         )
       )
-      And("order status is STATUS_PENDING")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 987"
-      )
-      And("sum of order book sell amount is 10")
-
     }
   }
 

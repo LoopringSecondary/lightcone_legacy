@@ -89,6 +89,12 @@ class SubmitOrderSpec_OwnerCutoff
 
       Then("submit order failed caused by ERR_ORDER_VALIDATION_INVALID_CUTOFF")
 
+      And("orders is empty")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 1000"
+      )
+      And("order book is empty")
+
       defaultValidate(
         getOrdersMatcher = check((res: GetOrders.Res) => res.orders.isEmpty),
         accountMatcher = accountBalanceMatcher(
@@ -108,12 +114,6 @@ class SubmitOrderSpec_OwnerCutoff
         )
       )
 
-      And("orders is empty")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 1000"
-      )
-      And("order book is empty")
-
       When("submit the an order that valid since is bigger than cutoff")
       val order2 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
@@ -128,6 +128,13 @@ class SubmitOrderSpec_OwnerCutoff
       Then(
         "submit order successfully"
       )
+
+      And("order status is STATUS_PENDING_ACTIVE")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 1000"
+      )
+      And("order book is empty")
+
       defaultValidate(
         getOrdersMatcher =
           containsInGetOrders(STATUS_PENDING_ACTIVE, order2.hash),
@@ -147,12 +154,6 @@ class SubmitOrderSpec_OwnerCutoff
           dynamicMarketPair -> (orderBookIsEmpty(), defaultMatcher, defaultMatcher)
         )
       )
-
-      And("order status is STATUS_PENDING_ACTIVE")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 1000"
-      )
-      And("order book is empty")
     }
   }
 

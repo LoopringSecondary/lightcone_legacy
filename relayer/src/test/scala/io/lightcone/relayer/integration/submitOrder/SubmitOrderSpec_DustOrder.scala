@@ -18,7 +18,6 @@ package io.lightcone.relayer.integration.submitOrder
 
 import io.lightcone.core.ErrorCode.ERR_ORDER_DUST_VALUE
 import io.lightcone.core.ErrorException
-import io.lightcone.core.OrderStatus.STATUS_DUST_ORDER
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
@@ -35,9 +34,8 @@ class SubmitOrderSpec_DustOrder
 
   feature("submit order") {
     scenario("check dust order") {
-      implicit val account = getUniqueAccount()
       Given("a new account with enough balance and allowance")
-
+      implicit val account = getUniqueAccount()
       addAccountExpects({
         case req =>
           GetAccount.Res(
@@ -82,6 +80,10 @@ class SubmitOrderSpec_DustOrder
 
       Then("submit order failed caused by ERR_ORDER_DUST_VALUE")
 
+      And("order status is Status_Dust_Order")
+      And("balance,allowance,available balance and available allowance is 1000")
+      And("order book is empty")
+
       defaultValidate(
         accountMatcher = accountBalanceMatcher(
           dynamicBaseToken.getAddress(),
@@ -100,9 +102,6 @@ class SubmitOrderSpec_DustOrder
         )
       )
 
-      And("order status is Status_Dust_Order")
-      And("balance,allowance,available balance and available allowance is 1000")
-      And("order book is empty")
     }
   }
 

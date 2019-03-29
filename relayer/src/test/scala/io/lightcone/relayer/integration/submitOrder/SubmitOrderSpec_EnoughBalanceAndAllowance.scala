@@ -34,9 +34,8 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
 
   feature("submit  order ") {
     scenario("enough balance and enough allowance") {
-      implicit val account = getUniqueAccount()
       Given("an new account with enough balance and enough allowance")
-
+      implicit val account = getUniqueAccount()
       addAccountExpects({
         case req =>
           GetAccount.Res(
@@ -76,7 +75,11 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      Then("submit order successfully")
+      Then("the status of the order just submitted is status pending")
+      And(
+        "balance and allowance is 1000, available balance and available allowance is 950"
+      )
+      And("sell amount of order book is 40")
 
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order1.hash) and
@@ -110,12 +113,6 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
           ), defaultMatcher, defaultMatcher)
         )
       )
-
-      And("the status of the order just submitted is status pending")
-      And(
-        "balance and allowance is 1000, available balance and available allowance is 950"
-      )
-      And("sell amount of order book is 40")
     }
   }
 
