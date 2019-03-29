@@ -183,7 +183,8 @@ object AddedMatchers extends JsonSupport {
         .get
     MatchResult(
       balance == balanceAndAvailable && balance == availableBalance,
-      s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(token))} balance and availableBalance not equal to ${balanceAndAvailable}.",
+      s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(token))} balance and availableBalance " +
+        s"not equal to ${balanceAndAvailable}.",
       s"accountBalance of token ${token} matches."
     )
   }
