@@ -170,7 +170,7 @@ class OrderbookManagerActor(
       )).mapAs[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
       updates = {
-        if (res.update.nonEmpty) Nil
+        if (res.update.isEmpty) Nil
         else manager.processInternalUpdate(res.update.get)
       }
       _ = log.debug(s"orderbook incremental updates: $updates")

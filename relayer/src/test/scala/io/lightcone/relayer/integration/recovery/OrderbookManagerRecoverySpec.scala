@@ -16,8 +16,10 @@
 
 package io.lightcone.relayer.integration.recovery
 
+import java.lang.Thread
+
 import akka.actor.PoisonPill
-import io.lightcone.core.OrderStatus._
+import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
@@ -27,7 +29,7 @@ import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
-class MarketManagerRecoverySpec
+class OrderbookManagerRecoverySpec
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
@@ -79,8 +81,7 @@ class MarketManagerRecoverySpec
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "100".zeros(dynamicBaseToken.getDecimals()),
-        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 10
+        amountS = "100".zeros(dynamicBaseToken.getDecimals())
       )(account1)
       SubmitOrder
         .Req(Some(order1))
@@ -159,23 +160,19 @@ class MarketManagerRecoverySpec
           dynamicBaseToken.getAddress(),
           TokenBalance(
             token = dynamicBaseToken.getAddress(),
-            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableBalance =
-              "751".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
-              "751".zeros(dynamicBaseToken.getMetadata.decimals)
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "751".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "751".zeros(dynamicBaseToken.getDecimals())
           )
         ) and accountBalanceMatcher(
           dynamicQuoteToken.getAddress(),
           TokenBalance(
             token = dynamicQuoteToken.getAddress(),
-            balance = "1000".zeros(dynamicQuoteToken.getMetadata.decimals),
-            allowance = "1000".zeros(dynamicQuoteToken.getMetadata.decimals),
-            availableBalance =
-              "998".zeros(dynamicQuoteToken.getMetadata.decimals),
-            availableAlloawnce =
-              "998".zeros(dynamicQuoteToken.getMetadata.decimals)
+            balance = "1000".zeros(dynamicQuoteToken.getDecimals()),
+            allowance = "1000".zeros(dynamicQuoteToken.getDecimals()),
+            availableBalance = "998".zeros(dynamicQuoteToken.getDecimals()),
+            availableAlloawnce = "998".zeros(dynamicQuoteToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -283,148 +280,99 @@ class MarketManagerRecoverySpec
         )
       )(account2)
 
-      Then(s"cancel the first order of ${account2.getAddress}")
-
-      val cancelReq =
-        CancelOrder.Req(
-          owner = order6.owner,
-          id = order6.hash,
-          status = STATUS_SOFT_CANCELLED_BY_USER,
-          time = BigInt(timeProvider.getTimeSeconds())
-        )
-      val sig = generateCancelOrderSig(cancelReq)(account2)
-      cancelReq
-        .withSig(sig)
-        .expect(check { res: CancelOrder.Res =>
-          res.status == cancelReq.status
-        })
-
-      val amountB: BigInt = order2.getAmountB
-      val amountS: BigInt = order2.getAmountS
-      val amountFee: BigInt = order2.getFeeParams.getAmountFee
-
-      Then("sleep 10 seconds to wait order1 expire")
-
-      Thread.sleep(10000)
-
       When(
-        "send PoisonPill to kill specific  marketManagerActor"
+        "send PoisonPill to kill specific OrderBookManagerActor shard"
       )
+      getOrderBookShardActor(dynamicMarketPair) ! PoisonPill
 
-      getMarketManagerShardActor(dynamicMarketPair) ! PoisonPill
+      Then("send a request to make specific order book manager actor restart")
 
-      Then("send a request to make specific market manager actor restart")
-
-      actors.get(MarketManagerActor.name) ! Notify(
+      actors.get(OrderbookManagerActor.name) ! Notify(
         KeepAliveActor.NOTIFY_MSG,
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )
 
-      Then("sleep 10 seconds to wait recover completion")
+      Then("wait 10 seconds for recovering")
 
       Thread.sleep(10000)
 
-      Then("the order book is recovered")
-      GetOrderbook
-        .Req(
-          size = 20,
-          marketPair = Some(dynamicMarketPair)
-        )
-        .expectUntil(
-          check(
+      Then(
+        "order book :total amount for sell is 440 and total buy amount is 580"
+      )
+
+      And(
+        s"the status of all  submitted orders is pending"
+      )
+
+      And("orderbook, account and orders are recovered")
+
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(
+          STATUS_PENDING,
+          order1.hash,
+          order2.hash,
+          order3.hash,
+          order4.hash,
+          order5.hash
+        ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "751".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "751".zeros(dynamicBaseToken.getDecimals())
+          )
+        ) and accountBalanceMatcher(
+          dynamicQuoteToken.getAddress(),
+          TokenBalance(
+            token = dynamicQuoteToken.getAddress(),
+            balance = "1000".zeros(dynamicQuoteToken.getDecimals()),
+            allowance = "1000".zeros(dynamicQuoteToken.getDecimals()),
+            availableBalance = "998".zeros(dynamicQuoteToken.getDecimals()),
+            availableAlloawnce = "998".zeros(dynamicQuoteToken.getDecimals())
+          )
+        ),
+        marketMatchers = Map.empty
+      )(account1)
+
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(
+          STATUS_PENDING,
+          order6.hash,
+          order7.hash,
+          order8.hash,
+          order9.hash
+        ),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "794".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "794".zeros(dynamicBaseToken.getDecimals())
+          )
+        ) and accountBalanceMatcher(
+          dynamicQuoteToken.getAddress(),
+          TokenBalance(
+            token = dynamicQuoteToken.getAddress(),
+            balance = "1000".zeros(dynamicQuoteToken.getDecimals()),
+            allowance = "1000".zeros(dynamicQuoteToken.getDecimals()),
+            availableBalance = "998".zeros(dynamicQuoteToken.getDecimals()),
+            availableAlloawnce = "998".zeros(dynamicQuoteToken.getDecimals())
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
             (res: GetOrderbook.Res) =>
-              res.getOrderbook.sells
-                .map(_.amount.toDouble)
-                .sum == (amountS + order3.getAmountS + order7.getAmountS) / "1"
-                .zeros(dynamicBaseToken.getDecimals()) &&
-                res.getOrderbook.buys
-                  .map(_.amount.toDouble)
-                  .sum == (amount2BigInt(
-                  order4.getAmountB
-                ) + order5.getAmountB + order8.getAmountB + order9.getAmountB) / "1"
-                  .zeros(dynamicBaseToken.getDecimals())
-          )
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 440 &&
+                res.getOrderbook.buys.map(_.amount.toDouble).sum == 580
+          ), defaultMatcher, defaultMatcher)
         )
-      And("orders are recovered")
-      GetOrders
-        .Req(
-          owner = account1.getAddress
-        )
-        .expectUntil(
-          containsInGetOrders(
-            STATUS_EXPIRED,
-            order1.hash
-          ) and containsInGetOrders(
-            STATUS_PENDING,
-            order2.hash,
-            order3.hash,
-            order4.hash,
-            order5.hash
-          )
-        )
+      )(account2)
 
-      GetOrders
-        .Req(
-          owner = account2.getAddress
-        )
-        .expectUntil(
-          containsInGetOrders(
-            STATUS_PENDING,
-            order7.hash,
-            order8.hash,
-            order9.hash
-          ) and containsInGetOrders(
-            STATUS_SOFT_CANCELLED_BY_USER,
-            order6.hash
-          )
-        )
-      And(s"${account1.getAddress} is recovered")
-
-      GetAccount
-        .Req(
-          address = account1.getAddress,
-          allTokens = true
-        )
-        .expectUntil(
-          accountBalanceMatcher(
-            dynamicBaseToken.getAddress(),
-            TokenBalance(
-              token = dynamicBaseToken.getAddress(),
-              balance = "1000"
-                .zeros(dynamicBaseToken.getDecimals()),
-              allowance = "1000"
-                .zeros(dynamicBaseToken.getDecimals()),
-              availableBalance =
-                "1000"
-                  .zeros(dynamicBaseToken.getDecimals()) - order2.getAmountS - order3.getAmountS - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee,
-              availableAlloawnce =
-                "1000"
-                  .zeros(dynamicBaseToken.getDecimals()) - order2.getAmountS - order3.getAmountS - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee
-            )
-          )
-        )
-      And(s"${account2.getAddress} is recovered")
-      GetAccount
-        .Req(
-          address = account2.getAddress,
-          allTokens = true
-        )
-        .expectUntil(
-          accountBalanceMatcher(
-            dynamicBaseToken.getAddress(),
-            TokenBalance(
-              token = dynamicBaseToken.getAddress(),
-              balance = "1000".zeros(dynamicBaseToken.getDecimals()),
-              allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
-              availableBalance =
-                "1000"
-                  .zeros(dynamicBaseToken.getDecimals()) - order7.getAmountS - order7.getFeeParams.getAmountFee,
-              availableAlloawnce =
-                "1000"
-                  .zeros(dynamicBaseToken.getDecimals()) - order7.getAmountS - order7.getFeeParams.getAmountFee
-            )
-          )
-        )
     }
   }
 }

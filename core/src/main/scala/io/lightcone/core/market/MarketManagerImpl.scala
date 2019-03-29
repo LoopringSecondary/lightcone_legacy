@@ -139,7 +139,6 @@ class MarketManagerImpl(
     } else if (dustOrderEvaluator.isOriginalDust(order)) {
       MatchResult(order.copy(status = STATUS_DUST_ORDER))
     } else if (dustOrderEvaluator.isActualDust(order)) {
-      println(s"actual dust -- ${order.id}")
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
     } else {
       // 不能removeOrder，因为深度是现有订单减去pending ring中的订单的，因此深度应该是正确的。

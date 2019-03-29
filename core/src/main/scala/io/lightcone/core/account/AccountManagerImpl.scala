@@ -109,6 +109,7 @@ final class AccountManagerImpl(
             _matchable = None
           )
           _ = { orderPool += order_.as(STATUS_PENDING) } // potentially replace the old one.
+          _ = println()
           (block, orderIdsToDelete) <- reserveForOrder(order_)
           ordersToDelete = orderIdsToDelete.map(orderPool.apply)
           _ = ordersToDelete.map { order =>
@@ -356,7 +357,7 @@ final class AccountManagerImpl(
     val requestedAmountS = order.requestedAmount(order.tokenS)
     val requestedAmountFee = order.requestedAmount(order.tokenFee)
 
-    if (requestedAmountS <= 0 || requestedAmountFee < 0) {
+    if (requestedAmountS < 0 || requestedAmountFee < 0) {
       orderPool += order.copy(status = STATUS_INVALID_DATA)
       Future.successful((0L, Set(order.id)))
     } else

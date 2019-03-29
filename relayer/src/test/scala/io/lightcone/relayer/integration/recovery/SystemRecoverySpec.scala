@@ -27,7 +27,7 @@ import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
 
-class AccountManagerRecoverySpec_system
+class SystemRecoverySpec
     extends FeatureSpec
     with GivenWhenThen
     with CommonHelper
