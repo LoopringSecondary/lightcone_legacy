@@ -167,7 +167,6 @@ class MultiAccountManagerActor(
       becomeReady()
     } else {
       log.debug(s"actor recover started: ${self.path}")
-      println(s"actor recover started: ${self.path}")
       context.become(recover)
       for {
         _ <- actors.get(EthereumQueryActor.name) ? Notify("echo") //检测以太坊准备好之后才发起恢复请求

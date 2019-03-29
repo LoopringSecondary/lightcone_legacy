@@ -17,7 +17,6 @@
 package io.lightcone.relayer.integration.recovery
 
 import akka.actor.PoisonPill
-import akka.util.Timeout
 import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
 import io.lightcone.relayer.actors._
@@ -26,8 +25,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
-
-import scala.concurrent.duration._
 import org.scalatest._
 
 class AccountManagerRecoverySpec_system
@@ -75,7 +72,7 @@ class AccountManagerRecoverySpec_system
           )
         )
 
-      When(s"${account1.getAddress} submit an order: sell 100")
+      And(s"${account1.getAddress} submit an order: sell 100")
 
       val order1 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
@@ -139,6 +136,14 @@ class AccountManagerRecoverySpec_system
         .Req(Some(order5))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
+      Then("total amount for sell is 240 and total buy amount is 305")
+
+      And(
+        s"the status of all ${account1.getAddress} submitted orders is pending"
+      )
+
+      And(s" ${account1.getAddress} available balance and allowance is 751")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(
           STATUS_PENDING,
@@ -179,10 +184,6 @@ class AccountManagerRecoverySpec_system
           ), defaultMatcher, defaultMatcher)
         )
       )(account1)
-
-      Then("total amount for sell is 240 and total buy amount is 305")
-
-      And(s" ${account1.getAddress} available balance and allowance is 751")
 
       When(s"${account2.getAddress} submit an order :sell 110")
 
@@ -236,6 +237,14 @@ class AccountManagerRecoverySpec_system
         .Req(Some(order9))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
+      Then("total amount for sell is 440 and total buy amount is 580")
+
+      And(
+        s"the status of all ${account2.getAddress} submitted orders is pending"
+      )
+
+      And(s" ${account2.getAddress} available balance and allowance is 794")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(
           STATUS_PENDING,
@@ -276,44 +285,47 @@ class AccountManagerRecoverySpec_system
         )
       )(account2)
 
-      Then("total amount for sell is 440 and total buy amount is 580")
-
-      And(s" ${account2.getAddress} available balance and allowance is 794")
-
       When(
         "send PoisonPill to kill specific multiAccountManagerActor marketManagerActor and OrderBookManagerActor shard"
       )
       getOrderBookShardActor(dynamicMarketPair) ! PoisonPill
-//      getAccountManagerShardActor(account1.getAddress) ! PoisonPill
+      getAccountManagerShardActor(account1.getAddress) ! PoisonPill
+      getAccountManagerShardActor(account2.getAddress) ! PoisonPill
       getMarketManagerShardActor(dynamicMarketPair) ! PoisonPill
 
       /*
        * must guard the restart sequence of OrderbookManagerActor,then MarketManagerActor and finally MultiAccountManagerActor
        * */
-      And("send a request to make specific order book manager actor restart")
+      Then("send a request to make specific order book manager actor restart")
 
       actors.get(OrderbookManagerActor.name) ! Notify(
         KeepAliveActor.NOTIFY_MSG,
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )
 
-      And("send a request to make specific market manager actor restart")
+      Then("send a request to make specific market manager actor restart")
 
       actors.get(MarketManagerActor.name) ! Notify(
         KeepAliveActor.NOTIFY_MSG,
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )
 
-      Thread.sleep(10000)
+      Then("send an request to make specific MultiAccountManager restart")
 
-//      And("send an request to make specific MultiAccountManager restart")
-//
-//      entryPointActor ! GetAccount.Req(
-//        address = account1.getAddress,
-//        allTokens = true
-//      )
-//
-//      Thread.sleep(10000)
+      entryPointActor ! GetAccount.Req(
+        address = account1.getAddress,
+        allTokens = true
+      )
+      entryPointActor ! GetAccount.Req(
+        address = account2.getAddress,
+        allTokens = true
+      )
+
+      Then("sleep 5 seconds to wait for recover completion")
+
+      Thread.sleep(5000)
+
+      Then("orders are recovered")
 
       GetOrders
         .Req(
@@ -329,8 +341,21 @@ class AccountManagerRecoverySpec_system
             order5.hash
           )
         )
+      GetOrders
+        .Req(
+          owner = account2.getAddress
+        )
+        .expectUntil(
+          containsInGetOrders(
+            STATUS_PENDING,
+            order6.hash,
+            order7.hash,
+            order8.hash,
+            order9.hash
+          )
+        )
 
-      Then("orders are recovered")
+      And(s"${account1.getAddress} is recovered")
 
       GetAccount
         .Req(
@@ -352,7 +377,7 @@ class AccountManagerRecoverySpec_system
           )
         )
 
-      And(s"${account1.getAddress} is recovered")
+      And(s"${account2.getAddress} is recovered")
 
       GetAccount
         .Req(
@@ -374,7 +399,7 @@ class AccountManagerRecoverySpec_system
           )
         )
 
-      And(s"${account2.getAddress} is recovered")
+      And("the order book is recovered")
 
       GetOrderbook
         .Req(
@@ -388,9 +413,6 @@ class AccountManagerRecoverySpec_system
                 res.getOrderbook.buys.map(_.amount.toDouble).sum == 580
           )
         )
-
-      And("the order book is recovered")
-
     }
   }
 }

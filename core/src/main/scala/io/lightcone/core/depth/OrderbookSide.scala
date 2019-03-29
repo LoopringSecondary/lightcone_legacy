@@ -97,8 +97,6 @@ private[core] trait OrderbookSide {
     ): Orderbook.Slot = {
     val id = getAggregationSlotFor(slot.slot)
 
-    println(s"slot:${slot.slot} -- id:$id")
-
     val old = slotMap.getOrElse(id, Orderbook.Slot(id, 0, 0))
     if (maintainUpdatedSlots && !oldSlots.contains(id)) {
       oldSlots += id -> old
@@ -152,10 +150,7 @@ private[core] trait OrderbookSide {
     }
 
     val slots = updatedSlots.filter {
-      case (id, slot) =>
-        if (!oldSlots.contains(id))
-          println(s"oldslots keys:${oldSlots.keys.mkString("-")}")
-        oldSlots(id) != slot
+      case (id, slot) => oldSlots(id) != slot
     }.values.toList
 
     oldSlots = Map.empty
@@ -164,7 +159,6 @@ private[core] trait OrderbookSide {
   }
 
   private[core] def getAggregationSlotFor(slot: Long) = {
-    println(s"slot:$slot--- aggregationScaling:${aggregationScaling}")
     if (isSell)
       (Math.ceil(slot / aggregationScaling) * aggregationScaling).toLong
     else (Math.floor(slot / aggregationScaling) * aggregationScaling).toLong

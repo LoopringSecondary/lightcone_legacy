@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration.recovery
 
 import akka.actor.PoisonPill
-import io.lightcone.core.OrderStatus.STATUS_PENDING
+import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
@@ -32,10 +32,12 @@ class AccountManagerRecoverySpec
     with CommonHelper
     with RecoveryHelper
     with ValidateHelper
+    with CancelHelper
     with Matchers {
 
   feature("test recovery") {
     scenario("account manager recovery") {
+      Given("two accounts with enough balance and allowance")
       implicit val account1 = getUniqueAccount()
       implicit val account2 = getUniqueAccount()
 
@@ -57,8 +59,6 @@ class AccountManagerRecoverySpec
           )
       })
 
-      Given("two accounts with enough balance and allowance")
-
       When("send an request to make specific MultiAccountManager start")
       GetAccount
         .Req(
@@ -71,69 +71,92 @@ class AccountManagerRecoverySpec
           )
         )
 
-      When(s"${account1.getAddress} submit an order: sell 100")
+      When(
+        s"${account1.getAddress} submit an order: sell 100 and validUntil == now + 10s "
+      )
 
       val order1 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "100".zeros(dynamicBaseToken.getDecimals())
+        amountS = "100".zeros(dynamicBaseToken.getDecimals()),
+        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 10
       )(account1)
       SubmitOrder
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      And(s"${account1.getAddress}  submit an order: sell 80")
+      And(
+        s"${account1.getAddress}  submit an order: sell 80 and validUntil == now + 10s "
+      )
 
       val order2 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "80".zeros(dynamicBaseToken.getDecimals())
+        amountS = "80".zeros(dynamicBaseToken.getDecimals()),
+        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 10
       )(account1)
 
       SubmitOrder
         .Req(Some(order2))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      And(s" ${account1.getAddress} submit an order: sell 60")
+      And(
+        s" ${account1.getAddress} submit an order: sell 60 and validUntil == now + 10s "
+      )
 
       val order3 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "60".zeros(dynamicBaseToken.getDecimals())
+        amountS = "60".zeros(dynamicBaseToken.getDecimals()),
+        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 10
       )(account1)
 
       SubmitOrder
         .Req(Some(order3))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      And(s" ${account1.getAddress} submit an order: buy 150  ")
+      And(
+        s" ${account1.getAddress} submit an order: buy 150 and validUntil == now + 10s "
+      )
       val order4 = createRawOrder(
         tokenB = dynamicBaseToken.getAddress(),
         tokenS = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "1".zeros(dynamicQuoteToken.getDecimals()),
-        amountB = "150".zeros(dynamicBaseToken.getDecimals())
+        amountB = "150".zeros(dynamicBaseToken.getDecimals()),
+        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 10
       )(account1)
       SubmitOrder
         .Req(Some(order4))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      And(s" ${account1.getAddress} submit an order: buy 155  ")
+      And(
+        s" ${account1.getAddress} submit an order: buy 155 and validUntil == now + 10s "
+      )
 
       val order5 = createRawOrder(
         tokenB = dynamicBaseToken.getAddress(),
         tokenS = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "1".zeros(dynamicQuoteToken.getDecimals()),
-        amountB = "155".zeros(dynamicBaseToken.getDecimals())
+        amountB = "155".zeros(dynamicBaseToken.getDecimals()),
+        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 10
       )(account1)
 
       SubmitOrder
         .Req(Some(order5))
         .expect(check((res: SubmitOrder.Res) => res.success))
+
+      Then("total amount for sell is 240 and total buy amount is 305")
+
+      And(
+        s"the status of all ${account1.getAddress} submitted orders is pending"
+      )
+
+      And(s" ${account1.getAddress} available balance and allowance is 751")
 
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(
@@ -175,10 +198,6 @@ class AccountManagerRecoverySpec
           ), defaultMatcher, defaultMatcher)
         )
       )(account1)
-
-      Then("total amount for sell is 240 and total buy amount is 305")
-
-      And(s" ${account1.getAddress} available balance and allowance is 751")
 
       When(s"${account2.getAddress} submit an order :sell 110")
 
@@ -232,6 +251,14 @@ class AccountManagerRecoverySpec
         .Req(Some(order9))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
+      Then("total amount for sell is 440 and total buy amount is 580")
+
+      And(
+        s"the status of all ${account1.getAddress} submitted orders is pending"
+      )
+
+      And(s" ${account2.getAddress} available balance and allowance is 794")
+
       defaultValidate(
         getOrdersMatcher = containsInGetOrders(
           STATUS_PENDING,
@@ -272,13 +299,43 @@ class AccountManagerRecoverySpec
         )
       )(account2)
 
-      Then("total amount for sell is 440 and total buy amount is 580")
+      Then(s"cancel the first order of ${account2.getAddress}")
 
-      And(s" ${account2.getAddress} available balance and allowance is 794")
-
-      When("send PoisonPill to kill specific multiAccountManagerActor shard")
+      val cancelReq =
+        CancelOrder.Req(
+          owner = order6.owner,
+          id = order6.hash,
+          status = STATUS_SOFT_CANCELLED_BY_USER,
+          time = BigInt(timeProvider.getTimeSeconds())
+        )
+      val sig = generateCancelOrderSig(cancelReq)(account2)
+      cancelReq
+        .withSig(sig)
+        .expect(check { res: CancelOrder.Res =>
+          res.status == cancelReq.status
+        })
+      Then("send PoisonPill to kill specific multiAccountManagerActor shard")
       getAccountManagerShardActor(account1.getAddress) ! PoisonPill
+      getAccountManagerShardActor(account2.getAddress) ! PoisonPill
 
+      Then("sleep 10 seconds to wait for orders expire")
+
+      Thread.sleep(10000)
+
+      Then("send an request to make specific MultiAccountManager restart")
+
+      entryPointActor ! GetAccount.Req(
+        address = account1.getAddress,
+        allTokens = true
+      )
+      entryPointActor ! GetAccount.Req(
+        address = account2.getAddress,
+        allTokens = true
+      )
+      Then("sleep 5 seconds to wait for recover completion")
+
+      Thread.sleep(5000)
+      Then("the order book is recovered")
       GetOrderbook
         .Req(
           size = 20,
@@ -287,20 +344,18 @@ class AccountManagerRecoverySpec
         .expectUntil(
           check(
             (res: GetOrderbook.Res) =>
-              res.getOrderbook.sells.map(_.amount.toDouble).sum == 440 &&
-                res.getOrderbook.buys.map(_.amount.toDouble).sum == 580
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 90 &&
+                res.getOrderbook.buys.map(_.amount.toDouble).sum == 275
           )
         )
-
-      Then("the order book is recovered")
-
+      And("orders are recovered")
       GetOrders
         .Req(
           owner = account1.getAddress
         )
         .expectUntil(
           containsInGetOrders(
-            STATUS_PENDING,
+            STATUS_EXPIRED,
             order1.hash,
             order2.hash,
             order3.hash,
@@ -316,16 +371,16 @@ class AccountManagerRecoverySpec
         .expectUntil(
           containsInGetOrders(
             STATUS_PENDING,
-            order6.hash,
             order7.hash,
             order8.hash,
             order9.hash
+          ) and containsInGetOrders(
+            STATUS_SOFT_CANCELLED_BY_USER,
+            order6.hash
           )
         )
+      And(s"${account1.getAddress} is recovered")
 
-      And("orders are recovered")
-
-      Thread.sleep(5000)
       GetAccount
         .Req(
           address = account1.getAddress,
@@ -339,14 +394,13 @@ class AccountManagerRecoverySpec
               balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
               allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
               availableBalance =
-                "751".zeros(dynamicBaseToken.getMetadata.decimals),
+                "1000".zeros(dynamicBaseToken.getMetadata.decimals),
               availableAlloawnce =
-                "751".zeros(dynamicBaseToken.getMetadata.decimals)
+                "1000".zeros(dynamicBaseToken.getMetadata.decimals)
             )
           )
         )
-
-      And(s"${account1.getAddress} is recovered")
+      And(s"${account2.getAddress} is recovered")
 
       GetAccount
         .Req(
@@ -361,15 +415,12 @@ class AccountManagerRecoverySpec
               balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
               allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
               availableBalance =
-                "794".zeros(dynamicBaseToken.getMetadata.decimals),
+                "907".zeros(dynamicBaseToken.getMetadata.decimals),
               availableAlloawnce =
-                "794".zeros(dynamicBaseToken.getMetadata.decimals)
+                "907".zeros(dynamicBaseToken.getMetadata.decimals)
             )
           )
         )
-
-      And(s"${account2.getAddress} is recovered")
-
     }
   }
 }
