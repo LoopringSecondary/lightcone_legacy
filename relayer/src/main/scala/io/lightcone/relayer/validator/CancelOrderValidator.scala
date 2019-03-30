@@ -47,65 +47,67 @@ final class CancelOrderValidator(
   val schemaJson = parse(schema)
   implicit val formats = DefaultFormats
 
-  def validate(
-      req: CancelOrder.Req
-    ): Future[Either[ErrorCode, CancelOrder.Req]] = {
+  def validate(req: CancelOrder.Req): Future[CancelOrder.Req] = {
     val current = timeProvider.getTimeSeconds()
 
-    if (req.owner.isEmpty ||
-        !Address.isValid(req.owner) ||
-        req.time.isEmpty ||
+    if (req.time.isEmpty ||
         NumericConversion.toBigInt(req.getTime) < current - validityInSeconds
-        || NumericConversion.toBigInt(req.getTime) > current) {
-      Future.successful(Left(ERR_INVALID_ARGUMENT))
-
-    } else if (!checkSign(req)) {
-      Future.successful(Left(ERR_INVALID_SIG))
-    } else {
-      req match {
-        case CancelOrder.Req("", owner, _, None, _, _) =>
-          Future.successful(Right(req.copy(owner = Address.normalize(owner))))
-
-        case CancelOrder.Req("", owner, _, Some(marketPair), _, _) =>
-          Future {
-            try {
-              metadataManager.isMarketStatus(marketPair, ACTIVE, READONLY)
-              Right(
-                req.copy(
-                  owner = Address.normalize(owner),
-                  marketPair = Some(marketPair.normalize())
-                )
-              )
-            } catch {
-              case _: Throwable =>
-                Left(ERR_INVALID_MARKET)
-            }
-          }
-
-        case CancelOrder.Req(id, owner, _, _, _, _) =>
-          dbModule.orderService.getOrder(req.id).map {
-            case Some(order) if order.owner == owner =>
-              //TODO(HONGYU,YONGFENG): 订单状态的变迁需要确定规则，另外是否需要在此处过滤
-              if (order.getState.status == STATUS_NEW ||
-                  order.getState.status == STATUS_PENDING ||
-                  order.getState.status == STATUS_PENDING_ACTIVE ||
-                  order.getState.status == STATUS_PARTIALLY_FILLED) {
-                Right(req.copy(owner = Address.normalize(req.owner)))
-              } else {
-                Left(ERR_ORDER_VALIDATION_INVALID_CANCELED)
-              }
-            case Some(_) =>
-              Left(ERR_ORDER_VALIDATION_INVALID_OWNER)
-
-            case None =>
-              Left(ERR_ORDER_NOT_EXIST)
-          }
+        || NumericConversion.toBigInt(req.getTime) > current || (req.id.isEmpty && (req.owner.isEmpty || !Address
+          .isValid(req.owner)))) {
+      Future {
+        throw ErrorException(
+          ERR_INVALID_ARGUMENT,
+          "invalid cancel order argument"
+        )
       }
     }
+    (req match {
+      case CancelOrder.Req("", owner, _, None, _, _) =>
+        Future.successful(req.copy(owner = Address.normalize(owner)))
+      case CancelOrder.Req("", owner, _, Some(marketPair), _, _) =>
+        Future {
+          try {
+            metadataManager.isMarketStatus(marketPair, ACTIVE, READONLY)
+            req.copy(
+              owner = Address.normalize(owner),
+              marketPair = Some(marketPair.normalize())
+            )
+          } catch {
+            case _: Throwable =>
+              throw ErrorException(ERR_INVALID_MARKET, "unsupported market")
+          }
+        }
 
+      case CancelOrder.Req(id, _, _, _, _, _) =>
+        dbModule.orderService.getOrder(id).map {
+          case Some(order) =>
+            //TODO(HONGYU,YONGFENG): 订单状态的变迁需要确定规则，另外是否需要在此处过滤
+            if (order.getState.status == STATUS_NEW ||
+                order.getState.status == STATUS_PENDING ||
+                order.getState.status == STATUS_PENDING_ACTIVE ||
+                order.getState.status == STATUS_PARTIALLY_FILLED) {
+              req.copy(owner = Address.normalize(order.owner))
+            } else {
+              throw ErrorException(
+                ERR_ORDER_VALIDATION_INVALID_CANCELED,
+                s"order status is ${order.getState.status} so that no need to cancel "
+              )
+            }
+          case None =>
+            throw ErrorException(ERR_ORDER_NOT_EXIST, "Order does not exist")
+        }
+    }).map { newReq =>
+      if (validateSign(newReq))
+        newReq
+      else
+        throw ErrorException(
+          ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG,
+          "invalid sig"
+        )
+    }
   }
 
-  private def checkSign(req: CancelOrder.Req): Boolean = {
+  private def validateSign(req: CancelOrder.Req): Boolean = {
     val cancelRequest = Map(
       "id" -> req.id,
       "owner" -> req.owner,

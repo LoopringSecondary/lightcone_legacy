@@ -21,6 +21,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
 import scala.concurrent._
+import MessageValidator._
 
 // Owner: Yadong
 object EthereumQueryMessageValidator {
@@ -34,19 +35,6 @@ final class EthereumQueryMessageValidator(
     val config: Config,
     ec: ExecutionContext)
     extends MessageValidator {
-
-  def normalize(addrOrSymbol: String): String =
-    metadataManager.getTokenWithSymbol(addrOrSymbol) match {
-      case Some(t) =>
-        t.getAddress()
-      case None if Address.isValid(addrOrSymbol) =>
-        Address.normalize(addrOrSymbol)
-      case _ =>
-        throw ErrorException(
-          code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"unexpected address or symbol $addrOrSymbol"
-        )
-    }
 
   // Throws exception if validation fails.
   def validate = {
