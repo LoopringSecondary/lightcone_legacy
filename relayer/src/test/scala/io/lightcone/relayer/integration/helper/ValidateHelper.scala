@@ -46,7 +46,7 @@ trait ValidateHelper {
           .Req(size = 100, marketPair = Some(pair))
           .expectUntil(orderbookMatcher)
         GetUserFills
-          .Req(owner = account.getAddress, marketPair = Some(pair))
+          .Req(owner = account.getAddress, market = Some(MarketFilter(Some(pair))))
           .expectUntil(userFillsMatcher)
         GetMarketFills.Req(Some(pair)).expectUntil(marketFillsMatcher)
     }

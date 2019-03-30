@@ -67,6 +67,17 @@ message OrderStatusMonitor {
 // TWO WAY REQUEST-RESPONSES (DB RELATD NOT INCLUDED)
 /////////////////////////////////////////////////////////////////////
 
+message GetOrderHash {
+    message Req {
+        io.lightcone.core.RawOrder raw_order = 1;
+    }
+
+    message Res {
+        string order_hash = 1;
+    }
+}
+
+
 message SubmitOrder {
     message Req {
         io.lightcone.core.RawOrder raw_order = 1;

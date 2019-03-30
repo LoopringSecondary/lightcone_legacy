@@ -24,7 +24,9 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.validator._
 import io.lightcone.core._
+import io.lightcone.ethereum.{RawOrderValidator, RawOrderValidatorImpl}
 import io.lightcone.relayer.data._
+
 import scala.concurrent.ExecutionContext
 
 // Owner: Hongyu
@@ -53,7 +55,17 @@ class EntryPointActor(
 
   import ErrorCode._
 
+  val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
+
   def receive = LoggingReceive {
+    case req: GetOrderHash.Req =>
+      try {
+        sender ! GetOrderHash.Res(orderValidator.calculateOrderHash(req.getRawOrder))
+      } catch {
+        case _: Throwable =>
+          sender ! Error(ERR_ORDER_VALIDATION_INVALID,"invalid order")
+      }
+
     case msg: Any =>
       findDestination(msg) match {
         case Some(dest) =>

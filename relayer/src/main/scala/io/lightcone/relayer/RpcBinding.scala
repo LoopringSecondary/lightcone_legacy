@@ -33,6 +33,10 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetOrderbook.Req]
     .replies[GetOrderbook.Res]
 
+  method("get_order_hash")
+    .accepts[GetOrderHash.Req]
+    .replies[GetOrderHash.Res]
+
   method("submit_order") //
     .accepts[SubmitOrder.Req] //
     .replies[SubmitOrder.Res]
