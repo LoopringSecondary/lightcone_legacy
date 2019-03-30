@@ -22,12 +22,11 @@ import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import com.google.inject.Inject
 import com.typesafe.config.Config
-import io.lightcone.core.{Currency, ErrorCode, ErrorException}
-import io.lightcone.persistence.TokenTickerRecord
+import io.lightcone.core.{ErrorCode, ErrorException}
 import io.lightcone.relayer.actors.ExternalCrawlerActor
 import org.slf4s.Logging
-import io.lightcone.relayer.implicits._
 import scala.concurrent.ExecutionContext
+import scala.collection.JavaConverters._
 
 class SinaFiatExchangeRateFetcher @Inject()(
     implicit
@@ -38,11 +37,21 @@ class SinaFiatExchangeRateFetcher @Inject()(
     extends FiatExchangeRateFetcher
     with Logging {
 
-  val currencyConfig = config.getConfig(ExternalCrawlerActor.name)
+  private val currencyConfig = config.getConfig(ExternalCrawlerActor.name)
+  private val baseCurrency = currencyConfig.getString("base_currency")
+  private val currencies = currencyConfig
+    .getStringList("currencies.fiat")
+    .asScala
+    .toSeq
+  private val sinaParameterCurrencyMap = currencies.map { c =>
+    s"fx_s${baseCurrency.toLowerCase}${c.toLowerCase}" -> c
+  }.toMap
+  private val uri = String.format(
+    currencyConfig.getString("sina.uri"),
+    sinaParameterCurrencyMap.keys.mkString(",")
+  )
 
-  val uri = currencyConfig.getString("sina.uri")
-
-  def fetchExchangeRates(fiat: Seq[String]) =
+  def fetchExchangeRates() =
     for {
       response <- Http().singleRequest(
         HttpRequest(
@@ -63,37 +72,33 @@ class SinaFiatExchangeRateFetcher @Inject()(
                 .split(";")
               val currencyMap = currencyArr.map { c =>
                 val currencyItem = c.split("=")
-                assert(currencyItem.length == 2)
-                val key = currencyItem(0)
-                val charArr = currencyItem(1).split(",")
-//              val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-//              val time = formatter.parse(charArr(17) + " " + charArr(0)).getTime
-//                assert(time > 0)
-                val currency = charArr(2).toDouble
-                assert(currency > 0)
-                if (key.indexOf("hq_str_fx_susdcny") > -1) {
-                  USD_RMB -> currency
-                } else if (key.indexOf("hq_str_fx_susdjpy") > -1) {
-                  USD_JPY -> currency
-                } else if (key.indexOf("hq_str_fx_seurusd") > -1) {
-                  USD_EUR -> toDouble(
-                    BigDecimal(1) / BigDecimal(currency)
-                  )
-                } else if (key.indexOf("hq_str_fx_sgbpusd") > -1) {
-                  USD_GBP -> toDouble(
-                    BigDecimal(1) / BigDecimal(currency)
-                  )
-                } else {
+                assert(currencyItem.nonEmpty)
+                val key = currencyItem(0).substring(11) // "var hq_str_fx_susdsgd" => "fx_susdsgd"
+                val currencySymbol = sinaParameterCurrencyMap.getOrElse(
+                  key,
                   throw ErrorException(
                     ErrorCode.ERR_INTERNAL_UNKNOWN,
-                    s"unsupport value: $c"
+                    s"not found request parameter:$key"
                   )
+                )
+                val pair = s"$baseCurrency-$currencySymbol"
+                if (currencyItem.length == 1) {
+                  log.error(
+                    s"Sina not return currency correctly. request:${currencyItem(0)} response:$c"
+                  )
+                  pair -> 0.0
+                } else {
+                  val charArr = currencyItem(1).split(",")
+                  // val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                  // val time = formatter.parse(charArr(17) + " " + charArr(0)).getTime
+                  // assert(time > 0)
+                  val currency = charArr(1).toDouble
+                  pair -> currency
                 }
               }.toMap
-
-              fillCurrencyTickersToPersistence(fiat.map { f =>
-                f -> currencyMap.getOrElse(f, 0.0)
-              }.toMap)
+              val result = currencyMap.filter(m => m._2 > 0)
+              assert(result.nonEmpty)
+              CrawlerHelper.fillCurrencyTickersToPersistence(result)
             }
 
         case m =>
@@ -104,42 +109,5 @@ class SinaFiatExchangeRateFetcher @Inject()(
           )
       }
     } yield res
-
-  private def fillCurrencyTickersToPersistence(
-      exchangeRate: Map[String, Double]
-    ) = {
-    exchangeRate.map { k =>
-      val price = scala.util
-        .Try(
-          (BigDecimal(1) / BigDecimal(k._2))
-            .setScale(8, BigDecimal.RoundingMode.HALF_UP)
-            .toDouble
-        )
-        .toOption
-        .getOrElse(0.0)
-      val currencies = k._1.split("-")
-      val currency = Currency
-        .fromName(currencies(1))
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found Currency of name:${currencies(1)}"
-          )
-        )
-      new TokenTickerRecord(
-        symbol = currencies(1),
-        slug = currency.getSlug(),
-        tokenAddress = currency.getAddress(),
-        price = price,
-        dataSource = "Sina"
-      )
-    }.toSeq
-  }
-
-  private def toDouble(bigDecimal: BigDecimal): Double =
-    scala.util
-      .Try(bigDecimal.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
-      .toOption
-      .getOrElse(0)
 
 }

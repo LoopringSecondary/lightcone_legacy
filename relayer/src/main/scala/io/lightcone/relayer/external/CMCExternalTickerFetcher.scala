@@ -32,7 +32,6 @@ import io.lightcone.core.ErrorException
 import io.lightcone.persistence._
 import io.lightcone.relayer.actors.ExternalCrawlerActor
 import io.lightcone.relayer.external.CMCResponse._
-import io.lightcone.relayer.implicits._
 
 class CMCExternalTickerFetcher @Inject()(
     implicit
@@ -58,7 +57,7 @@ class CMCExternalTickerFetcher @Inject()(
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
 
-  def fetchExternalTickers() = {
+  def fetchExternalTickers(symbolSlugs: Seq[CMCCrawlerConfigForToken]) = {
     for {
       response <- Http().singleRequest(
         HttpRequest(
@@ -75,8 +74,10 @@ class CMCExternalTickerFetcher @Inject()(
             .map { j =>
               j.status match {
                 case Some(r) if r.errorCode == 0 =>
-                  fillTickersToPersistence(
-                    j.data.map(normalizeTicker)
+                  CrawlerHelper.fillTokenTickersToPersistence(
+                    CrawlerHelper
+                      .filterSlugTickers(symbolSlugs, j.data)
+                      .map(CrawlerHelper.normalizeTicker)
                   )
                 case Some(r) if r.errorCode != 0 =>
                   log.error(
@@ -100,111 +101,5 @@ class CMCExternalTickerFetcher @Inject()(
           )
       }
     } yield res
-  }
-
-  def fillTickersToPersistence(tickersInUsd: Seq[CMCTickerData]) = {
-    fillERC20TokenTickersToPersistence(tickersInUsd).++:(
-      fillQuoteTickersToPersistence(tickersInUsd)
-    )
-  }
-
-  private def fillERC20TokenTickersToPersistence(
-      tickersInUsd: Seq[CMCTickerData]
-    ): Seq[TokenTickerRecord] = {
-    tickersInUsd
-      .filter(
-        t => t.platform.nonEmpty && t.platform.get.symbol == Currency.ETH.name
-      )
-      .map { t =>
-        val q = getQuote(t)
-        val p = t.platform.get
-        normalize(
-          TokenTickerRecord(
-            p.tokenAddress,
-            t.symbol,
-            t.slug,
-            q.price,
-            q.volume24H,
-            q.percentChange1H,
-            q.percentChange24H,
-            q.percentChange7D,
-            q.marketCap,
-            0,
-            false,
-            "CMC"
-          )
-        )
-      }
-  }
-
-  private def getQuote(ticker: CMCTickerData) = {
-    if (ticker.quote.get("USD").isEmpty) {
-      log.error(s"CMC not return ${ticker.symbol} quote for USD")
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"CMC not return ${ticker.symbol} quote for USD"
-      )
-    }
-    ticker.quote("USD")
-  }
-
-  private def normalize(record: TokenTickerRecord) = {
-    record.copy(
-      tokenAddress = record.tokenAddress.toLowerCase,
-      symbol = record.symbol.toUpperCase,
-      slug = record.slug.toLowerCase
-    )
-  }
-
-  private def fillQuoteTickersToPersistence(
-      tickersInUsd: Seq[CMCTickerData]
-    ) = {
-    QUOTE_TOKEN.map { t =>
-      val ticker = tickersInUsd
-        .find(u => u.symbol == t && u.platform.isEmpty)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found ticker for token: $t"
-          )
-        )
-      val quote = getQuote(ticker)
-      val currency = Currency
-        .fromName(t)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found Currency of name:$t"
-          )
-        )
-      normalize(
-        TokenTickerRecord(
-          currency.getAddress(),
-          t,
-          ticker.slug,
-          quote.price,
-          quote.volume24H,
-          quote.percentChange1H,
-          quote.percentChange24H,
-          quote.percentChange7D,
-          quote.marketCap,
-          0,
-          false,
-          "CMC"
-        )
-      )
-    }
-  }
-
-  private def normalizeTicker(ticker: CMCTickerData): CMCTickerData =
-    ticker.copy(
-      symbol = ticker.symbol.toUpperCase(),
-      slug = ticker.slug.toLowerCase()
-    )
-
-  private def convertDateToSecond(utcDateStr: String) = {
-    utcFormat
-      .parse(utcDateStr.replace("Z", " UTC"))
-      .getTime / 1000
   }
 }

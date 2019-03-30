@@ -338,19 +338,6 @@ message ChainReorganizationImpact {
    repeated BalanceOfToken accounts  = 2;
 }
 
-enum Currency {
-    // fiat currency
-    USD = 0;
-    CNY = 1;
-    JPY = 2; // 日元
-    EUR = 3; // 欧元
-    GBP = 4; // 英镑
-
-    // quote token
-    BTC = 100;
-    ETH = 101;
-}
-
 message MarketTicker {
     string base_token = 1;  // base token address
     string quote_token = 2; // quote token address

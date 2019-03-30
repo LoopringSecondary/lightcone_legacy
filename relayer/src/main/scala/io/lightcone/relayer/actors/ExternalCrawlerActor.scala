@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core._
@@ -91,12 +90,11 @@ class ExternalCrawlerActor(
   private def syncTickers() = this.synchronized {
     log.info("ExternalCrawlerActor run sync job")
     for {
-      tokenTickers <- externalTickerFetcher.fetchExternalTickers()
       tokenSymbolSlugs_ <- dbModule.cmcCrawlerConfigForTokenDal.getConfigs()
-      tokenTickers_ = filterSlugTickers(tokenSymbolSlugs_, tokenTickers)
-      currencyTickers <- fiatExchangeRateFetcher.fetchExchangeRates(
-        CURRENCY_EXCHANGE_PAIR
+      tokenTickers_ <- externalTickerFetcher.fetchExternalTickers(
+        tokenSymbolSlugs_
       )
+      currencyTickers <- fiatExchangeRateFetcher.fetchExchangeRates()
       persistTickers <- if (tokenTickers_.nonEmpty && currencyTickers.nonEmpty) {
         persistTickers(
           currencyTickers,
@@ -114,17 +112,6 @@ class ExternalCrawlerActor(
       tokenSymbolSlugs = tokenSymbolSlugs_
       tickers = persistTickers
       notifyChanged()
-    }
-  }
-
-  private def filterSlugTickers(
-      tokenSymbolSlugs: Seq[CMCCrawlerConfigForToken],
-      tokenTickers: Seq[TokenTickerRecord]
-    ) = {
-    val slugMap = tokenSymbolSlugs.map(t => t.slug -> t.symbol).toMap
-    val slugs = slugMap.keySet
-    tokenTickers.filter(t => slugs.contains(t.slug)).map { t =>
-      t.copy(symbol = slugMap(t.slug))
     }
   }
 

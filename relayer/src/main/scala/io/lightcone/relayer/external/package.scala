@@ -16,21 +16,19 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.core.Currency
-
 package object external {
 
-  val USD_RMB = s"${Currency.USD.name}-${Currency.CNY.name}"
-  val USD_JPY = s"${Currency.USD.name}-${Currency.JPY.name}"
-  val USD_EUR = s"${Currency.USD.name}-${Currency.EUR.name}"
-  val USD_GBP = s"${Currency.USD.name}-${Currency.GBP.name}"
-
-  val CURRENCY_EXCHANGE_PAIR = Seq(
-    USD_RMB,
-    USD_JPY,
-    USD_EUR,
-    USD_GBP
-  )
-
-  val QUOTE_TOKEN = Seq(Currency.BTC.name, Currency.ETH.name)
+//  val USD_RMB = s"${Currency.USD.name}-${Currency.CNY.name}"
+//  val USD_JPY = s"${Currency.USD.name}-${Currency.JPY.name}"
+//  val USD_EUR = s"${Currency.USD.name}-${Currency.EUR.name}"
+//  val USD_GBP = s"${Currency.USD.name}-${Currency.GBP.name}"
+//
+//  val CURRENCY_EXCHANGE_PAIR = Seq(
+//    USD_RMB,
+//    USD_JPY,
+//    USD_EUR,
+//    USD_GBP
+//  )
+//
+//  val QUOTE_TOKEN = Seq(Currency.BTC.name, Currency.ETH.name)
 }
