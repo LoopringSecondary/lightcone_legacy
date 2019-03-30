@@ -90,7 +90,7 @@ final class CancelOrderValidator(
             } else {
               throw ErrorException(
                 ERR_ORDER_VALIDATION_INVALID_CANCELED,
-                "order "
+                s"order status is ${order.getState.status} so that no need to cancel "
               )
             }
           case None =>
