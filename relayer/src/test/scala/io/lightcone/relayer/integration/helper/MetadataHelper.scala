@@ -45,7 +45,6 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
     val externalTickerRecords = tokens.map { token =>
       TokenTickerRecord(
         symbol = token.getMetadata.symbol,
-        slug = token.getMetadata.name,
         price = token.getTicker.price,
         isValid = true,
         timestamp = 10,

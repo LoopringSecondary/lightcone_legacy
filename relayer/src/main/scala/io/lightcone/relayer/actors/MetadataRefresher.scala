@@ -72,10 +72,15 @@ class MetadataRefresher(
 
   val baseCurrency = config.getString("external_crawler.base_currency")
   private var currencies = config
-    .getStringList("external_crawler.currencies")
+    .getStringList("external_crawler.currencies.fiat")
     .asScala
     .map(_ -> 0.0)
-    .toMap + (baseCurrency -> 1.0)
+    .toMap ++ config
+    .getStringList("external_crawler.currencies.token")
+    .asScala
+    .map(_ -> 0.0)
+    .toMap +
+    (baseCurrency -> 1.0)
 
   override def initialize() = {
     val f = for {

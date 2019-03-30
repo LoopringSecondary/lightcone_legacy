@@ -36,24 +36,26 @@ message CursorPaging {
     int32 size = 2;
 }
 
-
-
 message News {
 
 }
 
 message TokenTickerRecord {
+    enum Type {
+        TOKEN     = 0; // lrc, zrx, eth, btc
+        CURRENCY  = 1; // cny
+    }
     string token_address        = 1;
     string symbol               = 2;
-    string slug                 = 3;
-    double price                = 4;  //默认存储的为usd价格
-    double volume_24h           = 5;
-    double percent_change_1h    = 6;
-    double percent_change_24h   = 7;
-    double percent_change_7d    = 8;
-    double market_cap           = 9;
-    int64 timestamp             = 10;
-    bool  is_valid              = 11;
+    double price                = 3;  //默认存储的为usd价格
+    double volume_24h           = 4;
+    double percent_change_1h    = 5;
+    double percent_change_24h   = 6;
+    double percent_change_7d    = 7;
+    double market_cap           = 8;
+    int64 timestamp             = 9;
+    bool  is_valid              = 10;
+    Type  type                  = 11;
     string data_source          = 12;
 }
 
