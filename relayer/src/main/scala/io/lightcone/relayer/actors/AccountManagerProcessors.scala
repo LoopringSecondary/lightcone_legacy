@@ -81,7 +81,7 @@ trait AccountManagerProcessors {
 
               _ = matchRes.taker.status match {
                 case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
-                    STATUS_DUST_ORDER | STATUS_COMPLETELY_FILLED =>
+                    STATUS_DUST_ORDER =>
                   self ! CancelOrder.Req(
                     matchRes.taker.id,
                     owner,

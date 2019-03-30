@@ -62,27 +62,23 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
         tokens = Seq(dynamicBaseToken.getAddress())
       )
       getBalanceReq.expectUntil(
-        check((res: GetAccount.Res) => {
-          val lrc_ba =
-            res.getAccountBalance.tokenBalanceMap(dynamicBaseToken.getAddress())
-          NumericConversion.toBigInt(lrc_ba.getAllowance) == "30".zeros(
-            dynamicBaseToken.getMetadata.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == "30"
-            .zeros(dynamicBaseToken.getMetadata.decimals) &&
-          NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
-            dynamicBaseToken.getMetadata.decimals
-          ) &&
-          NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "1000"
-            .zeros(dynamicBaseToken.getMetadata.decimals)
-        })
+        accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "30".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "30".zeros(dynamicBaseToken.getDecimals())
+          )
+        )
       )
 
       When("submit an order.")
 
       val order = createRawOrder(
-        amountS = "50".zeros(dynamicBaseToken.getMetadata.decimals),
-        amountFee = "10".zeros(dynamicBaseToken.getMetadata.decimals),
+        amountS = "50".zeros(dynamicBaseToken.getDecimals()),
+        amountFee = "10".zeros(dynamicBaseToken.getDecimals()),
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress()
@@ -105,12 +101,9 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
         getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order.hash) and
           outStandingMatcherInGetOrders(
             RawOrder.State(
-              outstandingAmountS =
-                "50".zeros(dynamicBaseToken.getMetadata.decimals),
-              outstandingAmountB =
-                "1".zeros(dynamicQuoteToken.getMetadata.decimals),
-              outstandingAmountFee =
-                "10".zeros(dynamicBaseToken.getMetadata.decimals)
+              outstandingAmountS = "50".zeros(dynamicBaseToken.getDecimals()),
+              outstandingAmountB = "1".zeros(dynamicQuoteToken.getDecimals()),
+              outstandingAmountFee = "10".zeros(dynamicBaseToken.getDecimals())
             ),
             order.hash
           ),
@@ -118,12 +111,10 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
           dynamicBaseToken.getAddress(),
           TokenBalance(
             token = dynamicBaseToken.getAddress(),
-            balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            allowance = "30".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableBalance =
-              "970".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
-              "0".zeros(dynamicBaseToken.getMetadata.decimals)
+            balance = "1000".zeros(dynamicBaseToken.getDecimals()),
+            allowance = "30".zeros(dynamicBaseToken.getDecimals()),
+            availableBalance = "970".zeros(dynamicBaseToken.getDecimals()),
+            availableAlloawnce = "0".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(
