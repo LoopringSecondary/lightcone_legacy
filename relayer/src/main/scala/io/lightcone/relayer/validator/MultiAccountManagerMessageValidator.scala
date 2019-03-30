@@ -58,15 +58,9 @@ final class MultiAccountManagerMessageValidator(
 
   def validate = {
     case req: CancelOrder.Req =>
-      cancelOrderValidator.validate(req).map {
-        case Left(errorCode) =>
-          throw ErrorException(
-            errorCode,
-            message = s"invalid order in CancelOrder.Req:$req"
-          )
-        case Right(newReq) =>
-          newReq.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
-      }
+      cancelOrderValidator
+        .validate(req)
+        .map(_.copy(status = STATUS_SOFT_CANCELLED_BY_USER))
 
     case req: GetAccounts.Req =>
       Future {
