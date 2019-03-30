@@ -71,7 +71,8 @@ trait MetadataHelper extends DbHelper {
 
   def createAndSaveNewMarket(
       price1: Double = 1.0,
-      price2: Double = 1.0
+      price2: Double = 1.0,
+      status: MarketMetadata.Status = MarketMetadata.Status.ACTIVE
     )(
       implicit
       dbModule: DatabaseModule,
@@ -85,7 +86,7 @@ trait MetadataHelper extends DbHelper {
     val marketPair =
       MarketPair(tokens(0).getMetadata.address, tokens(1).getMetadata.address)
     val marketMetadata = MarketMetadata(
-      status = MarketMetadata.Status.ACTIVE,
+      status = status,
       baseTokenSymbol = tokens(0).getMetadata.symbol,
       quoteTokenSymbol = tokens(1).getMetadata.symbol,
       maxNumbersOfOrders = 1000,

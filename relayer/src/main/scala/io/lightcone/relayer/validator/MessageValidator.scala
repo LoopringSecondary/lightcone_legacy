@@ -17,9 +17,10 @@
 package io.lightcone.relayer.validator
 
 import io.lightcone.core.ErrorCode.ERR_INVALID_ARGUMENT
-import io.lightcone.core.{ErrorCode, ErrorException}
+import io.lightcone.core.{ErrorCode, ErrorException, MetadataManager}
 import io.lightcone.lib.Address
 import io.lightcone.persistence.{CursorPaging, Paging}
+
 import scala.concurrent.Future
 
 // Example:
@@ -108,6 +109,26 @@ object MessageValidator {
         Some(CursorPaging(size = pageConfig.defaultItemsPerPage))
     }
   }
+
+  def normalize(
+      addrOrSymbol: String
+    )(
+      implicit
+      metadataManager: MetadataManager
+    ): String = {
+    metadataManager.getTokenWithSymbol(addrOrSymbol) match {
+      case Some(t) =>
+        t.getAddress()
+      case None if Address.isValid(addrOrSymbol) =>
+        Address.normalize(addrOrSymbol)
+      case _ =>
+        throw ErrorException(
+          code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          message = s"invalid address or symbol $addrOrSymbol"
+        )
+    }
+  }
+
 }
 
 case class PageConfig(

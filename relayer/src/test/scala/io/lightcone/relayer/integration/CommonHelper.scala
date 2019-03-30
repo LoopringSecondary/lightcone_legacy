@@ -50,4 +50,6 @@ trait CommonHelper
     super.beforeEach()
   }
 
+  def prepareMarkets() = {}
+
 }
