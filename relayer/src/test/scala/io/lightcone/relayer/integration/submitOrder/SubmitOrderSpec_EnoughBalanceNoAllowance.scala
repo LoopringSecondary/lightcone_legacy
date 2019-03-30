@@ -64,18 +64,18 @@ class SubmitOrderSpec_EnoughBalanceNoAllowance
           tokens = Seq(dynamicBaseToken.getAddress())
         )
         .expectUntil(
-          check((res: GetAccount.Res) => {
-            val lrc_ba =
-              res.getAccountBalance
-                .tokenBalanceMap(dynamicBaseToken.getAddress())
-            NumericConversion.toBigInt(lrc_ba.getAllowance) == 0 &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableAlloawnce) == 0 &&
-            NumericConversion.toBigInt(lrc_ba.getBalance) == "1000".zeros(
-              dynamicBaseToken.getMetadata.decimals
-            ) &&
-            NumericConversion.toBigInt(lrc_ba.getAvailableBalance) == "1000"
-              .zeros(dynamicBaseToken.getMetadata.decimals)
-          })
+          accountBalanceMatcher(
+            dynamicBaseToken.getAddress(),
+            TokenBalance(
+              token = dynamicBaseToken.getAddress(),
+              balance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+              allowance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
+              availableBalance =
+                "1000".zeros(dynamicBaseToken.getMetadata.decimals),
+              availableAlloawnce =
+                "0".zeros(dynamicBaseToken.getMetadata.decimals)
+            )
+          )
         )
 
       When("submit an order.")
