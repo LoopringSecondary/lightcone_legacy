@@ -357,7 +357,10 @@ final class AccountManagerImpl(
     val requestedAmountFee = order.requestedAmount(order.tokenFee)
 
     if (requestedAmountS <= 0 || requestedAmountFee < 0) {
-      orderPool += order.copy(status = STATUS_INVALID_DATA)
+//      orderPool += order.copy(status = STATUS_INVALID_DATA)
+      //TODO(hongyu):
+      val reserveManager = getReserveManagerOption(order.tokenS, true)
+      reserveManager.release(orderId, requestedAmountS)
       Future.successful((0L, Set(order.id)))
     } else
       for {
