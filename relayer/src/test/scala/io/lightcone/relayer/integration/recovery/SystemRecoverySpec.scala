@@ -22,9 +22,9 @@ import io.lightcone.core._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
+import io.lightcone.relayer.getUniqueAccount
 import org.scalatest._
 
 class SystemRecoverySpec
