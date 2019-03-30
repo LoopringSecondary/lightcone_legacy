@@ -23,6 +23,7 @@ import akka.stream.ActorMaterializer
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.core.{ErrorCode, ErrorException}
+import io.lightcone.persistence.TokenTickerRecord
 import io.lightcone.relayer.actors.ExternalCrawlerActor
 import org.slf4s.Logging
 import scala.concurrent.ExecutionContext
@@ -98,7 +99,7 @@ class SinaFiatExchangeRateFetcher @Inject()(
               }.toMap
               val result = currencyMap.filter(m => m._2 > 0)
               assert(result.nonEmpty)
-              CrawlerHelper.fillCurrencyTickersToPersistence(result)
+              fillCurrencyTickersToPersistence(result)
             }
 
         case m =>
@@ -110,4 +111,24 @@ class SinaFiatExchangeRateFetcher @Inject()(
       }
     } yield res
 
+  private def fillCurrencyTickersToPersistence(
+      exchangeRate: Map[String, Double]
+    ) = {
+    exchangeRate.map { k =>
+      val price = scala.util
+        .Try(
+          (BigDecimal(1) / BigDecimal(k._2))
+            .setScale(8, BigDecimal.RoundingMode.HALF_UP)
+            .toDouble
+        )
+        .toOption
+        .getOrElse(0.0)
+      val currencies = k._1.split("-")
+      new TokenTickerRecord(
+        symbol = currencies(1),
+        price = price,
+        dataSource = "Sina"
+      )
+    }.toSeq
+  }
 }

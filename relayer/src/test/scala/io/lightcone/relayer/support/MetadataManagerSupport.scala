@@ -33,6 +33,9 @@ import scala.concurrent.{Await, Future}
 trait MetadataManagerSupport extends DatabaseModuleSupport {
   me: CommonSpec =>
 
+  implicit val externalTickerFetcher = new CMCExternalTickerFetcher()
+  implicit val fiatExchangeRateFetcher = new SinaFiatExchangeRateFetcher()
+
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
   var tickers: Seq[TokenTickerRecord] = Seq.empty[TokenTickerRecord]
 
@@ -128,9 +131,7 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
     res.status match {
       case Some(r) if r.errorCode == 0 =>
         Future.successful(
-          CrawlerHelper.fillTokenTickersToPersistence(
-            CrawlerHelper.filterSlugTickers(symbolSlugs, res.data)
-          )
+          externalTickerFetcher.filterSupportTickers(symbolSlugs, res.data)
         )
       case Some(r) if r.errorCode != 0 =>
         log.error(

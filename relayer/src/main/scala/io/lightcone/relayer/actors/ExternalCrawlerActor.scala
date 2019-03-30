@@ -74,7 +74,6 @@ class ExternalCrawlerActor(
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   private var tickers: Seq[TokenTickerRecord] = Seq.empty[TokenTickerRecord]
-  private var tokenSymbolSlugs = Seq.empty[CMCCrawlerConfigForToken]
 
   val repeatedJobs = Seq(
     Job(
@@ -90,10 +89,7 @@ class ExternalCrawlerActor(
   private def syncTickers() = this.synchronized {
     log.info("ExternalCrawlerActor run sync job")
     for {
-      tokenSymbolSlugs_ <- dbModule.cmcCrawlerConfigForTokenDal.getConfigs()
-      tokenTickers_ <- externalTickerFetcher.fetchExternalTickers(
-        tokenSymbolSlugs_
-      )
+      tokenTickers_ <- externalTickerFetcher.fetchExternalTickers()
       currencyTickers <- fiatExchangeRateFetcher.fetchExchangeRates()
       persistTickers <- if (tokenTickers_.nonEmpty && currencyTickers.nonEmpty) {
         persistTickers(
@@ -107,9 +103,7 @@ class ExternalCrawlerActor(
         Future.successful(Seq.empty)
       }
     } yield {
-      assert(tokenSymbolSlugs_ nonEmpty)
       assert(persistTickers.nonEmpty)
-      tokenSymbolSlugs = tokenSymbolSlugs_
       tickers = persistTickers
       notifyChanged()
     }

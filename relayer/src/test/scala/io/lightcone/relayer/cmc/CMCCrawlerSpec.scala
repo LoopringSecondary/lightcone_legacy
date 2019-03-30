@@ -63,7 +63,7 @@ class CMCCrawlerSpec
         ],
         50.second
       )
-      q1._1.length should be(1099)
+      q1._1.nonEmpty should be(true)
     }
 
     "getTokens require [metadata]" in {
@@ -270,11 +270,7 @@ class CMCCrawlerSpec
     res.status match {
       case Some(r) if r.errorCode == 0 =>
         Future.successful(
-          CrawlerHelper.fillTokenTickersToPersistence(
-            CrawlerHelper
-              .filterSlugTickers(symbolSlugs, res.data)
-              .map(CrawlerHelper.normalizeTicker)
-          )
+          externalTickerFetcher.filterSupportTickers(symbolSlugs, res.data)
         )
       case Some(r) if r.errorCode != 0 =>
         log.error(

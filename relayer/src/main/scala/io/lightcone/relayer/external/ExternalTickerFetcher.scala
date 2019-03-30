@@ -16,12 +16,10 @@
 
 package io.lightcone.relayer.external
 
-import io.lightcone.persistence.{CMCCrawlerConfigForToken, TokenTickerRecord}
+import io.lightcone.persistence.TokenTickerRecord
 import scala.concurrent.Future
 
 trait ExternalTickerFetcher {
 
-  def fetchExternalTickers(
-      symbolSlugs: Seq[CMCCrawlerConfigForToken]
-    ): Future[Seq[TokenTickerRecord]]
+  def fetchExternalTickers(): Future[Seq[TokenTickerRecord]]
 }

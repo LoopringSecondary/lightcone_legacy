@@ -38,6 +38,7 @@ class CMCExternalTickerFetcher @Inject()(
     val config: Config,
     val system: ActorSystem,
     val ec: ExecutionContext,
+    val dbModule: DatabaseModule,
     val materializer: ActorMaterializer)
     extends ExternalTickerFetcher
     with Logging {
@@ -57,8 +58,9 @@ class CMCExternalTickerFetcher @Inject()(
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
 
-  def fetchExternalTickers(symbolSlugs: Seq[CMCCrawlerConfigForToken]) = {
+  def fetchExternalTickers() = {
     for {
+      symbolSlugs <- dbModule.cmcCrawlerConfigForTokenDal.getConfigs()
       response <- Http().singleRequest(
         HttpRequest(
           method = HttpMethods.GET,
@@ -74,11 +76,7 @@ class CMCExternalTickerFetcher @Inject()(
             .map { j =>
               j.status match {
                 case Some(r) if r.errorCode == 0 =>
-                  CrawlerHelper.fillTokenTickersToPersistence(
-                    CrawlerHelper
-                      .filterSlugTickers(symbolSlugs, j.data)
-                      .map(CrawlerHelper.normalizeTicker)
-                  )
+                  filterSupportTickers(symbolSlugs, j.data)
                 case Some(r) if r.errorCode != 0 =>
                   log.error(
                     s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
@@ -102,4 +100,89 @@ class CMCExternalTickerFetcher @Inject()(
       }
     } yield res
   }
+
+  def filterSupportTickers(
+      tokenSymbolSlugs: Seq[CMCCrawlerConfigForToken],
+      tickers: Seq[CMCTickerData]
+    ): Seq[TokenTickerRecord] = {
+    fillTokenTickersToPersistence(
+      filterSlugTickers(tokenSymbolSlugs, tickers)
+        .map(normalizeTicker)
+    )
+  }
+
+  private def fillTokenTickersToPersistence(
+      tickersInUsd: Seq[CMCTickerData]
+    ): Seq[TokenTickerRecord] = {
+    tickersInUsd.map { t =>
+      val q = getQuote(t)
+      val tokenAddress = t.platform match {
+        case None    => ""
+        case Some(p) => p.tokenAddress
+      }
+      normalize(
+        TokenTickerRecord(
+          tokenAddress,
+          t.symbol,
+          q.price,
+          q.volume24H,
+          q.percentChange1H,
+          q.percentChange24H,
+          q.percentChange7D,
+          q.marketCap,
+          0,
+          false,
+          TokenTickerRecord.Type.TOKEN,
+          "CMC"
+        )
+      )
+    }
+  }
+
+  private def getQuote(ticker: CMCTickerData) = {
+    if (ticker.quote.get("USD").isEmpty) {
+      log.error(s"CMC not return ${ticker.symbol} quote for USD")
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"CMC not return ${ticker.symbol} quote for USD"
+      )
+    }
+    ticker.quote("USD")
+  }
+
+  private def normalize(record: TokenTickerRecord) = {
+    record.copy(
+      tokenAddress = record.tokenAddress.toLowerCase,
+      symbol = record.symbol.toUpperCase
+    )
+  }
+
+  private def filterSlugTickers(
+      tokenSymbolSlugs: Seq[CMCCrawlerConfigForToken],
+      tickers: Seq[CMCTickerData]
+    ) = {
+    val slugMap = tokenSymbolSlugs.map(t => t.slug -> t.symbol).toMap
+    val slugs = slugMap.keySet
+    tickers.filter(t => slugs.contains(t.slug)).map { t =>
+      t.copy(symbol = slugMap(t.slug))
+    }
+  }
+
+  private def normalizeTicker(ticker: CMCTickerData): CMCTickerData =
+    ticker.copy(
+      symbol = ticker.symbol.toUpperCase(),
+      slug = ticker.slug.toLowerCase()
+    )
+
+  private def convertDateToSecond(utcDateStr: String) = {
+    utcFormat
+      .parse(utcDateStr.replace("Z", " UTC"))
+      .getTime / 1000
+  }
+
+  private def toDouble(bigDecimal: BigDecimal): Double =
+    scala.util
+      .Try(bigDecimal.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .toOption
+      .getOrElse(0)
 }
