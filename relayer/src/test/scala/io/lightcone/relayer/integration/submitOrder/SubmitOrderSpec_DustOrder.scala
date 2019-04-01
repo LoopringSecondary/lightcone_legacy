@@ -68,7 +68,7 @@ class SubmitOrderSpec_DustOrder
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "1".zeros(dynamicBaseToken.getMetadata.decimals - 2),
+        amountS = "1".zeros(dynamicBaseToken.getMetadata.decimals - 4),
         amountFee = "1".zeros(dynamicBaseToken.getMetadata.decimals - 1),
         amountB = "1".zeros(dynamicQuoteToken.getMetadata.decimals - 5)
       )

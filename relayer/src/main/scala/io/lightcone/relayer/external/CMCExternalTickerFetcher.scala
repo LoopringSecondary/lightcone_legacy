@@ -32,13 +32,13 @@ import io.lightcone.core.ErrorException
 import io.lightcone.persistence._
 import io.lightcone.relayer.actors.ExternalCrawlerActor
 import io.lightcone.relayer.external.CMCResponse._
-import io.lightcone.relayer.implicits._
 
 class CMCExternalTickerFetcher @Inject()(
     implicit
     val config: Config,
     val system: ActorSystem,
     val ec: ExecutionContext,
+    val dbModule: DatabaseModule,
     val materializer: ActorMaterializer)
     extends ExternalTickerFetcher
     with Logging {
@@ -60,6 +60,7 @@ class CMCExternalTickerFetcher @Inject()(
 
   def fetchExternalTickers() = {
     for {
+      symbolSlugs <- dbModule.cmcCrawlerConfigForTokenDal.getConfigs()
       response <- Http().singleRequest(
         HttpRequest(
           method = HttpMethods.GET,
@@ -75,9 +76,7 @@ class CMCExternalTickerFetcher @Inject()(
             .map { j =>
               j.status match {
                 case Some(r) if r.errorCode == 0 =>
-                  fillTickersToPersistence(
-                    j.data.map(normalizeTicker)
-                  )
+                  filterSupportTickers(symbolSlugs, j.data)
                 case Some(r) if r.errorCode != 0 =>
                   log.error(
                     s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
@@ -102,39 +101,42 @@ class CMCExternalTickerFetcher @Inject()(
     } yield res
   }
 
-  def fillTickersToPersistence(tickersInUsd: Seq[CMCTickerData]) = {
-    fillERC20TokenTickersToPersistence(tickersInUsd).++:(
-      fillQuoteTickersToPersistence(tickersInUsd)
+  def filterSupportTickers(
+      tokenSymbolSlugs: Seq[CMCCrawlerConfigForToken],
+      tickers: Seq[CMCTickerData]
+    ): Seq[TokenTickerRecord] = {
+    fillTokenTickersToPersistence(
+      filterSlugTickers(tokenSymbolSlugs, tickers)
+        .map(normalizeTicker)
     )
   }
 
-  private def fillERC20TokenTickersToPersistence(
+  private def fillTokenTickersToPersistence(
       tickersInUsd: Seq[CMCTickerData]
     ): Seq[TokenTickerRecord] = {
-    tickersInUsd
-      .filter(
-        t => t.platform.nonEmpty && t.platform.get.symbol == Currency.ETH.name
-      )
-      .map { t =>
-        val q = getQuote(t)
-        val p = t.platform.get
-        normalize(
-          TokenTickerRecord(
-            p.tokenAddress,
-            t.symbol,
-            t.slug,
-            q.price,
-            q.volume24H,
-            q.percentChange1H,
-            q.percentChange24H,
-            q.percentChange7D,
-            q.marketCap,
-            0,
-            false,
-            "CMC"
-          )
-        )
+    tickersInUsd.map { t =>
+      val q = getQuote(t)
+      val tokenAddress = t.platform match {
+        case None    => ""
+        case Some(p) => p.tokenAddress
       }
+      normalize(
+        TokenTickerRecord(
+          tokenAddress,
+          t.symbol,
+          q.price,
+          q.volume24H,
+          q.percentChange1H,
+          q.percentChange24H,
+          q.percentChange7D,
+          q.marketCap,
+          0,
+          false,
+          TokenTickerRecord.Type.TOKEN,
+          "CMC"
+        )
+      )
+    }
   }
 
   private def getQuote(ticker: CMCTickerData) = {
@@ -151,48 +153,18 @@ class CMCExternalTickerFetcher @Inject()(
   private def normalize(record: TokenTickerRecord) = {
     record.copy(
       tokenAddress = record.tokenAddress.toLowerCase,
-      symbol = record.symbol.toUpperCase,
-      slug = record.slug.toLowerCase
+      symbol = record.symbol.toUpperCase
     )
   }
 
-  private def fillQuoteTickersToPersistence(
-      tickersInUsd: Seq[CMCTickerData]
+  private def filterSlugTickers(
+      tokenSymbolSlugs: Seq[CMCCrawlerConfigForToken],
+      tickers: Seq[CMCTickerData]
     ) = {
-    QUOTE_TOKEN.map { t =>
-      val ticker = tickersInUsd
-        .find(u => u.symbol == t && u.platform.isEmpty)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found ticker for token: $t"
-          )
-        )
-      val quote = getQuote(ticker)
-      val currency = Currency
-        .fromName(t)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found Currency of name:$t"
-          )
-        )
-      normalize(
-        TokenTickerRecord(
-          currency.getAddress(),
-          t,
-          ticker.slug,
-          quote.price,
-          quote.volume24H,
-          quote.percentChange1H,
-          quote.percentChange24H,
-          quote.percentChange7D,
-          quote.marketCap,
-          0,
-          false,
-          "CMC"
-        )
-      )
+    val slugMap = tokenSymbolSlugs.map(t => t.slug -> t.symbol).toMap
+    val slugs = slugMap.keySet
+    tickers.filter(t => slugs.contains(t.slug)).map { t =>
+      t.copy(symbol = slugMap(t.slug))
     }
   }
 
@@ -207,4 +179,10 @@ class CMCExternalTickerFetcher @Inject()(
       .parse(utcDateStr.replace("Z", " UTC"))
       .getTime / 1000
   }
+
+  private def toDouble(bigDecimal: BigDecimal): Double =
+    scala.util
+      .Try(bigDecimal.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+      .toOption
+      .getOrElse(0)
 }

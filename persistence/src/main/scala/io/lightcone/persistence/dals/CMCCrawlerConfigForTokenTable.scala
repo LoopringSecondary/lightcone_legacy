@@ -20,6 +20,7 @@ import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 
+//TODO(yongfeng)：初始化配置时需要把eth，btc配进去
 class CMCCrawlerConfigForTokenTable(tag: Tag)
     extends BaseTable[CMCCrawlerConfigForToken](
       tag,
@@ -27,7 +28,7 @@ class CMCCrawlerConfigForTokenTable(tag: Tag)
     ) {
 
   def id = slug
-  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"), O.PrimaryKey)
+  def slug = column[String]("slug", O.SqlType("VARCHAR(20)"), O.PrimaryKey)
   def symbol = column[String]("symbol", O.SqlType("VARCHAR(10)"))
 
   // indexes

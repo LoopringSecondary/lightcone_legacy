@@ -56,17 +56,6 @@ class TokenTickerRecordDalImpl @Inject()(
   def countTickers(timestamp: Long) =
     db.run(query.filter(_.timestamp === timestamp).size.result)
 
-  def getTickers(
-      timestamp: Long,
-      tokenSlugs: Seq[String]
-    ): Future[Seq[TokenTickerRecord]] =
-    db.run(
-      query
-        .filter(_.timestamp === timestamp)
-        .filter(_.slug inSet tokenSlugs)
-        .result
-    )
-
   def setValid(timestamp: Long) =
     for {
       result <- db.run(

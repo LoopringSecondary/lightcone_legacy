@@ -62,7 +62,7 @@ class MarketHistoryActor(
 
   def ready: Receive = {
     case data: OHLCRawData =>
-      (for {
+      for {
         saveRes <- dbModule.ohlcDataDal.saveData(data)
       } yield {
         saveRes._1 match {
@@ -74,7 +74,7 @@ class MarketHistoryActor(
               s"failed to save ohlcRawData: $data"
             )
         }
-      }) sendTo sender
+      }
 
     case req: GetMarketHistory.Req => {
       val marketPair = req.marketPair.getOrElse(

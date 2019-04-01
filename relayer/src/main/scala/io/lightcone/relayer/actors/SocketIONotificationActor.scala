@@ -48,7 +48,8 @@ class SocketIONotificationActor @Inject()(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val notifer: SocketIONotifier)
-    extends Actor {
+    extends Actor
+    with ActorLogging {
 
   def receive: Receive = {
     case order: RawOrder =>
@@ -57,6 +58,10 @@ class SocketIONotificationActor @Inject()(
     case accountUpdate: AccountUpdate =>
       notifer.notifyEvent(accountUpdateLinter.lint(accountUpdate))
 
-    case event: AnyRef => notifer.notifyEvent(event)
+    case event: AnyRef =>
+      log.debug(
+        s"-- SocketIONotificationActor -- event: ${event}, sender: ${sender}"
+      )
+      notifer.notifyEvent(event)
   }
 }
