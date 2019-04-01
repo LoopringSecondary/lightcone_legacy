@@ -16,10 +16,9 @@
 
 package io.lightcone.relayer.actors
 
-import akka.actor.{Address => _, _}
+import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.ethereum.extractor._
 import io.lightcone.lib._
 import io.lightcone.persistence._

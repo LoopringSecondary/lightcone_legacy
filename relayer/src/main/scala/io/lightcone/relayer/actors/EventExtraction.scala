@@ -30,7 +30,7 @@ import io.lightcone.relayer.ethereum._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util._
 
 trait EventExtraction {
   me: InitializationRetryActor =>

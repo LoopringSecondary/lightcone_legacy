@@ -29,7 +29,7 @@ import io.lightcone.ethereum._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent._
 import scala.util.Random
 
 // Owner: Hongyu
