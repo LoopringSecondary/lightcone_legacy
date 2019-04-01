@@ -27,9 +27,10 @@ import io.lightcone.relayer.base._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
+
+import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.util._
-import io.lightcone.relayer.external._
 import scala.concurrent.duration._
 
 // Owner: Hongyu
@@ -69,8 +70,18 @@ class MetadataRefresher(
 
   val mediator = DistributedPubSub(context.system).mediator
 
-  private var tokens = Seq.empty[Token]
-  private var markets = Seq.empty[Market]
+  val baseCurrency = config.getString("external_crawler.base_currency")
+  private val fiatCurrencies = config
+    .getStringList("external_crawler.currencies.fiat")
+    .asScala
+  private var currencies = fiatCurrencies
+    .map(_ -> 0.0)
+    .toMap ++ config
+    .getStringList("external_crawler.currencies.token")
+    .asScala
+    .map(_ -> 0.0)
+    .toMap +
+    (baseCurrency -> 1.0)
 
   override def initialize() = {
     val f = for {
@@ -88,81 +99,86 @@ class MetadataRefresher(
 
   def ready: Receive = {
     case req: MetadataChanged =>
-      for {
-        _ <- refreshMetadata()
-        _ = getLocalActors(
-          MarketManagerActor.name,
-          OrderbookManagerActor.name,
-          MultiAccountManagerActor.name
-        ).foreach(_ ! req)
-        _ = delayNotify(req)
-      } yield Unit
+      blocking {
+        for {
+          _ <- refreshMetadata()
+          _ = getLocalShardingActors(
+            MarketManagerActor.name,
+            OrderbookManagerActor.name,
+            MultiAccountManagerActor.name
+          ).foreach(_ ! req)
+          _ = delayNotify(req)
+        } yield Unit
+      }
 
     case req: NotifyChanged =>
-      getLocalActors(SocketIONotificationActor.name)
+      getLocalSingletonActors(SocketIONotificationActor.name)
         .foreach(_ ! req.metadataChanged)
 
-    case req: GetTokens.Req => {
-      val tokens_ = if (tokens.isEmpty) {
-        Seq.empty
-      } else {
-        if (req.tokens.nonEmpty) {
-          tokens
-            .filter(
-              t =>
-                t.metadata.nonEmpty && t.getMetadata.address.nonEmpty && req.tokens
-                  .contains(t.getMetadata.address)
-            )
-        } else {
-          val eth = tokens
-            .find(t => t.getSymbol() == Currency.ETH.name)
-            .getOrElse(
-              throw ErrorException(
-                ErrorCode.ERR_INTERNAL_UNKNOWN,
-                "not found ticker ETH"
-              )
-            )
-          tokens
-            .filter(_.getMetadata.`type` != TokenMetadata.Type.TOKEN_TYPE_ETH)
-            .:+(eth)
-        }
-      }
-      val res = tokens_.map { t =>
-        val metadataOpt = if (!req.requireMetadata) None else t.metadata
-        val infoOpt = if (!req.requireInfo) None else t.info
-        val tickerOpt = if (!req.requirePrice) {
+    case req: GetTokens.Req =>
+      val request =
+        if (req.quoteCurrencyForPrice.isEmpty)
+          req.copy(quoteCurrencyForPrice = baseCurrency)
+        else req
+      val requestTokens =
+        if (request.tokens.nonEmpty)
+          request.tokens
+            .map(metadataManager.getTokenWithAddress)
+            .filter(_.nonEmpty)
+            .map(_.get)
+        else
+          metadataManager.getTokens()
+
+      val res = requestTokens.map { t =>
+        val metadataOpt = if (request.requireMetadata) t.metadata else None
+        val infoOpt = if (request.requireInfo) t.info else None
+        val tickerOpt = if (!request.requirePrice) {
           None
         } else {
           Some(
             changeTokenTickerWithQuoteCurrency(
               t.getTicker,
-              req.quoteCurrencyForPrice
+              request.quoteCurrencyForPrice
             )
           )
         }
         Token(metadataOpt, infoOpt, tickerOpt)
       }
       sender ! GetTokens.Res(res)
-    }
 
     case req: GetMarkets.Req =>
       // TODO(yongfeng): req.queryLoopringTicker
-      val markets_ = if (req.marketPairs.isEmpty) {
-        markets
-      } else {
-        markets.filter(
-          m => req.marketPairs.contains(m.getMetadata.marketPair.get)
+      val request =
+        if (req.quoteCurrencyForTicker.isEmpty)
+          req.copy(quoteCurrencyForTicker = baseCurrency)
+        else req
+      if (!currencies.contains(request.quoteCurrencyForTicker)) {
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found exchange rate of currency:${request.quoteCurrencyForTicker}"
         )
       }
+      val markets_ = if (request.marketPairs.isEmpty) {
+        metadataManager.getMarkets()
+      } else {
+        request.marketPairs.map(metadataManager.getMarket)
+      }
       val res = markets_.map { m =>
-        val metadataOpt = if (!req.requireMetadata) None else m.metadata
-        val tickerOpt = if (!req.requireTicker) {
+        val metadataOpt = if (request.requireMetadata) m.metadata else None
+        val tickerOpt = if (!request.requireTicker) {
           None
         } else {
+          val baseTokenTicker = changeTokenTickerWithQuoteCurrency(
+            metadataManager
+              .getTokenWithSymbol(m.getMetadata.baseTokenSymbol)
+              .get
+              .getTicker,
+            request.quoteCurrencyForTicker
+          )
           Some(
-            changeMarketTickerWithQuoteCurrency(
-              m.ticker.get,
-              req.quoteCurrencyForTicker
+            m.getTicker.copy(
+              price = baseTokenTicker.price,
+              volume24H = baseTokenTicker.volume24H
             )
           )
         }
@@ -176,20 +192,38 @@ class MetadataRefresher(
       tokens_ <- (metadataManagerActor ? GetTokens.Req())
         .mapTo[GetTokens.Res]
         .map(_.tokens)
+      _ = log.debug(
+        s"MetadataRefresher --- refreshMetadata -- tokens_: ${tokens_.mkString}"
+      )
+      currencyPrices <- (metadataManagerActor ? GetCurrencies.Req())
+        .mapTo[GetCurrencies.Res]
+        .map(_.prices)
+      _ = log.debug(
+        s"MetadataRefresher --- refreshMetadata -- currencyPrices: ${currencyPrices.mkString}"
+      )
       markets_ <- (metadataManagerActor ? GetMarkets.Req())
         .mapTo[GetMarkets.Res]
         .map(_.markets)
+      _ = log.debug(
+        s"MetadataRefresher --- refreshMetadata -- markets_: ${markets_.mkString}"
+      )
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokens = tokens_
-      markets = markets_
-      metadataManager.reset(tokens, markets)
+      currencies = currencyPrices
+      metadataManager.reset(tokens_, markets_)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
-  private def getLocalActors(actorNames: String*) = {
+  private def getLocalShardingActors(actorNames: String*) = {
     val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
+
+    actorNames map { n =>
+      context.system.actorSelection(str.format(n))
+    }
+  }
+  private def getLocalSingletonActors(actorNames: String*) = {
+    val str = s"akka://${context.system.name}/user/%s/singleton"
 
     actorNames map { n =>
       context.system.actorSelection(str.format(n))
@@ -209,50 +243,21 @@ class MetadataRefresher(
 
   private def changeTokenTickerWithQuoteCurrency(
       baseTokenTicker: TokenTicker,
-      toCurrency: Currency
+      toCurrency: String
     ) = {
-    val precision = calcuatePricePrecision(toCurrency)
-    val price = calculatePrice(baseTokenTicker.price, toCurrency, precision)
-    if (toCurrency == Currency.USD) {
-      baseTokenTicker.copy(price = price)
-    } else {
-      val volume24H =
-        BigDecimal(baseTokenTicker.volume24H / baseTokenTicker.price * price)
-          .setScale(precision, BigDecimal.RoundingMode.HALF_UP)
-          .toDouble
-      baseTokenTicker.copy(price = price, volume24H = volume24H)
-    }
+    val precision = currencyPrecision(toCurrency)
+    val currencyPrice = currencies(toCurrency)
+    baseTokenTicker.copy(
+      price = calculate(baseTokenTicker.price, currencyPrice, precision),
+      volume24H = calculate(baseTokenTicker.volume24H, currencyPrice, precision)
+    )
   }
 
-  // TODO(yongfeng): 法币精度保留至2位是否够？0.001目前算法会变为0.00，是否要变为0.01？
-  private def calcuatePricePrecision(quoteCurrency: Currency) = {
-    if (QUOTE_TOKEN.contains(quoteCurrency.name)) { // ETH, BTC will set to 8 or token's precision
-      val quoteTokenOpt = tokens.find(_.getSymbol() == quoteCurrency.name)
-      if (quoteTokenOpt.nonEmpty)
-        quoteTokenOpt.get.getMetadata.precision | 8
-      else 8
-    } else 2 // RMB, JPY
-  }
-
-  private def calculatePrice(
-      basePrice: Double,
-      toCurrency: Currency,
-      precision: Int
-    ) = {
-    toCurrency match {
-      case Currency.USD =>
-        calculate(basePrice, 1, 2)
-      case _ =>
-        val currencyToken = tokens
-          .find(_.getSymbol() == toCurrency.name)
-          .getOrElse(
-            throw ErrorException(
-              ErrorCode.ERR_INTERNAL_UNKNOWN,
-              s"not found ticker of token symbol:${toCurrency.name}"
-            )
-          )
-        calculate(basePrice, currencyToken.getTicker.price, precision)
-    }
+  private def currencyPrecision(toCurrency: String) = {
+    if (fiatCurrencies.contains(toCurrency))
+      2
+    else
+      8
   }
 
   private def calculate(
@@ -264,55 +269,6 @@ class MetadataRefresher(
       .setScale(scale, BigDecimal.RoundingMode.HALF_UP)
       .toDouble
 
-  private def changeMarketTickerWithQuoteCurrency(
-      marketTicker: MarketTicker,
-      toCurrency: Currency
-    ) = {
-    val precision = calcuatePricePrecision(toCurrency)
-    if (toCurrency == Currency.USD) {
-      marketTicker.copy(price = calculate(marketTicker.price, 1, precision))
-    } else {
-      val baseTicker = getTickerByAddress(marketTicker.baseToken)
-      val quoteTicker = tokens
-        .find(_.getSymbol() == toCurrency.name)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found token of symbol:${toCurrency.name}"
-          )
-        )
-        .ticker
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found ticker of symbol:${toCurrency.name}"
-          )
-        )
-      val rateToQuoteToken =
-        calculate(baseTicker.price, quoteTicker.price, precision)
-      val volume24H =
-        calculate(baseTicker.volume24H, quoteTicker.price, precision)
-      marketTicker.copy(price = rateToQuoteToken, volume24H = volume24H)
-    }
-  }
-
-  private def getTickerByAddress(address: String) = {
-    tokens
-      .find(t => t.getAddress() == address)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found token of address: $address"
-        )
-      )
-      .ticker
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found ticker of address: $address"
-        )
-      )
-  }
 }
 
 case class NotifyChanged(metadataChanged: MetadataChanged)

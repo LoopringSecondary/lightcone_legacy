@@ -23,10 +23,11 @@ import slick.jdbc.MySQLProfile.api._
 class TokenTickerRecordTable(tag: Tag)
     extends BaseTable[TokenTickerRecord](tag, "T_TOKEN_TICKER_RECORD") {
 
+  implicit val typeColumnType = enumColumnType(TokenTickerRecord.Type)
+
   def id = symbol
   def tokenAddress = columnAddress("token_address")
   def symbol = column[String]("symbol", O.SqlType("VARCHAR(10)"))
-  def slug = column[String]("slug", O.SqlType("VARCHAR(50)"))
   def price = column[Double]("price")
   def volume24H = column[Double]("volume_24h")
   def percentChange1H = column[Double]("percent_change_1h")
@@ -35,6 +36,7 @@ class TokenTickerRecordTable(tag: Tag)
   def marketCap = column[Double]("market_cap")
   def timestamp = column[Long]("timestamp")
   def isValid = column[Boolean]("is_valid")
+  def `type` = column[TokenTickerRecord.Type]("type")
   def dataSource = column[String]("data_source")
 
   // indexes
@@ -45,14 +47,13 @@ class TokenTickerRecordTable(tag: Tag)
       unique = false
     )
 
-  def pk_timestamp_slug =
-    primaryKey("pk_timestamp_slug", (timestamp, slug))
+  def pk_timestamp_type_symbol =
+    primaryKey("pk_timestamp_type_symbol", (timestamp, `type`, symbol))
 
   def * =
     (
       tokenAddress,
       symbol,
-      slug,
       price,
       volume24H,
       percentChange1H,
@@ -61,6 +62,7 @@ class TokenTickerRecordTable(tag: Tag)
       marketCap,
       timestamp,
       isValid,
+      `type`,
       dataSource
     ) <> ((TokenTickerRecord.apply _).tupled, TokenTickerRecord.unapply)
 }

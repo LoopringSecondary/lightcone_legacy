@@ -45,27 +45,38 @@ trait RpcHelper extends Logging {
       var resMatched = false
       val lastTime = System
         .currentTimeMillis() + expectTimeout.duration.toMillis
+      var errOpt: Option[ErrorException] = None
       while (!resMatched &&
              System.currentTimeMillis() <= lastTime) {
         val res = Await.result(entryPointActor ? req, expectTimeout.duration)
         resOpt = res match {
           case err: ErrorException =>
-            if (m.runtimeClass == err.getClass)
+            if (m.runtimeClass == err.getClass) {
               Some(res.asInstanceOf[R])
-            else throw err
+            } else {
+              errOpt = Some(err)
+              None
+            }
           case msg =>
             Some(msg.asInstanceOf[R])
         }
-        res.getClass should be(m.runtimeClass)
-        resMatched = matcher(resOpt.get).matches
-        if (!resMatched) {
+        if (resOpt.nonEmpty) {
+          println(s"#### res ${res}")
+          res.getClass should be(m.runtimeClass)
+          resMatched = matcher(resOpt.get).matches
+        }
+        if (resOpt.isEmpty || !resMatched) {
           Thread.sleep(200)
         }
       }
       if (resOpt.isEmpty) {
-        throw new Exception(
-          s"Timed out waiting for result of req:${req} "
-        )
+        if (errOpt.nonEmpty) {
+          throw errOpt.get
+        } else {
+          throw new Exception(
+            s"Timed out waiting for result of req:${req} "
+          )
+        }
       } else {
         //最好判断，便于返回未匹配的信息
         resOpt.get should matcher

@@ -127,6 +127,20 @@ class CoreDeployer @Inject()(
       )
   }
 
+  def deployMetadata() = {
+    actors
+      .add(
+        MetadataManagerActor.name, //
+        MetadataManagerActor.start
+      )
+      .add(
+        MetadataRefresher.name, //
+        MetadataRefresher.start
+      )
+      .add(ExternalCrawlerActor.name, ExternalCrawlerActor.start)
+
+  }
+
   def deploy(): Unit = {
 
     //deploy ethereum actors
@@ -185,6 +199,7 @@ class CoreDeployer @Inject()(
 
       // TODO：按照模块分布，因为启动有依赖顺序
 
+      deployMetadata()
       //-----------deploy singleton actors-----------
       actors
         .add(
@@ -194,10 +209,6 @@ class CoreDeployer @Inject()(
         .add(
           OrderStatusMonitorActor.name, //
           OrderStatusMonitorActor.start
-        )
-        .add(
-          MetadataManagerActor.name, //
-          MetadataManagerActor.start
         )
         .add(
           ChainReorganizationManagerActor.name,
@@ -211,7 +222,6 @@ class CoreDeployer @Inject()(
           RingAndFillPersistenceActor.name,
           RingAndFillPersistenceActor.start
         )
-        .add(ExternalCrawlerActor.name, ExternalCrawlerActor.start)
         .add(ApplicationInfoActor.name, ApplicationInfoActor.start)
         .add(SocketIONotificationActor.name, SocketIONotificationActor.start)
 
@@ -256,10 +266,6 @@ class CoreDeployer @Inject()(
         .add(
           EntryPointActor.name, //
           EntryPointActor.start
-        )
-        .add(
-          MetadataRefresher.name, //
-          MetadataRefresher.start
         )
         .add(
           KeepAliveActor.name, //

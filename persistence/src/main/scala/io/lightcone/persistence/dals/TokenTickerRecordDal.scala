@@ -32,10 +32,5 @@ trait TokenTickerRecordDal
 
   def countTickers(timestamp: Long): Future[Int]
 
-  def getTickers(
-      timestamp: Long,
-      tokenSlugs: Seq[String]
-    ): Future[Seq[TokenTickerRecord]]
-
   def setValid(timestamp: Long): Future[ErrorCode]
 }
