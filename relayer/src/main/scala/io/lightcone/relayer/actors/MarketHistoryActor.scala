@@ -25,6 +25,7 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core._
+import io.lightcone.relayer.data._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.relayer.data.GetMarketHistory
 import scala.concurrent.ExecutionContext
@@ -82,14 +83,16 @@ class MarketHistoryActor(
           s"invalid marketPair:${req.marketPair}"
         )
       )
-      dbModule.ohlcDataService
-        .getOHLCData(
-          MarketHash(marketPair).hashString,
-          req.interval,
-          req.beginTime,
-          req.endTime
-        )
-        .sendTo(sender)
+      (for {
+        ohlcData <- dbModule.ohlcDataService
+          .getOHLCData(
+            marketPair.hashString,
+            req.interval,
+            req.beginTime,
+            req.endTime
+          )
+        res = GetMarketHistory.Res(ohlcData)
+      } yield res).sendTo(sender)
     }
 
     case req: BlockEvent =>

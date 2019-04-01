@@ -63,32 +63,32 @@ class FillDalImpl @Inject()(
     Future.sequence(fills.map(saveFill))
 
   def getFills(
-      owner: String,
-      txHash: String,
-      orderHash: String,
+      ownerOpt: Option[String],
+      txHashOpt: Option[String],
+      orderHashOpt: Option[String],
       ringHashOpt: Option[String],
       ringIndexOpt: Option[Long],
       fillIndexOpt: Option[Int],
       tokensOpt: Option[String],
       tokenbOpt: Option[String],
-      marketHashOpt: Option[MarketHash],
-      wallet: String,
-      miner: String,
+      marketHashOpt: Option[String],
+      walletOpt: Option[String],
+      minerOpt: Option[String],
       sort: SortingType,
       pagingOpt: Option[CursorPaging]
     ): Future[Seq[Fill]] = {
     var filters = queryFilters(
-      getOptString(owner),
-      getOptString(txHash),
-      getOptString(orderHash),
+      ownerOpt,
+      txHashOpt,
+      orderHashOpt,
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
       tokensOpt,
       tokenbOpt,
       marketHashOpt,
-      getOptString(wallet),
-      getOptString(miner)
+      walletOpt,
+      minerOpt
     )
     if (pagingOpt.nonEmpty) {
       val paging = pagingOpt.get
@@ -117,30 +117,30 @@ class FillDalImpl @Inject()(
   }
 
   def countFills(
-      owner: String,
-      txHash: String,
-      orderHash: String,
+      ownerOpt: Option[String],
+      txHashOpt: Option[String],
+      orderHashOpt: Option[String],
       ringHashOpt: Option[String],
       ringIndexOpt: Option[Long],
       fillIndexOpt: Option[Int],
       tokensOpt: Option[String],
       tokenbOpt: Option[String],
-      marketHashOpt: Option[MarketHash],
-      wallet: String,
-      miner: String
+      marketHashOpt: Option[String],
+      walletOpt: Option[String],
+      minerOpt: Option[String]
     ): Future[Int] = {
     val filters = queryFilters(
-      getOptString(owner),
-      getOptString(txHash),
-      getOptString(orderHash),
+      ownerOpt,
+      txHashOpt,
+      orderHashOpt,
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
       tokensOpt,
       tokenbOpt,
       marketHashOpt,
-      getOptString(wallet),
-      getOptString(miner)
+      walletOpt,
+      minerOpt
     )
     db.run(filters.size.result)
   }
@@ -166,10 +166,6 @@ class FillDalImpl @Inject()(
         .delete
     )
 
-  private def getOptString(str: String) = {
-    if (str.nonEmpty) Some(str) else None
-  }
-
   private def queryFilters(
       owner: Option[String] = None,
       txHash: Option[String] = None,
@@ -179,7 +175,7 @@ class FillDalImpl @Inject()(
       fillIndex: Option[Int] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       wallet: Option[String] = None,
       miner: Option[String] = None
     ): Query[FillTable, FillTable#TableElementType, Seq] = {
@@ -196,7 +192,7 @@ class FillDalImpl @Inject()(
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
     if (marketHashOpt.nonEmpty)
-      filters = filters.filter(_.marketHash === marketHashOpt.get.hashString)
+      filters = filters.filter(_.marketHash === marketHashOpt.get)
     if (wallet.nonEmpty) filters = filters.filter(_.wallet === wallet.get)
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
     filters

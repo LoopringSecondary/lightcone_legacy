@@ -47,8 +47,8 @@ trait ValidateHelper {
           .expectUntil(orderbookMatcher)
         GetUserFills
           .Req(
-            owner = account.getAddress,
-            market = Some(MarketFilter(Some(pair)))
+            owner = Some(account.getAddress),
+            market = Some(MarketFilter(marketPair = Some(pair)))
           )
           .expectUntil(userFillsMatcher)
         GetMarketFills.Req(Some(pair)).expectUntil(marketFillsMatcher)

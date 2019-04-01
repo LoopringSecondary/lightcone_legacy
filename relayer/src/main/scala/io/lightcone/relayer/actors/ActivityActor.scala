@@ -107,6 +107,7 @@ class ActivityActor(
     }
 
     case req: BlockEvent => // shard-broadcast message
+      log.debug(s"ActivityActor receive BlockEvent $req")
       (for {
         _ <- activityDal.cleanActivitiesForReorg(req)
       } yield {}).sendTo(sender)

@@ -68,7 +68,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketIds: Set[Long] = Set.empty,
+      marketHashes: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: SortingType = SortingType.ASC,
       pagingOpt: Option[CursorPaging] = None
@@ -79,7 +79,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       ownerOpt: Option[String] = None,
       tokensOpt: Option[String] = None,
       tokenbOpt: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       feeTokenOpt: Option[String] = None,
       sort: SortingType = SortingType.ASC,
       pagingOpt: Option[CursorPaging] = None
@@ -91,7 +91,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       feeToken: Option[String] = None
     ): Future[Int]
 
