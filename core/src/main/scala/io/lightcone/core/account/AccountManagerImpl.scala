@@ -16,6 +16,7 @@
 
 package io.lightcone.core
 
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 import io.lightcone.lib.TimeProvider
 import org.slf4s.Logging
 import scala.concurrent._
@@ -42,7 +43,8 @@ final class AccountManagerImpl(
 
   type ReserveManagerMethod = ReserveManager => Set[String]
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-  private implicit var tokens = Map.empty[String, ReserveManager]
+  private implicit val tokens: ConcurrentMap[String, ReserveManager] =
+    new ConcurrentHashMap[String, ReserveManager]
 
   private var block = 0L
   private var marketPairCutoffs = Map.empty[String, Long]
@@ -379,9 +381,9 @@ final class AccountManagerImpl(
       tokens_ : Set[String],
       mustReturn: Boolean
     ): Future[Map[String, ReserveManager]] = {
-    val (existing, missing) = tokens_.partition(tokens.contains)
+    val (existing, missing) = tokens_.partition(tokens.containsKey)
     val existingManagers =
-      existing.map(tokens.apply).map(m => m.token -> m).toMap
+      existing.map(tokens.get).map(m => m.token -> m).toMap
 
     if (!mustReturn) Future.successful(existingManagers)
     else
@@ -405,7 +407,7 @@ final class AccountManagerImpl(
                 enableTracing
               )
               manager.setBalanceAndAllowance(block, balance, allowance)
-              tokens += token -> manager
+              tokens.put(token, manager)
               token -> manager
           }
           .toMap
@@ -426,7 +428,6 @@ final class AccountManagerImpl(
               } yield Unit
           }
         }
-
       } yield newManagers ++ existingManagers
   }
 

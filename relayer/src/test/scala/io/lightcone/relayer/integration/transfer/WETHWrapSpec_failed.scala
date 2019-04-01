@@ -19,9 +19,9 @@ package io.lightcone.relayer.integration
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{GetAccount, GetActivities}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
+import io.lightcone.relayer.integration.helper._
 import org.scalatest._
 
 class WETHWrapSpec_failed
@@ -65,8 +65,8 @@ class WETHWrapSpec_failed
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities
-              .exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
+            res.activities.length == 2 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_PENDING)
           })
         )
 

@@ -17,14 +17,14 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.relayer._
-import io.lightcone.relayer.data.{GetAccount, GetActivities}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import org.scalatest._
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.lib.Address
 import io.lightcone.relayer.actors.ActivityActor
 import io.lightcone.relayer.integration.Metadatas._
-import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
+import io.lightcone.relayer.integration.helper._
 import io.lightcone.lib.NumericConversion._
 
 class TransferETHSpec_success

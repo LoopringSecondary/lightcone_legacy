@@ -19,9 +19,9 @@ package io.lightcone.relayer.integration
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{GetAccount, GetAccountNonce, GetActivities}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.helper.{AccountHelper, ActivityHelper}
+import io.lightcone.relayer.integration.helper._
 import org.scalatest._
 import akka.pattern._
 import io.lightcone.lib.Address
@@ -174,16 +174,16 @@ class TransferETHSpec_nonceFromActivity
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 8 && !res.activities
-              .exists(_.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 8 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_SUCCESS)
           })
         )
       GetActivities
         .Req(to.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 8 && !res.activities
-              .exists(_.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 8 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_SUCCESS)
           })
         )
 

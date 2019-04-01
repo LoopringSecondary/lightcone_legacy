@@ -17,12 +17,10 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{GetAccount, GetActivities}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
-import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
 
@@ -123,44 +121,12 @@ class TransferETHSpec_failed
         )
 
       getFromAddressBalanceReq.expectUntil(
-        balanceMatcher(
-          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            Address.ZERO.toString
-          ),
-          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            WETH_TOKEN.address
-          ),
-          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            LRC_TOKEN.address
-          ),
-          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            dynamicMarketPair.baseToken
-          ),
-          fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            dynamicMarketPair.quoteToken
-          )
-        )
+        initializeMatcher(dynamicMarketPair)
       )
 
       getToAddressBalanceReq
         .expectUntil(
-          balanceMatcher(
-            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-              Address.ZERO.toString
-            ),
-            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-              WETH_TOKEN.address
-            ),
-            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-              LRC_TOKEN.address
-            ),
-            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-              dynamicMarketPair.baseToken
-            ),
-            toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-              dynamicMarketPair.quoteToken
-            )
-          )
+          initializeMatcher(dynamicMarketPair)
         )
     }
   }

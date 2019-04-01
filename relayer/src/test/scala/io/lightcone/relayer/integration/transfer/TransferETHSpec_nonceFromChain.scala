@@ -101,16 +101,16 @@ class TransferETHSpec_nonceFromChain
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities
-              .exists(_.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 2 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_SUCCESS)
           })
         )
       GetActivities
         .Req(to.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities
-              .exists(_.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 2 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_SUCCESS)
           })
         )
 

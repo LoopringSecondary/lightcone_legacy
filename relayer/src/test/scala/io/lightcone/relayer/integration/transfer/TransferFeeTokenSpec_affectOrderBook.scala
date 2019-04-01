@@ -18,9 +18,8 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.relayer._
 import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
-import io.lightcone.core.{Orderbook, RawOrder}
+import io.lightcone.core._
 import io.lightcone.lib.Address
-import io.lightcone.lib.NumericConversion.{toAmount, _}
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._

@@ -20,7 +20,7 @@ import io.lightcone.ethereum.TxStatus
 import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{GetAccount, GetActivities}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
@@ -65,21 +65,22 @@ class WETHWrapSpec_success
         wrapAmount,
         nonce
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(1000)
+      //Thread.sleep(1000)
 
       Then("the account should query 2 pending activity")
       GetActivities
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities
-              .exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
+            res.activities.length == 2 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_PENDING)
           })
         )
 
       When("activities confirmed")
       val blockEvent =
         blockConfirmedEvent(account.getAddress, blockNumber, txHash, nonce)
+      eventDispatcher.dispatch(blockEvent)
       ActivityActor.broadcast(blockEvent)
       Thread.sleep(2000)
 
@@ -98,8 +99,8 @@ class WETHWrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities
-              .exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 2 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_SUCCESS)
           })
         )
 
@@ -117,6 +118,7 @@ class WETHWrapSpec_success
         balance = toBigInt(wethBalance.balance) + wrapAmount,
         availableBalance = toBigInt(wethBalance.availableBalance) + wrapAmount
       )
+
       getFromAddressBalanceReq.expectUntil(
         balanceMatcher(
           ethExpect,
