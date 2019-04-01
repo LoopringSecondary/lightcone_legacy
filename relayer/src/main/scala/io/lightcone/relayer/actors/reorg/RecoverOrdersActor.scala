@@ -44,7 +44,9 @@ class RecoverOrdersActor(
 
   def receive = {
     case ChainReorganizationImpact(orderIds_, _) =>
-      log.debug(s"started recovering orders [size=${orderIds.size}]")
+      if (orderIds != null) {
+        log.debug(s"started recovering orders [size=${orderIds.size}]")
+      }
       orderIds = orderIds_
       self ! NEXT
 

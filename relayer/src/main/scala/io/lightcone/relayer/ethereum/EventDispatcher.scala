@@ -60,7 +60,7 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
 
       case Some(names) =>
         val (found, notFound) = names.partition(actors.contains)
-        if (notFound.size > 0) {
+        if (notFound.nonEmpty) {
           log.error(
             s"unable to dispatch message to actor with the following names: $notFound"
           )
@@ -75,6 +75,7 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
           s"unable to broadcast message of type: ${evt.getClass.getName}"
         )
       case Some(receivers) =>
+        log.debug(s"EventDispatcher dispatch ${evt}")
         receivers.foreach(_.broadcast(evt))
     }
   }

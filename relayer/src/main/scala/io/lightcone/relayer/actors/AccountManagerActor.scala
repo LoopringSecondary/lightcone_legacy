@@ -205,7 +205,6 @@ class AccountManagerActor(
         val f1 = f.recoverWith {
           case e: ErrorException =>
             e.error.code match {
-
               case ERR_ORDER_VALIDATION_INVALID_CUTOFF |
                   ERR_ORDER_VALIDATION_INVALID_CANCELED =>
                 val o = rawOrder.withStatus(STATUS_ONCHAIN_CANCELLED_BY_USER)
@@ -221,7 +220,6 @@ class AccountManagerActor(
                     .mapAs[RawOrder]
                   resp = SubmitOrder.Res(Some(resRawOrder.toOrder), true)
                 } yield resp
-
               case _ => throw e
             }
         }

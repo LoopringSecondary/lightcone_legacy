@@ -21,6 +21,6 @@ import scala.concurrent.Future
 
 trait FiatExchangeRateFetcher {
 
-  def fetchExchangeRates(fiat: Seq[String]): Future[Seq[TokenTickerRecord]]
+  def fetchExchangeRates(): Future[Seq[TokenTickerRecord]]
 
 }

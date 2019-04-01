@@ -86,6 +86,7 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
     prepareDbModule(dbModule)
+    metadataManager.reset(Seq.empty, Seq.empty)
     prepareMetadata(TOKENS, MARKETS, TOKEN_SLUGS_SYMBOLS)
 
     injector
@@ -94,6 +95,7 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
 
     actors = injector.instance[Lookup[ActorRef]]
 
+    Thread.sleep(3000) //waiting for system
     waiting()
   }
 
@@ -104,7 +106,6 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
       timeout: Timeout,
       ec: ExecutionContext
     ) = {
-    Thread.sleep(5000) //waiting for system
     //waiting for market
 
     try Unreliables.retryUntilTrue(
@@ -115,11 +116,13 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
           Future.sequence(metadataManager.getMarkets(ACTIVE, READONLY).map {
             meta =>
               val marketPair = meta.getMetadata.marketPair.get
-              actors.get(MarketManagerActor.name) ? GetOrderbookSlots
-                .Req(Some(marketPair))
+              actors.get(MarketManagerActor.name) ? Notify(
+                KeepAliveActor.NOTIFY_MSG,
+                s"${marketPair.baseToken}-${marketPair.quoteToken}"
+              )
           })
         val res =
-          Await.result(f.mapTo[Seq[GetOrderbookSlots.Res]], timeout.duration)
+          Await.result(f, timeout.duration)
         res.nonEmpty
       }
     )

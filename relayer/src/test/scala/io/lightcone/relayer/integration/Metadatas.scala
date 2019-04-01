@@ -18,12 +18,11 @@ package io.lightcone.relayer.integration
 import io.lightcone.core._
 import io.lightcone.lib.Address
 import io.lightcone.persistence._
-import io.lightcone.relayer.implicits._
 
 object Metadatas {
 
   val WETH_TOKEN = TokenMetadata(
-    address = Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
+    address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc".toLowerCase(),
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "WETH",
@@ -32,7 +31,7 @@ object Metadatas {
   )
 
   val LRC_TOKEN = TokenMetadata(
-    address = Address("0x97241525fe425C90eBe5A41127816dcFA5954b06").toString,
+    address = "0x97241525fe425C90eBe5A41127816dcFA5954b06".toLowerCase(),
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "LRC",
@@ -41,7 +40,7 @@ object Metadatas {
   )
 
   val GTO_TOKEN = TokenMetadata(
-    address = Address("0x2d7233f72af7a600a8ebdfa85558c047c1c8f795").toString,
+    address = "0x2d7233f72af7a600a8ebdfa85558c047c1c8f795".toLowerCase(),
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "GTO",
@@ -51,7 +50,7 @@ object Metadatas {
 
   val ETH_TOKEN = TokenMetadata(
     `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
-    address = Address("0x0000000000000000000000000000000000000000").toString,
+    address = "0x0000000000000000000000000000000000000000",
     decimals = 18,
     symbol = "ETH",
     name = "ethereum",
@@ -118,11 +117,7 @@ object Metadatas {
     CMCCrawlerConfigForToken("BTC", "bitcoin"),
     CMCCrawlerConfigForToken("WETH", "weth"),
     CMCCrawlerConfigForToken("LRC", "loopring"),
-    CMCCrawlerConfigForToken("GTO", "gifto"),
-    CMCCrawlerConfigForToken(Currency.RMB.name, Currency.RMB.getSlug()),
-    CMCCrawlerConfigForToken(Currency.JPY.name, Currency.JPY.getSlug()),
-    CMCCrawlerConfigForToken(Currency.EUR.name, Currency.EUR.getSlug()),
-    CMCCrawlerConfigForToken(Currency.GBP.name, Currency.GBP.getSlug())
+    CMCCrawlerConfigForToken("GTO", "gifto")
   )
 
   val MARKETS = Seq(
@@ -152,7 +147,6 @@ object Metadatas {
     TokenTickerRecord(
       "",
       "BTC",
-      "bitcoin",
       3624.66357903,
       6.10383926822598e9,
       0.192219,
@@ -161,12 +155,12 @@ object Metadatas {
       6.357152464717556e10,
       0,
       false,
+      TokenTickerRecord.Type.TOKEN,
       "CMC"
     ),
     TokenTickerRecord(
-      "0x0000000000000000000000000000000000000000",
-      "ETH",
-      "ethereum",
+      ETH_TOKEN.address,
+      ETH_TOKEN.symbol,
       122.020909611,
       3.21120682830794e9,
       0.345868,
@@ -175,12 +169,12 @@ object Metadatas {
       1.2795500306946983e10,
       0,
       false,
+      TokenTickerRecord.Type.TOKEN,
       "CMC"
     ),
     TokenTickerRecord(
-      "0x97241525fe425c90ebe5a41127816dcfa5954b06",
-      "LRC",
-      "loopring",
+      LRC_TOKEN.address,
+      LRC_TOKEN.symbol,
       0.0566613345897,
       5372659.102917,
       -0.618224,
@@ -189,12 +183,12 @@ object Metadatas {
       4.470491422715433e7,
       0,
       false,
+      TokenTickerRecord.Type.TOKEN,
       "CMC"
     ),
     TokenTickerRecord(
-      "0x2d7233f72af7a600a8ebdfa85558c047c1c8f795",
-      "GTO",
-      "gifto",
+      GTO_TOKEN.address,
+      GTO_TOKEN.symbol,
       0.026678235137,
       1.02527274920197e7,
       0.994498,
@@ -203,12 +197,12 @@ object Metadatas {
       1.4251839270099403e7,
       0,
       false,
+      TokenTickerRecord.Type.TOKEN,
       "CMC"
     ),
     TokenTickerRecord(
-      "0x7cb592d18d0c49751ba5fce76c1aec5bdd8941fc",
-      "WETH",
-      "weth",
+      WETH_TOKEN.address,
+      WETH_TOKEN.symbol,
       117.627070345,
       174597.678357847,
       0.503386,
@@ -217,34 +211,35 @@ object Metadatas {
       0.0,
       0,
       false,
+      TokenTickerRecord.Type.TOKEN,
       "CMC"
     ),
     TokenTickerRecord(
-      symbol = Currency.RMB.name,
-      slug = Currency.RMB.getSlug(),
+      symbol = "CNY",
       price = 0.1487497,
       isValid = false,
+      `type` = TokenTickerRecord.Type.CURRENCY,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = Currency.JPY.name,
-      slug = Currency.JPY.getSlug(),
+      symbol = "JPY",
       price = 0.00900017,
       isValid = false,
+      `type` = TokenTickerRecord.Type.CURRENCY,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = Currency.EUR.name,
-      slug = Currency.EUR.getSlug(),
+      symbol = "EUR",
       price = 1.12334307,
       isValid = false,
+      `type` = TokenTickerRecord.Type.CURRENCY,
       dataSource = "Sina"
     ),
     TokenTickerRecord(
-      symbol = Currency.GBP.name,
-      slug = Currency.GBP.getSlug(),
+      symbol = "GBP",
       price = 1.2973534,
       isValid = false,
+      `type` = TokenTickerRecord.Type.CURRENCY,
       dataSource = "Sina"
     )
   ).map(_.copy(timestamp = timeProvider.getTimeSeconds()))

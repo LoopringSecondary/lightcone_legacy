@@ -17,13 +17,14 @@
 package io.lightcone.relayer.validator
 
 import com.typesafe.config.Config
-import io.lightcone.core.ErrorCode.ERR_INVALID_ARGUMENT
+import io.lightcone.core.ErrorCode._
 import io.lightcone.core._
 import io.lightcone.ethereum._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
+import MessageValidator._
 
 import scala.concurrent._
 
@@ -41,6 +42,7 @@ final class MultiAccountManagerMessageValidator(
     timeProvider: TimeProvider,
     ec: ExecutionContext,
     metadataManager: MetadataManager,
+    dustOrderEvaluator: DustOrderEvaluator,
     eip712Support: EIP712Support,
     dbModule: DatabaseModule)
     extends MessageValidator {
@@ -54,31 +56,11 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
   val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()
 
-  def normalize(addrOrSymbol: String): String = {
-    metadataManager.getTokenWithSymbol(addrOrSymbol) match {
-      case Some(t) =>
-        t.getAddress()
-      case None if Address.isValid(addrOrSymbol) =>
-        Address.normalize(addrOrSymbol)
-      case _ =>
-        throw ErrorException(
-          code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid address or symbol $addrOrSymbol"
-        )
-    }
-  }
-
   def validate = {
     case req: CancelOrder.Req =>
-      cancelOrderValidator.validate(req).map {
-        case Left(errorCode) =>
-          throw ErrorException(
-            errorCode,
-            message = s"invalid order in CancelOrder.Req:$req"
-          )
-        case Right(newReq) =>
-          newReq.copy(status = STATUS_SOFT_CANCELLED_BY_USER)
-      }
+      cancelOrderValidator
+        .validate(req)
+        .map(_.copy(status = STATUS_SOFT_CANCELLED_BY_USER))
 
     case req: GetAccounts.Req =>
       Future {
@@ -116,9 +98,9 @@ final class MultiAccountManagerMessageValidator(
         } else if (req.allTokens)
           req.copy(
             address = Address.normalize(req.address),
-            tokens = (req.tokens union metadataManager
+            tokens = (req.tokens.map(normalize) union metadataManager
               .getTokens()
-              .map(_.getMetadata.address)).distinct.map(normalize)
+              .map(_.getMetadata.address)).distinct
           )
         else if (req.tokens.nonEmpty)
           req.copy(
@@ -146,10 +128,17 @@ final class MultiAccountManagerMessageValidator(
               message = s"invalid order in SubmitOrder.Req:$order"
             )
           case Right(rawOrder) =>
+            if (dustOrderEvaluator.isOriginalDust(rawOrder.toOrder())) {
+              throw ErrorException(
+                ERR_ORDER_DUST_VALUE,
+                message = s"order value is too little"
+              )
+            }
+
             val marketPair = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
             metadataManager.assertMarketStatus(marketPair, ACTIVE)
 
-            val marketId = MarketHash(marketPair).longId
+            val marketHash = MarketHash(marketPair).hashString
 
             val now = timeProvider.getTimeMillis
             val state = RawOrder.State(
@@ -183,7 +172,7 @@ final class MultiAccountManagerMessageValidator(
                     )
                   ),
                 state = Some(state),
-                marketId = marketId,
+                marketHash = marketHash,
                 marketEntityId = MarketManagerActor.getEntityId(marketPair),
                 accountEntityId = MultiAccountManagerActor
                   .getEntityId(order.owner)

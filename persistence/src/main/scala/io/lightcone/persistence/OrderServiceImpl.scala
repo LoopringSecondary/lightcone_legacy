@@ -47,7 +47,7 @@ class OrderServiceImpl @Inject()(
           o.copy(
             state = Some(returnState),
             sequenceId = 0,
-            marketId = 0,
+            marketHash = "",
             marketEntityId = 0,
             accountEntityId = 0
           )
@@ -85,7 +85,7 @@ class OrderServiceImpl @Inject()(
       owners: Set[String],
       tokenSSet: Set[String],
       tokenBSet: Set[String],
-      marketIds: Set[Long],
+      marketHashes: Set[String],
       feeTokenSet: Set[String],
       sort: SortingType,
       pagingOpt: Option[CursorPaging]
@@ -96,7 +96,7 @@ class OrderServiceImpl @Inject()(
         owners,
         tokenSSet,
         tokenBSet,
-        marketIds,
+        marketHashes,
         feeTokenSet,
         sort,
         pagingOpt
@@ -108,7 +108,7 @@ class OrderServiceImpl @Inject()(
       ownerOpt: Option[String] = None,
       tokenSOpt: Option[String] = None,
       tokenBOpt: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       feeTokenOpt: Option[String] = None,
       sort: SortingType = SortingType.ASC,
       pagingOpt: Option[CursorPaging] = None
@@ -157,7 +157,7 @@ class OrderServiceImpl @Inject()(
       ownerOpt: Option[String] = None,
       tokenSOpt: Option[String] = None,
       tokenBOpt: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       feeTokenSet: Option[String] = None
     ): Future[Int] =
     orderDal.countOrdersForUser(

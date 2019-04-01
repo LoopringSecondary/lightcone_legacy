@@ -257,6 +257,16 @@ message GetBurnRate {
     }
 }
 
+message BatchGetBurnRate {
+    message Req {
+        repeated GetBurnRate.Req reqs = 1;
+        string tag = 2;
+    }
+    message Res {
+        repeated GetBurnRate.Res resps = 1;
+    }
+}
+
 message SendRawTx {
     message Req {
         bytes data = 1;
@@ -312,7 +322,7 @@ message GetMarkets {
         bool require_metadata = 1;
         bool require_ticker = 2;
         bool query_loopring_ticker = 3;
-        io.lightcone.core.Currency quote_currency_for_ticker = 4;  // USD, RMB
+        string quote_currency_for_ticker = 4;  // USD, RMB
         repeated io.lightcone.core.MarketPair market_pairs = 5; // empty for query all
     }
 
@@ -326,12 +336,20 @@ message GetTokens {
         bool require_metadata = 1;
         bool require_info = 2;
         bool require_price = 3;
-        io.lightcone.core.Currency quote_currency_for_price = 4;  // USD, RMB
+        string quote_currency_for_price = 4;  // USD, CNY
         repeated string tokens = 5; // addresses
     }
 
     message Res {
         repeated io.lightcone.core.Token tokens = 1;
+    }
+}
+
+message GetCurrencies {
+    message Req {}
+
+    message Res {
+        map<string, double> prices = 1;
     }
 }
 
@@ -349,19 +367,19 @@ message GetOrderbookSlots {
 message GetUserFills {
     message Req {
         message RingFilter {
-            string  ring_hash         = 1;
-            string  ring_index        = 2; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
-            string  fill_index        = 3;
+            google.protobuf.StringValue  ring_hash         = 1;
+            google.protobuf.Int64Value  ring_index        = 2; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
+            google.protobuf.Int32Value  fill_index        = 3;
         }
-        string        owner      = 1;
-        string        tx_hash    = 2;
-        string        order_hash = 3;
-        MarketFilter  market     = 4;
-        RingFilter    ring       = 5;
-        string        wallet     = 6;
-        string        miner      = 7;
-        io.lightcone.persistence.SortingType  sort   = 8;
-        io.lightcone.persistence.CursorPaging paging = 9;
+        google.protobuf.StringValue         owner       = 1;
+        google.protobuf.StringValue         tx_hash     = 2;
+        google.protobuf.StringValue         order_hash  = 3;
+        MarketFilter                        market      = 4;
+        RingFilter                          ring        = 5;
+        google.protobuf.StringValue         wallet      = 6;
+        google.protobuf.StringValue         miner       = 7;
+        io.lightcone.persistence.SortingType  sort      = 8;
+        io.lightcone.persistence.CursorPaging paging    = 9;
     }
 
     message Res {

@@ -38,6 +38,7 @@ trait CommonHelper
   override protected def beforeEach(): Unit = {
     setDefaultEthExpects()
     prepareDbModule(dbModule)
+    metadataManager.reset(Seq.empty, Seq.empty)
     prepareMetadata(TOKENS, MARKETS, TOKEN_SLUGS_SYMBOLS)
     val tokens = createAndSaveNewMarket()
     dynamicBaseToken = tokens(0)
@@ -46,8 +47,15 @@ trait CommonHelper
       dynamicBaseToken.getMetadata.address,
       dynamicQuoteToken.getMetadata.address
     )
-    integrationStarter.waiting()
+    try {
+      integrationStarter.waiting()
+    } catch {
+      case e: Exception =>
+        log.error(s"--- CommonHelper -- ${e.getMessage}, ${e.getCause}")
+    }
     super.beforeEach()
   }
+
+  def prepareMarkets() = {}
 
 }
