@@ -18,6 +18,7 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.core._
 import io.lightcone.ethereum._
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
@@ -40,7 +41,7 @@ trait OrderHelper {
       credentials: Credentials
     ) = {
     val createAt = timeProvider.getTimeMillis
-    val marketId = MarketHash(MarketPair(tokenS, tokenB)).longId
+    val marketHash = MarketPair(tokenS, tokenB).hashString
     val owner = credentials.getAddress
     val order = RawOrder(
       owner = owner,
@@ -60,7 +61,7 @@ trait OrderHelper {
       feeParams =
         Some(RawOrder.FeeParams(tokenFee = tokenFee, amountFee = amountFee)),
       params = Some(RawOrder.Params(validUntil = validUntil)),
-      marketId = marketId,
+      marketHash = marketHash,
       marketEntityId = MarketManagerActor
         .getEntityId(MarketPair(tokenS, tokenB)),
       accountEntityId = MultiAccountManagerActor

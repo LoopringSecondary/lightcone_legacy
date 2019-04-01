@@ -40,17 +40,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r3 = Await.result(
       dal
         .getFills(
-          owner1,
-          "",
-          "",
+          Some(owner1),
           None,
           None,
           None,
           None,
           None,
           None,
-          "",
-          "",
+          None,
+          None,
+          None,
+          None,
           SortingType.ASC,
           Some(CursorPaging(size = 10))
         )
@@ -60,17 +60,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c3 = Await.result(
       dal
         .countFills(
-          owner1,
-          "",
-          "",
+          Some(owner1),
           None,
           None,
           None,
           None,
           None,
           None,
-          "",
-          ""
+          None,
+          None,
+          None,
+          None
         )
         .mapTo[Int],
       5.second
@@ -81,17 +81,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r3_2 = Await.result(
       dal
         .getFills(
-          owner1,
-          "",
-          "",
+          Some(owner1),
           None,
           None,
           None,
           None,
           None,
           None,
-          "",
-          "",
+          None,
+          None,
+          None,
+          None,
           SortingType.DESC,
           Some(CursorPaging(size = 10))
         )
@@ -105,17 +105,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r3_3 = Await.result(
       dal
         .getFills(
-          "",
-          "",
-          "",
           None,
           None,
           None,
           None,
           None,
           None,
-          "",
-          "",
+          None,
+          None,
+          None,
+          None,
+          None,
           SortingType.ASC,
           Some(CursorPaging(cursor = 1, size = 10))
         )
@@ -128,17 +128,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r4 = Await.result(
       dal
         .getFills(
-          owner1,
-          "",
-          "",
+          Some(owner1),
           None,
           None,
           None,
           None,
           None,
-          Some(MarketHash(MarketPair(tokenS1, tokenB1))),
-          "",
-          "",
+          None,
+          None,
+          Some(MarketHash(MarketPair(tokenS1, tokenB1)).hashString()),
+          None,
+          None,
           SortingType.ASC,
           None
         )
@@ -148,17 +148,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c4 = Await.result(
       dal
         .countFills(
-          owner1,
-          "",
-          "",
+          Some(owner1),
           None,
           None,
           None,
           None,
           None,
-          Some(MarketHash(MarketPair(tokenS1, tokenB1))),
-          "",
-          ""
+          None,
+          None,
+          Some(MarketHash(MarketPair(tokenS1, tokenB1)).hashString()),
+          None,
+          None
         )
         .mapTo[Int],
       5.second
@@ -169,17 +169,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r6 = Await.result(
       dal
         .getFills(
-          "",
-          "",
-          "",
+          None,
+          None,
+          None,
           Some(hash2),
           None,
           None,
           None,
           None,
           None,
-          "",
-          "",
+          None,
+          None,
           SortingType.ASC,
           None
         )
@@ -189,17 +189,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c6 = Await.result(
       dal
         .countFills(
-          "",
-          "",
-          "",
+          None,
+          None,
+          None,
           Some(hash2),
           None,
           None,
           None,
           None,
           None,
-          "",
-          ""
+          None,
+          None
         )
         .mapTo[Int],
       5.second
@@ -209,17 +209,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r7 = Await.result(
       dal
         .getFills(
-          "",
-          "",
-          "",
+          None,
+          None,
+          None,
           Some(hash2),
           Some(2),
           Some(1),
           None,
           None,
           None,
-          "",
-          "",
+          None,
+          None,
           SortingType.ASC,
           None
         )
@@ -229,17 +229,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c7 = Await.result(
       dal
         .countFills(
-          "",
-          "",
-          "",
+          None,
+          None,
+          None,
           Some(hash2),
           Some(2),
           Some(1),
           None,
           None,
           None,
-          "",
-          ""
+          None,
+          None
         )
         .mapTo[Int],
       5.second
@@ -248,17 +248,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r8 = Await.result(
       dal
         .getFills(
-          "",
-          "",
-          "",
+          None,
+          None,
+          None,
           Some(hash2),
           Some(2),
           Some(2),
           None,
           None,
           None,
-          "",
-          "",
+          None,
+          None,
           SortingType.ASC,
           None
         )
@@ -268,17 +268,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c8 = Await.result(
       dal
         .countFills(
-          "",
-          "",
-          "",
+          None,
+          None,
+          None,
           Some(hash2),
           Some(2),
           Some(2),
           None,
           None,
           None,
-          "",
-          ""
+          None,
+          None
         )
         .mapTo[Int],
       5.second
@@ -289,17 +289,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r9 = Await.result(
       dal
         .getFills(
-          owner1,
-          hash1,
-          hash1,
+          Some(owner1),
+          Some(hash1),
+          Some(hash1),
           Some(hash1),
           Some(1),
           Some(0),
           Some(tokenS1),
           Some(tokenB1),
           None,
-          wallet,
-          miner,
+          Some(wallet),
+          Some(miner),
           SortingType.ASC,
           None
         )
@@ -309,17 +309,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c9 = Await.result(
       dal
         .countFills(
-          owner1,
-          hash1,
-          hash1,
+          Some(owner1),
+          Some(hash1),
+          Some(hash1),
           Some(hash1),
           Some(1),
           Some(0),
           Some(tokenS1),
           Some(tokenB1),
           None,
-          wallet,
-          miner
+          Some(wallet),
+          Some(miner)
         )
         .mapTo[Int],
       5.second
@@ -328,17 +328,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val r10 = Await.result(
       dal
         .getFills(
-          owner2,
-          hash1,
-          hash1,
+          Some(owner2),
+          Some(hash1),
+          Some(hash1),
           Some(hash1),
           Some(1),
           Some(0),
           Some(tokenS1),
           Some(tokenB1),
           None,
-          wallet,
-          miner,
+          Some(wallet),
+          Some(miner),
           SortingType.ASC,
           None
         )
@@ -348,17 +348,17 @@ class FillDalSpec extends DalSpec[FillDal] {
     val c10 = Await.result(
       dal
         .countFills(
-          owner2,
-          hash1,
-          hash1,
+          Some(owner2),
+          Some(hash1),
+          Some(hash1),
           Some(hash1),
           Some(1),
           Some(0),
           Some(tokenS1),
           Some(tokenB1),
           None,
-          wallet,
-          miner
+          Some(wallet),
+          Some(miner)
         )
         .mapTo[Int],
       5.second
