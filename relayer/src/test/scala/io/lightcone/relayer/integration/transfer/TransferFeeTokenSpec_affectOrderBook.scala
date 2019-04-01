@@ -80,7 +80,6 @@ class TransferFeeTokenSpec_affectOrderBook
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
       info(s"the result of submit order is ${submitRes1.success}")
-      Thread.sleep(1000)
 
       val orderbookMatcher1 = orderBookItemMatcher(
         Seq(

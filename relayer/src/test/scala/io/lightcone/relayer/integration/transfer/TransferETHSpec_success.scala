@@ -74,7 +74,6 @@ class TransferETHSpec_success
         "10".zeros(18),
         nonce
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(1000)
 
       Then("the each account should query one pending activity")
       GetActivities

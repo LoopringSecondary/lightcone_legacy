@@ -75,7 +75,6 @@ class TransferERC20Spec_failed
         "100".zeros(18),
         nonce
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(1000)
 
       Then("the each account should query one pending activity")
       GetActivities
@@ -108,7 +107,6 @@ class TransferERC20Spec_failed
         "100".zeros(18),
         nonce
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(1000)
 
       GetActivities
         .Req(account.getAddress)

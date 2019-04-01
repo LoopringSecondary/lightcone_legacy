@@ -78,7 +78,6 @@ class TransferERC20Spec_affectOrderBook
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
       info(s"the result of submit order is ${submitRes1.success}")
-      Thread.sleep(1000)
 
       val orderbookMatcher1 = orderBookItemMatcher(
         Seq(
@@ -149,7 +148,6 @@ class TransferERC20Spec_affectOrderBook
         "30".zeros(18),
         "70".zeros(18)
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(2000)
 
       val baseAvailable = toBigInt(baseBalance.availableBalance) - toBigInt(
         order1.amountS

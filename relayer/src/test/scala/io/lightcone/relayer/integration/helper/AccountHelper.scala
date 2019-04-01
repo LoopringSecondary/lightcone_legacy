@@ -88,13 +88,8 @@ trait AccountHelper extends Logging {
               tokenBalanceMap = req.tokens.map {
                 t =>
                   val balance = t match {
-                    case ETH_TOKEN.address =>
-                      initialBalance
-                        .tokenBalanceMap(t)
-                    case WETH_TOKEN.address =>
-                      initialBalance
-                        .tokenBalanceMap(t)
-                    case LRC_TOKEN.address =>
+                    case ETH_TOKEN.address | WETH_TOKEN.address |
+                        LRC_TOKEN.address =>
                       initialBalance
                         .tokenBalanceMap(t)
                     case dynamicMarketPair.baseToken =>

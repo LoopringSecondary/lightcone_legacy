@@ -81,7 +81,6 @@ class TransferInFeeTokenSpec_affectOrderBook
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
       info(s"the result of submit order is ${submitRes1.success}")
-      Thread.sleep(1000)
 
       val orderbookMatcher1 = orderBookItemMatcher(
         Seq(
@@ -152,7 +151,6 @@ class TransferInFeeTokenSpec_affectOrderBook
         "200".zeros(18),
         "600".zeros(18)
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(1000)
 
       Then("available balance should reduce")
       val lrcBalance2 = toInitBalanceRes.getAccountBalance.tokenBalanceMap(

@@ -65,7 +65,6 @@ class WETHWrapSpec_success
         wrapAmount,
         nonce
       ).foreach(eventDispatcher.dispatch)
-      //Thread.sleep(1000)
 
       Then("the account should query 2 pending activity")
       GetActivities
@@ -93,7 +92,6 @@ class WETHWrapSpec_success
         "10".zeros(18),
         "40".zeros(18)
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(2000)
 
       GetActivities
         .Req(account.getAddress)
