@@ -180,8 +180,6 @@ final class MultiAccountManagerMessageValidator(
             )
         }
       }
-
-    case req @ GetOrderHash.Req(Some(order)) =>
   }
 
 }

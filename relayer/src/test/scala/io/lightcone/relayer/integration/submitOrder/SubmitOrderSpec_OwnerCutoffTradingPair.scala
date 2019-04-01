@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
-import io.lightcone.core.ErrorCode.ERR_ORDER_VALIDATION_INVALID_CUTOFF
 import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
