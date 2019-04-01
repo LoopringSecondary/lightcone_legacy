@@ -20,7 +20,7 @@ import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
 import io.lightcone.core.RawOrder
 import io.lightcone.lib.Address
 import io.lightcone.relayer._
-import io.lightcone.relayer.data.{GetAccount, SubmitOrder}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.helper._
 import org.scalatest._
@@ -74,7 +74,7 @@ class TransferERC20Spec_affectOrderCancelled
       val order1 = createRawOrder(
         tokenS = dynamicMarketPair.baseToken,
         tokenB = dynamicMarketPair.quoteToken,
-        "50".zeros(18)
+        amountS = "50".zeros(18)
       )(account)
       val submitRes1 = SubmitOrder
         .Req(Some(order1))
@@ -120,23 +120,7 @@ class TransferERC20Spec_affectOrderCancelled
       )
 
       getToAddressBalanceReq.expectUntil(
-        balanceMatcher(
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            Address.ZERO.toString
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            WETH_TOKEN.address
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            LRC_TOKEN.address
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            dynamicMarketPair.baseToken
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            dynamicMarketPair.quoteToken
-          )
-        )
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("transfer activities confirmed")

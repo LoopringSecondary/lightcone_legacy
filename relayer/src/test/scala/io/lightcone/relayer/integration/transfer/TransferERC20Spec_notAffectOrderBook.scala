@@ -17,10 +17,10 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.core.OrderStatus.STATUS_PENDING
-import io.lightcone.core.{Orderbook, RawOrder}
+import io.lightcone.core._
 import io.lightcone.lib.Address
 import io.lightcone.relayer._
-import io.lightcone.relayer.data.{GetAccount, GetOrderbook, SubmitOrder}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
@@ -74,7 +74,7 @@ class TransferERC20Spec_notAffectOrderBook
       val order1 = createRawOrder(
         tokenS = dynamicMarketPair.baseToken,
         tokenB = dynamicMarketPair.quoteToken,
-        "30".zeros(18)
+        amountS = "30".zeros(18)
       )(account)
       val submitRes1 = SubmitOrder
         .Req(Some(order1))

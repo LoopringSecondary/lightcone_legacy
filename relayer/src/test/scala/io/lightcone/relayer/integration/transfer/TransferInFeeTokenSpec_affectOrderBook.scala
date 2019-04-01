@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.core.OrderStatus.STATUS_PENDING
-import io.lightcone.core.{Orderbook, RawOrder}
+import io.lightcone.core._
 import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion.toAmount
 import io.lightcone.relayer._
@@ -136,23 +136,7 @@ class TransferInFeeTokenSpec_affectOrderBook
         )
       )
       getToAddressBalanceReq.expectUntil(
-        balanceMatcher(
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            Address.ZERO.toString
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            WETH_TOKEN.address
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            LRC_TOKEN.address
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            dynamicMarketPair.baseToken
-          ),
-          toInitBalanceRes.getAccountBalance.tokenBalanceMap(
-            dynamicMarketPair.quoteToken
-          )
-        )
+        initializeMatcher(dynamicMarketPair)
       )
 
       When("transfer confirmed")

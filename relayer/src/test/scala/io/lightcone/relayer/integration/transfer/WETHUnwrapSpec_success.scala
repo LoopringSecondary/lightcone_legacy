@@ -20,7 +20,7 @@ import io.lightcone.ethereum.TxStatus
 import io.lightcone.lib.Address
 import io.lightcone.relayer._
 import io.lightcone.relayer.actors.ActivityActor
-import io.lightcone.relayer.data.{GetAccount, GetActivities}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration.helper._
@@ -72,8 +72,8 @@ class WETHUnwrapSpec_success
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities
-              .exists(a => a.txStatus != TxStatus.TX_STATUS_PENDING)
+            res.activities.length == 2 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_PENDING)
           })
         )
 
@@ -92,14 +92,14 @@ class WETHUnwrapSpec_success
         "30".zeros(18),
         "20".zeros(18)
       ).foreach(eventDispatcher.dispatch)
-      Thread.sleep(1000)
+      Thread.sleep(2000)
 
       GetActivities
         .Req(account.getAddress)
         .expectUntil(
           check((res: GetActivities.Res) => {
-            res.activities.length == 2 && !res.activities
-              .exists(a => a.txStatus != TxStatus.TX_STATUS_SUCCESS)
+            res.activities.length == 2 && res.activities
+              .forall(a => a.txStatus == TxStatus.TX_STATUS_SUCCESS)
           })
         )
 
