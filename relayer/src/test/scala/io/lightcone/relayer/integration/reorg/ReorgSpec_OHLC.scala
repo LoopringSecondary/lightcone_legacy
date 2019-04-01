@@ -22,6 +22,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
+import org.scalatest.matchers._
 
 class ReorgSpec_OHLC
     extends FeatureSpec
@@ -104,11 +105,13 @@ class ReorgSpec_OHLC
       Then("check the result of OHLC")
       val res1 = req
         .expect(
-          check(
-            (res: GetMarketHistory.Res) =>
-              res.data.nonEmpty &&
-                res.data(0).data(1) == 100.0
-          )
+          Matcher { res: GetMarketHistory.Res =>
+            MatchResult(
+              res.data.nonEmpty && res.data(0).data(1) == 100.0,
+              s" ${JsonPrinter.printJsonString(res)} value is not 100",
+              s"${JsonPrinter.printJsonString(res)} value is 100."
+            )
+          }
         )
     }
   }

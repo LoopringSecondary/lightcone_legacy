@@ -43,13 +43,13 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       timeProvider: TimeProvider
     ) = {
 
-    val timestamp = getUniqueInt()
+//    val timestamp = getUniqueInt()
     val externalTickerRecords = tokens.map { token =>
       TokenTickerRecord(
         symbol = token.getMetadata.symbol,
         price = token.getTicker.price,
         isValid = true,
-        timestamp = timestamp,
+        timestamp = 10,
         dataSource = "Dynamic"
       )
     }
@@ -66,14 +66,14 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
 
     Await.result(f, timeout.duration)
     Await.result(
-      dbModule.tokenTickerRecordDal.setValid(timestamp),
+      dbModule.tokenTickerRecordDal.setValid(10),
       timeout.duration
     )
 
-    metadataManager.reset(
-      metadataManager.getTokens() ++ tokens,
-      metadataManager.getMarkets() ++ markets
-    )
+//    metadataManager.reset(
+//      metadataManager.getTokens() ++ tokens,
+//      metadataManager.getMarkets() ++ markets
+//    )
 
 //    Thread.sleep(10)
     if (actorRefs != null && actorRefs.contains(MetadataManagerActor.name)) {
@@ -88,6 +88,7 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       GetTokens
         .Req(
           requireMetadata = true,
+          requirePrice = true,
           tokens = tokens.map(_.getMetadata.address)
         )
         .expectUntil(
@@ -96,7 +97,10 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
               tokens.forall(
                 t =>
                   res.tokens
-                    .exists(_.getMetadata.address == t.getMetadata.address)
+                    .exists(
+                      t =>
+                        t.getMetadata.address == t.getMetadata.address && t.getTicker.price > 0
+                    )
               )
           )
         )
@@ -104,8 +108,8 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
   }
 
   def createAndSaveNewMarket(
-      price1: Double = 1.0,
-      price2: Double = 1.0,
+      price1: Double = 100.0,
+      price2: Double = 100.0,
       status: MarketMetadata.Status = MarketMetadata.Status.ACTIVE
     )(
       implicit
@@ -171,7 +175,7 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       decimals: Int = 18,
       burnRate: BurnRate = BurnRate(0.4, 0.5),
       status: TokenMetadata.Status = TokenMetadata.Status.VALID,
-      price: Double = 1.0
+      price: Double = 100.0
     ): Token = {
     val i = getUniqueInt()
     val meta = TokenMetadata(

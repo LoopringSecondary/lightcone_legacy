@@ -59,7 +59,9 @@ class SocketIONotificationActor @Inject()(
       notifer.notifyEvent(accountUpdateLinter.lint(accountUpdate))
 
     case event: AnyRef =>
-      log.debug(s"-- SocketIONotificationActor -- event: ${event}")
+      log.debug(
+        s"-- SocketIONotificationActor -- event: ${event}, sender: ${sender}"
+      )
       notifer.notifyEvent(event)
   }
 }
