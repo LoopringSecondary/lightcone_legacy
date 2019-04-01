@@ -44,7 +44,6 @@ object AddedMatchers extends JsonSupport {
     def findOrder(res: GetOrders.Res) = hashes.map { hash =>
       res.orders.find(_.hash.toLowerCase() == hash.toLowerCase())
     }
-
     Matcher { res: GetOrders.Res =>
       MatchResult(
         findOrder(res).count(_.nonEmpty) == hashes.size,
@@ -63,6 +62,33 @@ object AddedMatchers extends JsonSupport {
         )
       }
   }
+
+  def containsInGetOrderByHash(
+                           orderStatus: OrderStatus,
+                           hashes: String*
+                         ) = {
+    def findOrder(res: GetOrderByHash.BatchRes) = hashes.map { hash =>
+      res.orders.find(_.hash.toLowerCase() == hash.toLowerCase())
+    }
+    Matcher { res: GetOrderByHash.BatchRes =>
+      MatchResult(
+        findOrder(res).count(_.nonEmpty) == hashes.size,
+        s" ${JsonPrinter.printJsonString(res)} doesn't contains order: $hashes",
+        s"${JsonPrinter.printJsonString(res)} contains it."
+      )
+    } and
+      Matcher { res: GetOrderByHash.BatchRes =>
+        MatchResult(
+          findOrder(res).count(
+            _.get.getState.status == orderStatus
+          ) == hashes.size,
+          s"The status of order:${findOrder(res)
+            .map(JsonPrinter.printJsonString)} in result isn't  ${orderStatus}. ",
+          "the status matched."
+        )
+      }
+  }
+
 
   def outStandingMatcherInGetOrders(
       state: RawOrder.State,
