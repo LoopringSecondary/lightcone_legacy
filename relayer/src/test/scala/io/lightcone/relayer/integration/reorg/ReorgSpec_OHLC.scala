@@ -33,7 +33,7 @@ class ReorgSpec_OHLC
     with Matchers {
 
   feature("test reorg of OHLC ") {
-    scenario("the value of account's balance and allowance after forked") {
+    scenario("the market history after forked") {
 
       Given("three OHLC event in different block")
       val currentTime = 1553856200
@@ -104,7 +104,7 @@ class ReorgSpec_OHLC
 
       Then("check the result of OHLC")
       val res1 = req
-        .expect(
+        .expectUntil(
           Matcher { res: GetMarketHistory.Res =>
             MatchResult(
               res.data.nonEmpty && res.data(0).data(1) == 100.0,
