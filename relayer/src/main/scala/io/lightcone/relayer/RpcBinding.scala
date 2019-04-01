@@ -46,6 +46,10 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetOrders.Req]
     .replies[GetOrders.Res]
 
+  method("get_order_by_hash")
+    .accepts[GetOrderByHash.BatchReq]
+    .replies[GetOrderByHash.BatchRes]
+
   method("get_user_fills")
     .accepts[GetUserFills.Req]
     .replies[GetUserFills.Res]

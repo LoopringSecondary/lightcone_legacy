@@ -163,6 +163,11 @@ class DatabaseQueryActor(
         result <- dbModule.ringDal
           .getRings(ringHashOpt, ringIndexOpt, req.sort, req.paging)
       } yield GetRings.Res(result)) sendTo sender
+
+    case GetOrderByHash.BatchReq(hashes) =>
+      dbModule.orderDal
+        .getOrders(hashes)
+        .map(orders => GetOrderByHash.BatchRes(orders)) sendTo sender
   }
 
   private def getMarketQueryParameters(marketOpt: Option[MarketFilter]) = {
