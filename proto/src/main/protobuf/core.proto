@@ -80,6 +80,8 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2013;
     ERR_ORDER_VALIDATION_INVALID_CANCELED                   = 2014;
     ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG                 = 2015;
+    ERR_ORDER_DUST_VALUE                                    = 2016;
+    ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG                 = 2017;
 
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
@@ -306,7 +308,7 @@ message RawOrder  {
     ERC1400Params   erc1400_params          = 12;
     State state                             = 13;
     int64  sequence_id                      = 14;
-    int64  market_id                        = 15;
+    string  market_hash                      = 15;
     int64  account_entity_id                = 16;
     int64  market_entity_id                 = 17;
 }

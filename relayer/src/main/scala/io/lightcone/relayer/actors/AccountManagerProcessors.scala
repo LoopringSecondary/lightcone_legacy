@@ -80,7 +80,8 @@ trait AccountManagerProcessors {
               )).mapAs[MarketManager.MatchResult]
 
               _ = matchRes.taker.status match {
-                case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES =>
+                case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
+                    STATUS_DUST_ORDER =>
                   self ! CancelOrder.Req(
                     matchRes.taker.id,
                     owner,
@@ -118,7 +119,6 @@ trait AccountManagerProcessors {
             )
         }
 
-//        //TODO(yadong) 确认一下是不是要发送RawOrder，提交的订单是不是调用该方法
         rawOrder <- dbModule.orderDal.getOrder(order.id)
         _ = socketIONotifierActor ! rawOrder.get
       } yield Unit

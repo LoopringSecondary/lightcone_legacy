@@ -367,19 +367,19 @@ message GetOrderbookSlots {
 message GetUserFills {
     message Req {
         message RingFilter {
-            string  ring_hash         = 1;
-            string  ring_index        = 2; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
-            string  fill_index        = 3;
+            google.protobuf.StringValue  ring_hash         = 1;
+            google.protobuf.Int64Value  ring_index        = 2; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
+            google.protobuf.Int32Value  fill_index        = 3;
         }
-        string        owner      = 1;
-        string        tx_hash    = 2;
-        string        order_hash = 3;
-        MarketFilter  market     = 4;
-        RingFilter    ring       = 5;
-        string        wallet     = 6;
-        string        miner      = 7;
-        io.lightcone.persistence.SortingType  sort   = 8;
-        io.lightcone.persistence.CursorPaging paging = 9;
+        google.protobuf.StringValue         owner       = 1;
+        google.protobuf.StringValue         tx_hash     = 2;
+        google.protobuf.StringValue         order_hash  = 3;
+        MarketFilter                        market      = 4;
+        RingFilter                          ring        = 5;
+        google.protobuf.StringValue         wallet      = 6;
+        google.protobuf.StringValue         miner       = 7;
+        io.lightcone.persistence.SortingType  sort      = 8;
+        io.lightcone.persistence.CursorPaging paging    = 9;
     }
 
     message Res {

@@ -19,13 +19,16 @@ import io.lightcone.core.MarketPair
 import io.lightcone.relayer.data._
 import org.scalatest.matchers.Matcher
 import org.web3j.crypto.Credentials
+import io.lightcone.relayer.integration.AddedMatchers._
 
 trait ValidateHelper {
   me: RpcHelper =>
 
+  val defaultMatcher = check[Any](_ => true)
+
   def defaultValidate(
-      getOrdersMatcher: Matcher[GetOrders.Res],
-      accountMatcher: Matcher[GetAccount.Res],
+      getOrdersMatcher: Matcher[GetOrders.Res] = defaultMatcher,
+      accountMatcher: Matcher[GetAccount.Res] = defaultMatcher,
       marketMatchers: Map[MarketPair, (Matcher[GetOrderbook.Res], Matcher[
             GetUserFills.Res
           ], Matcher[GetMarketFills.Res])]
@@ -44,12 +47,11 @@ trait ValidateHelper {
           .expectUntil(orderbookMatcher)
         GetUserFills
           .Req(
-            owner = account.getAddress,
+            owner = Some(account.getAddress),
             market = Some(MarketFilter(marketPair = Some(pair)))
           )
           .expectUntil(userFillsMatcher)
         GetMarketFills.Req(Some(pair)).expectUntil(marketFillsMatcher)
     }
   }
-
 }

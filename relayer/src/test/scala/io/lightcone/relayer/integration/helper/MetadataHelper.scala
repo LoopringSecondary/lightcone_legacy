@@ -105,7 +105,8 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
 
   def createAndSaveNewMarket(
       price1: Double = 1.0,
-      price2: Double = 1.0
+      price2: Double = 1.0,
+      status: MarketMetadata.Status = MarketMetadata.Status.ACTIVE
     )(
       implicit
       dbModule: DatabaseModule,
@@ -122,7 +123,7 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       s"### createAndSaveNewMarket ${marketPair}, hashString:${marketPair.hashString}"
     )
     val marketMetadata = MarketMetadata(
-      status = MarketMetadata.Status.ACTIVE,
+      status = status,
       baseTokenSymbol = tokens(0).getMetadata.symbol,
       quoteTokenSymbol = tokens(1).getMetadata.symbol,
       maxNumbersOfOrders = 1000,
