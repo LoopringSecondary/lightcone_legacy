@@ -24,7 +24,6 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.validator._
 import io.lightcone.core._
-import io.lightcone.ethereum.{RawOrderValidator, RawOrderValidatorImpl}
 import io.lightcone.relayer.data._
 
 import scala.concurrent.ExecutionContext
@@ -54,8 +53,6 @@ class EntryPointActor(
     with ActorLogging {
 
   import ErrorCode._
-
-  val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
   def receive = LoggingReceive {
     case msg: Any =>
