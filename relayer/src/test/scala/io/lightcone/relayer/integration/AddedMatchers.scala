@@ -64,9 +64,9 @@ object AddedMatchers extends JsonSupport {
   }
 
   def containsInGetOrderByHash(
-                           orderStatus: OrderStatus,
-                           hashes: String*
-                         ) = {
+      orderStatus: OrderStatus,
+      hashes: String*
+    ) = {
     def findOrder(res: GetOrderByHash.BatchRes) = hashes.map { hash =>
       res.orders.find(_.hash.toLowerCase() == hash.toLowerCase())
     }
@@ -88,7 +88,6 @@ object AddedMatchers extends JsonSupport {
         )
       }
   }
-
 
   def outStandingMatcherInGetOrders(
       state: RawOrder.State,

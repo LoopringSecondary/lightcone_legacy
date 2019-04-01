@@ -99,7 +99,7 @@ class MatchesSpec_CompleteMatch
           hashes = Seq(order1.hash, order2.hash)
         )
         .expect(
-          containsInGetOrderByHash(STATUS_PENDING, order1.hash,order2.hash)
+          containsInGetOrderByHash(STATUS_PENDING, order1.hash, order2.hash)
         )
     }
   }
