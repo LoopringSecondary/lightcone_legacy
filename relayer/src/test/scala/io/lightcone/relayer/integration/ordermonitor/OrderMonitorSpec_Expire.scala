@@ -40,11 +40,18 @@ class OrderMonitorSpec_Expire
         address = account.getAddress,
         allTokens = true
       )
-     val accountInitRes =  getAccountReq.expectUntil(
+      val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
 
-      val initBaseToken = accountInitRes.getAccountBalance.tokenBalanceMap(dynamicBaseToken)
+      val initBaseToken =
+        accountInitRes.getAccountBalance.tokenBalanceMap(
+          dynamicBaseToken.getAddress()
+        )
+      val initBalance: BigInt = initBaseToken.getBalance
+      val initAllowance: BigInt = initBaseToken.getAllowance
+      val initAvailableBalance: BigInt = initBaseToken.getAvailableBalance
+      val initAvailableAllowance: BigInt = initBaseToken.getAvailableAlloawnce
 
       Then("submit an order that validUntil = now + 5 seconds")
 
@@ -79,16 +86,23 @@ class OrderMonitorSpec_Expire
       Then("two orders just submitted are STATUS_PENDING")
 
       defaultValidate(
-        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order1.hash, order2.hash),
+        getOrdersMatcher =
+          containsInGetOrders(STATUS_PENDING, order1.hash, order2.hash),
         accountMatcher = accountBalanceMatcher(
           dynamicBaseToken.getAddress(),
           TokenBalance(
             token = dynamicBaseToken.getAddress(),
-            balance = initBaseToken.balance,
-            allowance = initBaseToken.allowance,
-            availableBalance = "880".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "880".zeros(dynamicBaseToken.getDecimals())
+            balance = initBalance,
+            allowance = initAllowance,
+            availableBalance = initAvailableAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee,
+            availableAlloawnce = initAvailableBalance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee
           )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 200
+          ), defaultMatcher, defaultMatcher)
         )
       )
 
@@ -100,12 +114,27 @@ class OrderMonitorSpec_Expire
         s"${order1.hash} is STATUS_EXPIRED and ${order2.hash} is STATUS_PENDING"
       )
 
-      GetOrders
-        .Req(owner = account.getAddress)
-        .expect(
-          containsInGetOrders(STATUS_PENDING, order2.hash) and
-            containsInGetOrders(STATUS_EXPIRED, order1.hash)
+      defaultValidate(
+        getOrdersMatcher = containsInGetOrders(STATUS_PENDING, order2.hash) and
+          containsInGetOrders(STATUS_EXPIRED, order1.hash),
+        accountMatcher = accountBalanceMatcher(
+          dynamicBaseToken.getAddress(),
+          TokenBalance(
+            token = dynamicBaseToken.getAddress(),
+            balance = initBalance,
+            allowance = initAllowance,
+            availableBalance = initAvailableAllowance - order2.getAmountS - order2.getFeeParams.getAmountFee,
+            availableAlloawnce = initAvailableBalance - order2.getAmountS - order2.getFeeParams.getAmountFee
+          )
+        ),
+        marketMatchers = Map(
+          dynamicMarketPair -> (check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 100
+          ), defaultMatcher, defaultMatcher)
         )
+      )
+
     }
   }
 }
