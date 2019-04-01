@@ -100,7 +100,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketIds: Set[Long] = Set.empty,
+      marketHashes: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
@@ -109,8 +109,8 @@ class OrderDalImpl @Inject()(
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
-    if (marketIds.nonEmpty)
-      filters = filters.filter(_.marketId inSet marketIds)
+    if (marketHashes.nonEmpty)
+      filters = filters.filter(_.marketHash inSet marketHashes)
     if (feeTokenSet.nonEmpty)
       filters = filters.filter(_.tokenFee inSet feeTokenSet)
     if (validTime.nonEmpty)
@@ -125,7 +125,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketIds: Set[Long] = Set.empty,
+      marketHashes: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: SortingType,
       pagingOpt: Option[CursorPaging] = None
@@ -135,7 +135,7 @@ class OrderDalImpl @Inject()(
       owners,
       tokenSSet,
       tokenBSet,
-      marketIds,
+      marketHashes,
       feeTokenSet,
       None
     )
@@ -147,7 +147,7 @@ class OrderDalImpl @Inject()(
       ownerOpt: Option[String] = None,
       tokensOpt: Option[String] = None,
       tokenbOpt: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       feeTokenOpt: Option[String] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
@@ -156,7 +156,7 @@ class OrderDalImpl @Inject()(
     if (tokensOpt.nonEmpty) filters = filters.filter(_.tokenS === tokensOpt.get)
     if (tokenbOpt.nonEmpty) filters = filters.filter(_.tokenB === tokenbOpt.get)
     if (marketHashOpt.nonEmpty)
-      filters = filters.filter(_.marketId === marketHashOpt.get.longId)
+      filters = filters.filter(_.marketHash === marketHashOpt.get)
     if (feeTokenOpt.nonEmpty)
       filters = filters.filter(_.tokenFee === feeTokenOpt.get)
     filters
@@ -167,7 +167,7 @@ class OrderDalImpl @Inject()(
       ownerOpt: Option[String] = None,
       tokensOpt: Option[String] = None,
       tokenbOpt: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       feeTokenOpt: Option[String] = None,
       sort: SortingType,
       pagingOpt: Option[CursorPaging] = None
@@ -225,7 +225,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHashOpt: Option[MarketHash] = None,
+      marketHashOpt: Option[String] = None,
       feeToken: Option[String] = None
     ): Future[Int] = {
     val filters = queryOrderForUserFilters(
@@ -356,7 +356,7 @@ class OrderDalImpl @Inject()(
           Some(erc1400ParamsResult(r)),
           Some(stateResult(r)),
           r.nextLong,
-          r.nextLong,
+          r.nextString(),
           r.nextLong,
           r.nextLong
         )

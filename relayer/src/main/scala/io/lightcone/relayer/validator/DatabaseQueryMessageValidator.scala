@@ -82,20 +82,16 @@ final class DatabaseQueryMessageValidator(
         val ringOpt = req.ring match {
           case Some(r) =>
             val ringHash =
-              MessageValidator.normalizeHash(r.ringHash)
+              r.ringHash.map(MessageValidator.normalizeHash)
             val ringIndex =
-              if (r.ringIndex.nonEmpty && !MessageValidator.isValidNumber(
-                    r.ringIndex
-                  ))
+              if (r.ringIndex.nonEmpty)
                 throw ErrorException(
                   ERR_INVALID_ARGUMENT,
                   s"invalid ringIndex:${r.ringIndex}"
                 )
               else r.ringIndex
             val fillIndex =
-              if (r.fillIndex.nonEmpty && !MessageValidator.isValidNumber(
-                    r.fillIndex
-                  ))
+              if (r.fillIndex.nonEmpty)
                 throw ErrorException(
                   ERR_INVALID_ARGUMENT,
                   s"invalid fillIndex:${r.fillIndex}"
@@ -124,13 +120,13 @@ final class DatabaseQueryMessageValidator(
             Some(MarketFilter(Some(MarketPair(base, quote)), m.direction))
         }
         GetUserFills.Req(
-          MessageValidator.normalizeAddress(req.owner),
-          MessageValidator.normalizeHash(req.txHash),
-          MessageValidator.normalizeHash(req.orderHash),
+          req.owner.map(MessageValidator.normalizeAddress),
+          req.txHash.map(MessageValidator.normalizeHash),
+          req.orderHash.map(MessageValidator.normalizeHash),
           marketOpt,
           ringOpt,
-          MessageValidator.normalizeAddress(req.wallet),
-          MessageValidator.normalizeAddress(req.miner),
+          req.wallet.map(MessageValidator.normalizeAddress),
+          req.miner.map(MessageValidator.normalizeAddress),
           req.sort,
           MessageValidator.getValidCursorPaging(req.paging)
         )

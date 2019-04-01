@@ -86,7 +86,7 @@ class DatabaseQueryActor(
           }
           r.copy(
             params = params,
-            marketId = 0,
+            marketHash = "",
             accountEntityId = 0,
             marketEntityId = 0
           )
@@ -136,7 +136,7 @@ class DatabaseQueryActor(
     case req: GetMarketFills.Req =>
       (for {
         fills <- dbModule.fillDal
-          .getMarketFills(req.marketPair.get, getMarketFillsNum)
+          .getMarketFills(req.getMarketPair, getMarketFillsNum)
       } yield {
         val fills_ = fills.map { f =>
           new Fill(
@@ -170,7 +170,7 @@ class DatabaseQueryActor(
       case Some(m) =>
         m.direction match {
           case MarketFilter.Direction.BOTH =>
-            (None, None, Some(MarketHash(m.marketPair.get)))
+            (None, None, Some(m.getMarketPair.hashString))
           case MarketFilter.Direction.BUY =>
             (
               Some(m.marketPair.get.quoteToken),
@@ -199,12 +199,7 @@ class DatabaseQueryActor(
     ) = {
     ringOpt match {
       case Some(r) =>
-        val ringHash = getOptString(r.ringHash)
-        val ringIndex =
-          if (r.ringIndex.nonEmpty) Some(r.ringIndex.toLong) else None
-        val fillIndex =
-          if (r.fillIndex.nonEmpty) Some(r.fillIndex.toInt) else None
-        (ringHash, ringIndex, fillIndex)
+        (r.ringHash, r.ringIndex, r.fillIndex)
       case None => (None, None, None)
     }
   }
