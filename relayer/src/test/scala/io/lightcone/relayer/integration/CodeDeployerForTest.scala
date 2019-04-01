@@ -86,4 +86,15 @@ class CoreDeployerForTest @Inject()(
       )
   }
 
+  override def deployMetadata(): Lookup[ActorRef] = {
+    actors
+      .add(
+        MetadataManagerActor.name, //
+        MetadataManagerActor.start
+      )
+      .add(
+        MetadataRefresher.name, //
+        MetadataRefresher.start
+      )
+  }
 }

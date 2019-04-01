@@ -30,6 +30,7 @@ package object relayer {
     Description.createSuiteDescription(this.getClass)
 
   val mysqlContainer = new MySQLContainer(
+    configurationOverride = Some("db"),
     mysqlImageVersion = Some("mysql:5.7.18"),
     databaseName = Some("lightcone"),
     mysqlUsername = Some("test"),

@@ -51,6 +51,9 @@ class MockEthereumQueryActor(
     case req: GetBurnRate.Req =>
       sender ! queryProvider.getBurnRate(req)
 
+    case req: BatchGetBurnRate.Req =>
+      sender ! queryProvider.batchBurnRate(req)
+
     case req @ Notify("echo", _) =>
       sender ! req
 

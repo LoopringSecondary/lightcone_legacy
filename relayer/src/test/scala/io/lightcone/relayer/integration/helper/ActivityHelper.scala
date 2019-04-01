@@ -17,7 +17,11 @@
 package io.lightcone.relayer.integration.helper
 
 import io.lightcone.ethereum.TxStatus
-import io.lightcone.ethereum.event.{AddressAllowanceUpdatedEvent, AddressBalanceUpdatedEvent, BlockEvent}
+import io.lightcone.ethereum.event.{
+  AddressAllowanceUpdatedEvent,
+  AddressBalanceUpdatedEvent,
+  BlockEvent
+}
 import io.lightcone.ethereum.persistence.{Activity, TxEvents}
 import io.lightcone.lib.Address
 import io.lightcone.lib.NumericConversion.toAmount
@@ -551,13 +555,13 @@ trait ActivityHelper {
   }
 
   def approveConfirmedActivities(
-                                     owner: String,
-                                     blockNumber: Long,
-                                     txHash: String,
-                                     approveToken: String,
-                                     approveAmount: BigInt,
-                                     nonce: Long
-                                   ) = {
+      owner: String,
+      blockNumber: Long,
+      txHash: String,
+      approveToken: String,
+      approveAmount: BigInt,
+      nonce: Long
+    ) = {
     Seq(
       TxEvents(
         TxEvents.Events.Activities(

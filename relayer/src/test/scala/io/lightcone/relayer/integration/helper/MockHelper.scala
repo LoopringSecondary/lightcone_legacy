@@ -17,9 +17,11 @@
 package io.lightcone.relayer.integration.helper
 import io.lightcone.core.{Amount, BurnRate}
 import io.lightcone.relayer.data._
+import io.lightcone.relayer.integration.JsonPrinter
 import io.lightcone.relayer.ethereummock._
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.OneInstancePerTest
+import org.scalatest.{FeatureSpec, OneInstancePerTest}
+import org.slf4s.Logging
 import scala.math.BigInt
 
 //TODO:可以考虑设置请求次数
@@ -42,15 +44,21 @@ object MockHelper {
 
   var burnRateExpects: MockExpects[GetBurnRate.Req, GetBurnRate.Res] = _
 
+  var batchBurnRateExpects
+    : MockExpects[BatchGetBurnRate.Req, BatchGetBurnRate.Res] = _
+
   var cutoffsExpects: MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] = _
 
   var orderCancelExpects
     : MockExpects[GetOrderCancellation.Req, GetOrderCancellation.Res] = _
 
+  var sendRawTxExpects
+    : MockExpects[SendRawTransaction.Req, SendRawTransaction.Res] = _
+
   var getNonceExpects: MockExpects[GetNonce.Req, GetNonce.Res] = _
 }
 
-trait MockHelper extends MockFactory with OneInstancePerTest {
+trait MockHelper extends MockFactory with OneInstancePerTest with Logging {
 
   def addAccountExpects(
       expect: PartialFunction[GetAccount.Req, GetAccount.Res]
@@ -70,6 +78,12 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
     MockHelper.burnRateExpects.addExpect(expect)
   }
 
+  def addBatchBurnRateExpects(
+      expect: PartialFunction[BatchGetBurnRate.Req, BatchGetBurnRate.Res]
+    ) = {
+    MockHelper.batchBurnRateExpects.addExpect(expect)
+  }
+
   def addCutoffsExpects(
       expect: PartialFunction[BatchGetCutoffs.Req, BatchGetCutoffs.Res]
     ) = {
@@ -83,6 +97,15 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       ]
     ) = {
     MockHelper.orderCancelExpects.addExpect(expect)
+  }
+
+  def addSendRawTxExpects(
+      expect: PartialFunction[
+        SendRawTransaction.Req,
+        SendRawTransaction.Res
+      ]
+    ) = {
+    MockHelper.sendRawTxExpects.addExpect(expect)
   }
 
   def addGetNonceExpects(
@@ -117,6 +140,13 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       })
       .anyNumberOfTimes()
 
+    (queryProvider.batchBurnRate _)
+      .expects(*)
+      .onCall({ req: BatchGetBurnRate.Req =>
+        MockHelper.batchBurnRateExpects(req)
+      })
+      .anyNumberOfTimes()
+
     //batchGetCutoffs
     (queryProvider.batchGetCutoffs _)
       .expects(*)
@@ -145,6 +175,14 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       .expects(*)
       .onCall({ req: GetNonce.Req =>
         MockHelper.getNonceExpects(req)
+      })
+      .anyNumberOfTimes()
+
+    //sendRawTransaction
+    (accessProvider.sendRawTransaction _)
+      .expects(*)
+      .onCall({ req: SendRawTransaction.Req =>
+        MockHelper.sendRawTxExpects(req)
       })
       .anyNumberOfTimes()
   }
@@ -179,8 +217,17 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
       }
     MockHelper.burnRateExpects = MockExpects[GetBurnRate.Req, GetBurnRate.Res] {
       case req =>
-        GetBurnRate.Res(burnRate = Some(BurnRate()))
+        GetBurnRate.Res(burnRate = Some(BurnRate(0.4, 0.5)))
     }
+
+    MockHelper.batchBurnRateExpects =
+      MockExpects[BatchGetBurnRate.Req, BatchGetBurnRate.Res] {
+        case req =>
+          BatchGetBurnRate.Res(resps = req.reqs.map { req =>
+            GetBurnRate.Res(burnRate = Some(BurnRate(0.4, 0.5)))
+          })
+      }
+
     MockHelper.cutoffsExpects =
       MockExpects[BatchGetCutoffs.Req, BatchGetCutoffs.Res] {
         case req =>
@@ -210,5 +257,14 @@ trait MockHelper extends MockFactory with OneInstancePerTest {
           result = "0"
         )
     }
+
+    MockHelper.sendRawTxExpects =
+      MockExpects[SendRawTransaction.Req, SendRawTransaction.Res] {
+        case req =>
+          log.info(
+            s"receive SendRawTransaction ${JsonPrinter.printJsonString(req)}"
+          )
+          SendRawTransaction.Res()
+      }
   }
 }
