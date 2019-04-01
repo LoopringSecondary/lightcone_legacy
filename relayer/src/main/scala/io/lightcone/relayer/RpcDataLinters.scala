@@ -70,9 +70,9 @@ object RpcDataLinters {
       data.copy(orders = data.orders.map(rawOrderLinter.lint))
   }
 
-  implicit val getOrderByHashResLinter = new Linter[GetOrderByHash.BatchRes] {
+  implicit val getOrderByHashResLinter = new Linter[GetOrdersByHash.Res] {
 
-    def lint(data: GetOrderByHash.BatchRes) =
+    def lint(data: GetOrdersByHash.Res) =
       data.copy(orders = data.orders.map(rawOrderLinter.lint))
 
   }
