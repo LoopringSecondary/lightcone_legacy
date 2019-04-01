@@ -19,6 +19,7 @@ import akka.util.Timeout
 import io.lightcone.core._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence._
+import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors.MetadataManagerActor
 import io.lightcone.relayer.integration._
