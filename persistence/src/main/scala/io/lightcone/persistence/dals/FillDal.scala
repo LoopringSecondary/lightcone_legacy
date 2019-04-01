@@ -16,11 +16,14 @@
 
 package io.lightcone.persistence.dals
 
+import java.security.acl.Owner
+
 import io.lightcone.persistence.base._
 import io.lightcone.ethereum.persistence._
 import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockEvent
 import io.lightcone.persistence.{CursorPaging, SortingType}
+
 import scala.concurrent._
 
 trait FillDal extends BaseDalImpl[FillTable, Fill] {
@@ -28,38 +31,39 @@ trait FillDal extends BaseDalImpl[FillTable, Fill] {
   def saveFills(fills: Seq[Fill]): Future[Seq[ErrorCode]]
 
   def getFills(
-      owner: String,
-      txHash: String,
-      orderHash: String,
-      ringHashOpt: Option[String],
-      ringIndexOpt: Option[Long],
-      fillIndexOpt: Option[Int],
-      tokensOpt: Option[String],
-      tokenbOpt: Option[String],
-      marketHashOpt: Option[MarketHash],
-      wallet: String,
-      miner: String,
+      ownerOpt: Option[String] = None,
+      txHashOpt: Option[String] = None,
+      orderHashOpt: Option[String] = None,
+      ringHashOpt: Option[String] = None,
+      ringIndexOpt: Option[Long] = None,
+      fillIndexOpt: Option[Int] = None,
+      tokensOpt: Option[String] = None,
+      tokenbOpt: Option[String] = None,
+      marketHashOpt: Option[String] = None,
+      walletOpt: Option[String] = None,
+      minerOpt: Option[String] = None,
       sort: SortingType,
-      paging: Option[CursorPaging]
+      paging: Option[CursorPaging] = None
     ): Future[Seq[Fill]]
 
   def countFills(
-      owner: String,
-      txHash: String,
-      orderHash: String,
-      ringHashOpt: Option[String],
-      ringIndexOpt: Option[Long],
-      fillIndexOpt: Option[Int],
-      tokensOpt: Option[String],
-      tokenbOpt: Option[String],
-      marketHashOpt: Option[MarketHash],
-      wallet: String,
-      miner: String
+      ownerOpt: Option[String] = None,
+      txHashOpt: Option[String] = None,
+      orderHashOpt: Option[String] = None,
+      ringHashOpt: Option[String] = None,
+      ringIndexOpt: Option[Long] = None,
+      fillIndexOpt: Option[Int] = None,
+      tokensOpt: Option[String] = None,
+      tokenbOpt: Option[String] = None,
+      marketHashOpt: Option[String] = None,
+      walletOpt: Option[String] = None,
+      minerOpt: Option[String] = None
     ): Future[Int]
 
   def getMarketFills(
       marketPair: MarketPair,
       num: Int
     ): Future[Seq[Fill]]
+
   def cleanActivitiesForReorg(req: BlockEvent): Future[Int]
 }

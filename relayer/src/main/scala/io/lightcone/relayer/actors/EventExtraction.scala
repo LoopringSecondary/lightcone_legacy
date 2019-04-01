@@ -56,19 +56,10 @@ trait EventExtraction {
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  @inline def ringAndFillPersistenceActor =
-    actors.get(RingAndFillPersistenceActor.name)
-
-  @inline def chainReorganizationManagerActor =
-    actors.get(ChainReorganizationManagerActor.name)
-  @inline def marketHistoryActor = actors.get(MarketHistoryActor.name)
-
-  @inline def ringSettlementManagerActor =
-    actors.get(RingSettlementManagerActor.name)
-
   def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
+
       getBlockData(NumericConversion.toBigInt(blockData.number) + 1).map {
         case Some(block) =>
           if (block.parentHash == blockData.hash || NumericConversion
@@ -88,12 +79,8 @@ trait EventExtraction {
               )
             )
 
-            ActivityActor.broadcast(blockEvent)
             //TODO: 如何发送，是否需要等待返回结果之后再发送其余的events，否则会导致数据不一致
-            ringAndFillPersistenceActor ! blockEvent
-            chainReorganizationManagerActor ! blockEvent
-            marketHistoryActor ! blockEvent
-            ringSettlementManagerActor ! blockEvent
+            eventDispatcher.dispatch(blockEvent)
             self ! RETRIEVE_RECEIPTS
           } else {
             self ! BLOCK_REORG_DETECTED

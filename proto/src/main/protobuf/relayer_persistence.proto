@@ -147,16 +147,6 @@ message UpdateTxInBlock {
     }
 }
 
-message PersistOHLCData {
-    message Req {
-        io.lightcone.ethereum.persistence.OHLCRawData data    = 1;
-    }
-    message Res {
-        io.lightcone.ethereum.persistence.OHLCRawData record  = 1;
-        io.lightcone.core.ErrorCode error     = 2;
-    }
-}
-
 message GetMarketHistory {
     message Req {
         io.lightcone.core.MarketPair                 market_pair    = 1;
