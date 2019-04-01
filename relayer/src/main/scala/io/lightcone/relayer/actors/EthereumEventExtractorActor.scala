@@ -67,16 +67,6 @@ class EthereumEventExtractorActor(
 
   var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 
-  @inline def ringAndFillPersistenceActor =
-    actors.get(RingAndFillPersistenceActor.name)
-
-  @inline def chainReorganizationManagerActor =
-    actors.get(ChainReorganizationManagerActor.name)
-  @inline def marketHistoryActor = actors.get(MarketHistoryActor.name)
-
-  @inline def ringSettlementManagerActor =
-    actors.get(RingSettlementManagerActor.name)
-
   override def initialize(): Future[Unit] = {
     val startBlock = Math.max(selfConfig.getLong("start-block"), 0)
     val f = for {
@@ -106,27 +96,6 @@ class EthereumEventExtractorActor(
   }
 
   def ready = handleMessage
-
-  override def broadcastBlockEvent() = {
-    val blockEvent = BlockEvent(
-      blockNumber = NumericConversion.toBigInt(blockData.number).longValue(),
-      txs = blockData.transactions.map(
-        tx =>
-          BlockEvent.Tx(
-            from = Address.normalize(tx.from),
-            nonce = NumericConversion.toBigInt(tx.nonce).toInt,
-            txHash = tx.hash
-          )
-      )
-    )
-
-    ActivityActor.broadcast(blockEvent)
-    //TODO: 如何发送，是否需要等待返回结果之后再发送其余的events，否则会导致数据不一致
-    ringAndFillPersistenceActor ! blockEvent
-    chainReorganizationManagerActor ! blockEvent
-    marketHistoryActor ! blockEvent
-    ringSettlementManagerActor ! blockEvent
-  }
 
   def handleBlockReorganization: Receive = {
     case BLOCK_REORG_DETECTED =>

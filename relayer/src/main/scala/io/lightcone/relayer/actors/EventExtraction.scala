@@ -56,6 +56,16 @@ trait EventExtraction {
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
+  @inline def ringAndFillPersistenceActor =
+    actors.get(RingAndFillPersistenceActor.name)
+
+  @inline def chainReorganizationManagerActor =
+    actors.get(ChainReorganizationManagerActor.name)
+  @inline def marketHistoryActor = actors.get(MarketHistoryActor.name)
+
+  @inline def ringSettlementManagerActor =
+    actors.get(RingSettlementManagerActor.name)
+
   def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
@@ -65,7 +75,25 @@ trait EventExtraction {
                 .toBigInt(blockData.number) == -1) {
             preBlockData = blockData
             blockData = block
-            broadcastBlockEvent()
+            val blockEvent = BlockEvent(
+              blockNumber =
+                NumericConversion.toBigInt(blockData.number).longValue(),
+              txs = blockData.transactions.map(
+                tx =>
+                  BlockEvent.Tx(
+                    from = Address.normalize(tx.from),
+                    nonce = NumericConversion.toBigInt(tx.nonce).toInt,
+                    txHash = tx.hash
+                  )
+              )
+            )
+
+            ActivityActor.broadcast(blockEvent)
+            //TODO: 如何发送，是否需要等待返回结果之后再发送其余的events，否则会导致数据不一致
+            ringAndFillPersistenceActor ! blockEvent
+            chainReorganizationManagerActor ! blockEvent
+            marketHistoryActor ! blockEvent
+            ringSettlementManagerActor ! blockEvent
             self ! RETRIEVE_RECEIPTS
           } else {
             self ! BLOCK_REORG_DETECTED
@@ -104,8 +132,6 @@ trait EventExtraction {
   }
 
   def handleBlockReorganization: Receive
-
-  def broadcastBlockEvent() = ()
 
   def getBlockData(blockNum: BigInt): Future[Option[BlockWithTxObject]] = {
     for {
