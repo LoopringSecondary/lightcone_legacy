@@ -75,7 +75,7 @@ class EventDispatcherImpl(actors: Lookup[ActorRef])
           s"unable to broadcast message of type: ${evt.getClass.getName}"
         )
       case Some(receivers) =>
-        println(s"#### dispatch ${evt}")
+        log.debug(s"EventDispatcher dispatch ${evt}")
         receivers.foreach(_.broadcast(evt))
     }
   }

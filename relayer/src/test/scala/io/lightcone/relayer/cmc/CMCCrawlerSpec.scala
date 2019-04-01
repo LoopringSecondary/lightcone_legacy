@@ -19,10 +19,8 @@ package io.lightcone.relayer.cmc
 import io.lightcone.core._
 import io.lightcone.persistence._
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.external.CMCResponse.CMCTickerData
 import io.lightcone.relayer.external._
 import io.lightcone.relayer.support._
-import io.lightcone.relayer.implicits._
 import io.lightcone.relayer.data.{GetMarkets, GetTokens}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -42,28 +40,19 @@ class CMCCrawlerSpec
       val r =
         Await.result(
           fiatExchangeRateFetcher
-            .fetchExchangeRates(CURRENCY_EXCHANGE_PAIR)
+            .fetchExchangeRates()
             .mapTo[Seq[TokenTickerRecord]],
           5.second
         )
       r.nonEmpty should be(true)
       val map = r.map(t => t.symbol -> t.price).toMap
-      map.contains(Currency.RMB.name) should be(true)
-      map(Currency.RMB.name) > 0 should be(true)
-      map.contains(Currency.JPY.name) should be(true)
-      map(Currency.JPY.name) > 0 should be(true)
-      map.contains(Currency.EUR.name) should be(true)
-      map(Currency.EUR.name) > 0 should be(true)
-      map.contains(Currency.GBP.name) should be(true)
-      map(Currency.GBP.name) > 0 should be(true)
     }
 
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
       val f = for {
-        tokenTickers <- getMockedCMCTickers()
-        currencyTickers <- fiatExchangeRateFetcher.fetchExchangeRates(
-          CURRENCY_EXCHANGE_PAIR
-        )
+        tokenSymbolSlugs_ <- dbModule.cmcCrawlerConfigForTokenDal.getConfigs()
+        tokenTickers <- getMockedCMCTickers(tokenSymbolSlugs_)
+        currencyTickers <- fiatExchangeRateFetcher.fetchExchangeRates()
       } yield (tokenTickers, currencyTickers)
       val q1 = Await.result(
         f.mapTo[
@@ -74,8 +63,7 @@ class CMCCrawlerSpec
         ],
         50.second
       )
-      q1._1.length should be(1099)
-      q1._2.length should be(CURRENCY_EXCHANGE_PAIR.length)
+      q1._1.nonEmpty should be(true)
     }
 
     "getTokens require [metadata]" in {
@@ -134,7 +122,7 @@ class CMCCrawlerSpec
         t.ticker.nonEmpty should be(true)
       }
       val f2 = singleRequest(
-        GetTokens.Req(true, true, true, Currency.ETH),
+        GetTokens.Req(true, true, true, "ETH"),
         "get_tokens"
       )
       val res2 = Await.result(f2.mapTo[GetTokens.Res], timeout.duration)
@@ -146,7 +134,7 @@ class CMCCrawlerSpec
       }
 
       val f3 = singleRequest(
-        GetTokens.Req(true, true, true, Currency.RMB),
+        GetTokens.Req(true, true, true, "CNY"),
         "get_tokens"
       )
       val res3 = Await.result(f3.mapTo[GetTokens.Res], timeout.duration)
@@ -222,7 +210,7 @@ class CMCCrawlerSpec
       }
 
       val f2 = singleRequest(
-        GetMarkets.Req(true, true, false, Currency.BTC),
+        GetMarkets.Req(true, true, false, "BTC"),
         "get_markets"
       )
       val res2 = Await.result(f2.mapTo[GetMarkets.Res], timeout.duration)
@@ -234,7 +222,7 @@ class CMCCrawlerSpec
       }
 
       val f3 = singleRequest(
-        GetMarkets.Req(true, true, false, Currency.GBP),
+        GetMarkets.Req(true, true, false, "GBP"),
         "get_markets"
       )
       val res3 = Await.result(f3.mapTo[GetMarkets.Res], timeout.duration)
@@ -272,14 +260,18 @@ class CMCCrawlerSpec
     }
   }
 
-  private def getMockedCMCTickers() = {
+  private def getMockedCMCTickers(
+      symbolSlugs: Seq[CMCCrawlerConfigForToken]
+    ) = {
     import scala.io.Source
     val fileContents = Source.fromResource("cmc.data").getLines.mkString
 
     val res = parser.fromJsonString[CMCResponse](fileContents)
     res.status match {
       case Some(r) if r.errorCode == 0 =>
-        Future.successful(fillTickersToPersistence(res.data))
+        Future.successful(
+          externalTickerFetcher.filterSupportTickers(symbolSlugs, res.data)
+        )
       case Some(r) if r.errorCode != 0 =>
         log.error(
           s"Failed request CMC, code:[${r.errorCode}] msg:[${r.errorMessage}]"
@@ -288,120 +280,6 @@ class CMCCrawlerSpec
       case m =>
         log.error(s"Failed request CMC, return:[$m]")
         Future.successful(Seq.empty)
-    }
-  }
-
-  private def persistTickers(
-      currencyTickersInUsd: Seq[TokenTickerRecord],
-      tokenTickersInUsd: Seq[TokenTickerRecord]
-    ) =
-    for {
-      _ <- Future.unit
-      now = timeProvider.getTimeSeconds()
-      tickers_ = tokenTickersInUsd
-        .++:(currencyTickersInUsd)
-        .map(_.copy(timestamp = now))
-      fixGroup = tickers_.grouped(20).toList
-      _ <- Future.sequence(
-        fixGroup.map(dbModule.tokenTickerRecordDal.saveTickers)
-      )
-      updatedValid <- dbModule.tokenTickerRecordDal.setValid(now)
-    } yield {
-      if (updatedValid != ErrorCode.ERR_NONE)
-        log.error(s"External tickers persist failed, code:$updatedValid")
-      tickers_
-    }
-
-  def fillTickersToPersistence(tickersInUsd: Seq[CMCTickerData]) = {
-    fillERC20TokenTickersToPersistence(tickersInUsd).++:(
-      fillQuoteTickersToPersistence(tickersInUsd)
-    )
-  }
-
-  private def fillERC20TokenTickersToPersistence(
-      tickersInUsd: Seq[CMCTickerData]
-    ): Seq[TokenTickerRecord] = {
-    tickersInUsd
-      .filter(
-        t => t.platform.nonEmpty && t.platform.get.symbol == Currency.ETH.name
-      )
-      .map { t =>
-        val q = getQuote(t)
-        val p = t.platform.get
-        normalize(
-          TokenTickerRecord(
-            p.tokenAddress,
-            t.symbol,
-            t.slug,
-            q.price,
-            q.volume24H,
-            q.percentChange1H,
-            q.percentChange24H,
-            q.percentChange7D,
-            q.marketCap,
-            0,
-            false,
-            "CMC"
-          )
-        )
-      }
-  }
-
-  private def normalize(record: TokenTickerRecord) = {
-    record.copy(
-      tokenAddress = record.tokenAddress.toLowerCase,
-      symbol = record.symbol.toUpperCase
-    )
-  }
-
-  private def getQuote(ticker: CMCTickerData) = {
-    if (ticker.quote.get("USD").isEmpty) {
-      log.error(s"CMC not return ${ticker.symbol} quote for USD")
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"CMC not return ${ticker.symbol} quote for USD"
-      )
-    }
-    ticker.quote("USD")
-  }
-
-  private def fillQuoteTickersToPersistence(
-      tickersInUsd: Seq[CMCTickerData]
-    ) = {
-    QUOTE_TOKEN.map { t =>
-      val ticker = tickersInUsd
-        .find(u => u.symbol == t && u.platform.isEmpty)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found ticker for token: $t"
-          )
-        )
-      val quote = getQuote(ticker)
-      val currency = Currency
-        .fromName(t)
-        .getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"not found Currency of name:$t"
-          )
-        )
-      normalize(
-        TokenTickerRecord(
-          currency.getAddress(),
-          t,
-          ticker.slug,
-          quote.price,
-          quote.volume24H,
-          quote.percentChange1H,
-          quote.percentChange24H,
-          quote.percentChange7D,
-          quote.marketCap,
-          0,
-          false,
-          "CMC"
-        )
-      )
     }
   }
 
