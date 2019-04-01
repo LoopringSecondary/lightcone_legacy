@@ -16,11 +16,12 @@
 
 package io.lightcone.core
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
+import java.util.concurrent.{ConcurrentHashMap}
 import io.lightcone.lib.TimeProvider
 import org.slf4s.Logging
 import scala.concurrent._
 import io.lightcone.lib.FutureUtil._
+import scala.collection.JavaConverters._
 
 // This class is not thread safe.
 // TODO(dongw): use ConcurrentHashMap
@@ -43,8 +44,9 @@ final class AccountManagerImpl(
 
   type ReserveManagerMethod = ReserveManager => Set[String]
   private val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-  private implicit val tokens: ConcurrentMap[String, ReserveManager] =
-    new ConcurrentHashMap[String, ReserveManager]
+  private implicit val tokens
+    : scala.collection.concurrent.Map[String, ReserveManager] =
+    new ConcurrentHashMap[String, ReserveManager]().asScala
 
   private var block = 0L
   private var marketPairCutoffs = Map.empty[String, Long]
@@ -381,9 +383,9 @@ final class AccountManagerImpl(
       tokens_ : Set[String],
       mustReturn: Boolean
     ): Future[Map[String, ReserveManager]] = {
-    val (existing, missing) = tokens_.partition(tokens.containsKey)
+    val (existing, missing) = tokens_.partition(tokens.contains)
     val existingManagers =
-      existing.map(tokens.get).map(m => m.token -> m).toMap
+      existing.map(tokens.apply).map(m => m.token -> m).toMap
 
     if (!mustReturn) Future.successful(existingManagers)
     else
