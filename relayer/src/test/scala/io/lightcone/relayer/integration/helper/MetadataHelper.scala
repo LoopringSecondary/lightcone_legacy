@@ -84,7 +84,7 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
         true
       )
 //      Thread.sleep(1000)
-      println(s"#### newTokens ${tokens.mkString}")
+      log.debug(s"#### newTokens ${tokens.mkString}")
       GetTokens
         .Req(
           requireMetadata = true,
@@ -123,7 +123,7 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       Seq(createNewToken(price = price1), createNewToken(price = price2))
     val marketPair =
       MarketPair(tokens(0).getMetadata.address, tokens(1).getMetadata.address)
-    println(
+    log.debug(
       s"### createAndSaveNewMarket ${marketPair}, hashString:${marketPair.hashString}"
     )
     val marketMetadata = MarketMetadata(
