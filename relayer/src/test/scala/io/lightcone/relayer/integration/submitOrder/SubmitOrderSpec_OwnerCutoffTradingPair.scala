@@ -126,7 +126,7 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        validSince = (timeProvider.getTimeSeconds() + 1).toInt
+        validSince = (timeProvider.getTimeSeconds() + 10).toInt
       )
       SubmitOrder
         .Req(Some(order2))
