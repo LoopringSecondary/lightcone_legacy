@@ -43,7 +43,7 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       timeProvider: TimeProvider
     ) = {
 
-    val timestamp = timeProvider.getTimeSeconds()
+    val timestamp = getUniqueInt()
     val externalTickerRecords = tokens.map { token =>
       TokenTickerRecord(
         symbol = token.getMetadata.symbol,
