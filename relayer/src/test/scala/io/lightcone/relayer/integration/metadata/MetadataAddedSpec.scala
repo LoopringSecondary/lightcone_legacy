@@ -67,7 +67,7 @@ class MetadataAddedSpec
           ),
         timeout.duration
       )
-      Thread.sleep((metadataRefresherInterval + 2) * 1000) //等待同步数据库完毕
+      Thread.sleep((metadataRefresherInterval * 2 + 1) * 1000) //等待同步数据库完毕
 
       Then(
         "active the MarketManagerActor and OrderbookManagerActor"

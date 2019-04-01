@@ -81,7 +81,12 @@ class MetadataManagerActor(
     .getStringList("external_crawler.currencies.fiat")
     .asScala
     .map(_ -> 0.0)
-    .toMap + (baseCurrency -> 1.0)
+    .toMap ++ config
+    .getStringList("external_crawler.currencies.token")
+    .asScala
+    .map(_ -> 0.0)
+    .toMap +
+    (baseCurrency -> 1.0)
 
   private var tokens = Map.empty[String, Token]
   private var markets = Map.empty[String, Market]
@@ -191,16 +196,18 @@ class MetadataManagerActor(
         log.debug(
           s"--MetadataManagerActor-- receive MetadataChanged, $changed "
         )
-        (for {
+        for {
           _ <- if (changed.tokenMetadataChanged) {
             for {
               tokenMetas <- getTokenMetadatas()
-            } yield {
-              if (tokenMetas.nonEmpty) {
+              res <- if (tokenMetas.nonEmpty) {
                 processTokenMetaChange(tokenMetas)
-              }
-            }
+              } else Future.unit
+            } yield res
           } else Future.unit
+          _ = log.debug(
+            s"MetadataManagerActor --- MetadataChanged - after metas :${tokens.mkString} "
+          )
           _ <- if (changed.tokenInfoChanged) {
             for {
               tokenInfos <- getTokenInfos()
@@ -210,6 +217,9 @@ class MetadataManagerActor(
               }
             }
           } else Future.unit
+          _ = log.debug(
+            s"MetadataManagerActor --- MetadataChanged - after infos :${tokens.mkString} "
+          )
           _ <- if (changed.marketMetadataChanged) {
             for {
               marketMetas <- getMarketMetas()
@@ -221,30 +231,27 @@ class MetadataManagerActor(
           } else Future.unit
           _ <- if (changed.tickerChanged) {
             for {
-              tokenTickers <- getLatestTokenTickers()
+              (tokenTickers, currencyTickers) <- getLatestTickers()
             } yield {
               if (tokenTickers.nonEmpty) {
-                processTokenTickerChange(tokenTickers)
+                processTokenTickerChange(tokenTickers, currencyTickers)
               }
             }
           } else Future.unit
-        } yield Unit) sendTo (sender)
+          _ = log.debug(
+            s"MetadataManagerActor --- MetadataChanged - after tickers :${tokens.mkString} "
+          )
+        } yield Unit
       }
 
     case _: GetTokens.Req => //support for MetadataRefresher to synchronize tokens
       log.debug(
         s"MetadataMangerActor -- GetTokens.Req -- ${tokens.values.toSeq.mkString}"
       )
-      //TODO:将currenies作为特殊token返回
-      val currencyTokens = currencies.map {
-        case (currency, price) =>
-          Token(
-            Some(TokenMetadata(symbol = currency, name = currency)),
-            None,
-            Some(TokenTicker(price = price))
-          )
-      }
-      sender ! GetTokens.Res(tokens.values.toSeq ++ currencyTokens)
+      sender ! GetTokens.Res(tokens.values.toSeq)
+
+    case _: GetCurrencies.Req =>
+      sender ! GetCurrencies.Res(currencies)
 
     case _: GetMarkets.Req =>
       sender ! GetMarkets.Res(markets.values.toSeq)
@@ -252,32 +259,29 @@ class MetadataManagerActor(
 
   private def processTokenMetaChange(metadatas: Map[String, TokenMetadata]) = {
     val preTokens = tokens
+    val symbols = metadatas.map(_._2.symbol)
     for {
-      currentTokens <- Future.sequence(metadatas.map {
+      infos <- dbModule.tokenInfoDal.getTokenInfos(symbols.toSeq)
+      (tokenTickers, _) <- getLatestTickers()
+      currentTokens = metadatas.map {
         case (symbol, meta) =>
           if (tokens.contains(symbol)) {
-            Future.successful(
-              symbol -> tokens(symbol).copy(metadata = Some(meta))
-            )
+            symbol -> tokens(symbol).copy(metadata = Some(meta))
           } else {
-            for {
-              infos <- dbModule.tokenInfoDal.getTokenInfos(Seq(symbol))
-              tickers <- getLatestTokenTickers()
-            } yield {
-              symbol -> Token(
-                Some(meta),
-                Some(infos.headOption.getOrElse(TokenInfo(symbol = symbol))),
-                Some(
-                  tickers.getOrElse(symbol, TokenTicker(token = meta.address))
-                )
+            symbol -> Token(
+              Some(meta),
+              infos.find(_.symbol == symbol),
+              Some(
+                tokenTickers
+                  .getOrElse(symbol, TokenTicker(token = meta.address))
               )
-            }
+            )
           }
-      })
+      }
     } yield {
-      tokens = currentTokens.toMap
+      tokens = currentTokens
+      decideChangedEventAndPublish(preTokens, markets)
     }
-    decideChangedEventAndPublish(preTokens, markets)
   }
 
   private def processTokenInfoChange(infos: Map[String, TokenInfo]) = {
@@ -290,20 +294,23 @@ class MetadataManagerActor(
     decideChangedEventAndPublish(preTokenMap, markets)
   }
 
-  private def processTokenTickerChange(tickers: Map[String, TokenTicker]) = {
+  private def processTokenTickerChange(
+      tokenTickers: Map[String, TokenTicker],
+      currencyTickers: Map[String, Double]
+    ) = {
     val (preTokens, preMarkets) = (tokens, markets)
     val currentTokenMap = tokens.map {
       case (symbol, meta) =>
-        symbol -> tokens(symbol).copy(ticker = tickers.get(symbol))
+        symbol -> tokens(symbol).copy(ticker = tokenTickers.get(symbol))
     }
     tokens = currentTokenMap
     val marketTickers =
-      getMarketTickers(markets.map(m => m._1 -> m._2.getMetadata), tickers)
+      getMarketTickers(markets.map(m => m._1 -> m._2.getMetadata), tokenTickers)
     val currentMarkets = markets.map {
       case (marketHash, market) =>
         marketHash -> market.copy(ticker = marketTickers.get(marketHash))
     }
-    currencies = getCurrencies(tickers)
+    currencies = getCurrencies(tokenTickers, currencyTickers)
     markets = currentMarkets
     decideChangedEventAndPublish(preTokens, preMarkets)
   }
@@ -331,12 +338,18 @@ class MetadataManagerActor(
     decideChangedEventAndPublish(tokens, preMarkets)
   }
 
-  private def getCurrencies(tokenTickers: Map[String, TokenTicker]) = {
+  private def getCurrencies(
+      tokenTickers: Map[String, TokenTicker],
+      currencyTickers: Map[String, Double]
+    ) = {
     currencies.map {
-      case (c, _) => c -> tokenTickers.getOrElse(c, TokenTicker()).price
+      case (c, _) =>
+        c -> currencyTickers.getOrElse(
+          c,
+          tokenTickers.getOrElse(c, TokenTicker()).price
+        )
     } +
-      (baseCurrency -> 1.0) +
-      ("ETH" -> tokenTickers.getOrElse("ETH", TokenTicker()).price)
+      (baseCurrency -> 1.0)
   }
 
   private def decideChangedEventAndPublish(
@@ -424,27 +437,27 @@ class MetadataManagerActor(
     for {
       metas <- getTokenMetadatas()
       _ = log.debug(
-        s"MetadataManagerAcgor -- getLatestTokens -- meta: ${metas}"
+        s"MetadataManagerAcgor -- getLatestTokens -- metas: ${metas}"
       )
       infos <- getTokenInfos()
       _ = log.debug(
         s"MetadataManagerAcgor -- getLatestTokens -- infos ${infos}"
       )
-      tickers <- getLatestTokenTickers()
+      (tokenTickers, currencyTickers) <- getLatestTickers()
       _ = log.debug(
-        s"MetadataManagerAcgor -- getLatestTokens -- tickers ${tickers}"
+        s"MetadataManagerAcgor -- getLatestTokens -- tickers ${tokenTickers}"
       )
       tokens_ = metas.map {
         case (symbol, metadata) =>
           symbol -> Token(
             Some(metadata),
             infos.get(symbol),
-            tickers.get(symbol)
+            tokenTickers.get(symbol)
           )
       }
-      currencies_ = getCurrencies(tickers)
+      currencies_ = getCurrencies(tokenTickers, currencyTickers)
       marketMetas <- getMarketMetas()
-      marketTickers = getMarketTickers(marketMetas, tickers)
+      marketTickers = getMarketTickers(marketMetas, tokenTickers)
       markets_ = marketMetas.map {
         case (marketHash, meta) =>
           marketHash -> Market(
@@ -478,22 +491,26 @@ class MetadataManagerActor(
     }
   }
 
-  private def getLatestTokenTickers(): Future[Map[String, TokenTicker]] =
+  private def getLatestTickers(
+    ): Future[(Map[String, TokenTicker], Map[String, Double])] =
     for {
       latestTime <- dbModule.tokenTickerRecordDal
         .getLastTickerTime()
       tickersInDb <- dbModule.tokenTickerRecordDal.getTickers(latestTime.get)
-      tickers = tickersInDb.map { tickerRecord =>
-        val ticker: TokenTicker = tickerRecord
-        tickerRecord.symbol -> ticker
-      }.toMap
-      _ = log.info(
-        s"### getLatestTokenTickers ${latestTime}, tickersInDb: ${tickersInDb}, tickers: ${tickers}"
-      )
-    } yield {
-      assert(tickers.size == tickersInDb.size)
-      tickers
-    }
+      tokenTickers = tickersInDb
+        .filter(_.`type` == TokenTickerRecord.Type.TOKEN)
+        .map { tickerRecord =>
+          val ticker: TokenTicker = tickerRecord
+          tickerRecord.symbol -> ticker
+        }
+        .toMap
+      currencyTickers = tickersInDb
+        .filter(_.`type` == TokenTickerRecord.Type.CURRENCY)
+        .map { tickerRecord =>
+          tickerRecord.symbol -> tickerRecord.price
+        }
+        .toMap
+    } yield (tokenTickers, currencyTickers)
 
   private def calculateMarketTicker(
       market: MarketMetadata,

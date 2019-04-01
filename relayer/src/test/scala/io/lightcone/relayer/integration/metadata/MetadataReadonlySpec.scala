@@ -83,7 +83,7 @@ class MetadataReadonlySpec
         )
       } yield Unit
       Await.result(f, timeout.duration)
-      Thread.sleep((metadataRefresherInterval + 2) * 1000) //等待同步完毕
+      Thread.sleep((metadataRefresherInterval * 2 + 1) * 1000) //等待同步完毕
 
       And("check the response of submitting an order")
       val order2 =

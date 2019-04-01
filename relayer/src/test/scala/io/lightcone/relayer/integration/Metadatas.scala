@@ -22,7 +22,7 @@ import io.lightcone.persistence._
 object Metadatas {
 
   val WETH_TOKEN = TokenMetadata(
-    address = Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
+    address = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc".toLowerCase(),
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "WETH",
@@ -31,7 +31,7 @@ object Metadatas {
   )
 
   val LRC_TOKEN = TokenMetadata(
-    address = Address("0x97241525fe425C90eBe5A41127816dcFA5954b06").toString,
+    address = "0x97241525fe425C90eBe5A41127816dcFA5954b06".toLowerCase(),
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "LRC",
@@ -40,7 +40,7 @@ object Metadatas {
   )
 
   val GTO_TOKEN = TokenMetadata(
-    address = Address("0x2d7233f72af7a600a8ebdfa85558c047c1c8f795").toString,
+    address = "0x2d7233f72af7a600a8ebdfa85558c047c1c8f795".toLowerCase(),
     decimals = 18,
     burnRate = Some(BurnRate(0.4, 0.5)),
     symbol = "GTO",
@@ -50,18 +50,10 @@ object Metadatas {
 
   val ETH_TOKEN = TokenMetadata(
     `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
-    address = Address("0x0000000000000000000000000000000000000000").toString,
+    address = "0x0000000000000000000000000000000000000000",
     decimals = 18,
     symbol = "ETH",
     name = "ethereum",
-    status = TokenMetadata.Status.VALID
-  )
-
-  val RMB_TOKEN = TokenMetadata(
-    `type` = TokenMetadata.Type.TOKEN_TYPE_ETH,
-    decimals = 18,
-    symbol = "CNY",
-    name = "rmb",
     status = TokenMetadata.Status.VALID
   )
 
@@ -117,11 +109,6 @@ object Metadatas {
       Some(ETH_TOKEN),
       Some(TokenInfo(symbol = ETH_TOKEN.symbol)),
       Some(TokenTicker(token = ETH_TOKEN.address, price = 122.020909611))
-    ),
-    Token(
-      Some(RMB_TOKEN),
-      Some(TokenInfo(symbol = RMB_TOKEN.name)),
-      Some(TokenTicker(token = RMB_TOKEN.address, price = 0.1487497))
     )
   )
 
@@ -172,8 +159,8 @@ object Metadatas {
       "CMC"
     ),
     TokenTickerRecord(
-      "0x0000000000000000000000000000000000000000",
-      "ETH",
+      ETH_TOKEN.address,
+      ETH_TOKEN.symbol,
       122.020909611,
       3.21120682830794e9,
       0.345868,
@@ -186,8 +173,8 @@ object Metadatas {
       "CMC"
     ),
     TokenTickerRecord(
-      "0x97241525fe425c90ebe5a41127816dcfa5954b06",
-      "LRC",
+      LRC_TOKEN.address,
+      LRC_TOKEN.symbol,
       0.0566613345897,
       5372659.102917,
       -0.618224,
@@ -200,8 +187,8 @@ object Metadatas {
       "CMC"
     ),
     TokenTickerRecord(
-      "0x2d7233f72af7a600a8ebdfa85558c047c1c8f795",
-      "GTO",
+      GTO_TOKEN.address,
+      GTO_TOKEN.symbol,
       0.026678235137,
       1.02527274920197e7,
       0.994498,
@@ -214,8 +201,8 @@ object Metadatas {
       "CMC"
     ),
     TokenTickerRecord(
-      "0x7cb592d18d0c49751ba5fce76c1aec5bdd8941fc",
-      "WETH",
+      WETH_TOKEN.address,
+      WETH_TOKEN.symbol,
       117.627070345,
       174597.678357847,
       0.503386,

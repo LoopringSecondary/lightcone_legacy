@@ -71,9 +71,10 @@ class MetadataRefresher(
   val mediator = DistributedPubSub(context.system).mediator
 
   val baseCurrency = config.getString("external_crawler.base_currency")
-  private var currencies = config
+  private val fiatCurrencies = config
     .getStringList("external_crawler.currencies.fiat")
     .asScala
+  private var currencies = fiatCurrencies
     .map(_ -> 0.0)
     .toMap ++ config
     .getStringList("external_crawler.currencies.token")
@@ -97,23 +98,24 @@ class MetadataRefresher(
   }
 
   def ready: Receive = {
-    case req: MetadataChanged => {
-      for {
-        _ <- refreshMetadata()
-        _ = getLocalActors(
-          MarketManagerActor.name,
-          OrderbookManagerActor.name,
-          MultiAccountManagerActor.name
-        ).foreach(_ ! req)
-        _ = delayNotify(req)
-      } yield Unit
-    }
+    case req: MetadataChanged =>
+      blocking {
+        for {
+          _ <- refreshMetadata()
+          _ = getLocalShardingActors(
+            MarketManagerActor.name,
+            OrderbookManagerActor.name,
+            MultiAccountManagerActor.name
+          ).foreach(_ ! req)
+          _ = delayNotify(req)
+        } yield Unit
+      }
 
     case req: NotifyChanged =>
-      getLocalActors(SocketIONotificationActor.name)
+      getLocalSingletonActors(SocketIONotificationActor.name)
         .foreach(_ ! req.metadataChanged)
 
-    case req: GetTokens.Req => {
+    case req: GetTokens.Req =>
       val request =
         if (req.quoteCurrencyForPrice.isEmpty)
           req.copy(quoteCurrencyForPrice = baseCurrency)
@@ -143,7 +145,6 @@ class MetadataRefresher(
         Token(metadataOpt, infoOpt, tickerOpt)
       }
       sender ! GetTokens.Res(res)
-    }
 
     case req: GetMarkets.Req =>
       // TODO(yongfeng): req.queryLoopringTicker
@@ -191,28 +192,38 @@ class MetadataRefresher(
       tokens_ <- (metadataManagerActor ? GetTokens.Req())
         .mapTo[GetTokens.Res]
         .map(_.tokens)
+      _ = log.debug(
+        s"MetadataRefresher --- refreshMetadata -- tokens_: ${tokens_.mkString}"
+      )
+      currencyPrices <- (metadataManagerActor ? GetCurrencies.Req())
+        .mapTo[GetCurrencies.Res]
+        .map(_.prices)
+      _ = log.debug(
+        s"MetadataRefresher --- refreshMetadata -- currencyPrices: ${currencyPrices.mkString}"
+      )
       markets_ <- (metadataManagerActor ? GetMarkets.Req())
         .mapTo[GetMarkets.Res]
         .map(_.markets)
+      _ = log.debug(
+        s"MetadataRefresher --- refreshMetadata -- markets_: ${markets_.mkString}"
+      )
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      currencies = currencies.map {
-        case (c, _) =>
-          c -> tokens_
-            .find(_.getMetadata.symbol == c)
-            .getOrElse(Token(ticker = Some(TokenTicker())))
-            .getTicker
-            .price
-      }
-      metadataManager.reset(tokens_.filterNot { t =>
-        currencies.contains(t.getMetadata.symbol)
-      }, markets_)
+      currencies = currencyPrices
+      metadataManager.reset(tokens_, markets_)
     }
 
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
-  private def getLocalActors(actorNames: String*) = {
+  private def getLocalShardingActors(actorNames: String*) = {
     val str = s"akka://${context.system.name}/system/sharding/%s/*/*"
+
+    actorNames map { n =>
+      context.system.actorSelection(str.format(n))
+    }
+  }
+  private def getLocalSingletonActors(actorNames: String*) = {
+    val str = s"akka://${context.system.name}/user/%s/singleton"
 
     actorNames map { n =>
       context.system.actorSelection(str.format(n))
@@ -234,12 +245,19 @@ class MetadataRefresher(
       baseTokenTicker: TokenTicker,
       toCurrency: String
     ) = {
-    val precision = if (toCurrency == "ETH" || toCurrency == "BTC") 8 else 2
+    val precision = currencyPrecision(toCurrency)
     val currencyPrice = currencies(toCurrency)
     baseTokenTicker.copy(
       price = calculate(baseTokenTicker.price, currencyPrice, precision),
       volume24H = calculate(baseTokenTicker.volume24H, currencyPrice, precision)
     )
+  }
+
+  private def currencyPrecision(toCurrency: String) = {
+    if (fiatCurrencies.contains(toCurrency))
+      2
+    else
+      8
   }
 
   private def calculate(

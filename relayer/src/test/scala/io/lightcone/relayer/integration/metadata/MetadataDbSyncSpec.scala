@@ -41,6 +41,7 @@ class MetadataDbSyncSpec
   feature("test sync from db") {
     scenario("synced metadatas from db after refresh interval") {
 
+      Given("set new burnRate")
       val newBurnRate = BurnRate(0.2, 0.2)
       addBatchBurnRateExpects(
         {
@@ -64,7 +65,7 @@ class MetadataDbSyncSpec
           Seq(GTO_TOKEN.address)
         )
       val getTokensInitRes = getTokensReq
-        .expect(check((res: GetTokens.Res) => res.tokens.nonEmpty))
+        .expectUntil(check((res: GetTokens.Res) => res.tokens.nonEmpty))
 
       val ts = timeProvider.getTimeSeconds()
       val tickers = externalTickers.map { record =>
@@ -89,9 +90,9 @@ class MetadataDbSyncSpec
       Await.result(saveF, timeout.duration)
       Await.result(dbModule.tokenTickerRecordDal.setValid(ts), timeout.duration)
 
-      Thread.sleep((metadataRefresherInterval + 5) * 1000)
+      Thread.sleep((metadataRefresherInterval * 2 + 1) * 1000)
       val getTokensRes = getTokensReq
-        .expect(check((res: GetTokens.Res) => res.tokens.nonEmpty))
+        .expectUntil(check((res: GetTokens.Res) => res.tokens.nonEmpty))
 
       val gtoTokenRes = getTokensRes.tokens(0)
       gtoTokenRes.getTicker.price should be(0.04)

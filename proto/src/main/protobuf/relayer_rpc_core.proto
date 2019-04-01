@@ -345,6 +345,14 @@ message GetTokens {
     }
 }
 
+message GetCurrencies {
+    message Req {}
+
+    message Res {
+        map<string, double> prices = 1;
+    }
+}
+
 message GetOrderbookSlots {
     message Req {
         io.lightcone.core.MarketPair market_pair      = 1;

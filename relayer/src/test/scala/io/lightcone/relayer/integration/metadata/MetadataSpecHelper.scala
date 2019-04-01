@@ -52,7 +52,12 @@ trait MetadataSpecHelper {
     for {
       marketManagerActor <- getLocalActorRef(system, marketManagerPath)
       orderbookManagerActor <- getLocalActorRef(system, orderbookManagerPath)
-    } yield marketManagerActor != null && orderbookManagerActor != null
+    } yield {
+      log.info(
+        s"--- isActorAlive --- ${marketManagerPath} -> ${marketManagerActor}, ${orderbookManagerPath} -> ${orderbookManagerActor}"
+      )
+      marketManagerActor != null && orderbookManagerActor != null
+    }
 
   }
 

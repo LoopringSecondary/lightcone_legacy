@@ -20,7 +20,7 @@ import io.lightcone.core._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer._
+import io.lightcone.relayer.actors.MetadataManagerActor
 import io.lightcone.relayer.integration._
 import io.lightcone.relayer.integration.integrationStarter
 import org.scalatest.Matchers
@@ -42,12 +42,13 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       timeProvider: TimeProvider
     ) = {
 
+    val timestamp = timeProvider.getTimeSeconds()
     val externalTickerRecords = tokens.map { token =>
       TokenTickerRecord(
         symbol = token.getMetadata.symbol,
         price = token.getTicker.price,
         isValid = true,
-        timestamp = 10,
+        timestamp = timestamp,
         dataSource = "Dynamic"
       )
     }
@@ -63,13 +64,42 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
     )
 
     Await.result(f, timeout.duration)
-    Await.result(dbModule.tokenTickerRecordDal.setValid(10), timeout.duration)
+    Await.result(
+      dbModule.tokenTickerRecordDal.setValid(timestamp),
+      timeout.duration
+    )
 
     metadataManager.reset(
       metadataManager.getTokens() ++ tokens,
       metadataManager.getMarkets() ++ markets
     )
 
+//    Thread.sleep(10)
+    if (actorRefs != null && actorRefs.contains(MetadataManagerActor.name)) {
+      actorRefs.get(MetadataManagerActor.name) ! MetadataChanged(
+        true,
+        true,
+        true,
+        true
+      )
+//      Thread.sleep(1000)
+      println(s"#### newTokens ${tokens.mkString}")
+      GetTokens
+        .Req(
+          requireMetadata = true,
+          tokens = tokens.map(_.getMetadata.address)
+        )
+        .expectUntil(
+          AddedMatchers.check(
+            (res: GetTokens.Res) =>
+              tokens.forall(
+                t =>
+                  res.tokens
+                    .exists(_.getMetadata.address == t.getMetadata.address)
+              )
+          )
+        )
+    }
   }
 
   def createAndSaveNewMarket(
@@ -87,6 +117,9 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       Seq(createNewToken(price = price1), createNewToken(price = price2))
     val marketPair =
       MarketPair(tokens(0).getMetadata.address, tokens(1).getMetadata.address)
+    println(
+      s"### createAndSaveNewMarket ${marketPair}, hashString:${marketPair.hashString}"
+    )
     val marketMetadata = MarketMetadata(
       status = MarketMetadata.Status.ACTIVE,
       baseTokenSymbol = tokens(0).getMetadata.symbol,
@@ -121,18 +154,6 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
       )
     )
     prepareMetadata(tokens, Seq(market), symbolSlugs)
-
-    GetTokens
-      .Req(
-        requireMetadata = true,
-        tokens =
-          Seq(tokens(0).getMetadata.address, tokens(1).getMetadata.address)
-      )
-      .expectUntil(
-        AddedMatchers.check(
-          (res: GetTokens.Res) => res.tokens.size == 2
-        )
-      )
 
     try {
       integrationStarter.waiting()

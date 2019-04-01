@@ -47,7 +47,12 @@ trait CommonHelper
       dynamicBaseToken.getMetadata.address,
       dynamicQuoteToken.getMetadata.address
     )
-    integrationStarter.waiting()
+    try {
+      integrationStarter.waiting()
+    } catch {
+      case e: Exception =>
+        log.error(s"--- CommonHelper -- ${e.getMessage}, ${e.getCause}")
+    }
     super.beforeEach()
   }
 
