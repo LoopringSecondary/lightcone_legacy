@@ -298,14 +298,14 @@ class SystemRecoverySpec
        * */
       Then("send a request to make specific order book manager actor restart")
 
-      actors.get(OrderbookManagerActor.name) ! Notify(
+      actorRefs.get(OrderbookManagerActor.name) ! Notify(
         KeepAliveActor.NOTIFY_MSG,
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )
 
       Then("send a request to make specific market manager actor restart")
 
-      actors.get(MarketManagerActor.name) ! Notify(
+      actorRefs.get(MarketManagerActor.name) ! Notify(
         KeepAliveActor.NOTIFY_MSG,
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )

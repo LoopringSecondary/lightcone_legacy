@@ -16,8 +16,6 @@
 
 package io.lightcone.relayer.integration.recovery
 
-import java.lang.Thread
-
 import akka.actor.PoisonPill
 import io.lightcone.core.OrderStatus.STATUS_PENDING
 import io.lightcone.core._
@@ -287,7 +285,7 @@ class OrderbookManagerRecoverySpec
 
       Then("send a request to make specific order book manager actor restart")
 
-      actors.get(OrderbookManagerActor.name) ! Notify(
+      actorRefs.get(OrderbookManagerActor.name) ! Notify(
         KeepAliveActor.NOTIFY_MSG,
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )

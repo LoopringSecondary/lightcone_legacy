@@ -17,6 +17,7 @@
 package io.lightcone.relayer.integration.recovery
 
 import akka.actor.PoisonPill
+import akka.util.Timeout
 import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
@@ -24,6 +25,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
+import scala.concurrent.duration._
 import org.scalatest._
 
 class AccountManagerRecoverySpec
@@ -68,7 +70,8 @@ class AccountManagerRecoverySpec
         .expectUntil(
           check(
             (res: GetAccount.Res) => res.accountBalance.nonEmpty
-          )
+          ),
+          expectTimeout = Timeout(10 second)
         )
 
       When(

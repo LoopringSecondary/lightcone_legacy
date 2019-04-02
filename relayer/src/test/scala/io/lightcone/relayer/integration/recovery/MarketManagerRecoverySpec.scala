@@ -315,7 +315,7 @@ class MarketManagerRecoverySpec
 
       Then("send a request to make specific market manager actor restart")
 
-      actors.get(MarketManagerActor.name) ! Notify(
+      actorRefs.get(MarketManagerActor.name) ! Notify(
         KeepAliveActor.NOTIFY_MSG,
         s"${dynamicBaseToken.getAddress()}-${dynamicQuoteToken.getAddress()}"
       )

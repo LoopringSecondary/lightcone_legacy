@@ -17,6 +17,7 @@
 package io.lightcone.relayer
 import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
+import com.typesafe.config.Config
 import io.lightcone.core.MetadataManager
 import io.lightcone.lib.SystemTimeProvider
 import io.lightcone.persistence.DatabaseModule
