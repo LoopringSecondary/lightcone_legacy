@@ -118,7 +118,6 @@ class EventsSpec_RingMinedEvent
 
     addSendRawTxExpects({
       case req: SendRawTransaction.Req => {
-        println(s"###### SendRawTransaction")
         eventDispatcher.dispatch(ringMinedEvent)
         SendRawTransaction.Res()
       }
