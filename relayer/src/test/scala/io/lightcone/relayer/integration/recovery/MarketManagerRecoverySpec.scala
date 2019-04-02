@@ -19,6 +19,9 @@ package io.lightcone.relayer.integration.recovery
 import akka.actor.PoisonPill
 import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
+import io.lightcone.ethereum.TxStatus
+import io.lightcone.ethereum.event._
+import io.lightcone.lib.NumericConversion.toAmount
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
@@ -80,7 +83,7 @@ class MarketManagerRecoverySpec
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "100".zeros(dynamicBaseToken.getDecimals()),
-        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 10
+        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 15
       )(account1)
       SubmitOrder
         .Req(Some(order1))
@@ -303,6 +306,48 @@ class MarketManagerRecoverySpec
       val amountS: BigInt = order2.getAmountS
       val amountFee: BigInt = order2.getFeeParams.getAmountFee
 
+      Then("send orderFill to mock order fill")
+
+      addFilledAmountExpects({
+        case req: GetFilledAmount.Req =>
+          GetFilledAmount.Res(
+            filledAmountSMap = (req.orderIds map { id =>
+              if (id == order2.hash)
+                id -> toAmount(amountS / 2)
+              else id -> toAmount(BigInt(0))
+            }).toMap
+          )
+      })
+
+      val eventHeader = EventHeader(
+        txStatus = TxStatus.TX_STATUS_SUCCESS
+      )
+      val filled = OrderFilledEvent(
+        header = Some(eventHeader),
+        owner = account1.getAddress,
+        orderHash = order2.hash
+      )
+      eventDispatcher.dispatch(filled)
+
+      val addressBalanceUpdatedEvent = AddressBalanceUpdatedEvent(
+        address = account1.getAddress,
+        token = dynamicBaseToken.getAddress(),
+        balance = "1000"
+          .zeros(dynamicBaseToken.getDecimals()) - amountS / 2 - amountFee / 2,
+        block = 1L
+      )
+
+      eventDispatcher.dispatch(addressBalanceUpdatedEvent)
+
+      val addressAllowanceUpdatedEvent = AddressAllowanceUpdatedEvent(
+        address = account1.getAddress,
+        token = dynamicBaseToken.getAddress(),
+        allowance = "1000"
+          .zeros(dynamicBaseToken.getDecimals()) - amountS / 2 - amountFee / 2,
+        block = 1L
+      )
+      eventDispatcher.dispatch(addressAllowanceUpdatedEvent)
+
       Then("sleep 10 seconds to wait order1 expire")
 
       Thread.sleep(10000)
@@ -335,7 +380,7 @@ class MarketManagerRecoverySpec
             (res: GetOrderbook.Res) =>
               res.getOrderbook.sells
                 .map(_.amount.toDouble)
-                .sum == (amountS + order3.getAmountS + order7.getAmountS) / "1"
+                .sum == (amountS / 2 + order3.getAmountS + order7.getAmountS) / "1"
                 .zeros(dynamicBaseToken.getDecimals()) &&
                 res.getOrderbook.buys
                   .map(_.amount.toDouble)
@@ -391,9 +436,9 @@ class MarketManagerRecoverySpec
             TokenBalance(
               token = dynamicBaseToken.getAddress(),
               balance = "1000"
-                .zeros(dynamicBaseToken.getDecimals()),
+                .zeros(dynamicBaseToken.getDecimals()) - amountS / 2 - amountFee / 2,
               allowance = "1000"
-                .zeros(dynamicBaseToken.getDecimals()),
+                .zeros(dynamicBaseToken.getDecimals()) - amountS / 2 - amountFee / 2,
               availableBalance =
                 "1000"
                   .zeros(dynamicBaseToken.getDecimals()) - order2.getAmountS - order3.getAmountS - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee,
