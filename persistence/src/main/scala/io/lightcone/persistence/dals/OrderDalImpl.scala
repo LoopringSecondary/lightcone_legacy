@@ -192,10 +192,10 @@ class OrderDalImpl @Inject()(
       OrderStatus.STATUS_PENDING_ACTIVE
     val sinceTime = timeProvider
       .getTimeSeconds()
-      .toInt + activateLaggingInSecond
+      .toInt - activateLaggingInSecond
     var filters = query
       .filter(_.status === availableStatus)
-      .filter(_.validSince >= sinceTime)
+      .filter(_.validSince <= sinceTime)
       .sortBy(_.validSince.asc)
       .take(limit)
     db.run(filters.result)

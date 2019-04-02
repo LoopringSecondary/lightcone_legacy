@@ -16,6 +16,7 @@
 
 package io.lightcone.relayer.integration.ordermonitor
 
+import akka.util.Timeout
 import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
@@ -23,6 +24,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
+import scala.concurrent.duration._
 import org.scalatest._
 
 class OrderMonitorSpec_DelayActive
@@ -54,7 +56,7 @@ class OrderMonitorSpec_DelayActive
       val initAvailableBalance: BigInt = initBaseToken.getAvailableBalance
       val initAvailableAllowance: BigInt = initBaseToken.getAvailableAlloawnce
 
-      Then("submit an order that validUntil = now + 5 seconds")
+      Then("submit an order that validSince = now + 5 seconds")
 
       val order1 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
@@ -62,29 +64,28 @@ class OrderMonitorSpec_DelayActive
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "100".zeros(dynamicBaseToken.getDecimals()),
         amountFee = "10".zeros(dynamicBaseToken.getDecimals()),
-        validSince = (timeProvider.getTimeMillis / 1000).toInt + 5
+        validSince = timeProvider.getTimeSeconds().toInt + 5
       )
 
       SubmitOrder
         .Req(Some(order1))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      Then("submit an order that validUntil = now + 60*60*24")
+      Then("submit an order that validSince = now")
 
       val order2 = createRawOrder(
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "100".zeros(dynamicBaseToken.getDecimals()),
-        amountFee = "10".zeros(dynamicBaseToken.getDecimals()),
-        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 60 * 60 * 24
+        amountFee = "10".zeros(dynamicBaseToken.getDecimals())
       )
 
       SubmitOrder
         .Req(Some(order2))
         .expect(check((res: SubmitOrder.Res) => res.success))
 
-      Then("two orders just submitted are STATUS_PENDING")
+      Then("order is STATUS_PENDING_ACTIVE and order2 is STATUS_PENDING")
 
       defaultValidate(
         getOrdersMatcher =
@@ -110,9 +111,18 @@ class OrderMonitorSpec_DelayActive
         )
       )
 
-      Then("wait 10 seconds for order active")
+      Then("wait 5 seconds for order1 to be active and resubmitted")
 
-      Thread.sleep(10000)
+      Thread.sleep(5000)
+
+      GetOrders
+        .Req(owner = account.getAddress)
+        .expectUntil(
+          check(
+            (res: GetOrders.Res) =>
+              res.orders.head.getState.status == STATUS_PENDING
+          )
+        )
 
       Then(
         s"${order1.hash} and ${order2.hash} are STATUS_PENDING"
