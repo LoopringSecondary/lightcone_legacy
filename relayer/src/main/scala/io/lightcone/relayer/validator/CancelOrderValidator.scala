@@ -84,8 +84,7 @@ final class CancelOrderValidator(
             //TODO(HONGYU,YONGFENG): 订单状态的变迁需要确定规则，另外是否需要在此处过滤
             if (order.getState.status == STATUS_NEW ||
                 order.getState.status == STATUS_PENDING ||
-                order.getState.status == STATUS_PENDING_ACTIVE ||
-                order.getState.status == STATUS_PARTIALLY_FILLED) {
+                order.getState.status == STATUS_PENDING_ACTIVE) {
               req.copy(owner = Address.normalize(order.owner))
             } else {
               throw ErrorException(

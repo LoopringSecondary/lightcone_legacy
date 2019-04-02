@@ -406,13 +406,15 @@ class MarketManagerActor(
     log.debug(s"marketmanager.submitOrder ${order}")
     val matchable: Matchable = order
     order.status match {
-      case STATUS_NEW | STATUS_PENDING | STATUS_PARTIALLY_FILLED =>
-        if (order.actual.isEmpty) {
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ORDER_DATA,
-            "order in SubmitSimpleOrder miss `actual` field"
-          )
-        }
+      case STATUS_NEW | STATUS_PENDING =>
+        //不再通过该处返回错误，而是通过match时，判断订单的状态
+//        if (order.actual.isEmpty) {
+//          println("##### order.actual.isEmpty ")
+//          throw ErrorException(
+//            ErrorCode.ERR_INVALID_ORDER_DATA,
+//            "order in SubmitSimpleOrder miss `actual` field"
+//          )
+//        }
         // submit order to reserve balance and allowance
         val matchResult =
           manager.submitOrder(matchable, getRequiredMinimalIncome())
@@ -452,6 +454,7 @@ class MarketManagerActor(
       orderbookManagerActor ! ou.copy(marketPair = Some(marketPair))
     }
 
+    //该处还有保留的价值的，因为还可能是由于定时撮合等引起的，所以不能依赖于AccountManagerActor根据MatchResult的处理
     if (matchResult.taker.status == STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES) {
       for {
         takerOpt <- dbModule.orderService.getOrder(matchResult.taker.id)
