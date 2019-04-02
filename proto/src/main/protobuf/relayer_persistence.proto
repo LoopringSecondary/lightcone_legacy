@@ -64,23 +64,14 @@ message UpdateOrderStatus {
 }
 }
 
-message GetOrderByHash {
+message GetOrdersByHash {
+
     message Req {
-        string hash = 1;
-    }
-
-    message Res {
-        io.lightcone.core.RawOrder  order = 1;
-        io.lightcone.core.ErrorCode error = 2;
-    }
-
-    message BatchReq {
         repeated string hashes = 1;
     }
 
-    message BatchRes {
+    message Res {
         repeated io.lightcone.core.RawOrder  orders = 1;
-        io.lightcone.core.ErrorCode error = 2;
     }
 }
 
