@@ -28,7 +28,7 @@ object RpcDataLinters {
     def lint(data: SubmitOrder.Res) = SubmitOrder.Res(success = data.success)
   }
 
-  implicit val rawOrderLinter = new Linter[RawOrder] {
+  val rawOrderLinter = new Linter[RawOrder] {
 
     def lint(order: RawOrder) =
       RawOrder(
@@ -77,7 +77,7 @@ object RpcDataLinters {
 
   }
 
-  implicit val tokenBalanceLinter = new Linter[TokenBalance] {
+  val tokenBalanceLinter = new Linter[TokenBalance] {
 
     def lint(data: TokenBalance): TokenBalance =
       TokenBalance(
