@@ -73,7 +73,7 @@ class OrderRecoverActor(
   @inline def coordinator = actors.get(OrderRecoverCoordinator.name)
   @inline def mama = actors.get(MultiAccountManagerActor.name)
 
-  val orderStatus = Set(STATUS_NEW, STATUS_PENDING, STATUS_PARTIALLY_FILLED)
+  val orderStatus = Set(STATUS_NEW, STATUS_PENDING)
   var accountEntityIds: Set[Long] = Set.empty
   var marketEntityIds: Set[Long] = Set.empty
 

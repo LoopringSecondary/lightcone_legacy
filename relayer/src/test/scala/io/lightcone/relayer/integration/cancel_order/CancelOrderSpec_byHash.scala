@@ -17,8 +17,11 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.core.ErrorCode._
-import io.lightcone.core.ErrorException
-import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+import io.lightcone.core.{ErrorException, Orderbook}
+import io.lightcone.core.OrderStatus.{
+  STATUS_PENDING_ACTIVE,
+  STATUS_SOFT_CANCELLED_BY_USER
+}
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
@@ -45,19 +48,39 @@ class CancelOrderSpec_byHash
       val accountInitRes = getAccountReq.expectUntil(
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
+      val baseTokenBalance =
+        accountInitRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.baseToken
+        )
 
-      Then("submit an order.")
-      val order = createRawOrder()
-      val submitRes = SubmitOrder
-        .Req(Some(order))
-        .expect(check((res: SubmitOrder.Res) => true))
-      info(s"the result of submit order is ${submitRes.success}")
+      Then(
+        "submit two orders with status STATUS_PENDING and STATUS_PENDING_ACTIVE."
+      )
+      val orders = Seq(
+        createRawOrder(
+          tokenS = dynamicMarketPair.baseToken,
+          tokenB = dynamicMarketPair.quoteToken,
+          tokenFee = dynamicMarketPair.baseToken
+        ),
+        createRawOrder(
+          tokenS = dynamicMarketPair.baseToken,
+          tokenB = dynamicMarketPair.quoteToken,
+          tokenFee = dynamicMarketPair.baseToken,
+          validSince = timeProvider.getTimeSeconds().toInt + 10000
+        )
+      )
+      orders.map { order =>
+        SubmitOrder
+          .Req(Some(order))
+          .expect(check((res: SubmitOrder.Res) => res.success))
+      }
+//      info(s"the result of submit order is ${submitRes.success}")
 
-      Then("cancel this order by hash.")
+      Then("cancel the first order by hash.")
       val cancelReq =
         CancelOrder.Req(
-          owner = order.owner,
-          id = order.hash,
+          owner = orders.head.owner,
+          id = orders.head.hash,
           status = STATUS_SOFT_CANCELLED_BY_USER,
           time = BigInt(timeProvider.getTimeSeconds())
         )
@@ -68,10 +91,40 @@ class CancelOrderSpec_byHash
           res.status == cancelReq.status
         })
 
-      Then("check the cancel result.")
+      Then("check the first cancel result.")
       defaultValidate(
-        containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, order.hash),
-        be(accountInitRes),
+        containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, orders.head.hash)
+          and
+            containsInGetOrders(STATUS_PENDING_ACTIVE, orders(1).hash),
+        accountBalanceMatcher(dynamicMarketPair.baseToken, baseTokenBalance),
+        Map(
+          LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
+          userFillsIsEmpty(),
+          marketFillsIsEmpty())
+        )
+      )
+
+      Then("cancel the second order by hash.")
+      val cancelSecondReq =
+        CancelOrder.Req(
+          owner = orders(1).owner,
+          id = orders(1).hash,
+          status = STATUS_SOFT_CANCELLED_BY_USER,
+          time = BigInt(timeProvider.getTimeSeconds())
+        )
+      val secondSig = generateCancelOrderSig(cancelSecondReq)
+      val cancelSecondRes = cancelSecondReq
+        .withSig(secondSig)
+        .expect(check { res: CancelOrder.Res =>
+          res.status == cancelSecondReq.status
+        })
+
+      info(s"cancelSecondRes ${cancelSecondRes}")
+
+      Then("check the second cancel result.")
+      defaultValidate(
+        containsInGetOrders(STATUS_SOFT_CANCELLED_BY_USER, orders(1).hash),
+        accountBalanceMatcher(dynamicMarketPair.baseToken, baseTokenBalance),
         Map(
           LRC_WETH_MARKET.getMarketPair -> (orderBookIsEmpty(),
           userFillsIsEmpty(),
@@ -80,7 +133,7 @@ class CancelOrderSpec_byHash
       )
 
       Then("cancel another order.")
-      val order2 = createRawOrder(validSince = order.validSince + 100)
+      val order2 = createRawOrder(validSince = orders.head.validSince + 100)
       val cancelAnotherReq =
         CancelOrder.Req(
           owner = order2.owner,
