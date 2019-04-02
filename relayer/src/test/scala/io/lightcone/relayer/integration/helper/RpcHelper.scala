@@ -107,6 +107,12 @@ trait RpcHelper extends Logging {
           if (m.runtimeClass == err.getClass)
             err.asInstanceOf[R]
           else throw err
+
+        case err: Error =>
+          if (m.runtimeClass == err.getClass)
+            err.asInstanceOf[R]
+          else throw ErrorException(err)
+
         case msg => msg.asInstanceOf[R]
       }
       res should matcher
