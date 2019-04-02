@@ -70,8 +70,7 @@ trait AccountManagerProcessors {
         }
         _ <- order.status match {
           case STATUS_NEW | //
-              STATUS_PENDING | //
-              STATUS_PARTIALLY_FILLED =>
+              STATUS_PENDING =>
             log.debug(s"submitting order id=${order.id} to MMA")
             val order_ = order.copy(_reserved = None, _outstanding = None)
             for {
@@ -79,15 +78,20 @@ trait AccountManagerProcessors {
                 order = Some(order_)
               )).mapAs[MarketManager.MatchResult]
 
+              _ = log.debug(
+                s"AccountManagerProcessors -- processUpdatedOrder -- matchResult: ${matchRes}"
+              )
               _ = matchRes.taker.status match {
-                case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
-                    STATUS_DUST_ORDER =>
+                case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
+                    STATUS_DUST_ORDER | //
+                    STATUS_COMPLETELY_FILLED =>
                   self ! CancelOrder.Req(
                     matchRes.taker.id,
                     owner,
                     matchRes.taker.status,
                     Some(MarketPair(order.tokenS, order.tokenB))
                   )
+
                 case _ =>
               }
             } yield Unit
