@@ -63,21 +63,21 @@ object AddedMatchers extends JsonSupport {
       }
   }
 
-  def containsInGetOrderByHash(
+  def containsInGetOrdersByHash(
       orderStatus: OrderStatus,
       hashes: String*
     ) = {
-    def findOrder(res: GetOrderByHash.BatchRes) = hashes.map { hash =>
+    def findOrder(res: GetOrdersByHash.Res) = hashes.map { hash =>
       res.orders.find(_.hash.toLowerCase() == hash.toLowerCase())
     }
-    Matcher { res: GetOrderByHash.BatchRes =>
+    Matcher { res: GetOrdersByHash.Res =>
       MatchResult(
         findOrder(res).count(_.nonEmpty) == hashes.size,
         s" ${JsonPrinter.printJsonString(res)} doesn't contains order: $hashes",
         s"${JsonPrinter.printJsonString(res)} contains it."
       )
     } and
-      Matcher { res: GetOrderByHash.BatchRes =>
+      Matcher { res: GetOrdersByHash.Res =>
         MatchResult(
           findOrder(res).count(
             _.get.getState.status == orderStatus

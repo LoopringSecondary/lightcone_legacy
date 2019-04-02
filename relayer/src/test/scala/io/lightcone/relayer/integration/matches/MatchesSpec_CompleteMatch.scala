@@ -18,6 +18,12 @@ package io.lightcone.relayer.integration.matches
 
 import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
+import io.lightcone.ethereum.TxStatus
+import io.lightcone.ethereum.event.{
+  EventHeader,
+  OrderFilledEvent,
+  RingMinedEvent
+}
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
@@ -94,13 +100,57 @@ class MatchesSpec_CompleteMatch
         "order1 and order2 are submitted successfully and status are STATUS_PENDING"
       )
 
-      GetOrderByHash
-        .BatchReq(
+      GetOrdersByHash
+        .Req(
           hashes = Seq(order1.hash, order2.hash)
         )
         .expect(
-          containsInGetOrderByHash(STATUS_PENDING, order1.hash, order2.hash)
+          containsInGetOrdersByHash(STATUS_PENDING, order1.hash, order2.hash)
         )
+
+      Then("order book is empty")
+      GetOrderbook
+        .Req(
+          size = 10,
+          marketPair = Some(dynamicMarketPair)
+        )
+        .expect(
+          orderBookIsEmpty()
+        )
+
+      Then("dispatch fills and ring mined event")
+
+      val txHash =
+        "0x19e575bfe3671b54d70fea96aa96e1c4f133e39f07b31c1f2f0fb71e61c4f84a"
+
+      val eventHeader = EventHeader(
+        txHash = txHash,
+        txStatus = TxStatus.TX_STATUS_SUCCESS
+      )
+
+      val fill1 = OrderFilledEvent(
+        owner = account1.getAddress,
+        orderHash = order1.hash,
+        header = Some(eventHeader)
+      )
+
+      val fill2 = OrderFilledEvent(
+        owner = account2.getAddress,
+        orderHash = order2.hash,
+        header = Some(eventHeader)
+      )
+
+      val ringMinedEvent = RingMinedEvent(
+        header = Some(eventHeader),
+        orderIds = Seq(order1.hash, order2.hash),
+        marketPair = Some(dynamicMarketPair)
+      )
+
+      eventDispatcher.dispatch(fill1)
+      eventDispatcher.dispatch(fill2)
+      eventDispatcher.dispatch(ringMinedEvent)
+
+
     }
   }
 
