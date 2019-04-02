@@ -80,7 +80,7 @@ class EntryPointActor(
       Some(MultiAccountManagerMessageValidator.name)
 
     case _: GetOrders.Req | _: GetRings.Req | _: GetUserFills.Req |
-        _: GetMarketFills.Req =>
+        _: GetMarketFills.Req | _: GetOrdersByHash.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
     case _: JsonRpc.Request =>

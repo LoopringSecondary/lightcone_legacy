@@ -24,10 +24,11 @@ trait DbHelper extends Logging {
 
   def prepareDbModule(dbModule: DatabaseModule) = {
 
-    dbModule.tables.map { t =>
-      t.deleteByFilter(_ => true)
-    }
-//    dbModule.createTables()
+//    dbModule.tables.map { t =>
+//      t.deleteByFilter(_ => true)
+//    }
+    dbModule.dropTables()
+    dbModule.createTables()
   }
 
 }

@@ -55,15 +55,23 @@ trait RepeatedJobActor { actor: Actor with ActorLogging =>
         job.sequence += 1
         log.debug(s"running repeated job ${job.name}#${job.sequence}")
         val now = System.currentTimeMillis
-        job.run().map { _ =>
-          val timeTook =
-            if (job.delayBetweenStartAndFinish) 0
-            else (System.currentTimeMillis - now) / 1000
+        job
+          .run()
+          .recover {
+            case e: Exception =>
+              log.error(
+                s"occurs error in running repeated job: ${e.getMessage}, cause: ${e.getCause}, trace: ${e.printStackTrace()}"
+              )
+          }
+          .map { _ =>
+            val timeTook =
+              if (job.delayBetweenStartAndFinish) 0
+              else (System.currentTimeMillis - now) / 1000
 
-          val delay = Math.max(job.dalayInSeconds - timeTook, 0)
-          context.system.scheduler
-            .scheduleOnce(delay.seconds, self, Notify("run-job", name))
-        }
+            val delay = Math.max(job.dalayInSeconds - timeTook, 0)
+            context.system.scheduler
+              .scheduleOnce(delay.seconds, self, Notify("run-job", name))
+          }
       }
   }
 }
