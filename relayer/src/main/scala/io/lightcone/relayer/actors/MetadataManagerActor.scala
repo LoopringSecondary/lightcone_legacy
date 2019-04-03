@@ -203,7 +203,7 @@ class MetadataManagerActor(
               tokenMetas <- getTokenMetadatas()
               res <- if (tokenMetas.nonEmpty) {
                 processTokenMetaChange(tokenMetas)
-                log.debug(
+                println(
                   s"MetadataManagerActor --- MetadataChanged - tokenMetas: ${tokenMetas.mkString}, after tokens: ${tokens.mkString}"
                 )
                 Future.unit
