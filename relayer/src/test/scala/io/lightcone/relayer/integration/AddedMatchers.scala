@@ -191,6 +191,26 @@ object AddedMatchers extends JsonSupport {
     )
   }
 
+  def accountSimpleBalanceAndAvailableMatcher(
+      token: String,
+      balanceAndAvailable: BigInt
+    ) = Matcher { res: GetAccount.Res =>
+    val balanceOpt = res.accountBalance
+    val balance: BigInt =
+      balanceOpt.get.tokenBalanceMap(token).balance.get
+    val availableBalance: BigInt =
+      balanceOpt.get
+        .tokenBalanceMap(token)
+        .availableBalance
+        .get
+    MatchResult(
+      balance == balanceAndAvailable && balance == availableBalance,
+      s" ${JsonPrinter.printJsonString(res.getAccountBalance.tokenBalanceMap(token))} balance and availableBalance " +
+        s"not equal to ${balanceAndAvailable}.",
+      s"accountBalance of token ${token} matches."
+    )
+  }
+
   def resEqual(expectedRes: GeneratedMessage) = Matcher {
     res: GeneratedMessage =>
       MatchResult(

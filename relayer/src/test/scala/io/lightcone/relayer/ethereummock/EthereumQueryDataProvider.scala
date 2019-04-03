@@ -29,4 +29,5 @@ trait EthereumQueryDataProvider {
   def batchGetCutoffs(req: BatchGetCutoffs.Req): BatchGetCutoffs.Res
   def getBurnRate(req: GetBurnRate.Req): GetBurnRate.Res
   def batchBurnRate(req: BatchGetBurnRate.Req): BatchGetBurnRate.Res
+  def getNonce(req: GetNonce.Req): GetNonce.Res
 }
