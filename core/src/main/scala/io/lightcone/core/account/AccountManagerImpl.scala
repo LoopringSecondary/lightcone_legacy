@@ -101,7 +101,6 @@ final class AccountManagerImpl(
   def resubmitOrder(order: Matchable) = {
 
     for {
-      _ <- Future.unit
       (successful, updatedOrders) <- if (order.status.isCancelledStatus()) {
         Future.successful(false, Map(order.id -> order))
       } else {
@@ -114,14 +113,19 @@ final class AccountManagerImpl(
           )
           _ = { orderPool += order_.as(STATUS_PENDING) } // potentially replace the old one.
           (block, orderIdsToDelete) <- reserveForOrder(order_)
-          ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-          _ = ordersToDelete.map { order =>
+          ordersToDelete = orderIdsToDelete.map {
+            case (id, _) => orderPool.apply(id)
+          }
+          _ = ordersToDelete.foreach { order =>
             orderPool +=
               orderPool(order.id).copy(
                 block = order.block.max(block),
-                status = STATUS_SOFT_CANCELLED_LOW_BALANCE
+                status = orderIdsToDelete(order.id)
               )
           }
+          _ = log.debug(
+            s"AccountManagerImpl -- resubmitOrder -- orderIdsToDelete ${orderIdsToDelete} "
+          )
           successful = !orderIdsToDelete.contains(order.id)
           _ = if (successful) {
             orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
@@ -139,7 +143,7 @@ final class AccountManagerImpl(
     ) =
     for {
       orders <- cancelOrderInternal(status)(orderPool.getOrder(orderId).toSeq)
-    } yield (orders.size > 0, orders)
+    } yield (orders.nonEmpty, orders)
 
   def cancelOrders(orderIds: Seq[String]) =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
@@ -356,13 +360,32 @@ final class AccountManagerImpl(
       }
     } yield (manager.getBlock, orderIdsToDelete)
 
-  private def reserveForOrder(order: Matchable): Future[(Long, Set[String])] = {
+  private def reserveForOrder(
+      order: Matchable
+    ): Future[(Long, Map[String, OrderStatus])] = {
     val requestedAmountS = order.requestedAmount(order.tokenS)
     val requestedAmountFee = order.requestedAmount(order.tokenFee)
 
     if (requestedAmountS <= 0 || requestedAmountFee < 0) {
-      orderPool += order.copy(status = STATUS_INVALID_DATA)
-      Future.successful((0L, Set(order.id)))
+//      orderPool += order.copy(status = STATUS_INVALID_DATA)
+      //需要释放该订单相关的余额等，虽然通过返回再提交到MarketManager可以实现取消订单，但是，会在Actor中改变与BalanceUpdateEvent的顺序
+      for {
+        reserveManagers <- Future.sequence(
+          if (order.tokenS == order.tokenFee)
+            Seq(getReserveManagerOption(order.tokenS, false))
+          else
+            Seq(
+              getReserveManagerOption(order.tokenS, false),
+              getReserveManagerOption(order.tokenFee, false)
+            )
+        )
+        _ = reserveManagers.map(_.map(_.release(order.id)))
+      } yield {
+        if (requestedAmountS == 0)
+          (0L, Map(order.id -> STATUS_PENDING)) //因为目前订单的金额等控制是在MarketManager中，因此，设置成PENDING，便于提交到market，
+        else
+          (0L, Map(order.id -> STATUS_INVALID_DATA))
+      }
     } else
       for {
         _ <- Future.unit
@@ -375,8 +398,9 @@ final class AccountManagerImpl(
           }
         }
         block = b1.max(b2)
-        orderIdsToDelete = r1 ++ r2
-      } yield (block, orderIdsToDelete)
+        orderIdsToDelete = r1.map(_ -> STATUS_SOFT_CANCELLED_LOW_BALANCE) ++
+          r2.map(_ -> STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE)
+      } yield (block, orderIdsToDelete.toMap)
   }
 
   private def getReserveManagers(

@@ -107,7 +107,7 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
     } {
       _.copy(
         block = block + 1,
-        status = STATUS_SOFT_CANCELLED_LOW_BALANCE,
+        status = STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE,
         _reserved = Some(MatchableState(100, 0, 0)),
         _actual = Some(MatchableState(0, 0, 0))
       )
@@ -258,7 +258,7 @@ class AccountManagerImplSpec_SubmitSingleOrder extends AccountManagerImplSpec {
     } {
       _.copy(
         block = block + 1,
-        status = STATUS_SOFT_CANCELLED_LOW_BALANCE,
+        status = STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE,
         _reserved = Some(MatchableState(1000, 0, 0)),
         _actual = Some(MatchableState(0, 0, 0))
       )
