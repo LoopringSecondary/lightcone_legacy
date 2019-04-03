@@ -310,43 +310,45 @@ class AccountManagerActor(
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case evt: AddressBalanceUpdatedEvent =>
       count.refine("label" -> "balance_updated").increment()
-      println(
-        s"received AddressBalanceUpdatedEvent ${NumericConversion.toBigInt(evt.getBalance)}"
-      )
       blocking {
         assert(evt.address == owner)
-        println(s"set balance $owner -- ${BigInt(evt.balance.toByteArray)}")
-        manager
-          .setBalance(evt.block, evt.token, BigInt(evt.balance.toByteArray))
+        for {
+          _ <- manager
+            .setBalance(evt.block, evt.token, BigInt(evt.balance.toByteArray))
+          _ <- notifyAccountUpdate(evt.token)
+        } yield Unit
       }
-
-      notifyAccountUpdate(evt.token)
 
     case evt: AddressAllowanceUpdatedEvent =>
       count.refine("label" -> "allowance_updated").increment()
 
       blocking {
         assert(evt.address == owner)
-        manager
-          .setAllowance(evt.block, evt.token, BigInt(evt.allowance.toByteArray))
+        for {
+          _ <- manager
+            .setAllowance(
+              evt.block,
+              evt.token,
+              BigInt(evt.allowance.toByteArray)
+            )
+          _ <- notifyAccountUpdate(evt.token)
+        } yield Unit
       }
-
-      notifyAccountUpdate(evt.token)
 
     case evt: AddressBalanceAllowanceUpdatedEvent =>
       count.refine("label" -> "balance_allowance_updated").increment()
       blocking {
         assert(evt.address == owner)
-
-        manager.setBalanceAndAllowance(
-          evt.block,
-          evt.token,
-          BigInt(evt.balance.toByteArray),
-          BigInt(evt.allowance.toByteArray)
-        )
+        for {
+          _ <- manager.setBalanceAndAllowance(
+            evt.block,
+            evt.token,
+            BigInt(evt.balance.toByteArray),
+            BigInt(evt.allowance.toByteArray)
+          )
+          _ <- notifyAccountUpdate(evt.token)
+        } yield Unit
       }
-
-      notifyAccountUpdate(evt.token)
 
     case evt: CutoffEvent if evt.header.nonEmpty =>
       val header = evt.header.get
@@ -439,7 +441,6 @@ class AccountManagerActor(
 
   private def notifyAccountUpdate(token: String) = {
     manager.getBalanceOfToken(token).map { balanceAndAllowance =>
-      println(s"notify $owner -- ${balanceAndAllowance.balance}")
       AccountUpdate(
         address = owner,
         tokenBalance = Some(

@@ -236,6 +236,14 @@ final class AccountManagerImpl(
       lastBlock = manager.getBlock
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (token == order.tokenS) Future.unit
+        else {
+          getReserveManagerOption(order.tokenS, false).map { managerOpt =>
+            managerOpt.foreach(_.release(order.id))
+          }
+        }
+      }
 
       // release tokenFee allocations if tokenS != tokenFee
       _ <- serializeFutures(ordersToDelete) { order =>
