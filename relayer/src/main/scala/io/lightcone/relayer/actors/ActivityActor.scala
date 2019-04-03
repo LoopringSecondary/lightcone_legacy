@@ -85,10 +85,15 @@ class ActivityActor(
 
   activityDal.createTable()
 
+  val metricName = s"activity_${entityId}"
+  val count = KamonSupport.counter(metricName)
+  val timer = KamonSupport.timer(metricName)
+
   def ready: Receive = {
 
     case req: TxEvents =>
-      blocking { // shard-broadcast message
+      count.refine("label" -> "tx_events").increment()
+      blocking(timer, "tx_event")  { // shard-broadcast message
         // filter activities which current shard care
         log.debug(s"ActivityActor -- receive TxEvents: ${req}")
         val activities = req.getActivities.events
@@ -109,7 +114,8 @@ class ActivityActor(
       }
 
     case req: BlockEvent => // shard-broadcast message
-      blocking {
+      count.refine("label" -> "block_event").increment()
+      blocking(timer, "block_event") {
         log.debug(s"ActivityActor receive BlockEvent $req")
         (for {
           _ <- activityDal.cleanActivitiesForReorg(req)
@@ -117,7 +123,7 @@ class ActivityActor(
       }
 
     case req: GetActivities.Req =>
-      blocking {
+      blocking(timer, "get_activities") {
         (for {
           activities <- activityDal.getActivities(
             req.owner,
