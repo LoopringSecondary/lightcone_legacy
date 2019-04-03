@@ -132,7 +132,46 @@
 1. 
 
 ### OrderFilledEvent
+--- 
+分为2种情况：部分成交和完全成交
 
-1. 正确保存以及查询
-
-1. 订单状态变更是否正确，如更改成STATUS_COMPLETELY_FILLED
+---    
+1. 部分成交时
+    - **Objective**：测试一个订单收到部分成交的事件时，需要完成以下事件：
+                1、账户可用金额增加订单的金额(因为可用金额的减少是在UpdatedEvent中完成的)
+                2、订单的状态在未到灰尘单时，仍为STATUS_PENDING，但是outStandingAmountS需要改变事件的金额，
+                3、深度图减去事件的金额
+    - **测试设置**：
+        1. 设置一个新账号，有足够的余额和授权
+        1. 下一个卖出dynamicMarketPair.baseToken的订单
+        1. dispatch一个部分成交的FillEvent事件
+        1. 等待执行完毕
+    - **结果验证**：
+        1. **读取我的订单**：该订单的状态应该为 `STATUS_PENDING`
+        1. **读取市场深度**：订单金额 减去 filledEvent的金额
+        1. **读取我的成交**: 为空(因为未触发Fill事件)
+        1. **读取市场成交**：为空(因为未触发Fill事件)
+        1. **读取我的账号**: 余额和授权为初始值(未发送BalanceUpdatedEvent)，可用金额 - 订单的剩余金额
+    - **状态**: Planned
+    - **拥有者**: 红雨
+    - **其他信息**：NA
+    
+1. 完全成交时
+    - **Objective**：测试一个订单收到完全成交的事件时，需要完成以下事件：
+                1、账户可用金额增加订单的金额(因为可用金额的减少是在UpdatedEvent中完成的)
+                2、订单的状态为STATUS_PENDING，outStandingAmountS需要改变事件的金额，
+                3、深度图减去事件的金额
+    - **测试设置**：
+        1. 设置一个新账号，有足够的余额和授权
+        1. 下两个个卖出dynamicMarketPair.baseToken的订单
+        1. dispatch两个FilledEvent事件，一个完全成交、一个减去完成成交之后为灰尘单的
+        1. 等待执行完毕
+    - **结果验证**：
+        1. **读取我的订单**：订单的状态应该为 `STATUS_COMPLETELY_FILLED`
+        1. **读取市场深度**：为空
+        1. **读取我的成交**: 为空(因为未触发Fill事件)
+        1. **读取市场成交**：为空(因为未触发Fill事件)
+        1. **读取我的账号**: 余额和授权为初始值(未发送BalanceUpdatedEvent)，可用金额也为初始值
+    - **状态**: Planned
+    - **拥有者**: 红雨
+    - **其他信息**：NA

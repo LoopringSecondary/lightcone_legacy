@@ -171,6 +171,13 @@ final class DatabaseQueryMessageValidator(
           filter = filter
         )
       }
+
+    case req: GetOrdersByHash.Req =>
+      Future {
+        req.copy(
+          hashes = req.hashes.map(MessageValidator.normalizeHash)
+        )
+      }
   }
 
 }

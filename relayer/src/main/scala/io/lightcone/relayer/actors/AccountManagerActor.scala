@@ -304,16 +304,6 @@ class AccountManagerActor(
           // Make sure PENDING-ACTIVE orders can be cancelled.
           result <- (orderPersistenceActor ? req).mapAs[CancelOrder.Res]
           (successful, updatedOrders) <- manager.cancelOrder(req.id, req.status)
-          _ = {
-            if (successful) {
-              marketManagerActor.tell(req, originalSender)
-            } else {
-              throw ErrorException(
-                ERR_FAILED_HANDLE_MSG,
-                s"no order found with id: ${req.id}"
-              )
-            }
-          }
         } yield result).sendTo(sender)
       }
 
@@ -398,10 +388,10 @@ class AccountManagerActor(
         if evt.header.nonEmpty && evt.getHeader.txStatus == TX_STATUS_SUCCESS =>
       count.refine("label" -> "order_filled").increment()
       blocking {
-        (for {
+        for {
           orderOpt <- dbModule.orderService.getOrder(evt.orderHash)
           _ <- swap(orderOpt.map(resubmitOrder))
-        } yield Unit)
+        } yield Unit
       }
 
     case evt: MetadataChanged =>
@@ -476,23 +466,26 @@ class AccountManagerActor(
         .getOrElse(orderId, Amount(ByteString.copyFrom("0".getBytes)))
 
       adjusted = matchable.withFilledAmountS(filledAmountS)
+      _ = log.debug(
+        s"AccountManagerActor -- resubmitOrder -- adjusted: ${adjusted}"
+      )
       (successful, updatedOrders) <- manager.resubmitOrder(adjusted)
       updatedOrder = updatedOrders.getOrElse(orderId, adjusted)
       status = updatedOrder.status
-
       _ = log.debug(
         s"submit order result:  ${updatedOrder}",
         s"with ${updatedOrders.size} updated orders"
       )
 
       _ = if (!successful) {
-        val error = status match {
-          case STATUS_SOFT_CANCELLED_LOW_BALANCE => ERR_LOW_BALANCE
+        val errorCode = status match {
+          case STATUS_SOFT_CANCELLED_LOW_BALANCE     => ERR_LOW_BALANCE
+          case STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE => ERR_LOW_FEE_BALANCE
           case _ =>
             log.error(s"unexpected failure order status $status")
             ERR_INTERNAL_UNKNOWN
         }
-        throw ErrorException(error, s"failed to submit order ${status}.")
+        throw ErrorException(errorCode, s"failed to submit order ${status}.")
       }
 
       result: Order = updatedOrder.copy(_reserved = None, _outstanding = None)

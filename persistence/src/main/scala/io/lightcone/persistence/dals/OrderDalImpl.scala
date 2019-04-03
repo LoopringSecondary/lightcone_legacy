@@ -57,8 +57,7 @@ class OrderDalImpl @Inject()(
 
   val activeStatus = Set(
     OrderStatus.STATUS_NEW,
-    OrderStatus.STATUS_PENDING,
-    OrderStatus.STATUS_PARTIALLY_FILLED
+    OrderStatus.STATUS_PENDING
   )
 
   def saveOrder(
@@ -207,8 +206,7 @@ class OrderDalImpl @Inject()(
     ): Future[Seq[RawOrder]] = {
     val availableStatus = Seq(
       OrderStatus.STATUS_NEW,
-      OrderStatus.STATUS_PENDING,
-      OrderStatus.STATUS_PARTIALLY_FILLED
+      OrderStatus.STATUS_PENDING
     )
     val untilTime = timeProvider.getTimeSeconds().toInt + expireLeadInSeconds
     var filters = query
