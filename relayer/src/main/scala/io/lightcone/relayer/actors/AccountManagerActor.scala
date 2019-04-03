@@ -311,7 +311,9 @@ class AccountManagerActor(
     // 为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case evt: AddressBalanceUpdatedEvent =>
       count.refine("label" -> "balance_updated").increment()
-
+      println(
+        s"received AddressBalanceUpdatedEvent ${NumericConversion.toBigInt(evt.getBalance)}"
+      )
       blocking {
         assert(evt.address == owner)
         manager
