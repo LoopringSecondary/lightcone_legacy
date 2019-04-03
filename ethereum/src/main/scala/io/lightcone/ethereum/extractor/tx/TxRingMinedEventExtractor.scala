@@ -407,7 +407,7 @@ class TxRingMinedEventExtractor @Inject()(
             owner = order.owner,
             txHash = txHash,
             txStatus = txStatus,
-            activityType = ActivityType.TRADE_BUY, //TODO:
+            activityType = ActivityType.TRADE_BUY,
             token = order.tokenS,
             detail = Activity.Detail.Trade(trade)
           )

@@ -47,7 +47,6 @@ object OrderRecoverCoordinator extends DeployedAsSingleton {
 
 }
 
-// TODO(yongfeng):需要确定Terminate一个市场后，不能影响该Actor的继续执行
 class OrderRecoverCoordinator(
     implicit
     val config: Config,
