@@ -91,6 +91,12 @@ class MetadataManagerActor(
   private var tokens = Map.empty[String, Token]
   private var markets = Map.empty[String, Market]
 
+  val metricName = s"metadata_manager"
+  val count = KamonSupport.counter(metricName)
+  val timer = KamonSupport.timer(metricName)
+  val gauge = KamonSupport.gauge(metricName)
+  val histo = KamonSupport.histogram(metricName)
+
   private val syncNotify = Notify("sync-metadata")
   override def initialize() = {
     val (preTokens, preMarkets) = (tokens, markets)
@@ -116,6 +122,7 @@ class MetadataManagerActor(
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case req: TokenBurnRateChangedEvent =>
       blocking {
+        count.refine("label" -> "burn_rate_events").increment()
         log.debug(
           s"--MetadataManagerActor-- receive TokenBurnRateChangedEvent $req "
         )
@@ -193,7 +200,10 @@ class MetadataManagerActor(
       }
 
     case changed: MetadataChanged => // subscribe message from ExternalCrawlerActor
-      blocking {
+      blocking(timer, "metadata_changed") {
+        count.refine("label" -> "metadata_changed").increment()
+        gauge.refine("label" -> "tokens").set(tokens.size)
+        histo.refine("label" -> "markets").record(markets.size)
         log.debug(
           s"--MetadataManagerActor-- receive MetadataChanged, $changed "
         )
@@ -247,6 +257,7 @@ class MetadataManagerActor(
       }
 
     case _: GetTokens.Req => //support for MetadataRefresher to synchronize tokens
+      count.refine("label" -> "get_tokens").increment()
       log.debug(
         s"MetadataMangerActor -- GetTokens.Req -- ${tokens.values.toSeq.mkString}"
       )
@@ -259,7 +270,10 @@ class MetadataManagerActor(
       sender ! GetMarkets.Res(markets.values.toSeq)
 
     case `syncNotify` =>
-      blocking {
+      blocking(timer, "sync_metadata") {
+        count.refine("label" -> "sync_metadata").increment()
+        gauge.refine("label" -> "tokens").set(tokens.size)
+        histo.refine("label" -> "markets").record(markets.size)
         syncAndPublish()
       }
   }
