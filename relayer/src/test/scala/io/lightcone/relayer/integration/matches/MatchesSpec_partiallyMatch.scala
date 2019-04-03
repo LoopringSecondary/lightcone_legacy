@@ -51,6 +51,15 @@ class MatchesSpec_partiallyMatch
           check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
         )
 
+//      GetAccount
+//        .Req(
+//          account2.getAddress,
+//          tokens = Seq(dynamicBaseToken.getAddress())
+//        )
+//        .expectUntil(
+//          check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
+//        )
+
       val initDynamicToken = initAccount.getAccountBalance.tokenBalanceMap(
         dynamicBaseToken.getAddress()
       )
@@ -254,28 +263,28 @@ class MatchesSpec_partiallyMatch
 //        )
 
       Then(s"${account1.getAddress} and ${account2.getAddress} are updated")
-      GetAccount
-        .Req(
-          address = account1.getAddress,
-          allTokens = true
-        )
-        .expectUntil(
-          accountBalanceMatcher(
-            token = dynamicBaseToken.getAddress(),
-            tokenBalance = TokenBalance(
-              token = dynamicBaseToken.getAddress(),
-              balance = initBalance - order1.getAmountS / 2 - order1.getFeeParams.getAmountFee / 2,
-              allowance = initAllowance - order1.getAmountS / 2 - order1.getFeeParams.getAmountFee / 2,
-              availableBalance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee
-            )
-          )
-        )
+//      GetAccount
+//        .Req(
+//          address = account1.getAddress,
+//          allTokens = true
+//        )
+//        .expectUntil(
+//          accountBalanceMatcher(
+//            token = dynamicBaseToken.getAddress(),
+//            tokenBalance = TokenBalance(
+//              token = dynamicBaseToken.getAddress(),
+//              balance = initBalance - order1.getAmountS / 2 - order1.getFeeParams.getAmountFee / 2,
+//              allowance = initAllowance - order1.getAmountS / 2 - order1.getFeeParams.getAmountFee / 2,
+//              availableBalance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
+//              availableAlloawnce = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee
+//            )
+//          )
+//        )
 
       GetAccount
         .Req(
           address = account2.getAddress,
-          allTokens = true
+          tokens = Seq(dynamicBaseToken.getAddress())
         )
         .expectUntil(
           accountBalanceMatcher(
@@ -287,8 +296,7 @@ class MatchesSpec_partiallyMatch
               availableBalance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
               availableAlloawnce = initAllowance
             )
-          ),
-          expectTimeout = Timeout(5 second)
+          )
         )
 
     }

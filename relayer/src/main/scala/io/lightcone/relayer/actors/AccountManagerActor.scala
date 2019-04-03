@@ -315,6 +315,7 @@ class AccountManagerActor(
       )
       blocking {
         assert(evt.address == owner)
+        println(s"set balance $owner -- ${BigInt(evt.balance.toByteArray)}")
         manager
           .setBalance(evt.block, evt.token, BigInt(evt.balance.toByteArray))
       }
@@ -438,6 +439,7 @@ class AccountManagerActor(
 
   private def notifyAccountUpdate(token: String) = {
     manager.getBalanceOfToken(token).map { balanceAndAllowance =>
+      println(s"notify $owner -- ${balanceAndAllowance.balance}")
       AccountUpdate(
         address = owner,
         tokenBalance = Some(
