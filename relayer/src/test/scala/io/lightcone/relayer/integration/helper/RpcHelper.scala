@@ -23,7 +23,6 @@ import org.scalatest.Matchers
 import org.scalatest.matchers.Matcher
 import org.slf4s.Logging
 import scalapb.GeneratedMessage
-
 import scala.concurrent.{Await, ExecutionContext}
 
 trait RpcHelper extends Logging {

@@ -32,7 +32,6 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import kamon.metric._
-
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -261,11 +260,11 @@ class AccountManagerActor(
         nonceFromDbRes <- (activityActor ? GetPendingActivityNonce
           .Req(owner, numOfActivitiesForCalculatingNonce))
           .mapAs[GetPendingActivityNonce.Res]
-        nonceFromDb = nonceFromDbRes.nonces
+        nonceFromDb = nonceFromDbRes.nonces.reverse
           .sliding(2)
           .find(s => s(1) - s(0) > 1)
           .map(_(0) + 1)
-          .getOrElse(nonceFromDbRes.nonces.lastOption.getOrElse(0L))
+          .getOrElse(nonceFromDbRes.nonces.headOption.map(_ + 1).getOrElse(0L))
         nonce = if (nonceFromEth >= nonceFromDb) nonceFromEth else nonceFromDb
         res = GetAccountNonce.Res(nonce)
       } yield res).sendTo(sender)
