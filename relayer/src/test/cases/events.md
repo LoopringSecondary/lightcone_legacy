@@ -72,6 +72,29 @@
 
    - 其他信息：failed activity 与success测试验证一样，不再重复测试。
 
+2. Activity 被删除
+
+   - 目标：测试pending的activity在后续相同nonce不同activity的影响
+
+   - 测试前置条件:
+
+     1. 设置一个pending 的transfer eth out 的activity，nonce 为10  —  a1
+     2. 设置一个success 的transfer LRC out 的activity，nonce 为10  —  a2
+
+   - 测试步骤及结果验证：
+
+     1. 发出 a1
+
+     2. 发出a2
+
+        ==> 验证 activity a1被删除， a2正确存储
+
+   - 状态: Planned
+
+   - 拥有者: 亚东
+
+   - 其他信息：NA
+
 ### K线数据
 
 1. 测试ohlc data 
