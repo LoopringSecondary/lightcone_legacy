@@ -36,10 +36,10 @@ trait ValidateHelper {
       implicit
       account: Credentials
     ) = {
-    GetOrders.Req(owner = account.getAddress).expect(getOrdersMatcher)
+    GetOrders.Req(owner = account.getAddress).expectUntil(getOrdersMatcher)
     GetAccount
       .Req(address = account.getAddress, allTokens = true)
-      .expect(accountMatcher)
+      .expectUntil(accountMatcher)
     marketMatchers.map {
       case (pair, (orderbookMatcher, userFillsMatcher, marketFillsMatcher)) =>
         GetOrderbook

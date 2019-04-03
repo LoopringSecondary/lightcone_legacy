@@ -23,11 +23,13 @@ import io.lightcone.lib.Address
 import io.lightcone.ethereum.persistence._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
+import org.slf4s.Logging
 import slick.basic._
 import slick.dbio.Effect
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
 import slick.sql.FixedSqlAction
+
 import scala.concurrent._
 
 class ActivityDalImpl @Inject()(
@@ -36,7 +38,8 @@ class ActivityDalImpl @Inject()(
   )(
     implicit
     val ec: ExecutionContext)
-    extends ActivityDal {
+    extends ActivityDal
+    with Logging{
 
   val query = TableQuery(new ActivityTable(shardId)(_))
   implicit val activityStatusCxolumnType = enumColumnType(TxStatus)
@@ -53,7 +56,12 @@ class ActivityDalImpl @Inject()(
     val op = (for {
       _ <- DBIO.sequence(activities_.map(saveActivityDBIO))
     } yield {}).transactionally
-    db.run(op)
+    db.run(op).recover {
+      case e: Exception =>
+        log.error(
+          s"occurs error when save activity:${e.getMessage}, ${e.getCause}"
+        )
+    }
   }
 
   def getActivities(
@@ -117,7 +125,12 @@ class ActivityDalImpl @Inject()(
         deletePendingActivitiesWithSmallerNonceDBIO(r.from, r.nonce)
       })
     } yield {}).transactionally
-    db.run(op)
+    db.run(op).recover {
+      case e: Exception =>
+        log.error(
+          s"occurs error when cleanActivitiesForReorg:${e.getMessage}, ${e.getCause}"
+        )
+    }
   }
 
   private def deleteActivitiesWithHashesDBIO(

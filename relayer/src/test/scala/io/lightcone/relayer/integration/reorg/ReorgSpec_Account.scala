@@ -18,11 +18,13 @@ package io.lightcone.relayer.integration
 
 import io.lightcone.core.Amount
 import io.lightcone.ethereum.event._
+import io.lightcone.lib.NumericConversion._
 import io.lightcone.relayer._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
+import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.math.BigInt
 
@@ -36,8 +38,8 @@ class ReorgSpec_Account
 
   feature("test reorg of account ") {
     scenario("the value of account's balance and allowance after forked") {
-
       implicit val account = getUniqueAccount()
+      val blockNumber = 1000L
       val token = LRC_TOKEN.address
       val balance: Option[Amount] = BigInt(100000)
       val getAccountReq = GetAccount.Req(
@@ -48,12 +50,16 @@ class ReorgSpec_Account
         check((res: GetAccount.Res) => res.accountBalance.nonEmpty)
       )
 
+      val initAllowance: BigInt = accountInitRes.getAccountBalance
+        .tokenBalanceMap(token)
+        .allowance
+
       Given("dispatch an AddressBalanceUpdatedEvent.")
       val balanceEvent = AddressBalanceUpdatedEvent(
         address = account.getAddress,
         token = token,
         balance = balance,
-        block = 100
+        block = blockNumber
       )
       addAccountExpects({
         case req: GetAccount.Req =>
@@ -76,12 +82,30 @@ class ReorgSpec_Account
       })
       eventDispatcher.dispatch(balanceEvent)
 
+      getAccountReq.expectUntil(
+        Matcher { res: GetAccount.Res =>
+          MatchResult(
+            res.accountBalance.nonEmpty,
+            "accountBalance is empty",
+            "accountBalance is nonEmpty"
+          )
+        } and Matcher { res: GetAccount.Res =>
+          val balance1: BigInt = res.getAccountBalance
+            .tokenBalanceMap(token)
+            .balance
+          MatchResult(
+            balance1 == toBigInt(balance),
+            s"balance: ${balance1} != ${toBigInt(balance)}",
+            s"balance: ${balance1} == ${toBigInt(balance)}"
+          )
+        }
+      )
       Given("dispatch an AddressAllowanceUpdatedEvent.")
       val allowanceEvent = AddressAllowanceUpdatedEvent(
         address = account.getAddress,
         token = token,
         allowance = balance,
-        block = 100
+        block = blockNumber
       )
       addAccountExpects({
         case req: GetAccount.Req =>
@@ -117,7 +141,7 @@ class ReorgSpec_Account
       )
       When("dispatch a forked block event.")
       val blockEvent = BlockEvent(
-        blockNumber = 99
+        blockNumber = blockNumber - 1
       )
       addAccountExpects({
         case req: GetAccount.Req =>
@@ -142,20 +166,26 @@ class ReorgSpec_Account
       })
 
       eventDispatcher.dispatch(blockEvent)
+      Thread.sleep(1000)
 
       Then("the balance and allowance should have rollbacked.")
-      Thread.sleep(1000)
       val accountRes1 = getAccountReq.expectUntil(
-        check(
-          (res: GetAccount.Res) =>
-            res.accountBalance.nonEmpty &&
-              res.getAccountBalance
-                .tokenBalanceMap(token)
-                .allowance ==
-                accountInitRes.getAccountBalance
-                  .tokenBalanceMap(token)
-                  .allowance
-        )
+        Matcher { res: GetAccount.Res =>
+          MatchResult(
+            res.accountBalance.nonEmpty,
+            "accountBalance is empty",
+            "accountBalance is nonEmpty"
+          )
+        } and Matcher { res: GetAccount.Res =>
+          val allowance1: BigInt = res.getAccountBalance
+            .tokenBalanceMap(token)
+            .allowance
+          MatchResult(
+            allowance1 == initAllowance,
+            s"allowance: ${allowance1} != ${initAllowance}",
+            s"allowance: ${allowance1} == ${initAllowance}"
+          )
+        }
       )
     }
   }

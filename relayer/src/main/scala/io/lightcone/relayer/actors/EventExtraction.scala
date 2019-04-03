@@ -87,6 +87,7 @@ trait EventExtraction {
             )
 
             //TODO: 如何发送，是否需要等待返回结果之后再发送其余的events，否则会导致数据不一致
+            //TODO: blockEvent必须在其他事件之前发送，并且需要在上一个块的所有的event发送之后，再发送
             eventDispatcher.dispatch(blockEvent)
             self ! RETRIEVE_RECEIPTS
           } else {

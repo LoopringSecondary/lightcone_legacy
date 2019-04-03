@@ -25,6 +25,7 @@ import org.web3j.utils.Numeric
 package object relayer {
   //便于生成全局唯一的地址
   private val addressGenerator = new AtomicInteger(100000)
+  private val blockNumber = new AtomicInteger(100000)
 
   implicit private val suiteDescription =
     Description.createSuiteDescription(this.getClass)
@@ -60,6 +61,11 @@ package object relayer {
   def getUniqueInt() = {
     addressGenerator.getAndIncrement()
   }
+
+  def getNextBlockNumber() = {
+    blockNumber.getAndIncrement()
+  }
+
   println(s"##### ${postgreContainer.jdbcUrl}")
 
 }

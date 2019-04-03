@@ -87,47 +87,55 @@ class ActivityActor(
 
   def ready: Receive = {
 
-    case req: TxEvents => { // shard-broadcast message
-      // filter activities which current shard care
-      val activities = req.getActivities.events
-        .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
-      if (activities.nonEmpty) {
-        val blocks = activities.groupBy(_.block).keySet
-        if (blocks.size != 1)
-          log.error(
-            s"multiple block detected in a batch activities save request: $activities"
-          )
-        val txs = activities.groupBy(_.txHash).keySet
-        if (txs.size != 1)
-          log.error(
-            s"multiple txHash detected in a batch activities save request: $activities"
-          )
-        activityDal.saveActivities(activities)
+    case req: TxEvents =>
+      blocking { // shard-broadcast message
+        // filter activities which current shard care
+        log.debug(s"ActivityActor -- receive TxEvents: ${req}")
+        val activities = req.getActivities.events
+          .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
+        if (activities.nonEmpty) {
+          val blocks = activities.groupBy(_.block).keySet
+          if (blocks.size != 1)
+            log.error(
+              s"multiple block detected in a batch activities save request: $activities"
+            )
+          val txs = activities.groupBy(_.txHash).keySet
+          if (txs.size != 1)
+            log.error(
+              s"multiple txHash detected in a batch activities save request: $activities"
+            )
+          activityDal.saveActivities(activities)
+        }
       }
-    }
 
     case req: BlockEvent => // shard-broadcast message
-      log.debug(s"ActivityActor receive BlockEvent $req")
-      (for {
-        _ <- activityDal.cleanActivitiesForReorg(req)
-      } yield {}).sendTo(sender)
+      blocking {
+        log.debug(s"ActivityActor receive BlockEvent $req")
+        (for {
+          _ <- activityDal.cleanActivitiesForReorg(req)
+        } yield {}).sendTo(sender)
+      }
 
     case req: GetActivities.Req =>
-      (for {
-        activities <- activityDal.getActivities(
-          req.owner,
-          req.token,
-          req.sort,
-          req.paging.get
-        )
-        res = GetActivities.Res(activities)
-      } yield res).sendTo(sender)
+      blocking {
+        (for {
+          activities <- activityDal.getActivities(
+            req.owner,
+            req.token,
+            req.sort,
+            req.paging.get
+          )
+          res = GetActivities.Res(activities)
+        } yield res).sendTo(sender)
+      }
 
     case req: GetPendingActivityNonce.Req =>
-      (for {
-        nonces <- activityDal.getPendingActivityNonces(req.from, req.limit)
-        res = GetPendingActivityNonce.Res(nonces)
-      } yield res).sendTo(sender)
+      blocking {
+        (for {
+          nonces <- activityDal.getPendingActivityNonces(req.from, req.limit)
+          res = GetPendingActivityNonce.Res(nonces)
+        } yield res).sendTo(sender)
+      }
   }
 
 }

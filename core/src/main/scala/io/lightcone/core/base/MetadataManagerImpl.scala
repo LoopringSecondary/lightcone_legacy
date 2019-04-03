@@ -17,6 +17,10 @@
 package io.lightcone.core
 
 import org.slf4s.Logging
+import java.util.concurrent.ConcurrentHashMap
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 final class MetadataManagerImpl(
     val defaultBurnRateForMarket: Double,
@@ -26,9 +30,9 @@ final class MetadataManagerImpl(
 
   import ErrorCode._
 
-  private var tokenAddressMap = Map.empty[String, Token]
-  private var tokenSymbolMap = Map.empty[String, Token]
-  private var marketMap = Map.empty[String, Market]
+  private var tokenAddressMap = mutable.Map.empty[String, Token]
+  private var tokenSymbolMap = mutable.Map.empty[String, Token]
+  private var marketMap = mutable.Map.empty[String, Market]
 
   def reset(
       tokens: Seq[Token],
@@ -37,20 +41,25 @@ final class MetadataManagerImpl(
     log.debug(
       s"MetadataManagerImpl -- reset -- tokens:${tokens.mkString}, markets:${markets.mkString}"
     )
-    tokenAddressMap = Map.empty
-    tokenSymbolMap = Map.empty
+    val tokenAddressMapTmp: mutable.Map[String, Token] =
+      new ConcurrentHashMap[String, Token]().asScala
+    val tokenSymbolMapTmp: mutable.Map[String, Token] =
+      new ConcurrentHashMap[String, Token]().asScala
+    val marketMapTmp: mutable.Map[String, Market] =
+      new ConcurrentHashMap[String, Market]().asScala
 
     tokens.foreach { token =>
-      val m = token.metadata.get
-      tokenAddressMap += m.address -> token
-      tokenSymbolMap += m.symbol -> token
+      tokenAddressMapTmp.put(token.getMetadata.address, token)
+      tokenSymbolMapTmp.put(token.getMetadata.symbol, token)
     }
 
-    marketMap = Map.empty
     markets.foreach { market =>
-      val m = market.metadata.get
-      marketMap += m.marketHash -> market
+      marketMapTmp.put(market.getMetadata.marketHash, market)
     }
+
+    tokenAddressMap = tokenAddressMapTmp
+    tokenSymbolMap = tokenSymbolMapTmp
+    marketMap = marketMapTmp
   }
 
   def isMarketStatus(
@@ -59,8 +68,7 @@ final class MetadataManagerImpl(
     ): Boolean =
     marketMap
       .get(marketHash)
-      .map(m => statuses.contains(m.metadata.get.status))
-      .getOrElse(false)
+      .exists(m => statuses.contains(m.getMetadata.status))
 
   def getTokenWithAddress(addr: String): Option[Token] = {
     tokenAddressMap.get(addr.toLowerCase())
@@ -73,13 +81,7 @@ final class MetadataManagerImpl(
   def getBurnRate(addr: String) =
     tokenAddressMap
       .get(addr.toLowerCase())
-      .map(
-        m =>
-          BurnRate(
-            m.getBurnRateForMarket(),
-            m.getBurnRateForP2P()
-          )
-      )
+      .map(_.getMetadata.getBurnRate)
       .getOrElse(BurnRate(defaultBurnRateForMarket, defaultBurnRateForP2P))
 
   def getTokens = tokenAddressMap.values.toSeq
