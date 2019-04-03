@@ -83,7 +83,7 @@ trait MetadataHelper extends DbHelper with Matchers with RpcHelper {
         true,
         true
       )
-//      Thread.sleep(1000)
+      Thread.sleep(1000)
       log.debug(s"#### newTokens ${tokens.mkString}")
       GetTokens
         .Req(

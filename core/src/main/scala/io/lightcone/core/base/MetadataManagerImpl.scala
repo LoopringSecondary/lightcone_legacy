@@ -34,6 +34,9 @@ final class MetadataManagerImpl(
       tokens: Seq[Token],
       markets: Seq[Market]
     ) = {
+    log.debug(
+      s"MetadataManagerImpl -- reset -- tokens:${tokens.mkString}, markets:${markets.mkString}"
+    )
     tokenAddressMap = Map.empty
     tokenSymbolMap = Map.empty
 

@@ -75,7 +75,9 @@ class EventsSpec_RingMinedEvent
         submitAndDispatchEvent(i, order)(account1)
       }
 
-      Then(s" the status of the first order should be STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES after more than ${failureCount} times failures ")
+      Then(
+        s" the status of the first order should be STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES after more than ${failureCount} times failures "
+      )
       val getOrderRes = GetOrders
         .Req(owner = account.getAddress)
         .expect(check((res: GetOrders.Res) => true))

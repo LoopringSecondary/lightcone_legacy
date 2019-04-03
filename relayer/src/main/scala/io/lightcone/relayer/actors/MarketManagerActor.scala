@@ -438,7 +438,9 @@ class MarketManagerActor(
 
   private def updateOrderbookAndSettleRings(matchResult: MatchResult): Unit = {
     // Settle rings
-    log.debug(s"MarketManagerActor -- updateOrderbookAndSettleRings -- matchResult:${matchResult}")
+    log.debug(
+      s"MarketManagerActor -- updateOrderbookAndSettleRings -- matchResult:${matchResult}"
+    )
     if (matchResult.rings.nonEmpty) {
       settlementActor ! SettleRings(
         rings = matchResult.rings,

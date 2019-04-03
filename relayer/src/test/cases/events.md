@@ -1,6 +1,6 @@
 ## 以太坊事件测试用例
 
-### Interal Ticker 测试
+### Internal Ticker 测试
 
 1. inter ticker的解析和推送
 

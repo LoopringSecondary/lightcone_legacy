@@ -91,6 +91,7 @@ class MetadataManagerActor(
   private var tokens = Map.empty[String, Token]
   private var markets = Map.empty[String, Market]
 
+  private val syncNotify = Notify("sync-metadata")
   override def initialize() = {
     val (preTokens, preMarkets) = (tokens, markets)
     val f = syncAndPublish
@@ -108,7 +109,7 @@ class MetadataManagerActor(
       name = "load_tokens_markets_metadata",
       dalayInSeconds = refreshIntervalInSeconds,
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () => syncAndPublish()
+      run = () => Future.successful(self ! syncNotify)
     )
   )
 
@@ -202,12 +203,13 @@ class MetadataManagerActor(
               tokenMetas <- getTokenMetadatas()
               res <- if (tokenMetas.nonEmpty) {
                 processTokenMetaChange(tokenMetas)
+                log.debug(
+                  s"MetadataManagerActor --- MetadataChanged - tokenMetas: ${tokenMetas.mkString}, after tokens: ${tokens.mkString}"
+                )
+                Future.unit
               } else Future.unit
             } yield res
           } else Future.unit
-          _ = log.debug(
-            s"MetadataManagerActor --- MetadataChanged - after metas :${tokens.mkString} "
-          )
           _ <- if (changed.tokenInfoChanged) {
             for {
               tokenInfos <- getTokenInfos()
@@ -255,6 +257,11 @@ class MetadataManagerActor(
 
     case _: GetMarkets.Req =>
       sender ! GetMarkets.Res(markets.values.toSeq)
+
+    case `syncNotify` =>
+      blocking {
+        syncAndPublish()
+      }
   }
 
   private def processTokenMetaChange(metadatas: Map[String, TokenMetadata]) = {
