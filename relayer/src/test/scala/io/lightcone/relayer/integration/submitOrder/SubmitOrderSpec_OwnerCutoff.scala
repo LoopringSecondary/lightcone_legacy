@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.integration.submitOrder
 
-import io.lightcone.core.ErrorCode.ERR_ORDER_VALIDATION_INVALID_CUTOFF
 import io.lightcone.core.OrderStatus.STATUS_PENDING_ACTIVE
 import io.lightcone.core._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
@@ -119,7 +118,7 @@ class SubmitOrderSpec_OwnerCutoff
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        validSince = (timeProvider.getTimeSeconds() + 1).toInt
+        validSince = (timeProvider.getTimeSeconds() + 10).toInt
       )
       SubmitOrder
         .Req(Some(order2))
