@@ -30,7 +30,7 @@ import io.lightcone.relayer.ethereum._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util._
 
 trait EventExtraction {
   me: InitializationRetryActor =>
@@ -56,13 +56,6 @@ trait EventExtraction {
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  @inline def ringAndFillPersistenceActor =
-    actors.get(RingAndFillPersistenceActor.name)
-
-  @inline def chainReorganizationManagerActor =
-    actors.get(ChainReorganizationManagerActor.name)
-  @inline def marketHistoryActor = actors.get(MarketHistoryActor.name)
-
   def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
@@ -79,7 +72,7 @@ trait EventExtraction {
               txs = blockData.transactions.map(
                 tx =>
                   BlockEvent.Tx(
-                    from = tx.from,
+                    from = Address.normalize(tx.from),
                     nonce = NumericConversion.toBigInt(tx.nonce).toInt,
                     txHash = tx.hash
                   )

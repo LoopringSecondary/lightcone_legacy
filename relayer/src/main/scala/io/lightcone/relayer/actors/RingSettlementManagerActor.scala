@@ -26,9 +26,10 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum._
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 import scala.util.Random
 
 // Owner: Hongyu
@@ -61,7 +62,8 @@ class RingSettlementManagerActor(
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule,
     ringBatchGenerator: RingBatchGenerator)
-    extends InitializationRetryActor {
+    extends InitializationRetryActor
+    with BlockingReceive {
 
   import ErrorCode._
 
@@ -76,7 +78,7 @@ class RingSettlementManagerActor(
     .asScala
     .map(minerConfig => {
       val miner = minerConfig.getString("transaction-origin")
-      val item = Address(miner).toString ->
+      val item = Address.normalize(miner) ->
         context.actorOf(
           Props(
             new RingSettlementActor()(
@@ -125,6 +127,20 @@ class RingSettlementManagerActor(
           ))
           ringSettlementActors = ringSettlementActors - ba.address
         }
+      }
+
+    case event: BlockEvent =>
+      val miners = ringSettlementActors.keys.toSeq
+      blocking {
+        for {
+          _ <- dbModule.settlementTxDal.cleanTxsForReorg(event)
+          _ <- Future.sequence(
+            event.txs.filter(tx => miners.contains(tx.from)).map { tx =>
+              dbModule.settlementTxDal
+                .updateInBlock(tx.txHash, tx.from, tx.nonce)
+            }
+          )
+        } yield Unit
       }
   }
 }
