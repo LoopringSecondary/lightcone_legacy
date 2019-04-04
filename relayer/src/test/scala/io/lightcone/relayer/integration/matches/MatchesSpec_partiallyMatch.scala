@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.integration.matches
 
-import akka.util.Timeout
 import io.lightcone.core.OrderStatus._
 import io.lightcone.ethereum.TxStatus
 import io.lightcone.ethereum.event._
@@ -27,7 +26,6 @@ import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
 import org.scalatest._
-import scala.concurrent.duration._
 
 class MatchesSpec_partiallyMatch
     extends FeatureSpec
@@ -66,6 +64,7 @@ class MatchesSpec_partiallyMatch
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "200".zeros(dynamicBaseToken.getDecimals()),
+        amountB = "2".zeros(dynamicQuoteToken.getDecimals()),
         amountFee = "20".zeros(dynamicBaseToken.getDecimals())
       )(account1)
 
