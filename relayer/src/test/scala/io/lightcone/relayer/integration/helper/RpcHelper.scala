@@ -23,6 +23,7 @@ import org.scalatest.Matchers
 import org.scalatest.matchers.Matcher
 import org.slf4s.Logging
 import scalapb.GeneratedMessage
+import io.lightcone.core.Error
 
 import scala.concurrent.{Await, ExecutionContext}
 
@@ -55,6 +56,13 @@ trait RpcHelper extends Logging {
               Some(res.asInstanceOf[R])
             } else {
               errOpt = Some(err)
+              None
+            }
+          case err: Error =>
+            if (m.runtimeClass == err.getClass) {
+              Some(res.asInstanceOf[R])
+            } else {
+              errOpt = Some(ErrorException(err))
               None
             }
           case msg =>
@@ -99,6 +107,12 @@ trait RpcHelper extends Logging {
           if (m.runtimeClass == err.getClass)
             err.asInstanceOf[R]
           else throw err
+
+        case err: Error =>
+          if (m.runtimeClass == err.getClass)
+            err.asInstanceOf[R]
+          else throw ErrorException(err)
+
         case msg => msg.asInstanceOf[R]
       }
       res should matcher
