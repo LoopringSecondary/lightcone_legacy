@@ -59,16 +59,13 @@ class GasPriceActor(
   private val blockSize = selfConfig.getInt("block-size")
   private val excludePercent = selfConfig.getInt("exclude-percent")
 
-  @inline def marketManagerActor = actors.get(MarketManagerActor.name)
-
   var blocks: Seq[BlockGasPricesExtractedEvent] = Seq.empty
 
   def ready: Receive = {
 
     case SetGasPrice.Req(price) =>
-      sender ! SetGasPrice.Res(gasPrice)
+      sender ! SetGasPrice.Res(price)
       gasPrice = price
-      marketManagerActor ! GasPriceUpdatedEvent(gasPrice.longValue())
 
     case req: GetGasPrice.Req =>
       sender ! GetGasPrice.Res(gasPrice)
@@ -79,7 +76,6 @@ class GasPriceActor(
       }
       blocks = blocks.:+(block).sortWith(_.height < _.height)
       calculateGasPrices
-      marketManagerActor ! GasPriceUpdatedEvent(gasPrice.longValue())
   }
 
   def calculateGasPrices = {

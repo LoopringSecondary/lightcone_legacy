@@ -56,9 +56,13 @@ class MatchesSpec_DelayMatch
       val initBalance: BigInt = initDynamicToken.getBalance
       val initAllowance: BigInt = initDynamicToken.getAllowance
 
-      Then("set gas price to 100 Gwei ")
+      Then(
+        "set gas price to 100 Gwei and sleep 2s for market manager to update"
+      )
 
-      actorRefs.get(GasPriceActor.name) ! SetGasPrice.Req("100".zeros(9))
+      GasPriceActor.broadcast(SetGasPrice.Req("100".zeros(9)))
+
+      Thread.sleep(2000)
 
       GetGasPrice
         .Req()
@@ -70,7 +74,7 @@ class MatchesSpec_DelayMatch
         )
 
       When(
-        s"account1: ${account1.getAddress} submit an order of sell 100 LRC and set fee to 10 LRC."
+        s"account1: ${account1.getAddress} submit an order of sell 100 LRC and set fee to 0.001 LRC."
       )
 
       val order1 = createRawOrder(
@@ -78,7 +82,7 @@ class MatchesSpec_DelayMatch
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "100".zeros(dynamicBaseToken.getDecimals()),
-        amountFee = "1".zeros(dynamicBaseToken.getDecimals() - 4)
+        amountFee = "1".zeros(dynamicBaseToken.getDecimals() - 3)
       )(account1)
 
       SubmitOrder
@@ -92,13 +96,14 @@ class MatchesSpec_DelayMatch
         )
 
       And(
-        s"account2: ${account2.getAddress} submit an order of buy 100 LRC and set fee to 10 LRC."
+        s"account2: ${account2.getAddress} submit an order of buy 100 LRC and set fee to 0.001 LRC."
       )
 
       var submitted = false
       addSendRawTxExpects({
         case req: SendRawTransaction.Req => {
           submitted = true
+          println("submitted order")
           SendRawTransaction.Res()
         }
       })
@@ -109,7 +114,7 @@ class MatchesSpec_DelayMatch
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "1".zeros(dynamicQuoteToken.getDecimals()),
         amountB = "100".zeros(dynamicBaseToken.getDecimals()),
-        amountFee = "1".zeros(dynamicBaseToken.getDecimals() - 4)
+        amountFee = "1".zeros(dynamicBaseToken.getDecimals() - 3)
       )(account2)
 
       SubmitOrder
@@ -139,7 +144,7 @@ class MatchesSpec_DelayMatch
 
       Then("set gas price to 1 Gwei ")
 
-      actorRefs.get(GasPriceActor.name) ! SetGasPrice.Req("1".zeros(9))
+      GasPriceActor.broadcast(SetGasPrice.Req("1".zeros(9)))
 
       GetGasPrice
         .Req()
@@ -152,7 +157,7 @@ class MatchesSpec_DelayMatch
       Then("send raw transaction to submit ring")
       val now = timeProvider.getTimeSeconds()
       while (!submitted && timeProvider
-               .getTimeSeconds() - now < timeout.duration.toSeconds) {
+               .getTimeSeconds() - now < 10) {
         Thread.sleep(500)
       }
 

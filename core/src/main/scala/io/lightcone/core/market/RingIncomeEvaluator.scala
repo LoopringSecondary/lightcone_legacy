@@ -41,8 +41,10 @@ final class RingIncomeEvaluatorImpl @Inject()(
   def isProfitable(
       ring: MatchableRing,
       fiatValueThreshold: Double
-    ) =
+    ) = {
+    println(s"income:${getRingIncome(ring)}")
     getRingIncome(ring) >= fiatValueThreshold
+  }
 
   private def getExpectedFillIncomeFiatValue(fill: ExpectedMatchableFill) = {
 

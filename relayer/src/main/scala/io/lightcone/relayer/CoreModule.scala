@@ -256,10 +256,6 @@ class CoreModule(
         SocketIONotificationActor.name
       )
       .register(
-        classOf[BlockGasPricesExtractedEvent], //
-        GasPriceActor.name
-      )
-      .register(
         classOf[AddressAllowanceUpdatedEvent],
         MultiAccountManagerActor.name
       )
@@ -285,6 +281,10 @@ class CoreModule(
       .registerBroadcast(
         classOf[TxEvents],
         ActivityActor
+      )
+      .registerBroadcast(
+        classOf[BlockGasPricesExtractedEvent], //
+        GasPriceActor
       )
   }
 

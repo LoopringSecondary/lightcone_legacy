@@ -24,11 +24,12 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data._
+import io.lightcone.relayer.data.{TriggerRematch, _}
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import kamon.metric._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -176,6 +177,9 @@ class MarketManagerActor(
   val syncGasPriceDelayInSeconds =
     selfConfig.getInt("sync-gasprice-delay-in-seconds")
 
+  val triggerRematchDelayInSeconds =
+    selfConfig.getInt("trigger-rematch-delay-in-seconds")
+
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring_protocol.gas-limit-per-ring-v2")
   )
@@ -248,7 +252,7 @@ class MarketManagerActor(
     } yield Unit
   }
 
-  def recover: Receive = {
+  def recover: Receive = super.receiveRepeatdJobs orElse {
 
     case SubmitSimpleOrder(_, Some(order)) =>
       blocking(recover_timer, "recover_submit_order") {
@@ -281,7 +285,7 @@ class MarketManagerActor(
       }
   }
 
-  def ready: Receive = {
+  def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
@@ -311,21 +315,6 @@ class MarketManagerActor(
       gauge.refine("label" -> "num_orders").set(numOfOrders)
       histo.refine("label" -> "num_orders").record(numOfOrders)
       count.refine("label" -> "cancel_order").increment()
-
-    case GasPriceUpdatedEvent(_gasPrice) =>
-      val t = timer.refine("label" -> "rematch").start()
-
-      this.gasPrice = _gasPrice
-      manager.triggerMatch(true, getRequiredMinimalIncome()) foreach {
-        matchResult =>
-          updateOrderbookAndSettleRings(matchResult)
-      }
-
-      t.stop()
-      val numOfOrders = manager.getNumOfOrders
-      gauge.refine("label" -> "num_orders").set(numOfOrders)
-      histo.refine("label" -> "num_orders").record(numOfOrders)
-      count.refine("label" -> "rematch").increment()
 
     case TriggerRematch(sellOrderAsTaker, offset) =>
       val t = timer.refine("label" -> "rematch").start()
@@ -475,13 +464,18 @@ class MarketManagerActor(
     for {
       res <- (gasPriceActor ? GetGasPrice.Req())
         .mapAs[GetGasPrice.Res]
-    } yield this.gasPrice = res.gasPrice
+    } yield this.gasPrice = res.getGasPrice
 
   val repeatedJobs = Seq(
     Job(
       name = "sync-gasprice",
       dalayInSeconds = syncGasPriceDelayInSeconds, // 10 minutes
       run = () => syncGasPrice()
+    ),
+    Job(
+      name = "trigger-rematch",
+      dalayInSeconds = triggerRematchDelayInSeconds,
+      run = () => Future { self ! TriggerRematch(sellOrderAsTaker = true) }
     )
   )
 
