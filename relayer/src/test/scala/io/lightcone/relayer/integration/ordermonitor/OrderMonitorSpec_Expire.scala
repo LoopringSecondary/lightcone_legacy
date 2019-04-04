@@ -61,7 +61,7 @@ class OrderMonitorSpec_Expire
         tokenFee = dynamicBaseToken.getAddress(),
         amountS = "100".zeros(dynamicBaseToken.getDecimals()),
         amountFee = "10".zeros(dynamicBaseToken.getDecimals()),
-        validUntil = (timeProvider.getTimeMillis / 1000).toInt + 5
+        validUntil = timeProvider.getTimeSeconds().toInt + 5
       )
 
       SubmitOrder
