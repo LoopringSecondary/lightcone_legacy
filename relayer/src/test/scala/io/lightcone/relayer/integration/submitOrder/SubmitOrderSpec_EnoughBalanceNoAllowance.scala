@@ -19,7 +19,6 @@ package io.lightcone.relayer.integration.submitOrder
 import io.lightcone.core.ErrorCode.ERR_LOW_BALANCE
 import io.lightcone.core.OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
 import io.lightcone.core._
-import io.lightcone.lib.NumericConversion
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount

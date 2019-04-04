@@ -25,6 +25,7 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
+
 import scala.concurrent.ExecutionContext
 
 // Owner: Hongyu
@@ -91,6 +92,7 @@ class EntryPointActor(
 
     case _: GetMarketHistory.Req => Some(MarketHistoryActor.name)
 
+    case _: GetGasPrice.Req => Some(GasPriceActor.name)
     case _: GetTime.Req =>
       Some(ApplicationInfoActor.name)
 

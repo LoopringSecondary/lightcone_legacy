@@ -158,6 +158,7 @@ class MarketManagerActor(
   val gauge = KamonSupport.gauge(metricName)
   val histo = KamonSupport.histogram(metricName)
   val timer = KamonSupport.timer(metricName)
+  val recover_timer = KamonSupport.timer(metricName)
 
   log.info(s"===> starting MarketManagerActor ${self.path} for ${marketPair}")
 
@@ -250,9 +251,11 @@ class MarketManagerActor(
   def recover: Receive = {
 
     case SubmitSimpleOrder(_, Some(order)) =>
-      count.refine("label" -> "recover_order").increment()
-      submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
-
+      blocking(recover_timer, "recover_submit_order") {
+        count.refine("label" -> "recover_order").increment()
+        submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
+          .sendTo(sender)
+      }
     case msg @ ActorRecover.Finished(timeout) =>
       autoSwitchBackToReady.foreach(_.cancel)
       autoSwitchBackToReady = None

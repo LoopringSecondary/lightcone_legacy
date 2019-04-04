@@ -19,6 +19,7 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import io.lightcone.ethereum.event._
 import io.lightcone.ethereum.extractor._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
@@ -50,6 +51,7 @@ object MissingBlocksEventExtractorActor extends DeployedAsSingleton {
 
 }
 
+//TODO: 补全的事件需要单独处理，可能会与分叉事件冲突
 class MissingBlocksEventExtractorActor(
     implicit
     val config: Config,
@@ -116,5 +118,7 @@ class MissingBlocksEventExtractorActor(
       }
     } yield Unit
   }
+
+  override def unSupportedEvents: Seq[Class[_]] = Seq(classOf[BlockEvent])
 
 }
