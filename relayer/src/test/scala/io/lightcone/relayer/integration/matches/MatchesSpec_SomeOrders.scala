@@ -108,7 +108,7 @@ class MatchesSpec_SomeOrders
         tokenS = dynamicBaseToken.getAddress(),
         tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "80".zeros(dynamicBaseToken.getDecimals()),
+        amountS = "60".zeros(dynamicBaseToken.getDecimals()),
         amountFee = "10".zeros(dynamicBaseToken.getDecimals())
       )(account1)
 
@@ -204,20 +204,19 @@ class MatchesSpec_SomeOrders
         s"account2: ${account2.getAddress} submit an order of sell 110 -- buy 1."
       )
 
-      var submitTimes = 0
+      var submitted = false
       addSendRawTxExpects({
         case req: SendRawTransaction.Req => {
-          submitTimes += 1
+          submitted = true
           SendRawTransaction.Res()
         }
       })
 
       val order6 = createRawOrder(
-        tokenB = dynamicBaseToken.getAddress(),
-        tokenS = dynamicQuoteToken.getAddress(),
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "1".zeros(dynamicQuoteToken.getDecimals()),
-        amountB = "110".zeros(dynamicBaseToken.getDecimals()),
+        amountS = "110".zeros(dynamicBaseToken.getDecimals()),
         amountFee = "10".zeros(dynamicBaseToken.getDecimals())
       )(account2)
 
@@ -234,11 +233,10 @@ class MatchesSpec_SomeOrders
       )
 
       val order7 = createRawOrder(
-        tokenB = dynamicBaseToken.getAddress(),
-        tokenS = dynamicQuoteToken.getAddress(),
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
         tokenFee = dynamicBaseToken.getAddress(),
-        amountS = "1".zeros(dynamicQuoteToken.getDecimals()),
-        amountB = "90".zeros(dynamicBaseToken.getDecimals()),
+        amountS = "90".zeros(dynamicBaseToken.getDecimals()),
         amountFee = "10".zeros(dynamicBaseToken.getDecimals())
       )(account2)
 
@@ -251,7 +249,7 @@ class MatchesSpec_SomeOrders
         )
 
       Then(
-        s"account1: ${account1.getAddress} submit an order of buy 145 and sell 1."
+        s"account2: ${account2.getAddress} submit an order of buy 145 and sell 1."
       )
 
       val order8 = createRawOrder(
@@ -274,7 +272,7 @@ class MatchesSpec_SomeOrders
         )
 
       Then(
-        s"account1: ${account1.getAddress} submit an order of buy 145 and sell 1."
+        s"account2: ${account2.getAddress} submit an order of buy 130 and sell 1."
       )
 
       val order9 = createRawOrder(
@@ -328,157 +326,251 @@ class MatchesSpec_SomeOrders
         )
       )(account2)
 
+      Then(s"${account3.getAddress} submit an order to sell 435 and buy 3")
 
-      Then(s"${account3.getAddress} submit ")
+      val order10 = createRawOrder(
+        tokenS = dynamicBaseToken.getAddress(),
+        tokenB = dynamicQuoteToken.getAddress(),
+        tokenFee = dynamicBaseToken.getAddress(),
+        amountS = "435".zeros(dynamicBaseToken.getDecimals()),
+        amountB = "3".zeros(dynamicQuoteToken.getDecimals()),
+        amountFee = "10".zeros(dynamicBaseToken.getDecimals())
+      )(account3)
 
+      SubmitOrder
+        .Req(
+          rawOrder = Some(order10)
+        )
+        .expect(
+          check(
+            (res: SubmitOrder.Res) => res.success
+          )
+        )
 
+      Then("send raw transaction to submit ring")
+      val now = timeProvider.getTimeSeconds()
+      while (!submitted && timeProvider
+               .getTimeSeconds() - now < timeout.duration.toSeconds) {
+        Thread.sleep(500)
+      }
 
-//      Then("send raw transaction to submit ring")
-//      val now = timeProvider.getTimeSeconds()
-//      while (!submitted && timeProvider
-//               .getTimeSeconds() - now < timeout.duration.toSeconds) {
-//        Thread.sleep(500)
-//      }
-//
-//      submitted shouldBe true
-//
-//      Then("order book is empty")
-//      GetOrderbook
-//        .Req(
-//          size = 10,
-//          marketPair = Some(dynamicMarketPair)
-//        )
-//        .expect(
-//          orderBookIsEmpty()
-//        )
-//
-//      Then("dispatch fills and ring mined event")
-//
-//      addFilledAmountExpects({
-//        case req: GetFilledAmount.Req =>
-//          GetFilledAmount.Res(
-//            filledAmountSMap = (req.orderIds map { id =>
-//              if (id == order1.hash)
-//                id -> order1.getAmountS
-//              else if (id == order2.hash) id -> order2.getAmountS
-//              else id -> toAmount(BigInt(0))
-//            }).toMap
-//          )
-//      })
-//
-//      val txHash =
-//        "0x19e575bfe3671b54d70fea96aa96e1c4f133e39f07b31c1f2f0fb71e61c4f84a"
-//
-//      val eventHeader = EventHeader(
-//        txHash = txHash,
-//        txStatus = TxStatus.TX_STATUS_SUCCESS
-//      )
-//
-//      val fill1 = OrderFilledEvent(
-//        owner = account1.getAddress,
-//        orderHash = order1.hash,
-//        header = Some(eventHeader)
-//      )
-//
-//      val fill2 = OrderFilledEvent(
-//        owner = account2.getAddress,
-//        orderHash = order2.hash,
-//        header = Some(eventHeader)
-//      )
-//
-//      val ringMinedEvent = RingMinedEvent(
-//        header = Some(eventHeader),
-//        orderIds = Seq(order1.hash, order2.hash),
-//        marketPair = Some(dynamicMarketPair)
-//      )
-//      eventDispatcher.dispatch(fill1)
-//      eventDispatcher.dispatch(fill2)
-//      eventDispatcher.dispatch(ringMinedEvent)
-//
-//      val addressBalanceUpdatedEvent1 = AddressBalanceUpdatedEvent(
-//        address = account1.getAddress,
-//        token = dynamicBaseToken.getAddress(),
-//        balance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-//        block = 1L
-//      )
-//
-//      val addressAllowanceUpdatedEvent1 = AddressAllowanceUpdatedEvent(
-//        address = account1.getAddress,
-//        token = dynamicBaseToken.getAddress(),
-//        allowance = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-//        block = 1L
-//      )
-//
-//      eventDispatcher.dispatch(addressAllowanceUpdatedEvent1)
-//      eventDispatcher.dispatch(addressBalanceUpdatedEvent1)
-//
-//      val addressBalanceUpdatedEvent2 = AddressBalanceUpdatedEvent(
-//        address = account2.getAddress,
-//        token = dynamicBaseToken.getAddress(),
-//        balance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
-//        block = 1L
-//      )
-//      eventDispatcher.dispatch(addressBalanceUpdatedEvent2)
-//
-//      Then("order1 and order2 are STATUS_COMPLETELY_FILLED")
-//      GetOrdersByHash
-//        .Req(
-//          hashes = Seq(order1.hash, order2.hash)
-//        )
-//        .expectUntil(
-//          containsInGetOrdersByHash(
-//            STATUS_COMPLETELY_FILLED,
-//            order1.hash,
-//            order2.hash
-//          )
-//        )
-//
-//      Then("order book is empty")
-//      GetOrderbook
-//        .Req(
-//          size = 10,
-//          marketPair = Some(dynamicMarketPair)
-//        )
-//        .expect(
-//          orderBookIsEmpty()
-//        )
-//
-//      Then(s"${account1.getAddress} and ${account2.getAddress} are updated")
-//      GetAccount
-//        .Req(
-//          address = account1.getAddress,
-//          allTokens = true
-//        )
-//        .expectUntil(
-//          accountBalanceMatcher(
-//            token = dynamicBaseToken.getAddress(),
-//            tokenBalance = TokenBalance(
-//              token = dynamicBaseToken.getAddress(),
-//              balance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-//              allowance = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-//              availableBalance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-//              availableAlloawnce = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee
-//            )
-//          )
-//        )
-//
-//      GetAccount
-//        .Req(
-//          address = account2.getAddress,
-//          allTokens = true
-//        )
-//        .expectUntil(
-//          accountBalanceMatcher(
-//            token = dynamicBaseToken.getAddress(),
-//            tokenBalance = TokenBalance(
-//              token = dynamicBaseToken.getAddress(),
-//              balance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
-//              allowance = initAllowance,
-//              availableBalance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
-//              availableAlloawnce = initAllowance
-//            )
-//          )
-//        )
+      submitted shouldBe true
+
+      Then("dispatch fills and ring mined event")
+
+      addFilledAmountExpects({
+        case req: GetFilledAmount.Req =>
+          GetFilledAmount.Res(
+            filledAmountSMap = (req.orderIds map {
+              case order5.hash =>
+                order5.hash -> order5.getAmountS
+              case order8.hash =>
+                order8.hash -> order8.getAmountS
+              case order9.hash =>
+                order9.hash -> order9.getAmountS
+              case order10.hash =>
+                order10.hash -> order10.getAmountS
+              case id =>
+                id -> toAmount(BigInt(0))
+            }).toMap
+          )
+      })
+
+      val txHash =
+        "0x19e575bfe3671b54d70fea96aa96e1c4f133e39f07b31c1f2f0fb71e61c4f84a"
+
+      val eventHeader = EventHeader(
+        txHash = txHash,
+        txStatus = TxStatus.TX_STATUS_SUCCESS
+      )
+
+      val fill5 = OrderFilledEvent(
+        owner = account1.getAddress,
+        orderHash = order5.hash,
+        header = Some(eventHeader)
+      )
+
+      val fill8 = OrderFilledEvent(
+        owner = account2.getAddress,
+        orderHash = order8.hash,
+        header = Some(eventHeader)
+      )
+
+      val fill9 = OrderFilledEvent(
+        owner = account2.getAddress,
+        orderHash = order9.hash,
+        header = Some(eventHeader)
+      )
+
+      val fill10 = OrderFilledEvent(
+        owner = account3.getAddress,
+        orderHash = order10.hash,
+        header = Some(eventHeader)
+      )
+
+      val ringMinedEvent1 = RingMinedEvent(
+        header = Some(eventHeader),
+        orderIds = Seq(order5.hash, order10.hash),
+        marketPair = Some(dynamicMarketPair)
+      )
+
+      val ringMinedEvent2 = RingMinedEvent(
+        header = Some(eventHeader),
+        orderIds = Seq(order8.hash, order10.hash),
+        marketPair = Some(dynamicMarketPair)
+      )
+      val ringMinedEvent3 = RingMinedEvent(
+        header = Some(eventHeader),
+        orderIds = Seq(order9.hash, order10.hash),
+        marketPair = Some(dynamicMarketPair)
+      )
+
+      eventDispatcher.dispatch(fill5)
+      eventDispatcher.dispatch(fill8)
+      eventDispatcher.dispatch(fill9)
+      eventDispatcher.dispatch(fill10)
+      eventDispatcher.dispatch(ringMinedEvent1)
+      eventDispatcher.dispatch(ringMinedEvent2)
+      eventDispatcher.dispatch(ringMinedEvent3)
+
+      val addressBalanceUpdatedEvent1 = AddressBalanceUpdatedEvent(
+        address = account1.getAddress,
+        token = dynamicBaseToken.getAddress(),
+        balance = initBalance + order5.getAmountB - order5.getFeeParams.getAmountFee,
+        block = 1L
+      )
+
+      val addressBalanceUpdatedEvent2 = AddressBalanceUpdatedEvent(
+        address = account2.getAddress,
+        token = dynamicBaseToken.getAddress(),
+        balance = initBalance + order8.getAmountB - order8.getFeeParams.getAmountFee + order9.getAmountB - order9.getFeeParams.getAmountFee,
+        block = 1L
+      )
+
+      val addressBalanceUpdatedEvent3 = AddressBalanceUpdatedEvent(
+        address = account3.getAddress,
+        token = dynamicBaseToken.getAddress(),
+        balance = initBalance - order10.getAmountS - order10.getFeeParams.getAmountFee,
+        block = 1L
+      )
+
+      val addressAllowanceUpdatedEvent3 = AddressAllowanceUpdatedEvent(
+        address = account3.getAddress,
+        token = dynamicBaseToken.getAddress(),
+        allowance = initBalance - order10.getAmountS - order10.getFeeParams.getAmountFee,
+        block = 1L
+      )
+
+      eventDispatcher.dispatch(addressBalanceUpdatedEvent1)
+      eventDispatcher.dispatch(addressBalanceUpdatedEvent2)
+      eventDispatcher.dispatch(addressBalanceUpdatedEvent3)
+      eventDispatcher.dispatch(addressAllowanceUpdatedEvent3)
+
+      Then(
+        "order5, order8, order9, order10 are STATUS_COMPLETELY_FILLED and others are STATUS_PENDING"
+      )
+      GetOrdersByHash
+        .Req(
+          hashes = Seq(
+            order1.hash,
+            order2.hash,
+            order3.hash,
+            order4.hash,
+            order5.hash,
+            order6.hash,
+            order7.hash,
+            order8.hash,
+            order9.hash,
+            order10.hash
+          )
+        )
+        .expectUntil(
+          containsInGetOrdersByHash(
+            STATUS_COMPLETELY_FILLED,
+            order5.hash,
+            order8.hash,
+            order9.hash,
+            order10.hash
+          ) and containsInGetOrdersByHash(
+            STATUS_PENDING,
+            order1.hash,
+            order2.hash,
+            order3.hash,
+            order4.hash,
+            order6.hash
+          )
+        )
+
+      Then("order book is updated")
+      GetOrderbook
+        .Req(
+          size = 10,
+          marketPair = Some(dynamicMarketPair)
+        )
+        .expect(
+          check(
+            (res: GetOrderbook.Res) =>
+              res.getOrderbook.sells.map(_.amount.toDouble).sum == 440 &&
+                res.getOrderbook.buys.map(_.amount.toDouble).sum == 155
+          )
+        )
+
+      Then(
+        s"${account1.getAddress} , ${account2.getAddress} and ${account3.getAddress} are updated"
+      )
+      GetAccount
+        .Req(
+          address = account1.getAddress,
+          allTokens = true
+        )
+        .expectUntil(
+          accountBalanceMatcher(
+            token = dynamicBaseToken.getAddress(),
+            tokenBalance = TokenBalance(
+              token = dynamicBaseToken.getAddress(),
+              balance = initBalance + order5.getAmountB - order5.getFeeParams.getAmountFee,
+              allowance = initAllowance,
+              availableBalance = initBalance + order5.getAmountB - order5.getFeeParams.getAmountFee - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee,
+              availableAlloawnce = initAllowance - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee
+            )
+          )
+        )
+
+      GetAccount
+        .Req(
+          address = account2.getAddress,
+          allTokens = true
+        )
+        .expectUntil(
+          accountBalanceMatcher(
+            token = dynamicBaseToken.getAddress(),
+            tokenBalance = TokenBalance(
+              token = dynamicBaseToken.getAddress(),
+              balance = initBalance + order8.getAmountB - order8.getFeeParams.getAmountFee + order9.getAmountB - order9.getFeeParams.getAmountFee,
+              allowance = initAllowance,
+              availableBalance = initBalance + order8.getAmountB - order8.getFeeParams.getAmountFee + order9.getAmountB - order9.getFeeParams.getAmountFee - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee,
+              availableAlloawnce = initAllowance - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee
+            )
+          )
+        )
+
+      GetAccount
+        .Req(
+          address = account3.getAddress,
+          allTokens = true
+        )
+        .expectUntil(
+          accountBalanceMatcher(
+            token = dynamicBaseToken.getAddress(),
+            tokenBalance = TokenBalance(
+              token = dynamicBaseToken.getAddress(),
+              balance = initBalance - order10.getAmountS - order10.getFeeParams.getAmountFee,
+              allowance = initAllowance - order10.getAmountS - order10.getFeeParams.getAmountFee,
+              availableBalance = initBalance - order10.getAmountS - order10.getFeeParams.getAmountFee,
+              availableAlloawnce = initAllowance - order10.getAmountS - order10.getFeeParams.getAmountFee
+            )
+          )
+        )
     }
   }
 
