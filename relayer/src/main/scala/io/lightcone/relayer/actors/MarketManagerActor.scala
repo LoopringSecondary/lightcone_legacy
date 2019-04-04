@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.actors
 
-import akka.actor.{Address => _, _}
+import akka.actor._
 import akka.pattern.ask
 import akka.serialization.Serialization
 import akka.util.Timeout
@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.data.{TriggerRematch, _}
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
