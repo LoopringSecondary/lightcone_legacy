@@ -36,7 +36,6 @@ class SimpleRingBatchDeserializer(
   private var tableOffSet: Int = 0
   private var dataOffset: Int = 0
 
-  //TODO(kongliang):RingBatch.rings 为空
   def deserialize: Either[ErrorCode, RingBatch] =
     try {
       val version = bitExtractor.extractUint16(0)
@@ -89,16 +88,15 @@ class SimpleRingBatchDeserializer(
     ) = {
     var ringOffset = ringDataOffset
     val rings = (0 until numRings) map { _ =>
-      ringOffset += 1
       val ringSize = bitExtractor.extractUint8(ringOffset)
-      var orderOffset = ringOffset
+      var orderOffset = ringOffset + 1
       val orderIndexes = (0 until ringSize) map { _ =>
         val orderIndex = bitExtractor.extractUint8(orderOffset)
         orderOffset += 1
         orderIndex
       }
 
-      ringOffset += 8
+      ringOffset += 9 // ringSize(1) + orders(8)
       new RingBatch.Ring(orderIndexes)
     }
 
