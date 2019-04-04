@@ -22,7 +22,6 @@ import io.lightcone.relayer.ethereummock._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FeatureSpec, OneInstancePerTest}
 import org.slf4s.Logging
-
 import scala.math.BigInt
 
 //TODO:可以考虑设置请求次数
@@ -55,6 +54,8 @@ object MockHelper {
 
   var sendRawTxExpects
     : MockExpects[SendRawTransaction.Req, SendRawTransaction.Res] = _
+
+  var getNonceExpects: MockExpects[GetNonce.Req, GetNonce.Res] = _
 }
 
 trait MockHelper extends MockFactory with OneInstancePerTest with Logging {
@@ -105,6 +106,15 @@ trait MockHelper extends MockFactory with OneInstancePerTest with Logging {
       ]
     ) = {
     MockHelper.sendRawTxExpects.addExpect(expect)
+  }
+
+  def addGetNonceExpects(
+      expect: PartialFunction[
+        GetNonce.Req,
+        GetNonce.Res
+      ]
+    ) = {
+    MockHelper.getNonceExpects.addExpect(expect)
   }
 
   //eth的prepare，每次重设，应当有默认值，beforeAll和afterAll都需要重设
@@ -158,6 +168,13 @@ trait MockHelper extends MockFactory with OneInstancePerTest with Logging {
       .expects(*)
       .onCall({ req: GetFilledAmount.Req =>
         MockHelper.filledAmountExpects(req)
+      })
+      .anyNumberOfTimes()
+
+    (queryProvider.getNonce _)
+      .expects(*)
+      .onCall({ req: GetNonce.Req =>
+        MockHelper.getNonceExpects(req)
       })
       .anyNumberOfTimes()
 
@@ -233,6 +250,13 @@ trait MockHelper extends MockFactory with OneInstancePerTest with Logging {
             block = 100
           )
       }
+
+    MockHelper.getNonceExpects = MockExpects[GetNonce.Req, GetNonce.Res] {
+      case req =>
+        GetNonce.Res(
+          result = "0"
+        )
+    }
 
     MockHelper.sendRawTxExpects =
       MockExpects[SendRawTransaction.Req, SendRawTransaction.Res] {
