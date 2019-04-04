@@ -107,13 +107,13 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
       _ <- testSaves(
         mockState,
-        OrderStatus.STATUS_PARTIALLY_FILLED,
+        OrderStatus.STATUS_PENDING,
         tokenS,
         tokenB
       )
       _ <- testSaves(
         mockToken,
-        OrderStatus.STATUS_PARTIALLY_FILLED,
+        OrderStatus.STATUS_PENDING,
         "0xcccccccc1",
         "0xccccccccc2",
         200,
@@ -131,7 +131,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None
       )
       queryStatus <- service.getOrders(
-        Set(OrderStatus.STATUS_PARTIALLY_FILLED),
+        Set(OrderStatus.STATUS_PENDING),
         Set.empty,
         Set.empty,
         Set.empty,
@@ -293,7 +293,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val state = RawOrder.State(
       createdAt = now,
       updatedAt = now,
-      status = OrderStatus.STATUS_PARTIALLY_FILLED,
+      status = OrderStatus.STATUS_PENDING,
       actualAmountB = BigInt(111),
       actualAmountS = BigInt(112),
       actualAmountFee = BigInt(113),
