@@ -116,7 +116,9 @@ class ExternalCrawlerActor(
   private def syncCurrencyTicker() = {
     sinaFiatExchangeRateFetcher.fetchExchangeRates() recoverWith {
       case e: Exception =>
-        log.error(s"Failed request Sina currency rate cause [${e.getMessage}], trying to request exchangerate-api")
+        log.error(
+          s"Failed request Sina currency rate cause [${e.getMessage}], trying to request exchangerate-api"
+        )
         exchangeRateAPIFetcher.fetchExchangeRates()
     }
   }
