@@ -219,7 +219,6 @@ message GetOrderCancellation {
     }
 }
 
-// TODO(yadong): return block for cutoff.
 message GetCutoff {
     message Req {
         string broker = 1;

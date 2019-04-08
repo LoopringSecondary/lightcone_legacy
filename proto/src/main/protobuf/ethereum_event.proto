@@ -77,10 +77,6 @@ message AddressBalanceAllowanceUpdatedEvent {
     int64 block = 5;
 }
 
-message GasPriceUpdatedEvent {
-    int64 gas_price = 1;
-}
-
 message BlockGasPricesExtractedEvent {
     int64 height = 1;
     repeated int64 gas_prices = 2;
