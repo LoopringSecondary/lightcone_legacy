@@ -17,6 +17,7 @@
 package io.lightcone.relayer
 import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
+import com.typesafe.config.Config
 import io.lightcone.core.MetadataManager
 import io.lightcone.lib.SystemTimeProvider
 import io.lightcone.persistence.DatabaseModule
@@ -56,6 +57,8 @@ package object integration extends MockFactory {
     injector.instance[Lookup[ActorRef]].get(MetadataManagerActor.name)
 
   implicit val system = injector.instance[ActorSystem]
+
+  implicit val config = injector.instance[Config]
 
   implicit val ec = system.dispatcher
 

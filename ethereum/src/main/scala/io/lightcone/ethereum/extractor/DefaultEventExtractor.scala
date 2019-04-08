@@ -18,7 +18,7 @@ package io.lightcone.ethereum.extractor
 import com.google.inject.Inject
 import io.lightcone.ethereum.BlockHeader
 import io.lightcone.ethereum.TxStatus.TX_STATUS_SUCCESS
-import io.lightcone.ethereum.event.EventHeader
+import io.lightcone.ethereum.event.{BlockEvent, EventHeader}
 import io.lightcone.ethereum.persistence._
 import io.lightcone.lib._
 import io.lightcone.relayer.data._
@@ -79,6 +79,18 @@ final class DefaultEventExtractor @Inject()(
 
       txFillEvents: Seq[TxEvents] = EventExtractor.composeFills(fills)
 
-      events = txEvents ++ blockEvents ++ txActivityEvents ++ txFillEvents
+      blockEvent = BlockEvent(
+        blockNumber = NumericConversion.toBigInt(block.number).longValue(),
+        txs = block.transactions.map(
+          tx =>
+            BlockEvent.Tx(
+              from = tx.from,
+              nonce = NumericConversion.toBigInt(tx.nonce).toInt,
+              txHash = tx.hash
+            )
+        )
+      )
+
+      events = txEvents ++ blockEvents ++ txActivityEvents ++ txFillEvents :+ blockEvent
     } yield events
 }
