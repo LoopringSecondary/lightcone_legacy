@@ -26,6 +26,7 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum._
+import org.web3j.crypto.Credentials
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
@@ -79,8 +80,10 @@ class RingSettlementManagerActor(
     .getConfigList("miners")
     .asScala
     .map(minerConfig => {
-      val miner = minerConfig.getString("transaction-origin")
-      val item = Address.normalize(miner) ->
+      val credentials: Credentials =
+        Credentials
+          .create(minerConfig.getString("transaction-origin-private-key"))
+      val item = credentials.getAddress ->
         context.actorOf(
           Props(
             new RingSettlementActor(minerConfig.withFallback(config))
