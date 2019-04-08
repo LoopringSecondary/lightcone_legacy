@@ -1,6 +1,8 @@
 [![Build Status](https://semaphoreci.com/api/v1/projects/adecda77-2a3e-434e-8517-53a7dfd94586/2473633/shields_badge.svg)](https://semaphoreci.com/loopring/lightcone)
 
-# Lightcone Relay
+# Lightcone Relayer 1.0
+
+This relayer is implemented to support Loopring Protocol 2.x. A [new version](https://github.com/Loopring/lightcone2) is being worked on for [Loopring Protocol 3.0](https://github.com/Loopring/protocols/tree/master/packages/loopring_v3). 
 
 ## Compile
 
