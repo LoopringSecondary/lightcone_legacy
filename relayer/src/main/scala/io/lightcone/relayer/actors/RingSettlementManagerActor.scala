@@ -46,6 +46,7 @@ object RingSettlementManagerActor extends DeployedAsSingleton {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
+      metadataManager: MetadataManager,
       ringBatchGenerator: RingBatchGenerator,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
@@ -62,6 +63,7 @@ class RingSettlementManagerActor(
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule,
+    metadataManager: MetadataManager,
     ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor
     with BlockingReceive {
@@ -78,24 +80,19 @@ class RingSettlementManagerActor(
     .getConfigList("miners")
     .asScala
     .map(minerConfig => {
-      val credentials: Credentials =
-        Credentials
-          .create(minerConfig.getString("transaction-origin-private-key"))
-      val item = credentials.getAddress ->
+      val transactionOriginPrivateKey =
+        minerConfig.getString("transaction-origin-private-key")
+      val minerPrivateKey = minerConfig.getString("miner-privateKey")
+
+      Credentials.create(transactionOriginPrivateKey).getAddress ->
         context.actorOf(
           Props(
-            new RingSettlementActor()(
-              config = minerConfig.withFallback(config),
-              ec = ec,
-              timeProvider = timeProvider,
-              timeout = timeout,
-              actors = actors,
-              dbModule = dbModule,
-              ringBatchGenerator
+            new RingSettlementActor(
+              minerPrivateKey,
+              transactionOriginPrivateKey
             )
           )
         )
-      item
     })
     .toMap
 
