@@ -29,7 +29,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 
 import scala.collection.JavaConverters._
-import scala.concurrent._
+import scala.concurrent.ExecutionContext
 import scala.util._
 import scala.concurrent.duration._
 
@@ -64,7 +64,8 @@ class MetadataRefresher(
     val metadataManager: MetadataManager)
     extends InitializationRetryActor
     with Stash
-    with ActorLogging {
+    with ActorLogging
+    with BlockingReceive {
 
   @inline def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
@@ -108,7 +109,9 @@ class MetadataRefresher(
       blocking(timer, "metadata_changed") {
         count.refine("label" -> "metadata_changed").increment()
         gauge.refine("label" -> "tokens").set(metadataManager.getTokens().size)
-        histo.refine("label" -> "markets").record(metadataManager.getTokens().size)
+        histo
+          .refine("label" -> "markets")
+          .record(metadataManager.getTokens().size)
         for {
           _ <- refreshMetadata()
           _ = getLocalShardingActors(

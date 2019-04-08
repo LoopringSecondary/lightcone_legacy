@@ -27,7 +27,8 @@ import io.lightcone.persistence.dals._
 import io.lightcone.relayer._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-import scala.concurrent._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 // main owner: 杜永丰
 object ActivityActor extends DeployedAsShardedByAddress {
@@ -65,7 +66,8 @@ class ActivityActor(
     val dbModule: DatabaseModule,
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
-    with ShardingEntityAware {
+    with ShardingEntityAware
+    with BlockingReceive {
 
   val selfConfig = config.getConfig(ActivityActor.name)
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
@@ -93,7 +95,7 @@ class ActivityActor(
 
     case req: TxEvents =>
       count.refine("label" -> "tx_events").increment()
-      blocking(timer, "tx_event")  { // shard-broadcast message
+      blocking(timer, "tx_event") { // shard-broadcast message
         // filter activities which current shard care
         log.debug(s"ActivityActor -- receive TxEvents: ${req}")
         val activities = req.getActivities.events
@@ -110,6 +112,8 @@ class ActivityActor(
               s"multiple txHash detected in a batch activities save request: $activities"
             )
           activityDal.saveActivities(activities)
+        } else {
+          Future.unit
         }
       }
 

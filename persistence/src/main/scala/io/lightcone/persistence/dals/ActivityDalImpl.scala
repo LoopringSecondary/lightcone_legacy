@@ -39,7 +39,7 @@ class ActivityDalImpl @Inject()(
     implicit
     val ec: ExecutionContext)
     extends ActivityDal
-    with Logging{
+    with Logging {
 
   val query = TableQuery(new ActivityTable(shardId)(_))
   implicit val activityStatusCxolumnType = enumColumnType(TxStatus)
