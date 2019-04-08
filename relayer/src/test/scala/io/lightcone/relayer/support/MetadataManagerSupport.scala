@@ -24,7 +24,7 @@ import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import akka.pattern._
 import io.lightcone.core._
-import io.lightcone.persistence.{CMCCrawlerConfigForToken, TokenTickerRecord}
+import io.lightcone.persistence._
 import io.lightcone.relayer.external._
 import scalapb.json4s.Parser
 import scala.concurrent.duration._
@@ -35,6 +35,7 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
 
   implicit val externalTickerFetcher = new CMCExternalTickerFetcher()
   implicit val fiatExchangeRateFetcher = new SinaFiatExchangeRateFetcher()
+  implicit val exchangeRateAPIFetcher = new ExchangeRateAPIFetcher()
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
   var tickers: Seq[TokenTickerRecord] = Seq.empty[TokenTickerRecord]

@@ -17,6 +17,7 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core._
@@ -25,6 +26,7 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.external._
+
 import scala.concurrent.{ExecutionContext, Future}
 import io.lightcone.relayer.jsonrpc._
 
@@ -42,8 +44,7 @@ object ExternalCrawlerActor extends DeployedAsSingleton {
       timeout: Timeout,
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
-      externalTickerFetcher: ExternalTickerFetcher,
-      fiatExchangeRateFetcher: FiatExchangeRateFetcher,
+      materializer: ActorMaterializer,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new ExternalCrawlerActor()))
@@ -58,9 +59,8 @@ class ExternalCrawlerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
+    val materializer: ActorMaterializer,
     val dbModule: DatabaseModule,
-    val externalTickerFetcher: ExternalTickerFetcher,
-    val fiatExchangeRateFetcher: FiatExchangeRateFetcher,
     val system: ActorSystem)
     extends InitializationRetryActor
     with JsonSupport
@@ -68,6 +68,10 @@ class ExternalCrawlerActor(
     with ActorLogging {
 
   @inline def metadataManagerActor = actors.get(MetadataManagerActor.name)
+
+  val cmcExternalTickerFetcher = new CMCExternalTickerFetcher()
+  val sinaFiatExchangeRateFetcher = new SinaFiatExchangeRateFetcher()
+  val exchangeRateAPIFetcher = new ExchangeRateAPIFetcher()
 
   val selfConfig = config.getConfig(ExternalCrawlerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
@@ -89,8 +93,8 @@ class ExternalCrawlerActor(
   private def syncTickers() = this.synchronized {
     log.info("ExternalCrawlerActor run sync job")
     for {
-      tokenTickers_ <- externalTickerFetcher.fetchExternalTickers()
-      currencyTickers <- fiatExchangeRateFetcher.fetchExchangeRates()
+      tokenTickers_ <- cmcExternalTickerFetcher.fetchExternalTickers()
+      currencyTickers <- syncCurrencyTicker()
       persistTickers <- if (tokenTickers_.nonEmpty && currencyTickers.nonEmpty) {
         persistTickers(
           currencyTickers,
@@ -106,6 +110,12 @@ class ExternalCrawlerActor(
       assert(persistTickers.nonEmpty)
       tickers = persistTickers
       notifyChanged()
+    }
+  }
+
+  private def syncCurrencyTicker() = {
+    sinaFiatExchangeRateFetcher.fetchExchangeRates() recoverWith {
+      case e: Exception => exchangeRateAPIFetcher.fetchExchangeRates()
     }
   }
 
