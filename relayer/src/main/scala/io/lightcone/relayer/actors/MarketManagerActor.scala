@@ -165,7 +165,7 @@ class MarketManagerActor(
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 
-  val wethTokenAddress = config.getString("relay.weth-address")
+  val wethTokenAddress = config.getString("tokens.weth-address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxSettementFailuresPerOrder =

@@ -63,18 +63,19 @@ class RingSettlementActor(
   private val resendDelay =
     selfConfig.getInt("resend-delay_in_seconds")
 
-  implicit val ringContext: RingBatchContext =
-    RingBatchContext(
-      lrcAddress = selfConfig.getString("lrc-address"),
-      feeRecipient = selfConfig.getString("fee-recipient"),
-      miner = config.getString("miner"),
-      transactionOrigin =
-        Address(config.getString("transaction-origin")).toString,
-      minerPrivateKey = config.getString("miner-privateKey")
-    )
-
   implicit val credentials: Credentials =
     Credentials.create(config.getString("transaction-origin-private-key"))
+  val miner = Credentials.create(config.getString("miner-privateKey"))
+
+  implicit val ringContext: RingBatchContext =
+    RingBatchContext(
+      lrcAddress = config.getString("tokens.lrc-address"),
+      feeRecipient = selfConfig.getString("fee-recipient"),
+      miner = miner.getAddress,
+      transactionOrigin = credentials.getAddress,
+      minerPrivateKey =
+        NumericConversion.toHexString(miner.getEcKeyPair.getPrivateKey)
+    )
 
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
