@@ -80,16 +80,19 @@ class RingSettlementManagerActor(
     .getConfigList("miners")
     .asScala
     .map(minerConfig => {
-      val credentials: Credentials =
-        Credentials
-          .create(minerConfig.getString("transaction-origin-private-key"))
-      val item = credentials.getAddress ->
+      val transactionOriginPrivateKey =
+        minerConfig.getString("transaction-origin-private-key")
+      val minerPrivateKey = minerConfig.getString("miner-privateKey")
+
+      Credentials.create(transactionOriginPrivateKey).getAddress ->
         context.actorOf(
           Props(
-            new RingSettlementActor(minerConfig.withFallback(config))
+            new RingSettlementActor(
+              minerPrivateKey,
+              transactionOriginPrivateKey
+            )
           )
         )
-      item
     })
     .toMap
 
