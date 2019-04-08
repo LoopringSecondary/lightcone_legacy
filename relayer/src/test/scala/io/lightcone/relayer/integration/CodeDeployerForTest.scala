@@ -69,8 +69,8 @@ class CoreDeployerForTest @Inject()(
     socketIONotifier: SocketIONotifier,
     eip712Support: EIP712Support,
     splitMergerProvider: SplitMergerProvider,
-    externalTickerFetcher: ExternalTickerFetcher,
-    fiatExchangeRateFetcher: FiatExchangeRateFetcher,
+//    externalTickerFetcher: ExternalTickerFetcher,
+//    fiatExchangeRateFetcher: FiatExchangeRateFetcher,
     system: ActorSystem)
     extends CoreDeployer {
 

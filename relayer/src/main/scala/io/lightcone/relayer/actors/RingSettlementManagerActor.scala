@@ -45,6 +45,7 @@ object RingSettlementManagerActor extends DeployedAsSingleton {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
+      metadataManager: MetadataManager,
       ringBatchGenerator: RingBatchGenerator,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
@@ -61,6 +62,7 @@ class RingSettlementManagerActor(
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule,
+    metadataManager: MetadataManager,
     ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor
     with BlockingReceive {
@@ -81,15 +83,7 @@ class RingSettlementManagerActor(
       val item = Address.normalize(miner) ->
         context.actorOf(
           Props(
-            new RingSettlementActor()(
-              config = minerConfig.withFallback(config),
-              ec = ec,
-              timeProvider = timeProvider,
-              timeout = timeout,
-              actors = actors,
-              dbModule = dbModule,
-              ringBatchGenerator
-            )
+            new RingSettlementActor(minerConfig.withFallback(config))
           )
         )
       item

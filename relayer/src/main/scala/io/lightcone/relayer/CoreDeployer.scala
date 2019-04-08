@@ -71,8 +71,8 @@ class CoreDeployer @Inject()(
     socketIONotifier: SocketIONotifier,
     splitMergerProvider: SplitMergerProvider,
     eip712Support: EIP712Support,
-    externalTickerFetcher: ExternalTickerFetcher,
-    fiatExchangeRateFetcher: FiatExchangeRateFetcher,
+//    externalTickerFetcher: ExternalTickerFetcher,
+//    fiatExchangeRateFetcher: FiatExchangeRateFetcher,
     system: ActorSystem)
     extends Object
     with Logging {

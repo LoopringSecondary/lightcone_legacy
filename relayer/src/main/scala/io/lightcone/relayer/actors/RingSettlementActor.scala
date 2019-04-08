@@ -40,13 +40,15 @@ import scala.util._
 
 // Owner: Yadong & Kongliang
 class RingSettlementActor(
+    config: Config
+  )(
     implicit
-    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
+    val metadataManager: MetadataManager,
     val ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor
     with Stash
