@@ -1,6 +1,6 @@
 ## 以太坊事件测试用例
 
-### Interal Ticker 测试
+### Internal Ticker 测试
 
 1. inter ticker的解析和推送
 
@@ -50,28 +50,17 @@
 ### Activity 
 
 1. Activity 状态更新
-
-   - 目标：测试pending的activity在后续相同的nonce 相同activity的影响更新
-
-   - 测试前置条件:
-
-     1. 设置一个pending 的transfer eth out 的activity，nonce 为10 — a1
-     2. 设置一个success 的transfer eth out 的activity，nonce 为10  — a2
-
-   - 测试步骤及结果验证：
-
-     1. 发出 a1
-
-     2. 发出a2
-
-        ==> 验证 activity a1 更新为 activity a2
-
-   - 状态: Planned
-
-   - 拥有者: 亚东
-
-   - 其他信息：failed activity 与success测试验证一样，不再重复测试。
-
+    - **Objective**：测试pending的activity受nonce和block的影响
+    - **测试设置**：
+        1. dispatch两个Activity，第一个的hash为0x001,nonce为10,第二个的为0x002，nonce为10
+        2. dispatch一个block事件，包含第二个activity
+        1. dispatch第二个Activity，但是设置block和txStatus
+    - **结果验证**：
+        1. **读取我的活动**：应当只包含第二个Activity并且状态为"TX_STATUS_SUCCESS"
+    - **状态**: Planned
+    - **拥有者**: 红雨
+    - **其他信息**：NA
+    
 2. Activity 被删除
 
    - 目标：测试pending的activity在后续相同nonce不同activity的影响
@@ -126,10 +115,24 @@
 
 1. 测试成功以及失败的，对AccountManager、OrderbookManager以及MarketManager的影响
 
-1. 失败多次之后，需要将对应的订单删除，状态为STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES
-可参考原先的 EntryPointSpec_CancelOrderAfterManyRingFailures
-
-1. 
+1. 失败多次之后，需要将对应订单删除
+    - **Objective**：测试当一个订单被多次提交环路之后，都遇到错误无法执行成功，认为该订单有问题，将其删除
+    - **测试设置**：
+        1. 设置一个新账号，有足够的余额和授权
+        1. 下一个卖出dynamicMarketPair.baseToken的订单
+        1. 下一个买入的订单，并且使之能成交，并提交环路
+        1. dispatch失败的RingMinedEvent
+        1. 重复提交订单一和dispatch失败的RingMinedEvent，直到达到配置里的次数
+    - **结果验证**：
+        1. **读取我的订单**：该订单的状态应该为 `STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES`
+        1. **读取市场深度**：为空
+        1. **读取我的成交**: 为空
+        1. **读取市场成交**：为空
+        1. **读取我的账号**: 余额和授权为初始值
+    - **状态**: Planned
+    - **拥有者**: 红雨
+    - **其他信息**：NA
+    
 
 ### OrderFilledEvent
 --- 

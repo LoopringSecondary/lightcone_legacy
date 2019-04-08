@@ -194,12 +194,10 @@ class CoreDeployer @Inject()(
       )
 
     //-----------deploy local actors-----------
-    // TODO: OnMemberUp执行有时间限制，超时会有TimeoutException
+    //OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
-
-      // TODO：按照模块分布，因为启动有依赖顺序
-
       deployMetadata()
+
       //-----------deploy singleton actors-----------
       actors
         .add(

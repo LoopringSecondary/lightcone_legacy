@@ -124,30 +124,6 @@
 
    - 其他信息：NA
 
-### 测试分叉事件中token burn rate
-
-1. 测试分叉事件中 token burn rate有没有正确取最新的值
-
-   - 目标：测试分叉事件 受影响token burn rate 有没有重新取最新值
-
-   - 测试前置条件：
-
-     1. 设置 GTO的burn rate 为0.5
-     2. 设置 GTO的burn rate 在 block 100 更新为0.25
-     3. 设置block event，block 为99
-
-   - 测试步骤及结果验证：
-
-     1. 发出 block event
-
-        ==> 验证 GTO的burn rate是否为0.5
-
-   - 状态: Planned
-
-   - 拥有者: 亚东、红雨
-
-   - 其他信息：NA
-
 ### 测试分叉事件中K线数据
 
 1. 测试分叉事件中的K线数据

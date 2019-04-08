@@ -27,7 +27,8 @@ import io.lightcone.persistence.dals._
 import io.lightcone.relayer._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-import scala.concurrent._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 // main owner: 杜永丰
 object ActivityActor extends DeployedAsShardedByAddress {
@@ -65,7 +66,8 @@ class ActivityActor(
     val dbModule: DatabaseModule,
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
-    with ShardingEntityAware {
+    with ShardingEntityAware
+    with BlockingReceive {
 
   val selfConfig = config.getConfig(ActivityActor.name)
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
@@ -85,49 +87,65 @@ class ActivityActor(
 
   activityDal.createTable()
 
+  val metricName = s"activity_${entityId}"
+  val count = KamonSupport.counter(metricName)
+  val timer = KamonSupport.timer(metricName)
+
   def ready: Receive = {
 
-    case req: TxEvents => { // shard-broadcast message
-      // filter activities which current shard care
-      val activities = req.getActivities.events
-        .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
-      if (activities.nonEmpty) {
-        val blocks = activities.groupBy(_.block).keySet
-        if (blocks.size != 1)
-          log.error(
-            s"multiple block detected in a batch activities save request: $activities"
-          )
-        val txs = activities.groupBy(_.txHash).keySet
-        if (txs.size != 1)
-          log.error(
-            s"multiple txHash detected in a batch activities save request: $activities"
-          )
-        activityDal.saveActivities(activities)
+    case req: TxEvents =>
+      count.refine("label" -> "tx_events").increment()
+      blocking(timer, "tx_event") { // shard-broadcast message
+        // filter activities which current shard care
+        log.debug(s"ActivityActor -- receive TxEvents: ${req}")
+        val activities = req.getActivities.events
+          .filter(a => ActivityActor.getEntityId(a.owner) == entityId)
+        if (activities.nonEmpty) {
+          val blocks = activities.groupBy(_.block).keySet
+          if (blocks.size != 1)
+            log.error(
+              s"multiple block detected in a batch activities save request: $activities"
+            )
+          val txs = activities.groupBy(_.txHash).keySet
+          if (txs.size != 1)
+            log.error(
+              s"multiple txHash detected in a batch activities save request: $activities"
+            )
+          activityDal.saveActivities(activities)
+        } else {
+          Future.unit
+        }
       }
-    }
 
     case req: BlockEvent => // shard-broadcast message
-      log.debug(s"ActivityActor receive BlockEvent $req")
-      (for {
-        _ <- activityDal.cleanActivitiesForReorg(req)
-      } yield {}).sendTo(sender)
+      count.refine("label" -> "block_event").increment()
+      blocking(timer, "block_event") {
+        log.debug(s"ActivityActor receive BlockEvent $req")
+        (for {
+          _ <- activityDal.cleanActivitiesForReorg(req)
+        } yield {}).sendTo(sender)
+      }
 
     case req: GetActivities.Req =>
-      (for {
-        activities <- activityDal.getActivities(
-          req.owner,
-          req.token,
-          req.sort,
-          req.paging.get
-        )
-        res = GetActivities.Res(activities)
-      } yield res).sendTo(sender)
+      blocking(timer, "get_activities") {
+        (for {
+          activities <- activityDal.getActivities(
+            req.owner,
+            req.token,
+            req.sort,
+            req.paging.get
+          )
+          res = GetActivities.Res(activities)
+        } yield res).sendTo(sender)
+      }
 
     case req: GetPendingActivityNonce.Req =>
-      (for {
-        nonces <- activityDal.getPendingActivityNonces(req.from, req.limit)
-        res = GetPendingActivityNonce.Res(nonces)
-      } yield res).sendTo(sender)
+      blocking {
+        (for {
+          nonces <- activityDal.getPendingActivityNonces(req.from, req.limit)
+          res = GetPendingActivityNonce.Res(nonces)
+        } yield res).sendTo(sender)
+      }
   }
 
 }

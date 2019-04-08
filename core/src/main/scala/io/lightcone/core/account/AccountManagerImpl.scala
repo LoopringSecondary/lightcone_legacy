@@ -245,6 +245,15 @@ final class AccountManagerImpl(
         }
       }
 
+      _ <- serializeFutures(ordersToDelete) { order =>
+        if (token == order.tokenS) Future.unit
+        else {
+          getReserveManagerOption(order.tokenS, false).map { managerOpt =>
+            managerOpt.foreach(_.release(order.id))
+          }
+        }
+      }
+
       // release tokenFee allocations if tokenS != tokenFee
       _ <- serializeFutures(ordersToDelete) { order =>
         if (order.tokenFee == order.tokenS) Future.unit

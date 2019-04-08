@@ -16,10 +16,10 @@
 
 package io.lightcone.relayer.integration.helper
 
-import io.lightcone.core.MarketPair
+import io.lightcone.core._
 import io.lightcone.lib.Address
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
-import io.lightcone.relayer.data.{AccountBalance, GetAccount}
+import io.lightcone.relayer.data._
 import io.lightcone.relayer.integration.Metadatas._
 import io.lightcone.relayer.integration._
 import org.slf4s.Logging
@@ -95,6 +95,90 @@ trait AccountHelper extends Logging {
                     case dynamicMarketPair.baseToken =>
                       initialBalance
                         .tokenBalanceMap("baseToken")
+                    case dynamicMarketPair.quoteToken =>
+                      initialBalance
+                        .tokenBalanceMap("quoteToken")
+                    case _ =>
+                      initialBalance
+                        .tokenBalanceMap("otherToken")
+                  }
+                  t -> balance
+                    .copy(token = t) // reset token for dynamicMarketPair
+              }.toMap
+            )
+          )
+        )
+    })
+  }
+
+  def mockAccountWithLRCAllowance(
+      address: String,
+      allowance: Option[Amount],
+      dynamicMarketPair: MarketPair
+    ) = {
+    addAccountExpects({
+      case req =>
+        GetAccount.Res(
+          Some(
+            AccountBalance(
+              address = req.address,
+              tokenBalanceMap = req.tokens.map {
+                t =>
+                  val balance = t match {
+                    case ETH_TOKEN.address | WETH_TOKEN.address =>
+                      initialBalance
+                        .tokenBalanceMap(t)
+                    case LRC_TOKEN.address =>
+                      initialBalance
+                        .tokenBalanceMap(t)
+                        .copy(
+                          allowance = allowance,
+                          availableAlloawnce = allowance
+                        )
+                    case dynamicMarketPair.baseToken =>
+                      initialBalance
+                        .tokenBalanceMap("baseToken")
+                    case dynamicMarketPair.quoteToken =>
+                      initialBalance
+                        .tokenBalanceMap("quoteToken")
+                    case _ =>
+                      initialBalance
+                        .tokenBalanceMap("otherToken")
+                  }
+                  t -> balance
+                    .copy(token = t) // reset token for dynamicMarketPair
+              }.toMap
+            )
+          )
+        )
+    })
+  }
+
+  def mockAccountWithBaseAllowance(
+      address: String,
+      allowance: Option[Amount] = BigInt(10),
+      dynamicMarketPair: MarketPair
+    ) = {
+    addAccountExpects({
+      case req =>
+        GetAccount.Res(
+          Some(
+            AccountBalance(
+              address = req.address,
+              tokenBalanceMap = req.tokens.map {
+                t =>
+                  val balance = t match {
+                    case ETH_TOKEN.address | WETH_TOKEN.address |
+                        LRC_TOKEN.address =>
+                      initialBalance
+                        .tokenBalanceMap(t)
+                    case dynamicMarketPair.baseToken =>
+                      initialBalance
+                        .tokenBalanceMap("baseToken")
+                        .copy(
+                          allowance = allowance,
+                          availableAlloawnce = allowance
+                        )
                     case dynamicMarketPair.quoteToken =>
                       initialBalance
                         .tokenBalanceMap("quoteToken")

@@ -67,24 +67,29 @@ class ChainReorganizationManagerActor @Inject()(
   val strictMode = selfConfig.getBoolean("strict-mode")
   val manager = new ChainReorganizationManagerImpl(maxDepth, strictMode)
 
-  //  @inline def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  //  @inline def marketManagerActor = actors.get(MarketManagerActor.name)
-  //  @inline def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
+  val metricName = s"chain_reorg_manager"
+  val count = KamonSupport.counter(metricName)
+  val timer = KamonSupport.timer(metricName)
+  val gauge = KamonSupport.gauge(metricName)
+  val histo = KamonSupport.histogram(metricName)
 
   def ready: Receive = LoggingReceive {
     case reorg.RecordOrderUpdateReq(block, orderIds) =>
+      count.refine("label" -> "record_orders").increment()
       orderIds.foreach(manager.recordOrderUpdate(block, _))
 
     case reorg.RecordAccountUpdateReq(block, address, tokenAddress) =>
+      count.refine("label" -> "record_accounts").increment()
       manager.recordAccountUpdate(block, address, tokenAddress)
 
     case event: BlockEvent =>
+      count.refine("label" -> "block_event").increment()
       val impact = manager.reorganizedAt(event.blockNumber)
-
+      gauge.refine("label" -> "impact_accounts").set(impact.accounts.size)
+      histo.refine("label" -> "impact_orders").record(impact.orderIds.size)
       log.info(
         s"chain reorganized at ${event.blockNumber} with impact: $impact"
       )
-
       if (impact.orderIds.nonEmpty) {
         context
           .actorOf(

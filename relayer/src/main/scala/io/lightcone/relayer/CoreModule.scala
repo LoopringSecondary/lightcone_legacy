@@ -45,10 +45,8 @@ import io.lightcone.ethereum.extractor.tx.{
 import io.lightcone.ethereum.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.external._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -142,10 +140,6 @@ class CoreModule(
     bind[EIP712Support].to[DefaultEIP712Support]
 
     bind[SplitMergerProvider].to[DefaultSplitMergerProvider].in[Singleton]
-    bind[ExternalTickerFetcher].to[CMCExternalTickerFetcher].in[Singleton]
-    bind[FiatExchangeRateFetcher]
-      .to[SinaFiatExchangeRateFetcher]
-      .in[Singleton]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))

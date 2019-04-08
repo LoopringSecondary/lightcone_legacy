@@ -29,7 +29,6 @@ package io.lightcone.relayer.entrypoint
 //  @inline val ringAndFillPersistActor =
 //    actors.get(RingAndFillPersistenceActor.name)
 
-//TODO(hongyu): reopen after refactor struct of event
 //  "DatabaseQueryActor Entrypoint" must {
 //    "init" in {
 //      info("save some ring and fills")

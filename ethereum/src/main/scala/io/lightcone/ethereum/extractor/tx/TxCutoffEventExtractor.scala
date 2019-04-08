@@ -94,7 +94,7 @@ class TxCutoffEventExtractor @Inject()(
         val detail = Activity.OrderCancellation(
           cutoff = evt.cutoff,
           broker = evt.broker,
-          marketPair = evt.marketHash //TODO(hongyu):Markethash与marketPair如何使用
+          marketPair = evt.marketHash
         )
         Seq(
           Activity(
@@ -118,7 +118,7 @@ class TxCutoffEventExtractor @Inject()(
             txHash = txHash,
             activityType = ActivityType.ORDER_CANCEL,
             timestamp = blockHeader.timestamp,
-            token = Address.ZERO.toString(), //TODO(hongyu):取消订单按照ETH
+            token = Address.ZERO.toString(), //取消订单等操作按照eth进行处理
             detail = Activity.Detail.OrderCancellation(detail),
             txStatus = txStatus
           )

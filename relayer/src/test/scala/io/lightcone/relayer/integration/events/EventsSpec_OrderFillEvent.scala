@@ -17,8 +17,8 @@
 package io.lightcone.relayer.integration
 
 import akka.util.Timeout
-import io.lightcone.core.OrderStatus._
 import io.lightcone.core.MarketPair
+import io.lightcone.core.OrderStatus._
 import io.lightcone.ethereum._
 import io.lightcone.ethereum.event._
 import io.lightcone.lib.NumericConversion._
@@ -103,7 +103,7 @@ class EventsSpec_OrderFillEvent
         s"the avaliable balance after submit an order is : {balance: ${avaliableBalance1}, allowance:${avaliableAlowance1}"
       )
 
-      Then("dispatcher a partally filled event.")
+      Then("dispatch a partally filled event.")
       val filledAmount: BigInt =
         "5".zeros(dynamicBaseToken.getMetadata.decimals)
       val evt = OrderFilledEvent(
@@ -238,7 +238,7 @@ class EventsSpec_OrderFillEvent
         s"the avaliable balance after submit an order is : {balance: ${avaliableBalance1}, allowance:${avaliableAlowance1}"
       )
 
-      Then("dispatcher two full filled event.")
+      Then("dispatch two full filled event.")
       val events =
         orders.map { order =>
           OrderFilledEvent(

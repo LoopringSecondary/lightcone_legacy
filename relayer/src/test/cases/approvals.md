@@ -148,7 +148,7 @@
    - 目标：测试授权值增加流程中订单的可成交量和order book的影响
 
    - 测试前置条件：
-      1. 设置A对路印合约的授权值为0LRC
+      1. 设置A对路印合约的授权值为50LRC
       2. 设置A卖出 1000 LRC的order
       3. 设置A授权路印合约为10000的ethereum transaction
 
@@ -174,7 +174,7 @@
 
    - 测试前置条件：
 
-     1. 设置A对路印合约的授权值为0LRC，GTO余额和授权充足
+     1. 设置A对路印合约的授权值为50LRC，GTO余额和授权充足
      2. 设置A卖出 2000 GTO的order，fee 为100LRC
      3. 设置A授权路印合约为10000的ethereum transaction
 

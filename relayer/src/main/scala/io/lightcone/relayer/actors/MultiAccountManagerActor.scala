@@ -148,7 +148,6 @@ class MultiAccountManagerActor(
   var recoverTimer: Option[StartedTimer] = None
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
-  // TODO: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
     AllForOneStrategy() {
       case e: Exception =>
@@ -220,7 +219,6 @@ class MultiAccountManagerActor(
     case req: Any => handleRequest(req)
   }
 
-  // TODO(hongyu):以太坊的事件如 AddressBalanceUpdated和AddressAllowanceUpdated 不应该触发创建AccountManagerActor
   private def handleRequest(req: Any) = extractShardingObject(req) match {
     case Some(address) => {
       req match {
