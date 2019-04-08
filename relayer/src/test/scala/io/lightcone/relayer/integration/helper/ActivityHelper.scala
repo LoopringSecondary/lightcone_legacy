@@ -554,7 +554,7 @@ trait ActivityHelper {
     )
   }
 
-  def approveConfirmedActivities(
+  def notLoopringApproveConfirmedActivities(
       owner: String,
       blockNumber: Long,
       txHash: String,
@@ -589,12 +589,51 @@ trait ActivityHelper {
             )
           )
         )
+      )
+    )
+  }
+
+  def loopringApproveConfirmedActivities(
+      owner: String,
+      blockNumber: Long,
+      txHash: String,
+      approveToken: String,
+      approveValue: BigInt,
+      nonce: Long
+    ) = {
+    Seq(
+      TxEvents(
+        TxEvents.Events.Activities(
+          TxEvents.Activities(
+            Seq(
+              Activity(
+                owner = owner,
+                block = blockNumber,
+                txHash = txHash,
+                activityType = Activity.ActivityType.TOKEN_AUTH,
+                timestamp = timeProvider.getTimeSeconds,
+                token = approveToken,
+                detail = Activity.Detail.TokenAuth(
+                  Activity.TokenAuth(
+                    approveToken,
+                    "0x2",
+                    Some(
+                      toAmount(approveValue)
+                    )
+                  )
+                ),
+                nonce = nonce,
+                txStatus = TxStatus.TX_STATUS_SUCCESS
+              )
+            )
+          )
+        )
       ),
       AddressAllowanceUpdatedEvent(
         address = owner,
-        token = WETH_TOKEN.address,
+        token = approveToken,
         allowance = Some(
-          toAmount(approveAmount)
+          toAmount(approveValue)
         ),
         block = blockNumber
       )

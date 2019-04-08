@@ -96,6 +96,7 @@ class OrderStatusMonitorActor(
     )
   )
 
+  //TODO repeated Job 发送的消息在orders.size >= batchSize 时可能会并行，造成同样的订单都被取出。周期时间需要设置的久一点
   def receive: Receive = super.receiveRepeatdJobs orElse {
     case ACTIVATE_ORDER_NOTIFY =>
       for {

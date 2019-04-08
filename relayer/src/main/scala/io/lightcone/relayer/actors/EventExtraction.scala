@@ -30,7 +30,7 @@ import io.lightcone.relayer.ethereum._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util._
 
 trait EventExtraction {
   me: InitializationRetryActor =>
@@ -56,13 +56,6 @@ trait EventExtraction {
 
   @inline def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  @inline def ringAndFillPersistenceActor =
-    actors.get(RingAndFillPersistenceActor.name)
-
-  @inline def chainReorganizationManagerActor =
-    actors.get(ChainReorganizationManagerActor.name)
-  @inline def marketHistoryActor = actors.get(MarketHistoryActor.name)
-
   def handleMessage: Receive = handleBlockReorganization orElse {
     case GET_BLOCK =>
       assert(blockData != null)
@@ -73,21 +66,6 @@ trait EventExtraction {
                 .toBigInt(blockData.number) == -1) {
             preBlockData = blockData
             blockData = block
-            val blockEvent = BlockEvent(
-              blockNumber =
-                NumericConversion.toBigInt(blockData.number).longValue(),
-              txs = blockData.transactions.map(
-                tx =>
-                  BlockEvent.Tx(
-                    from = tx.from,
-                    nonce = NumericConversion.toBigInt(tx.nonce).toInt,
-                    txHash = tx.hash
-                  )
-              )
-            )
-
-            //TODO: 如何发送，是否需要等待返回结果之后再发送其余的events，否则会导致数据不一致
-            eventDispatcher.dispatch(blockEvent)
             self ! RETRIEVE_RECEIPTS
           } else {
             self ! BLOCK_REORG_DETECTED
@@ -158,8 +136,13 @@ trait EventExtraction {
 
   def processEvents: Future[Unit] = {
     for {
-      events <- eventExtractor.extractEvents(blockData)
-      _ = events.foreach(eventDispatcher.dispatch)
+      events_ <- eventExtractor.extractEvents(blockData)
+      events = if (unSupportedEvents.isEmpty) events_
+      else events_.filterNot(evt => unSupportedEvents.contains(evt.getClass))
+      (blockEvent, otherEvents) = events.partition(_.isInstanceOf[BlockEvent])
+      //TODO: 首先发送BlockEvent，如何发送，是否需要等待返回结果之后再发送其余的events，否则会导致数据不一致
+      _ = blockEvent.foreach(eventDispatcher.dispatch)
+      _ = otherEvents.foreach(eventDispatcher.dispatch)
       _ <- dbModule.blockService.saveBlock(
         BlockData(
           hash = blockData.hash,
@@ -172,5 +155,8 @@ trait EventExtraction {
   }
 
   def postProcessEvents(): Future[Unit] = Future.unit
+
+  def unSupportedEvents: Seq[Class[_]] =
+    Seq.empty //MissingBlocksEventExtractorActor与EthereumEventExtractorActor需要处理的事件不一致，有些事件不需要Miss的发送
 
 }
