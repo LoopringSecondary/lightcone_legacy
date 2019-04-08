@@ -45,8 +45,14 @@ class CMCCrawlerSpec
           5.second
         )
       r.nonEmpty should be(true)
-      val map = r.map(t => t.symbol -> t.price).toMap
     }
+
+//    "exchangerate-api" in {
+//      val f = for {
+//        r <- syncCurrencyTicker()
+//      } yield r
+//      val q = Await.result(f.mapTo[Seq[TokenTickerRecord]], timeout.duration)
+//    }
 
     "request cmc tickers in USD and persist (CMCCrawlerActor)" in {
       val f = for {
@@ -283,4 +289,21 @@ class CMCCrawlerSpec
     }
   }
 
+  private def mockSinaCurrencyError(): Future[Seq[TokenTickerRecord]] = {
+    if (true) {
+      Future {
+        throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, "mock error")
+      }
+    } else {
+      Future.successful(Seq.empty)
+    }
+  }
+
+  private def syncCurrencyTicker() = {
+    mockSinaCurrencyError() recoverWith {
+      case e: Exception => {
+        exchangeRateAPIFetcher.fetchExchangeRates()
+      }
+    }
+  }
 }
