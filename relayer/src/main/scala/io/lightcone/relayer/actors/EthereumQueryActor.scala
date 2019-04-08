@@ -116,12 +116,11 @@ class EthereumQueryActor(
           case Nil => Future.successful(None)
         }
 
-        // TODO(yadong): we only need to return block number once using the `block` field.
         finalBalance = if (ethRes.isDefined) {
           accountBalance.copy(
             tokenBalanceMap = accountBalance.tokenBalanceMap +
               (ethToken.head -> AccountBalance.TokenBalance(
-                Address.ZERO.toString(), // TODO(yadong): do we need this?
+                Address.ZERO.toString(),
                 Some(
                   Amount(
                     NumericConversion.toBigInt(ethRes.get.resps.head.result),

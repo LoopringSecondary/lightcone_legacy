@@ -252,7 +252,7 @@ class MarketManagerActor(
     } yield Unit
   }
 
-  def recover: Receive = super.receiveRepeatdJobs orElse {
+  def recover: Receive = {
 
     case SubmitSimpleOrder(_, Some(order)) =>
       blocking(recover_timer, "recover_submit_order") {
