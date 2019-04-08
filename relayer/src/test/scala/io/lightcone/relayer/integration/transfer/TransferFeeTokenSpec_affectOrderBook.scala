@@ -165,7 +165,9 @@ class TransferFeeTokenSpec_affectOrderBook
           WETH_TOKEN.address
         ),
         lrcExpect2,
-        baseExpect,
+        fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
+          dynamicMarketPair.baseToken
+        ),
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
           dynamicMarketPair.quoteToken
         )
