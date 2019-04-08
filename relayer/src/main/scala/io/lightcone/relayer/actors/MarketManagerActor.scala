@@ -278,7 +278,7 @@ class MarketManagerActor(
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
       //sender 是自己时，不再发送Error信息
       if (sender != self) {
-        sender ! Error(
+        sender ! ErrorException(
           ERR_REJECTED_DURING_RECOVER,
           s"market manager `${entityId}` is being recovered"
         )
