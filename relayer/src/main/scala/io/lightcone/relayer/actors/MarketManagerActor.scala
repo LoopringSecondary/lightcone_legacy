@@ -268,7 +268,7 @@ class MarketManagerActor(
 
       recoverTimer.foreach(_.stop)
       recoverTimer = None
-
+      autoSwitchBackToReady.map(_.cancel())
       val numOfOrders = manager.getNumOfOrders
       gauge.refine("label" -> "num_orders").set(numOfOrders)
       histo.refine("label" -> "num_orders").record(numOfOrders)

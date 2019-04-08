@@ -197,6 +197,7 @@ class MultiAccountManagerActor(
       recoverTimer.foreach(_.stop)
       recoverTimer = None
 
+      autoSwitchBackToReady.map(_.cancel())
       val numOfAccounts = accountManagerActors.size
       gauge.refine("label" -> "num_accounts").set(numOfAccounts)
       histo.refine("label" -> "num_accounts").record(numOfAccounts)
