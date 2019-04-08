@@ -42,6 +42,9 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
       maker: Matchable,
       taker: Matchable
     ): Either[ErrorCode, MatchableRing] = {
+    log.debug(
+      s"RingMatcherImpl -- makeRing -- maker:${maker.id}, ${maker.numAttempts}, taker: ${taker.id}, ${taker.numAttempts}"
+    )
     if (taker.amountB <= 0 || taker.amountS <= 0) {
       Left(ERR_MATCHING_INVALID_TAKER_ORDER)
     } else if (maker.amountB <= 0 || maker.amountS <= 0) {

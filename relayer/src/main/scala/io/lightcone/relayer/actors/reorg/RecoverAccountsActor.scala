@@ -44,6 +44,7 @@ class RecoverAccountsActor(
       log.debug(s"started recovering accounts [size=${accounts.size}]")
       accounts.foreach {
         case ChainReorganizationImpact.BalanceOfToken(address, tokens) =>
+          log.debug(s"recovering account:${address}, tokens:${tokens.mkString}")
           (query ? GetAccount.Req(address, tokens))
             .mapAs[GetAccount.Res]
             .map { resp =>

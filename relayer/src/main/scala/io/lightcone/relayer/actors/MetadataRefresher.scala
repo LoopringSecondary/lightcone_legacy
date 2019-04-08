@@ -29,7 +29,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.data._
 
 import scala.collection.JavaConverters._
-import scala.concurrent._
+import scala.concurrent.ExecutionContext
 import scala.util._
 import scala.concurrent.duration._
 
@@ -64,7 +64,8 @@ class MetadataRefresher(
     val metadataManager: MetadataManager)
     extends InitializationRetryActor
     with Stash
-    with ActorLogging {
+    with ActorLogging
+    with BlockingReceive {
 
   @inline def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
@@ -83,6 +84,12 @@ class MetadataRefresher(
     .toMap +
     (baseCurrency -> 1.0)
 
+  val metricName = s"metadata_refresher_${self.path.address}"
+  val count = KamonSupport.counter(metricName)
+  val timer = KamonSupport.timer(metricName)
+  val gauge = KamonSupport.gauge(metricName)
+  val histo = KamonSupport.histogram(metricName)
+
   override def initialize() = {
     val f = for {
       _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
@@ -99,7 +106,12 @@ class MetadataRefresher(
 
   def ready: Receive = {
     case req: MetadataChanged =>
-      blocking {
+      blocking(timer, "metadata_changed") {
+        count.refine("label" -> "metadata_changed").increment()
+        gauge.refine("label" -> "tokens").set(metadataManager.getTokens().size)
+        histo
+          .refine("label" -> "markets")
+          .record(metadataManager.getTokens().size)
         for {
           _ <- refreshMetadata()
           _ = getLocalShardingActors(
@@ -116,6 +128,7 @@ class MetadataRefresher(
         .foreach(_ ! req.metadataChanged)
 
     case req: GetTokens.Req =>
+      count.refine("label" -> "get_tokens").increment()
       val request =
         if (req.quoteCurrencyForPrice.isEmpty)
           req.copy(quoteCurrencyForPrice = baseCurrency)
@@ -147,6 +160,7 @@ class MetadataRefresher(
       sender ! GetTokens.Res(res)
 
     case req: GetMarkets.Req =>
+      count.refine("label" -> "get_markets").increment()
       // TODO(yongfeng): req.queryLoopringTicker
       val request =
         if (req.quoteCurrencyForTicker.isEmpty)

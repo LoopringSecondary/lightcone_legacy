@@ -346,6 +346,7 @@ class MarketManagerActor(
         log.error(s"unexpected msg : $req")
       } else {
         blocking(timer, "handle_ring_mind_event") {
+          log.debug(s"MarketManagerActor -- receive RingMinedEvent:${req}")
           Future {
             val ringhash =
               createRingIdByOrderHash(orderIds(0), orderIds(1))
@@ -440,6 +441,9 @@ class MarketManagerActor(
 
   private def updateOrderbookAndSettleRings(matchResult: MatchResult): Unit = {
     // Settle rings
+    log.debug(
+      s"MarketManagerActor -- updateOrderbookAndSettleRings -- matchResult:${matchResult}"
+    )
     if (matchResult.rings.nonEmpty) {
       settlementActor ! SettleRings(
         rings = matchResult.rings,
