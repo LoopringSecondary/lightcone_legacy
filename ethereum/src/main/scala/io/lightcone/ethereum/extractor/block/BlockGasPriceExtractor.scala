@@ -33,7 +33,7 @@ class BlockGasPriceExtractor @Inject()(implicit val ec: ExecutionContext)
       BlockGasPricesExtractedEvent(
         height = NumericConversion.toBigInt(block.number).longValue,
         gasPrices = block.transactions.map { tx =>
-          NumericConversion.toBigInt(tx.gasPrice).longValue
+          NumericConversion.toAmount(NumericConversion.toBigInt(tx.gasPrice))
         }
       )
     )
