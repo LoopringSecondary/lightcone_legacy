@@ -34,7 +34,6 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.data.BlockWithTxObject
 import io.lightcone.relayer.ethereum._
-import io.lightcone.relayer.external._
 import io.lightcone.relayer.ethereummock._
 import io.lightcone.relayer.socketio._
 import io.lightcone.relayer.splitmerge._
