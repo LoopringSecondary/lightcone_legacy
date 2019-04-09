@@ -66,7 +66,7 @@ class RingSettlementActor(
 
   implicit val ringContext: RingBatchContext =
     RingBatchContext(
-      lrcAddress = selfConfig.getString("lrc-address"),
+      lrcAddress = config.getString("tokens.lrc-address"),
       feeRecipient = selfConfig.getString("fee-recipient"),
       miner = Credentials.create(minerPrivateKey).getAddress,
       transactionOrigin = credentials.getAddress,
