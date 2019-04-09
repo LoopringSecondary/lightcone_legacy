@@ -118,7 +118,7 @@ class CancelOrderSpec_byCutoffEventOwner
       Then("check the cancel result.")
       val baseExpectedBalance = baseTokenBalance.copy(
         availableBalance = baseTokenBalance.availableBalance - order3.amountS - order3.getFeeParams.amountFee,
-        availableAlloawnce = baseTokenBalance.availableAlloawnce - order3.amountS - order3.getFeeParams.amountFee
+        availableAllowance = baseTokenBalance.availableAllowance - order3.amountS - order3.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(
@@ -173,7 +173,7 @@ class CancelOrderSpec_byCutoffEventOwner
       Then("check the result after submit the two new orders.")
       val secondExpectedBalance = secondTokenBalance.copy(
         availableBalance = secondTokenBalance.availableBalance - order5.amountS - order5.getFeeParams.amountFee,
-        availableAlloawnce = secondTokenBalance.availableAlloawnce - order5.amountS - order5.getFeeParams.amountFee
+        availableAllowance = secondTokenBalance.availableAllowance - order5.amountS - order5.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(

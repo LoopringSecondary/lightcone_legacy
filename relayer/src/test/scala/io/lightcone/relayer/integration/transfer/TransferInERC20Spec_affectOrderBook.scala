@@ -105,7 +105,7 @@ class TransferInERC20Spec_affectOrderBook
         availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
           order1.getFeeParams.amountFee
         ),
-        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(lrcBalance.availableAllowance) - toBigInt(
           order1.getFeeParams.amountFee
         )
       )
@@ -118,7 +118,7 @@ class TransferInERC20Spec_affectOrderBook
         else order1.amountS // min(order.amounts, account.balance)
       val baseExpect = baseBalance.copy(
         availableBalance = zero,
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - actualOrderAmount
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - actualOrderAmount
       )
       getFromAddressBalanceReq.expectUntil(
         balanceMatcher(
@@ -185,7 +185,7 @@ class TransferInERC20Spec_affectOrderBook
         availableBalance = toBigInt(baseBalance.availableBalance) + transferAmount - toBigInt(
           order1.amountS
         ),
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - toBigInt(
           order1.amountS
         )
       )

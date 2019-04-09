@@ -101,7 +101,7 @@ class TransferERC20Spec_affectOrderBook
         availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
           order1.getFeeParams.amountFee
         ),
-        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(lrcBalance.availableAllowance) - toBigInt(
           order1.getFeeParams.amountFee
         )
       )
@@ -112,7 +112,7 @@ class TransferERC20Spec_affectOrderBook
         availableBalance = toBigInt(baseBalance.availableBalance) - toBigInt(
           order1.amountS
         ),
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - toBigInt(
           order1.amountS
         )
       )
@@ -156,16 +156,16 @@ class TransferERC20Spec_affectOrderBook
         if (baseAvailable > 0) baseAvailable else 0
       val availableAllowance =
         if (toBigInt(baseBalance.balance) - transferAmount > order1.amountS) {
-          toBigInt(baseBalance.availableAlloawnce) - order1.amountS
+          toBigInt(baseBalance.availableAllowance) - order1.amountS
         } else {
-          toBigInt(baseBalance.availableAlloawnce) - (toBigInt(
+          toBigInt(baseBalance.availableAllowance) - (toBigInt(
             baseBalance.balance
           ) - transferAmount)
         }
       val baseExpect2 = baseBalance.copy(
         balance = toBigInt(baseBalance.balance) - transferAmount,
         availableBalance = baseAvailableExpect,
-        availableAlloawnce = availableAllowance
+        availableAllowance = availableAllowance
       )
       val balanceMatcher2 = balanceMatcher(
         fromInitBalanceRes.getAccountBalance.tokenBalanceMap(

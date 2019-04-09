@@ -112,7 +112,7 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "1000".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "1000".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "1000".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -152,7 +152,7 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "1000".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "1000".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "1000".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -194,7 +194,7 @@ class SubmitOrderSpec_OwnerCutoffTradingPair
             balance = "1000".zeros(baseToken1.getDecimals()),
             allowance = "1000".zeros(baseToken1.getDecimals()),
             availableBalance = "987".zeros(baseToken1.getDecimals()),
-            availableAlloawnce = "987".zeros(baseToken1.getDecimals())
+            availableAllowance = "987".zeros(baseToken1.getDecimals())
           )
         ),
         marketMatchers = Map(

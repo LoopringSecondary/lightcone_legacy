@@ -133,7 +133,7 @@ trait AccountHelper extends Logging {
                         .tokenBalanceMap(t)
                         .copy(
                           allowance = allowance,
-                          availableAlloawnce = allowance
+                          availableAllowance = allowance
                         )
                     case dynamicMarketPair.baseToken =>
                       initialBalance
@@ -177,7 +177,7 @@ trait AccountHelper extends Logging {
                         .tokenBalanceMap("baseToken")
                         .copy(
                           allowance = allowance,
-                          availableAlloawnce = allowance
+                          availableAllowance = allowance
                         )
                     case dynamicMarketPair.quoteToken =>
                       initialBalance

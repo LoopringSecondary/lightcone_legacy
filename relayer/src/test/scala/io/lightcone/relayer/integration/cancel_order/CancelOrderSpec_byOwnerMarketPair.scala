@@ -100,7 +100,7 @@ class CancelOrderSpec_byOwnerMarketPair
       Then("check the cancel result.")
       val secondExpectedBalance = secondBaseTokenBalance.copy(
         availableBalance = secondBaseTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
-        availableAlloawnce = secondBaseTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
+        availableAllowance = secondBaseTokenBalance.availableAllowance - order2.amountS - order2.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(

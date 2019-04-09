@@ -121,11 +121,11 @@ class CancelOrderSpec_byCutoffEventMarketPair
       Then("check the cancel result.")
       var baseTokenExpectedBalance = baseTokenBalance.copy(
         availableBalance = baseTokenBalance.availableBalance - order3.amountS - order3.getFeeParams.amountFee,
-        availableAlloawnce = baseTokenBalance.availableAlloawnce - order3.amountS - order3.getFeeParams.amountFee
+        availableAllowance = baseTokenBalance.availableAllowance - order3.amountS - order3.getFeeParams.amountFee
       )
       var secondBaseExpectedBalance = secondBaseTokenBalance.copy(
         availableBalance = secondBaseTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
-        availableAlloawnce = secondBaseTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
+        availableAllowance = secondBaseTokenBalance.availableAllowance - order2.amountS - order2.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(
@@ -204,11 +204,11 @@ class CancelOrderSpec_byCutoffEventMarketPair
 
       baseTokenExpectedBalance = baseTokenExpectedBalance.copy(
         availableBalance = baseTokenExpectedBalance.availableBalance - order5.amountS - order5.getFeeParams.amountFee,
-        availableAlloawnce = baseTokenExpectedBalance.availableAlloawnce - order5.amountS - order5.getFeeParams.amountFee
+        availableAllowance = baseTokenExpectedBalance.availableAllowance - order5.amountS - order5.getFeeParams.amountFee
       )
       secondBaseExpectedBalance = secondBaseExpectedBalance.copy(
         availableBalance = secondBaseExpectedBalance.availableBalance - order6.amountS - order6.getFeeParams.amountFee,
-        availableAlloawnce = secondBaseExpectedBalance.availableAlloawnce - order6.amountS - order6.getFeeParams.amountFee
+        availableAllowance = secondBaseExpectedBalance.availableAllowance - order6.amountS - order6.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(

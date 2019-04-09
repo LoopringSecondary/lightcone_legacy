@@ -48,7 +48,7 @@ class EventsSpec_RingMinedEvent
       )
       val avaliableAlowanceInit: BigInt = accountInitRes.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
       val avaliableBalanceInit: BigInt = accountInitRes.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
         .availableBalance

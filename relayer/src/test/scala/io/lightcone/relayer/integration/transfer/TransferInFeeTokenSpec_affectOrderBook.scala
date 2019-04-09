@@ -106,7 +106,7 @@ class TransferInFeeTokenSpec_affectOrderBook
         else lrcBalance.balance
       val lrcExpect = lrcBalance.copy(
         availableBalance = toBigInt(lrcBalance.availableBalance) - availableAmountInOrder,
-        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - availableAmountInOrder
+        availableAllowance = toBigInt(lrcBalance.availableAllowance) - availableAmountInOrder
       )
       val baseBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         dynamicMarketPair.baseToken
@@ -115,7 +115,7 @@ class TransferInFeeTokenSpec_affectOrderBook
         availableBalance = toBigInt(baseBalance.availableBalance) - toBigInt(
           order1.amountS
         ),
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - toBigInt(
           order1.amountS
         )
       )
@@ -183,7 +183,7 @@ class TransferInFeeTokenSpec_affectOrderBook
         availableBalance = toBigInt(lrcBalance.availableBalance) + transferAmount - toBigInt(
           order1.getFeeParams.amountFee
         ),
-        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(lrcBalance.availableAllowance) - toBigInt(
           order1.getFeeParams.amountFee
         )
       )
@@ -191,7 +191,7 @@ class TransferInFeeTokenSpec_affectOrderBook
         availableBalance = toBigInt(baseBalance.availableBalance) - toBigInt(
           order1.amountS
         ),
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - toBigInt(
           order1.amountS
         )
       )

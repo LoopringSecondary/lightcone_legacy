@@ -68,7 +68,7 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
           NumericConversion.toBigInt(ba.getAllowance) == "1000".zeros(
             dynamicBaseToken.getDecimals()
           ) &&
-          NumericConversion.toBigInt(ba.getAvailableAlloawnce) == "1000"
+          NumericConversion.toBigInt(ba.getAvailableAllowance) == "1000"
             .zeros(dynamicBaseToken.getDecimals()) &&
           NumericConversion.toBigInt(ba.getBalance) == "30".zeros(
             dynamicBaseToken.getDecimals()
@@ -114,7 +114,7 @@ class SubmitOrderSpec_NotEnoughBalanceEnoughAllowance
             balance = "30".zeros(dynamicBaseToken.getMetadata.decimals),
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "970".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),
