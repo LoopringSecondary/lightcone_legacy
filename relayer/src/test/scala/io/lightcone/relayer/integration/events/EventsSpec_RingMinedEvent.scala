@@ -80,7 +80,11 @@ class EventsSpec_RingMinedEvent
       )
       val getOrderRes = GetOrders
         .Req(owner = account.getAddress)
-        .expect(check((res: GetOrders.Res) => true))
+        .expectUntil(check((res: GetOrders.Res) => {
+          val order1Res =
+            res.orders.find(_.hash.equalsIgnoreCase(order.hash))
+          order1Res.nonEmpty && order1Res.get.getState.status == STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES
+        }))
       val order1Res =
         getOrderRes.orders.find(_.hash.equalsIgnoreCase(order.hash))
       info(

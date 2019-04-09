@@ -194,6 +194,7 @@ class IntegrationStarter extends MockHelper with DbHelper with MetadataHelper {
           "Timed out waiting for MetadataRefresher init.)"
         )
     }
+
     try Unreliables.retryUntilTrue(
       10,
       TimeUnit.SECONDS,

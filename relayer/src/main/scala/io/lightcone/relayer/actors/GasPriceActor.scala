@@ -64,7 +64,7 @@ class GasPriceActor(
   def ready: Receive = {
 
     case SetGasPrice.Req(price) =>
-      sender ! SetGasPrice.Res(gasPrice)
+      sender ! SetGasPrice.Res(price)
       gasPrice = price
 
     case req: GetGasPrice.Req =>

@@ -56,7 +56,7 @@ class MetadataReadonlySpec
 
       SubmitOrder
         .Req(Some(order1))
-        .expect(check((res: SubmitOrder.Res) => res.success))
+        .expectUntil(check((res: SubmitOrder.Res) => res.success))
       Then("this order must be saved in db.")
       val getOrderF = dbModule.orderService.getOrder(order1.hash)
       val getOrder = Await.result(getOrderF, timeout.duration)

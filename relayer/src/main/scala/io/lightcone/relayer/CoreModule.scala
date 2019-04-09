@@ -146,7 +146,7 @@ class CoreModule(
 
     bind[Double]
       .annotatedWithName("dust-order-threshold")
-      .toInstance(config.getDouble("relay.dust-order-threshold"))
+      .toInstance(config.getDouble("market_manager.dust-order-threshold"))
 
     bind[Boolean]
       .annotatedWithName("deploy-actors-ignoring-roles")
@@ -250,10 +250,6 @@ class CoreModule(
         SocketIONotificationActor.name
       )
       .register(
-        classOf[BlockGasPricesExtractedEvent], //
-        GasPriceActor.name
-      )
-      .register(
         classOf[AddressAllowanceUpdatedEvent],
         MultiAccountManagerActor.name
       )
@@ -280,6 +276,10 @@ class CoreModule(
       .registerBroadcast(
         classOf[TxEvents],
         ActivityActor
+      )
+      .registerBroadcast(
+        classOf[BlockGasPricesExtractedEvent], //
+        GasPriceActor
       )
   }
 

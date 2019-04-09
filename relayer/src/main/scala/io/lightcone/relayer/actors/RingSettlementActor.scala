@@ -40,6 +40,9 @@ import scala.util._
 
 // Owner: Yadong & Kongliang
 class RingSettlementActor(
+    minerPrivateKey: String,
+    transactionOriginPrivateKey: String
+  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -47,6 +50,7 @@ class RingSettlementActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
+    val metadataManager: MetadataManager,
     val ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor
     with Stash
@@ -55,34 +59,28 @@ class RingSettlementActor(
   val selfConfig = config.getConfig(RingSettlementManagerActor.name)
 
   //防止一个tx中的订单过多，超过 gaslimit
-  private val maxRingsInOneTx =
-    selfConfig.getInt("max-rings-in-one-tx")
-
-  private val resendDelay =
-    selfConfig.getInt("resend-delay_in_seconds")
+  private val maxRingsInOneTx = selfConfig.getInt("max-rings-in-one-tx")
+  private val resendDelay = selfConfig.getInt("resend-delay_in_seconds")
+  implicit val credentials: Credentials =
+    Credentials.create(transactionOriginPrivateKey)
 
   implicit val ringContext: RingBatchContext =
     RingBatchContext(
-      lrcAddress = selfConfig.getString("lrc-address"),
+      lrcAddress = metadataManager.getTokenWithSymbol("LRC").get.getAddress(),
       feeRecipient = selfConfig.getString("fee-recipient"),
-      miner = config.getString("miner"),
-      transactionOrigin =
-        Address(config.getString("transaction-origin")).toString,
-      minerPrivateKey = config.getString("miner-privateKey")
+      miner = Credentials.create(minerPrivateKey).getAddress,
+      transactionOrigin = credentials.getAddress,
+      minerPrivateKey = minerPrivateKey
     )
-
-  implicit val credentials: Credentials =
-    Credentials.create(config.getString("transaction-origin-private-key"))
 
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
-  val protocolAddress: String =
-    config.getString("loopring_protocol.protocol-address")
+  val protocolConfig = config.getConfig("loopring_protocol")
+  val protocolAddress: String = protocolConfig.getString("protocol-address")
 
   val gasLimitPerRingV2 = BigInt(
-    config.getString("loopring_protocol.gas-limit-per-ring-v2")
+    protocolConfig.getString("gas-limit-per-ring-v2")
   )
-
   val chainId: Int = config.getInt(s"${EthereumClientMonitor.name}.chain_id")
 
   val taskQueue = new Queue[SettleRings]()

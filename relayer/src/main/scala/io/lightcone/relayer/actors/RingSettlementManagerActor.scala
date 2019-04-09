@@ -26,6 +26,7 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum._
+import org.web3j.crypto.Credentials
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
@@ -45,6 +46,7 @@ object RingSettlementManagerActor extends DeployedAsSingleton {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
+      metadataManager: MetadataManager,
       ringBatchGenerator: RingBatchGenerator,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
@@ -61,6 +63,7 @@ class RingSettlementManagerActor(
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule,
+    metadataManager: MetadataManager,
     ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor
     with BlockingReceive {
@@ -77,22 +80,19 @@ class RingSettlementManagerActor(
     .getConfigList("miners")
     .asScala
     .map(minerConfig => {
-      val miner = minerConfig.getString("transaction-origin")
-      val item = Address.normalize(miner) ->
+      val transactionOriginPrivateKey =
+        minerConfig.getString("transaction-origin-private-key")
+      val minerPrivateKey = minerConfig.getString("miner-privateKey")
+
+      Credentials.create(transactionOriginPrivateKey).getAddress ->
         context.actorOf(
           Props(
-            new RingSettlementActor()(
-              config = minerConfig.withFallback(config),
-              ec = ec,
-              timeProvider = timeProvider,
-              timeout = timeout,
-              actors = actors,
-              dbModule = dbModule,
-              ringBatchGenerator
+            new RingSettlementActor(
+              minerPrivateKey,
+              transactionOriginPrivateKey
             )
           )
         )
-      item
     })
     .toMap
 
