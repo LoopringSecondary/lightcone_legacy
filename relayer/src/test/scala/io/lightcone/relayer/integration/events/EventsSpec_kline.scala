@@ -17,7 +17,7 @@
 package io.lightcone.relayer.integration
 
 import io.lightcone.core._
-import io.lightcone.ethereum.persistence.{Interval, OHLCData, OHLCRawData}
+import io.lightcone.ethereum.persistence.{Interval, OHLCRawData}
 import io.lightcone.relayer.data.GetMarketHistory
 import io.lightcone.relayer.integration.Metadatas._
 import org.scalatest._
@@ -95,8 +95,15 @@ class EventsSpec_kline
             )
           } and
             Matcher { res: GetMarketHistory.Res =>
-              val result = res.data.exists(_.data(1) == 300.0) && res.data
-                .exists(_.data(1) == 100.0)
+              val result = res.data.exists { r =>
+                r.data(1) == 300.0 && r.data(2) == 0.4 && r
+                  .data(3) == 0.0013 && r.data(4) == 0.0013 && r
+                  .data(5) == 0.0013 && r.data(6) == 0.0013
+              } && res.data.exists { r =>
+                r.data(1) == 100.0 && r.data(2) == 0.1 && r
+                  .data(3) == 0.0001 && r.data(4) == 0.0001 && r
+                  .data(5) == 0.0001 && r.data(6) == 0.0001
+              }
               MatchResult(
                 result,
                 s"kline data of quality not verified",
