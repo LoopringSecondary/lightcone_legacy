@@ -95,7 +95,7 @@ class SubmitOrderSpec_MarketStatus
             balance = "1000".zeros(baseToken1.getMetadata.decimals),
             allowance = "1000".zeros(baseToken1.getMetadata.decimals),
             availableBalance = "1000".zeros(baseToken1.getMetadata.decimals),
-            availableAlloawnce = "1000".zeros(baseToken1.getMetadata.decimals)
+            availableAllowance = "1000".zeros(baseToken1.getMetadata.decimals)
           )
         ),
         marketMatchers = Map(
@@ -144,7 +144,7 @@ class SubmitOrderSpec_MarketStatus
             balance = "1000".zeros(baseToken2.getMetadata.decimals),
             allowance = "1000".zeros(baseToken2.getMetadata.decimals),
             availableBalance = "1000".zeros(baseToken2.getMetadata.decimals),
-            availableAlloawnce = "1000".zeros(baseToken2.getMetadata.decimals)
+            availableAllowance = "1000".zeros(baseToken2.getMetadata.decimals)
           )
         ),
         marketMatchers = Map.empty

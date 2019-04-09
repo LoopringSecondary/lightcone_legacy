@@ -107,7 +107,7 @@ class SubmitOrderSpec_NotEnoughFee
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "990".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "990".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),

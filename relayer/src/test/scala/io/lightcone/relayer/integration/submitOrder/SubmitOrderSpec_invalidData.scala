@@ -90,7 +90,7 @@ class SubmitOrderSpec_invalidData
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),
@@ -136,7 +136,7 @@ class SubmitOrderSpec_invalidData
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),
@@ -188,7 +188,7 @@ class SubmitOrderSpec_invalidData
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),

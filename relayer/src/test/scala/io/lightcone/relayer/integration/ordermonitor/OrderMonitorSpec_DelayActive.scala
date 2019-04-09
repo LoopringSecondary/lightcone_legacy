@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.integration.ordermonitor
 
-import akka.util.Timeout
 import io.lightcone.core.OrderStatus._
 import io.lightcone.core._
 import io.lightcone.relayer.data.AccountBalance.TokenBalance
@@ -24,7 +23,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.getUniqueAccount
 import io.lightcone.relayer.integration.AddedMatchers._
 import io.lightcone.relayer.integration._
-import scala.concurrent.duration._
 import org.scalatest._
 
 class OrderMonitorSpec_DelayActive
@@ -54,7 +52,7 @@ class OrderMonitorSpec_DelayActive
       val initBalance: BigInt = initBaseToken.getBalance
       val initAllowance: BigInt = initBaseToken.getAllowance
       val initAvailableBalance: BigInt = initBaseToken.getAvailableBalance
-      val initAvailableAllowance: BigInt = initBaseToken.getAvailableAlloawnce
+      val initAvailableAllowance: BigInt = initBaseToken.getAvailableAllowance
 
       Then("submit an order that validSince = now + 5 seconds")
 
@@ -100,7 +98,7 @@ class OrderMonitorSpec_DelayActive
             balance = initBalance,
             allowance = initAllowance,
             availableBalance = initAvailableAllowance - order2.getAmountS - order2.getFeeParams.getAmountFee,
-            availableAlloawnce = initAvailableBalance - order2.getAmountS - order2.getFeeParams.getAmountFee
+            availableAllowance = initAvailableBalance - order2.getAmountS - order2.getFeeParams.getAmountFee
           )
         ),
         marketMatchers = Map(
@@ -141,7 +139,7 @@ class OrderMonitorSpec_DelayActive
             balance = initBalance,
             allowance = initAllowance,
             availableBalance = initAvailableAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee,
-            availableAlloawnce = initAvailableBalance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee
+            availableAllowance = initAvailableBalance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee
           )
         ),
         marketMatchers = Map(

@@ -51,7 +51,7 @@ class OrderMonitorSpec_Expire
       val initBalance: BigInt = initBaseToken.getBalance
       val initAllowance: BigInt = initBaseToken.getAllowance
       val initAvailableBalance: BigInt = initBaseToken.getAvailableBalance
-      val initAvailableAllowance: BigInt = initBaseToken.getAvailableAlloawnce
+      val initAvailableAllowance: BigInt = initBaseToken.getAvailableAllowance
 
       Then("submit an order that validUntil = now + 5 seconds")
 
@@ -95,7 +95,7 @@ class OrderMonitorSpec_Expire
             balance = initBalance,
             allowance = initAllowance,
             availableBalance = initAvailableAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee,
-            availableAlloawnce = initAvailableBalance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee
+            availableAllowance = initAvailableBalance - order1.getAmountS - order1.getFeeParams.getAmountFee - order2.getAmountS - order2.getFeeParams.getAmountFee
           )
         ),
         marketMatchers = Map(
@@ -124,7 +124,7 @@ class OrderMonitorSpec_Expire
             balance = initBalance,
             allowance = initAllowance,
             availableBalance = initAvailableAllowance - order2.getAmountS - order2.getFeeParams.getAmountFee,
-            availableAlloawnce = initAvailableBalance - order2.getAmountS - order2.getFeeParams.getAmountFee
+            availableAllowance = initAvailableBalance - order2.getAmountS - order2.getFeeParams.getAmountFee
           )
         ),
         marketMatchers = Map(

@@ -93,7 +93,7 @@ class SubmitOrderSpec_DustOrder
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),

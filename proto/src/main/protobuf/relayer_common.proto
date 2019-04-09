@@ -85,7 +85,7 @@ message AccountBalance {
         io.lightcone.core.Amount balance                = 2;
         io.lightcone.core.Amount allowance              = 3;
         io.lightcone.core.Amount available_balance      = 4;
-        io.lightcone.core.Amount available_alloawnce    = 5;
+        io.lightcone.core.Amount available_allowance    = 5;
         int64 block                                     = 6;
     }
 

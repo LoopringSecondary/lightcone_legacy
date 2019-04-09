@@ -103,7 +103,7 @@ class TransferERC20Spec_notAffectOrderBook
         availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
           order1.getFeeParams.amountFee
         ),
-        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(lrcBalance.availableAllowance) - toBigInt(
           order1.getFeeParams.amountFee
         )
       )
@@ -114,7 +114,7 @@ class TransferERC20Spec_notAffectOrderBook
         availableBalance = toBigInt(baseBalance.availableBalance) - toBigInt(
           order1.amountS
         ),
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - toBigInt(
           order1.amountS
         )
       )
@@ -153,7 +153,7 @@ class TransferERC20Spec_notAffectOrderBook
         availableBalance = toBigInt(baseBalance.availableBalance) - transferAmount - toBigInt(
           order1.amountS
         ),
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - toBigInt(
           order1.amountS
         )
       )

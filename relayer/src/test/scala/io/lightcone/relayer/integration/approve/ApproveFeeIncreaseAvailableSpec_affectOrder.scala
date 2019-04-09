@@ -137,7 +137,7 @@ class ApproveFeeIncreaseAvailableSpec_affectOrder
       val lrcExpect = lrcBalance.copy(
         availableBalance = availableBalance,
         allowance = approveTo,
-        availableAlloawnce = availableAllowance
+        availableAllowance = availableAllowance
       )
       val baseBalance = fromInitBalanceRes.getAccountBalance.tokenBalanceMap(
         dynamicMarketPair.baseToken
@@ -150,15 +150,15 @@ class ApproveFeeIncreaseAvailableSpec_affectOrder
         }
       val availableAllowance2 =
         if (toBigInt(baseBalance.availableBalance) > toBigInt(order1.amountS)) {
-          toBigInt(baseBalance.availableAlloawnce) - toBigInt(order1.amountS)
+          toBigInt(baseBalance.availableAllowance) - toBigInt(order1.amountS)
         } else {
-          toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+          toBigInt(baseBalance.availableAllowance) - toBigInt(
             baseBalance.availableBalance
           )
         }
       val baseExpect = baseBalance.copy(
         availableBalance = availableBalance2,
-        availableAlloawnce = availableAllowance2
+        availableAllowance = availableAllowance2
       )
       val orderbookMatcher2 = orderBookItemMatcher(
         Seq(

@@ -68,7 +68,7 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "30".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "1000".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "30".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "30".zeros(dynamicBaseToken.getDecimals())
           )
         )
       )
@@ -113,7 +113,7 @@ class SubmitOrderSpec_EnoughBalanceNotEnoughAllowance
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "30".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "970".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "0".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "0".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(

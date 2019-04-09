@@ -161,7 +161,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "751".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "751".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "751".zeros(dynamicBaseToken.getDecimals())
           )
         ) and accountBalanceMatcher(
           dynamicQuoteToken.getAddress(),
@@ -170,7 +170,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             allowance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             availableBalance = "998".zeros(dynamicQuoteToken.getDecimals()),
-            availableAlloawnce = "998".zeros(dynamicQuoteToken.getDecimals())
+            availableAllowance = "998".zeros(dynamicQuoteToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -257,7 +257,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "794".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "794".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "794".zeros(dynamicBaseToken.getDecimals())
           )
         ) and accountBalanceMatcher(
           dynamicQuoteToken.getAddress(),
@@ -266,7 +266,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             allowance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             availableBalance = "998".zeros(dynamicQuoteToken.getDecimals()),
-            availableAlloawnce = "998".zeros(dynamicQuoteToken.getDecimals())
+            availableAllowance = "998".zeros(dynamicQuoteToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -320,7 +320,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "751".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "751".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "751".zeros(dynamicBaseToken.getDecimals())
           )
         ) and accountBalanceMatcher(
           dynamicQuoteToken.getAddress(),
@@ -329,7 +329,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             allowance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             availableBalance = "998".zeros(dynamicQuoteToken.getDecimals()),
-            availableAlloawnce = "998".zeros(dynamicQuoteToken.getDecimals())
+            availableAllowance = "998".zeros(dynamicQuoteToken.getDecimals())
           )
         ),
         marketMatchers = Map.empty
@@ -350,7 +350,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "794".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "794".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "794".zeros(dynamicBaseToken.getDecimals())
           )
         ) and accountBalanceMatcher(
           dynamicQuoteToken.getAddress(),
@@ -359,7 +359,7 @@ class OrderbookManagerRecoverySpec
             balance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             allowance = "1000".zeros(dynamicQuoteToken.getDecimals()),
             availableBalance = "998".zeros(dynamicQuoteToken.getDecimals()),
-            availableAlloawnce = "998".zeros(dynamicQuoteToken.getDecimals())
+            availableAllowance = "998".zeros(dynamicQuoteToken.getDecimals())
           )
         ),
         marketMatchers = Map(

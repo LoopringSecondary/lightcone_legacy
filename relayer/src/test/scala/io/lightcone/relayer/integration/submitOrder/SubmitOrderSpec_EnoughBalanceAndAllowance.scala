@@ -102,7 +102,7 @@ class SubmitOrderSpec_EnoughBalanceAndAllowance
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "950".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "950".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),

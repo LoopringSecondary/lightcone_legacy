@@ -45,7 +45,7 @@ class EventsSpec_OrderFillEvent
     res: GetAccount.Res =>
       val resAvailabeAllowance: BigInt = res.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
 
       MatchResult(
         resAvailabeAllowance == expectedAvaliableAllowance,
@@ -67,7 +67,7 @@ class EventsSpec_OrderFillEvent
       )
       val avaliableAlowanceInit: BigInt = accountInitRes.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
       val avaliableBalanceInit: BigInt = accountInitRes.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
         .availableBalance
@@ -89,12 +89,12 @@ class EventsSpec_OrderFillEvent
           (res: GetAccount.Res) =>
             res.accountBalance.nonEmpty && res.getAccountBalance
               .tokenBalanceMap(dynamicMarketPair.baseToken)
-              .availableAlloawnce > 0
+              .availableAllowance > 0
         )
       )
       val avaliableAlowance1: BigInt = accountRes1.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
       val avaliableBalance1: BigInt = accountRes1.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
         .availableBalance
@@ -143,7 +143,7 @@ class EventsSpec_OrderFillEvent
       )
       val avaliableAlowance2: BigInt = accountRes2.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
       val avaliableBalance2: BigInt = accountRes2.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
         .availableBalance
@@ -187,7 +187,7 @@ class EventsSpec_OrderFillEvent
       )
       val avaliableAlowanceInit: BigInt = accountInitRes.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
       val avaliableBalanceInit: BigInt = accountInitRes.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
         .availableBalance
@@ -224,12 +224,12 @@ class EventsSpec_OrderFillEvent
           (res: GetAccount.Res) =>
             res.accountBalance.nonEmpty && res.getAccountBalance
               .tokenBalanceMap(dynamicMarketPair.baseToken)
-              .availableAlloawnce >= ordersAmountS
+              .availableAllowance >= ordersAmountS
         )
       )
       val avaliableAlowance1: BigInt = accountRes1.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
       val avaliableBalance1: BigInt = accountRes1.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
         .availableBalance
@@ -280,7 +280,7 @@ class EventsSpec_OrderFillEvent
       )
       val avaliableAlowance2: BigInt = accountRes2.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
-        .availableAlloawnce
+        .availableAllowance
       val avaliableBalance2: BigInt = accountRes2.getAccountBalance
         .tokenBalanceMap(dynamicMarketPair.baseToken)
         .availableBalance

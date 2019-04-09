@@ -266,7 +266,7 @@ class MatchesSpec_partiallyMatch
               balance = initBalance - order1.getAmountS / 2 - order1.getFeeParams.getAmountFee / 2,
               allowance = initAllowance - order1.getAmountS / 2 - order1.getFeeParams.getAmountFee / 2,
               availableBalance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee
+              availableAllowance = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee
             )
           )
         )
@@ -284,7 +284,7 @@ class MatchesSpec_partiallyMatch
               balance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
               allowance = initAllowance,
               availableBalance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance
+              availableAllowance = initAllowance
             )
           )
         )
