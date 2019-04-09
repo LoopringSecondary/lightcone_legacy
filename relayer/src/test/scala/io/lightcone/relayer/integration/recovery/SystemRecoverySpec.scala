@@ -161,7 +161,7 @@ class SystemRecoverySpec
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "751".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "751".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ) and accountBalanceMatcher(
@@ -172,7 +172,7 @@ class SystemRecoverySpec
             allowance = "1000".zeros(dynamicQuoteToken.getMetadata.decimals),
             availableBalance =
               "998".zeros(dynamicQuoteToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "998".zeros(dynamicQuoteToken.getMetadata.decimals)
           )
         ),
@@ -261,7 +261,7 @@ class SystemRecoverySpec
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance =
               "794".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "794".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ) and accountBalanceMatcher(
@@ -272,7 +272,7 @@ class SystemRecoverySpec
             allowance = "1000".zeros(dynamicQuoteToken.getMetadata.decimals),
             availableBalance =
               "998".zeros(dynamicQuoteToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "998".zeros(dynamicQuoteToken.getMetadata.decimals)
           )
         ),
@@ -371,7 +371,7 @@ class SystemRecoverySpec
               allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
               availableBalance =
                 "751".zeros(dynamicBaseToken.getMetadata.decimals),
-              availableAlloawnce =
+              availableAllowance =
                 "751".zeros(dynamicBaseToken.getMetadata.decimals)
             )
           )
@@ -393,7 +393,7 @@ class SystemRecoverySpec
               allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
               availableBalance =
                 "794".zeros(dynamicBaseToken.getMetadata.decimals),
-              availableAlloawnce =
+              availableAllowance =
                 "794".zeros(dynamicBaseToken.getMetadata.decimals)
             )
           )

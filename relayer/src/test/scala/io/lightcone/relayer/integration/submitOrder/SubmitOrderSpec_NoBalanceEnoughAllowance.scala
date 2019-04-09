@@ -70,7 +70,7 @@ class SubmitOrderSpec_NoBalanceEnoughAllowance
             balance = "0".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "0".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "1000".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "1000".zeros(dynamicBaseToken.getDecimals())
           )
         )
       )
@@ -106,7 +106,7 @@ class SubmitOrderSpec_NoBalanceEnoughAllowance
             balance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
             allowance = "1000".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "1000".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),

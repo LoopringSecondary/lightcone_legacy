@@ -120,7 +120,7 @@ class ApproveSellIncreaseAvailableSpec_affectOrder
         availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
           order1.getFeeParams.amountFee
         ),
-        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(lrcBalance.availableAllowance) - toBigInt(
           order1.getFeeParams.amountFee
         )
       )
@@ -142,7 +142,7 @@ class ApproveSellIncreaseAvailableSpec_affectOrder
       val baseExpect = baseBalance.copy(
         availableBalance = availableBalance,
         allowance = approveTo,
-        availableAlloawnce = availableAllowance
+        availableAllowance = availableAllowance
       )
       val orderbookMatcher2 = orderBookItemMatcher(
         Seq(

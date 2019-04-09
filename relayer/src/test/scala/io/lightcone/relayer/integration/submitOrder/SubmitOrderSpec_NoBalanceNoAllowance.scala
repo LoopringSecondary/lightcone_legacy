@@ -70,7 +70,7 @@ class SubmitOrderSpec_NoBalanceNoAllowance
           NumericConversion.toBigInt(ba.getBalance) == 0 &&
           NumericConversion.toBigInt(ba.getAllowance) == 0 &&
           NumericConversion.toBigInt(ba.getAvailableBalance) == 0 &&
-          NumericConversion.toBigInt(ba.getAvailableAlloawnce) == 0
+          NumericConversion.toBigInt(ba.getAvailableAllowance) == 0
         })
       )
 
@@ -103,7 +103,7 @@ class SubmitOrderSpec_NoBalanceNoAllowance
             balance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
             allowance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
             availableBalance = "0".zeros(dynamicBaseToken.getMetadata.decimals),
-            availableAlloawnce =
+            availableAllowance =
               "0".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),

@@ -188,7 +188,7 @@ class MatchesSpec_SomeOrders
             balance = initBalance,
             allowance = initAllowance,
             availableBalance = initBalance - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee,
-            availableAlloawnce = initAllowance - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee
+            availableAllowance = initAllowance - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee
           )
         ),
         marketMatchers = Map(
@@ -313,7 +313,7 @@ class MatchesSpec_SomeOrders
             balance = initBalance,
             allowance = initAllowance,
             availableBalance = initBalance - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee,
-            availableAlloawnce = initAllowance - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee
+            availableAllowance = initAllowance - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee
           )
         ),
         marketMatchers = Map(
@@ -531,7 +531,7 @@ class MatchesSpec_SomeOrders
               balance = initBalance + order5.getAmountB - order5.getFeeParams.getAmountFee,
               allowance = initAllowance,
               availableBalance = initBalance + order5.getAmountB - order5.getFeeParams.getAmountFee - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee
+              availableAllowance = initAllowance - order1.getAmountS - order2.getAmountS - order3.getAmountS - order1.getFeeParams.getAmountFee - order2.getFeeParams.getAmountFee - order3.getFeeParams.getAmountFee
             )
           )
         )
@@ -549,7 +549,7 @@ class MatchesSpec_SomeOrders
               balance = initBalance + order8.getAmountB - order8.getFeeParams.getAmountFee + order9.getAmountB - order9.getFeeParams.getAmountFee,
               allowance = initAllowance,
               availableBalance = initBalance + order8.getAmountB - order8.getFeeParams.getAmountFee + order9.getAmountB - order9.getFeeParams.getAmountFee - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee
+              availableAllowance = initAllowance - order6.getAmountS - order7.getAmountS - order6.getFeeParams.getAmountFee - order7.getFeeParams.getAmountFee
             )
           )
         )
@@ -567,7 +567,7 @@ class MatchesSpec_SomeOrders
               balance = initBalance - order10.getAmountS - order10.getFeeParams.getAmountFee,
               allowance = initAllowance - order10.getAmountS - order10.getFeeParams.getAmountFee,
               availableBalance = initBalance - order10.getAmountS - order10.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance - order10.getAmountS - order10.getFeeParams.getAmountFee
+              availableAllowance = initAllowance - order10.getAmountS - order10.getFeeParams.getAmountFee
             )
           )
         )

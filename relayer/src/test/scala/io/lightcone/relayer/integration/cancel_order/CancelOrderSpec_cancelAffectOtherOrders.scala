@@ -92,7 +92,7 @@ class CancelOrderSpec_cancelAffectOtherOrders
       Then("check the cancel result.")
       val lrcExpectedBalance = baseTokenBalance.copy(
         availableBalance = baseTokenBalance.availableBalance - order2.amountS - order2.getFeeParams.amountFee,
-        availableAlloawnce = baseTokenBalance.availableAlloawnce - order2.amountS - order2.getFeeParams.amountFee
+        availableAllowance = baseTokenBalance.availableAllowance - order2.amountS - order2.getFeeParams.amountFee
       )
       defaultValidate(
         containsInGetOrders(

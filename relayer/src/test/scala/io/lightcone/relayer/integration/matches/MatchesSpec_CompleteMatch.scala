@@ -243,7 +243,7 @@ class MatchesSpec_CompleteMatch
               balance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
               allowance = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee,
               availableBalance = initBalance - order1.getAmountS - order1.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee
+              availableAllowance = initAllowance - order1.getAmountS - order1.getFeeParams.getAmountFee
             )
           )
         )
@@ -261,7 +261,7 @@ class MatchesSpec_CompleteMatch
               balance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
               allowance = initAllowance,
               availableBalance = initBalance + order2.getAmountB - order2.getFeeParams.getAmountFee,
-              availableAlloawnce = initAllowance
+              availableAllowance = initAllowance
             )
           )
         )

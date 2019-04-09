@@ -105,7 +105,7 @@ class SubmitOrderSpec_Continuous
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "880".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "880".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "880".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -152,7 +152,7 @@ class SubmitOrderSpec_Continuous
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "360".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "360".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "360".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(
@@ -199,7 +199,7 @@ class SubmitOrderSpec_Continuous
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "0".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce =
+            availableAllowance =
               "0".zeros(dynamicBaseToken.getMetadata.decimals)
           )
         ),
@@ -243,7 +243,7 @@ class SubmitOrderSpec_Continuous
             balance = "1000".zeros(dynamicBaseToken.getDecimals()),
             allowance = "1000".zeros(dynamicBaseToken.getDecimals()),
             availableBalance = "0".zeros(dynamicBaseToken.getDecimals()),
-            availableAlloawnce = "0".zeros(dynamicBaseToken.getDecimals())
+            availableAllowance = "0".zeros(dynamicBaseToken.getDecimals())
           )
         ),
         marketMatchers = Map(

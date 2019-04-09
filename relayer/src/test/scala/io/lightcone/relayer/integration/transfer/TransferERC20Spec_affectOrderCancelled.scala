@@ -89,7 +89,7 @@ class TransferERC20Spec_affectOrderCancelled
         availableBalance = toBigInt(lrcBalance.availableBalance) - toBigInt(
           order1.getFeeParams.amountFee
         ),
-        availableAlloawnce = toBigInt(lrcBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(lrcBalance.availableAllowance) - toBigInt(
           order1.getFeeParams.amountFee
         )
       )
@@ -98,7 +98,7 @@ class TransferERC20Spec_affectOrderCancelled
       )
       val baseExpect = baseBalance.copy(
         availableBalance = baseBalance.availableBalance - order1.amountS,
-        availableAlloawnce = toBigInt(baseBalance.availableAlloawnce) - toBigInt(
+        availableAllowance = toBigInt(baseBalance.availableAllowance) - toBigInt(
           order1.amountS
         )
       )
