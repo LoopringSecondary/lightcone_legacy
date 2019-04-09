@@ -67,6 +67,8 @@ class MarketHistoryActor(
       } yield {
         saveRes._1 match {
           case ERR_NONE =>
+            //log.info("ohlcRawData not stored")
+            log.info("ohlcRawData stored")
             saveRes._2
           case _ =>
             throw ErrorException(
