@@ -165,7 +165,7 @@ class MarketManagerActor(
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 
-  val wethTokenAddress = config.getString("relay.weth-address")
+  val wethTokenAddress = config.getString("tokens.weth-address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxSettementFailuresPerOrder =
@@ -268,7 +268,7 @@ class MarketManagerActor(
 
       recoverTimer.foreach(_.stop)
       recoverTimer = None
-
+      autoSwitchBackToReady.map(_.cancel())
       val numOfOrders = manager.getNumOfOrders
       gauge.refine("label" -> "num_orders").set(numOfOrders)
       histo.refine("label" -> "num_orders").record(numOfOrders)
@@ -278,7 +278,7 @@ class MarketManagerActor(
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
       //sender 是自己时，不再发送Error信息
       if (sender != self) {
-        sender ! Error(
+        sender ! ErrorException(
           ERR_REJECTED_DURING_RECOVER,
           s"market manager `${entityId}` is being recovered"
         )

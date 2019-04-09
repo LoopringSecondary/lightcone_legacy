@@ -197,6 +197,7 @@ class MultiAccountManagerActor(
       recoverTimer.foreach(_.stop)
       recoverTimer = None
 
+      autoSwitchBackToReady.map(_.cancel())
       val numOfAccounts = accountManagerActors.size
       gauge.refine("label" -> "num_accounts").set(numOfAccounts)
       histo.refine("label" -> "num_accounts").record(numOfAccounts)
@@ -205,7 +206,7 @@ class MultiAccountManagerActor(
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
       //sender 是自己时，不再发送Error信息
       if (sender != self) {
-        sender ! Error(
+        sender ! ErrorException(
           ERR_REJECTED_DURING_RECOVER,
           s"account manager ${entityId} is being recovered"
         )
