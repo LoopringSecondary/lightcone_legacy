@@ -79,7 +79,7 @@ message AddressBalanceAllowanceUpdatedEvent {
 
 message BlockGasPricesExtractedEvent {
     int64 height = 1;
-    repeated int64 gas_prices = 2;
+    repeated io.lightcone.core.Amount gas_prices = 2;
 }
 
 message OrderSubmittedOnChainEvent {

@@ -75,11 +75,14 @@ class GasPriceActor(
         blocks = blocks.drop(1)
       }
       blocks = blocks.:+(block).sortWith(_.height < _.height)
-      calculateGasPrices
+      setGasPrices
   }
 
-  def calculateGasPrices = {
-    val gasPrices = blocks.flatMap(_.gasPrices).sortWith(_ > _)
+  def setGasPrices = {
+    val gasPrices: Seq[BigInt] = blocks
+      .flatMap(_.gasPrices)
+      .map(NumericConversion.toBigInt)
+      .sortWith(_ > _)
     val excludeAmount = gasPrices.size * excludePercent / 100
     val gasPricesInUse = gasPrices.drop(excludeAmount).dropRight(excludeAmount)
     if (gasPricesInUse.nonEmpty) {
