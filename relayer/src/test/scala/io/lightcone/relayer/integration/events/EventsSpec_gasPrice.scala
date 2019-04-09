@@ -20,8 +20,7 @@ import io.lightcone.core._
 import io.lightcone.ethereum.event.BlockGasPricesExtractedEvent
 import io.lightcone.relayer.data.GetGasPrice
 import org.scalatest._
-import akka.pattern._
-import scala.concurrent.Await
+import io.lightcone.relayer.integration.AddedMatchers.check
 
 class EventsSpec_gasPrice
     extends FeatureSpec
@@ -36,28 +35,32 @@ class EventsSpec_gasPrice
 
       When("dispatch the BlockGasPricesExtractedEvent")
       val gasPrice = ((0 until 5) map { i =>
-        20L
+        val p: Amount = "20".zeros(9)
+        p
       }) ++ ((0 until 30) map { i =>
-        15L
+        val p: Amount = "15".zeros(9)
+        p
       }) ++ ((0 until 30) map { i =>
-        10L
+        val p: Amount = "10".zeros(9)
+        p
       }) ++ ((0 until 30) map { i =>
-        5L
+        val p: Amount = "5".zeros(9)
+        p
       }) ++ ((0 until 5) map { i =>
-        1L
+        val p: Amount = "1".zeros(9)
+        p
       })
       eventDispatcher.dispatch(
         BlockGasPricesExtractedEvent(gasPrices = gasPrice.toSeq)
       )
 
       Then("check gas price")
-      Thread.sleep(2000)
-      val result = Await.result(
-        (entryPointActor ? GetGasPrice.Req()).mapTo[GetGasPrice.Res],
-        timeout.duration
-      )
-      val res: BigInt = result.gasPrice
-      res should be(BigInt(10))
+      GetGasPrice
+        .Req()
+        .expectUntil(check((res: GetGasPrice.Res) => {
+          val result: BigInt = res.gasPrice
+          result == "10".zeros(9)
+        }))
     }
   }
 
