@@ -36,7 +36,6 @@ import io.lightcone.lib._
 import io.lightcone.lib.cache.Cache
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.external._
 import io.lightcone.relayer.splitmerge._
 import io.lightcone.relayer.socketio._
 import org.slf4s.Logging
