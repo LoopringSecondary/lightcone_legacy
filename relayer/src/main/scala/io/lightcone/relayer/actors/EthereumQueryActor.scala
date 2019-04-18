@@ -220,11 +220,9 @@ class EthereumQueryActor(
     case req: BatchGetBurnRate.Req =>
       batchCallEthereum(sender, brb.buildRequest(req, burnRateTableAddress)) {
         result =>
-          BatchGetBurnRate.Res((req.reqs zip result.resps).map {
-            //TODO:需要简化
-            case (burnRateReq, res) => {
+          BatchGetBurnRate.Res(result.resps.map {res => {
               val formatResult =
-                Numeric.cleanHexPrefix(result.resps.head.result)
+                Numeric.cleanHexPrefix(res.result)
               if (formatResult.length == 64) {
                 val p2pRate = NumericConversion
                   .toBigInt(formatResult.substring(56, 60))
