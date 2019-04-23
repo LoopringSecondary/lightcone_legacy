@@ -102,7 +102,7 @@ class EthereumEventExtractorActor(
         dbBlock <- dbModule.blockDal.findByHeight(
           NumericConversion.toBigInt(blockData.number).longValue() - 1
         )
-        onlineBlock <- getBlockData(blockData.number)
+        onlineBlock <- getBlockData(blockData.number -1)
       } yield {
         blockData = onlineBlock.get
         if (dbBlock.map(_.hash) == onlineBlock.map(_.hash))
