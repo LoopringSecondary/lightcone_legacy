@@ -43,14 +43,14 @@ trait AbiFunction[P, R] {
   def unpackInput(data: String)(implicit m: Manifest[P]): Option[P] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
     val list = entry.decode(dataBytes).asScala.toList
-    if (list.isEmpty) None
+    if (list.isEmpty && getContractAnnontationIdx[P]().nonEmpty) None
     else Some(Deserialization.deserialize[P](list))
   }
 
   def unpackResult(data: String)(implicit m: Manifest[R]): Option[R] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
     val list = entry.decodeResult(dataBytes).asScala.toList
-    if (list.isEmpty) None
+    if (list.isEmpty && getContractAnnontationIdx[R]().nonEmpty) None
     else Some(Deserialization.deserialize[R](list))
   }
 }
