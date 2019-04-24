@@ -68,7 +68,7 @@ trait AbiEvent[R] {
     val dataBytes = Numeric.hexStringToByteArray(data)
     val topicBytes = topics.map(Numeric.hexStringToByteArray)
     val list = entry.decode(dataBytes, topicBytes).asScala.toList
-    if (list.isEmpty) None
+    if (list.isEmpty && getContractAnnontationIdx[R]().nonEmpty) None
     else Some(Deserialization.deserialize[R](list))
   }
 }
