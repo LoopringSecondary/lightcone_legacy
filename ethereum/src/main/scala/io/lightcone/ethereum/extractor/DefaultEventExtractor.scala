@@ -91,6 +91,6 @@ final class DefaultEventExtractor @Inject()(
         )
       )
 
-      events = txEvents ++ blockEvents ++ txActivityEvents ++ txFillEvents :+ blockEvent
+      events = (blockEvent +: txEvents) ++ blockEvents ++ txActivityEvents ++ txFillEvents
     } yield events
 }
